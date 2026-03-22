@@ -370,14 +370,42 @@ async function fetchBookings() {
   return true;
 }
 
-// On load — read code from URL then fetch sheet
+// On load — support ?b= encoded booking OR ?code= lookup
 window.addEventListener('load', async function() {
   var params = new URLSearchParams(window.location.search);
+  
+  // METHOD 1: Full booking data encoded in URL (?b=...)
+  // This works on ANY device ANY browser — no database needed
+  var encoded = params.get('b');
+  if (encoded) {
+    try {
+      var bdata = JSON.parse(decodeURIComponent(escape(atob(encoded))));
+      var code = bdata.c || 'RVIP-0000-XXX';
+      var booking = {
+        name: bdata.n || '',
+        service: bdata.s || '',
+        date: bdata.d || '',
+        time: bdata.t || '',
+        pickup: bdata.pu || '',
+        destination: bdata.de || '',
+        vehicle: bdata.v || '',
+        passengers: bdata.pa || '1',
+        price: parseFloat(bdata.pr) || 0,
+      };
+      currentCode = code;
+      currentBooking = booking;
+      showState('payment');
+      renderPayment(code, booking);
+      return;
+    } catch(e) {
+      console.error('Could not decode booking data:', e);
+    }
+  }
+
+  // METHOD 2: Code-based lookup from localStorage (?code=...)
   var code = (params.get('code') || '').toUpperCase().trim();
-
-  var ok = await fetchBookings();
-
   if (code) {
+    await fetchBookings();
     var booking = allBookings[code];
     if (booking) {
       currentCode = code;

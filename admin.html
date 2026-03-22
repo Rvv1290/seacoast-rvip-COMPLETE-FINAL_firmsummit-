@@ -424,7 +424,21 @@ function openPay(id) {
   var b=getBks().find(function(x){ return x.id===id; });
   if(!b) return;
 
-  var link = SITE+'/payment.html?code='+encodeURIComponent(b.code);
+  // Encode ALL booking data into URL so it works on any device any browser
+  var bdata = {
+    n: b.name,
+    s: b.service,
+    d: b.date,
+    t: b.time,
+    pu: b.pickup,
+    de: b.destination,
+    v: b.vehicle,
+    pa: b.passengers,
+    pr: b.price,
+    c: b.code
+  };
+  var encoded = btoa(unescape(encodeURIComponent(JSON.stringify(bdata))));
+  var link = SITE+'/payment.html?b='+encoded;
   var fn = b.name.split(' ')[0];
   var msg = 'Hi '+fn+'! Your Seacoast RVIP ride is confirmed for '+b.date+' at '+ft(b.time)+'.\n\n'+
     'Total: $'+b.price+'\n\n'+
