@@ -37,6 +37,9 @@ body{font-family:'Inter',sans-serif;background:#f9f9f9;margin:0;padding:0}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
 .pulse{animation:pulse 1.5s ease infinite}
 </style>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 </head>
 <body class="text-on-background antialiased min-h-screen">
 
@@ -263,19 +266,28 @@ body{font-family:'Inter',sans-serif;background:#f9f9f9;margin:0;padding:0}
 
 <script>
 // ═══════════════════════════════════════════════════════════════
-// SETUP — REPLACE THIS WITH YOUR GOOGLE SHEET CSV URL
-//
-// HOW TO GET YOUR SHEET URL:
-// 1. Create Google Sheet with these exact column headers in Row 1:
-//    Code | Name | Service | Date | Time | Pickup | Destination | Vehicle | Passengers | Price | Status
-//
-// 2. File → Share → Publish to web
-//    → Sheet1 → CSV → Publish
-//    → Copy the URL
-//
-// 3. Paste it below replacing YOUR_GOOGLE_SHEET_CSV_URL
+// FIREBASE CONFIG — Seacoast RVIP
 // ═══════════════════════════════════════════════════════════════
-var SHEET_CSV_URL = 'YOUR_GOOGLE_SHEET_CSV_URL';
+var FB_CONFIG = {
+  apiKey:            "AIzaSyDGel0ktZDQYcdlOuoZo4bAqZWCuGvOVbc",
+  authDomain:        "seacoast-rip.firebaseapp.com",
+  projectId:         "seacoast-rip",
+  storageBucket:     "seacoast-rip.firebasestorage.app",
+  messagingSenderId: "684535453116",
+  appId:             "1:684535453116:web:922c843b5bad3b81ad47b9"
+};
+
+var db = null;
+try {
+  if (!firebase.apps || !firebase.apps.length) {
+    firebase.initializeApp(FB_CONFIG);
+  }
+  db = firebase.firestore();
+  console.log('✅ Firebase connected');
+} catch(e) {
+  console.log('Firebase init failed - using localStorage fallback');
+}
+
 
 // ⚠️ Replace with your Stripe Payment Link
 // dashboard.stripe.com → Payment Links → Create
@@ -334,13 +346,46 @@ function splitCSVLine(line) {
   return result;
 }
 
-// Load bookings from localStorage (saved by admin panel)
-async function fetchBookings() {
+// Fetch booking by code from Firebase
+async function fetchBookings(code) {
+  allBookings = {};
+
+  // Try Firebase first
+  if (db && code) {
+    try {
+      // Search by code field
+      var snap = await db.collection('bookings')
+        .where('code', '==', code)
+        .limit(1)
+        .get();
+      if (!snap.empty) {
+        snap.forEach(function(doc) {
+          var b = doc.data();
+          allBookings[b.code.toUpperCase()] = {
+            name: b.name || '',
+            service: b.service || '',
+            date: b.date || '',
+            time: b.time || '',
+            pickup: b.pickup || '',
+            destination: b.destination || '',
+            vehicle: b.vehicle || '',
+            passengers: b.passengers || '1',
+            price: parseFloat(b.price) || 0,
+          };
+        });
+        console.log('✅ Booking found in Firebase');
+        return true;
+      }
+    } catch(e) {
+      console.error('Firebase fetch error:', e);
+    }
+  }
+
+  // Fallback: localStorage (same device only)
   try {
     var raw = localStorage.getItem('rv-bks');
     if (raw) {
       var arr = JSON.parse(raw);
-      allBookings = {};
       arr.forEach(function(b) {
         if (b.code && b.status !== 'Cancelled') {
           allBookings[b.code.toUpperCase()] = {
@@ -356,18 +401,11 @@ async function fetchBookings() {
           };
         }
       });
-      console.log('Loaded bookings:', Object.keys(allBookings));
-      return true;
+      if (Object.keys(allBookings).length > 0) return true;
     }
-  } catch(e) {
-    console.error('LocalStorage error:', e);
-  }
-  // Fallback demo data for testing
-  allBookings = {
-    'RVIP-0001-TST': {name:'John',service:'Airport Transfer — Boston Logan',date:'April 2, 2025',time:'5:00 AM',pickup:'123 Main St, Hampton NH',destination:'Boston Logan Terminal B',vehicle:'Black SUV Luxury',passengers:'2',price:95},
-    'RVIP-0002-TST': {name:'Maria',service:'Night Out — Portsmouth',date:'April 5, 2025',time:'8:00 PM',pickup:'456 Ocean Blvd, Portsmouth NH',destination:'Downtown Portsmouth',vehicle:'Regular SUV',passengers:'3',price:45},
-  };
-  return true;
+  } catch(e) {}
+
+  return false;
 }
 
 // On load — support ?b= encoded booking OR ?code= lookup
@@ -405,7 +443,7 @@ window.addEventListener('load', async function() {
   // METHOD 2: Code-based lookup from localStorage (?code=...)
   var code = (params.get('code') || '').toUpperCase().trim();
   if (code) {
-    await fetchBookings();
+    await fetchBookings(code);
     var booking = allBookings[code];
     if (booking) {
       currentCode = code;
@@ -428,7 +466,7 @@ async function manualLookup() {
   document.getElementById('manual-error').classList.add('hidden');
 
   // Re-fetch in case new bookings were added
-  await fetchBookings();
+  await fetchBookings(code);
   document.getElementById('manual-loading').classList.add('hidden');
 
   var booking = allBookings[code];

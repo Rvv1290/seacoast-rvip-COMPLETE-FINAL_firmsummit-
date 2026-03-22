@@ -80,6 +80,9 @@ a{text-decoration:none}
 .empty{text-align:center;padding:3rem 0;color:#bbb}
 .empty .material-symbols-outlined{font-size:3rem;display:block;margin-bottom:0.75rem}
 </style>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
@@ -228,11 +231,40 @@ a{text-decoration:none}
 </div>
 
 <script>
-// ═══════════════════════════════
-// CONFIG
+// ═══════════════════════════════════════════════════
+// CONFIG — CHANGE THESE
 var PWD  = 'seacoast2025';
 var SITE = 'https://seacoast-rvip-complete-final-firmsu.vercel.app';
-// ═══════════════════════════════
+
+// FIREBASE CONFIG
+// ⚠️ Replace with YOUR Firebase config after setup
+// Get it from: console.firebase.google.com
+// Project Settings → Your Apps → Web App → Config
+var FB_CONFIG = {
+  apiKey:            "AIzaSyDGel0ktZDQYcdlOuoZo4bAqZWCuGvOVbc",
+  authDomain:        "seacoast-rip.firebaseapp.com",
+  projectId:         "seacoast-rip",
+  storageBucket:     "seacoast-rip.firebasestorage.app",
+  messagingSenderId: "684535453116",
+  appId:             "1:684535453116:web:922c843b5bad3b81ad47b9"
+};
+// ═══════════════════════════════════════════════════
+
+// Firebase state
+var db = null;
+var fbReady = false;
+
+function initFirebase() {
+  try {
+    firebase.initializeApp(FB_CONFIG);
+    db = firebase.firestore();
+    fbReady = true;
+    console.log('✅ Firebase connected');
+  } catch(e) {
+    console.log('Firebase not configured yet — using localStorage');
+    fbReady = false;
+  }
+}
 
 var activeTab = 'all';
 
@@ -249,10 +281,15 @@ function doLogin() {
   }
 }
 
-function goToDash() {
+async function goToDash() {
   document.getElementById('pg-login').style.display = 'none';
   document.getElementById('pg-dash').style.display = 'block';
   document.getElementById('today').textContent = new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+  // Load from Firebase if connected
+  if (fbReady) {
+    toast('Loading bookings...');
+    await fbLoad();
+  }
   render();
 }
 
@@ -263,12 +300,51 @@ function doLogout() {
   document.getElementById('pwd').value = '';
 }
 
-// ── DATA ──
+// ── DATA — Firebase + localStorage fallback ──
 function getBks() {
   try { return JSON.parse(localStorage.getItem('rv-bks') || '[]'); }
   catch(e) { return []; }
 }
-function setBks(b) { localStorage.setItem('rv-bks', JSON.stringify(b)); }
+function setBks(b) {
+  localStorage.setItem('rv-bks', JSON.stringify(b));
+}
+
+// Save single booking to Firebase
+async function fbSave(bk) {
+  if (!fbReady) return;
+  try {
+    await db.collection('bookings').doc(bk.id).set(bk);
+    console.log('✅ Saved to Firebase:', bk.code);
+  } catch(e) {
+    console.error('Firebase save error:', e);
+  }
+}
+
+// Delete from Firebase
+async function fbDelete(id) {
+  if (!fbReady) return;
+  try {
+    await db.collection('bookings').doc(id).delete();
+  } catch(e) {
+    console.error('Firebase delete error:', e);
+  }
+}
+
+// Load all bookings from Firebase
+async function fbLoad() {
+  if (!fbReady) return false;
+  try {
+    var snap = await db.collection('bookings').get();
+    var bks = [];
+    snap.forEach(function(doc) { bks.push(doc.data()); });
+    localStorage.setItem('rv-bks', JSON.stringify(bks));
+    console.log('✅ Loaded '+bks.length+' bookings from Firebase');
+    return true;
+  } catch(e) {
+    console.error('Firebase load error:', e);
+    return false;
+  }
+}
 
 // ── RENDER ──
 function render() {
@@ -409,14 +485,19 @@ function saveBk() {
   if(eid){ var i=bks.findIndex(function(b){ return b.id===eid; }); if(i>-1) bks[i]=bk; }
   else bks.push(bk);
 
-  setBks(bks); closeAdd(); render();
-  toast(eid?'Updated!':'Booking saved!');
+  setBks(bks);
+  fbSave(bk); // save to Firebase cloud
+  closeAdd();
+  render();
+  toast(eid ? 'Updated!' : 'Booking saved!' + (fbReady ? ' ☁️' : ' (local)'));
 }
 
 function delBk(id) {
   if(!confirm('Delete this booking?')) return;
   setBks(getBks().filter(function(b){ return b.id!==id; }));
-  render(); toast('Deleted');
+  fbDelete(id);
+  render();
+  toast('Deleted');
 }
 
 // ── SEND PAYMENT ──
@@ -424,21 +505,8 @@ function openPay(id) {
   var b=getBks().find(function(x){ return x.id===id; });
   if(!b) return;
 
-  // Encode ALL booking data into URL so it works on any device any browser
-  var bdata = {
-    n: b.name,
-    s: b.service,
-    d: b.date,
-    t: b.time,
-    pu: b.pickup,
-    de: b.destination,
-    v: b.vehicle,
-    pa: b.passengers,
-    pr: b.price,
-    c: b.code
-  };
-  var encoded = btoa(unescape(encodeURIComponent(JSON.stringify(bdata))));
-  var link = SITE+'/payment.html?b='+encoded;
+  // Clean short URL — booking data stored in Firebase cloud
+  var link = SITE+'/payment.html?code='+encodeURIComponent(b.code);
   var fn = b.name.split(' ')[0];
   var msg = 'Hi '+fn+'! Your Seacoast RVIP ride is confirmed for '+b.date+' at '+ft(b.time)+'.\n\n'+
     'Total: $'+b.price+'\n\n'+
@@ -496,6 +564,7 @@ document.getElementById('m-pay').addEventListener('click',function(e){ if(e.targ
 
 // Init
 document.addEventListener('DOMContentLoaded', function(){
+  initFirebase();
   if(localStorage.getItem('rv-auth')==='1') goToDash();
   else document.getElementById('pwd').focus();
 });
