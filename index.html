@@ -82,6 +82,11 @@
         .noto-serif { font-family: 'Noto Serif', serif; }
         .work-sans { font-family: 'Work Sans', sans-serif; }
     </style>
+<style>
+.font-headline, .logo-text {
+  font-family: "Times New Roman", Times, serif !important;
+}
+</style>
 </head>
 <body class="text-on-background antialiased overflow-x-hidden">
 <nav class="fixed top-0 w-full z-50 bg-white/90 backdrop-blur-md shadow-sm transition-all duration-300">
@@ -117,9 +122,7 @@
 <button class="bg-primary text-on-primary px-10 py-5 rounded-md font-label text-sm uppercase tracking-widest border-b-2 border-secondary hover:opacity-90 transition-all">
                             Reserve Your Ride
                         </button>
-<a class="font-label text-sm uppercase tracking-widest text-primary flex items-center gap-2 group" href="#">
-                            Our Fleet <span class="material-symbols-outlined text-secondary group-hover:translate-x-1 transition-transform">arrow_forward</span>
-</a>
+
 </div>
 </div>
 <div class="relative h-[500px] lg:h-[700px] w-full">
@@ -159,7 +162,7 @@
 <div class="max-w-xl">
 <span class="font-label text-secondary uppercase tracking-[0.3em] text-xs font-semibold mb-4 block">Our Expertise</span>
 <h2 class="font-headline text-5xl text-primary mb-6">Refined SUV Services</h2>
-<p class="font-body text-on-surface-variant leading-relaxed">Choose the level of comfort that suits your occasion. Featuring our premium Chevrolet Suburban fleet for the ultimate group travel experience.</p>
+<p class="font-body text-on-surface-variant leading-relaxed">Choose the level of comfort that fits your occasion. Our premium black SUV fleet delivers a seamless blend of comfort, style, and reliability for every journey.</p>
 </div>
 <div class="h-[1px] flex-grow bg-outline-variant/30 mx-12 hidden lg:block mb-4"></div>
 </div>
@@ -171,7 +174,7 @@
 </div>
 <h3 class="font-headline text-2xl mb-2 text-primary">Black SUV Luxury</h3>
 <p class="font-body text-sm text-on-surface-variant mb-4">The pinnacle of travel. All-black Chevrolet Suburban with premium leather, climate control, and professional chauffeur service.</p>
-<span class="font-label text-xs uppercase tracking-widest text-secondary group-hover:underline underline-offset-8 transition-all">Discover Premium</span>
+
 </div>
 <div class="group cursor-pointer">
 <div class="aspect-[4/5] overflow-hidden rounded-sm mb-6 bg-surface-container-high relative">
@@ -180,7 +183,7 @@
 </div>
 <h3 class="font-headline text-2xl mb-2 text-primary">Regular SUV</h3>
 <p class="font-body text-sm text-on-surface-variant mb-4">Reliable, spacious, and comfortable. Perfect for family airport runs and practical group transport without the "Black Car" price tag.</p>
-<span class="font-label text-xs uppercase tracking-widest text-secondary group-hover:underline underline-offset-8 transition-all">Discover Standard</span>
+
 </div>
 <div class="group cursor-pointer">
 <div class="aspect-[4/5] overflow-hidden rounded-sm mb-6 bg-surface-container-high relative">
@@ -189,7 +192,7 @@
 </div>
 <h3 class="font-headline text-2xl mb-2 text-primary">Corporate Accounts</h3>
 <p class="font-body text-sm text-on-surface-variant mb-4">Streamlined billing and priority dispatch for our recurring business clients and high-profile executives.</p>
-<span class="font-label text-xs uppercase tracking-widest text-secondary group-hover:underline underline-offset-8 transition-all">Learn More</span>
+
 </div>
 </div>
 </div>
@@ -204,7 +207,7 @@
                     "The punctuality and professionalism displayed by Seacoast RVIP is unmatched. Their new SUV fleet provides the perfect balance of comfort and style."
                 </blockquote>
 <div class="h-8 w-[1px] bg-secondary mx-auto mb-6"></div>
-<cite class="font-label text-sm uppercase tracking-widest block non-italic">Julian Vance — Private Wealth Executive</cite>
+<cite class="font-label text-sm uppercase tracking-widest block non-italic">Ramon VV — Owner &amp; Founder, Seacoast RVIP</cite>
 </div>
 </section>
 <section class="py-40 bg-surface text-center">
@@ -225,28 +228,52 @@
 <div class="flex flex-col gap-6">
 <div class="font-headline text-xl font-bold text-black dark:text-white">Seacoast RVIP</div>
 <p class="font-body text-xs text-gray-600 dark:text-gray-400 max-w-xs leading-relaxed">Providing the distinguished path for travelers who value time, discretion, and the finer details of coastal luxury.</p>
-<div class="flex gap-4">
-<span class="material-symbols-outlined text-secondary cursor-pointer hover:scale-110 transition-transform">share</span>
-<span class="material-symbols-outlined text-secondary cursor-pointer hover:scale-110 transition-transform">mail</span>
-<span class="material-symbols-outlined text-secondary cursor-pointer hover:scale-110 transition-transform">call</span>
+<div class="flex gap-4 items-center">
+<span class="material-symbols-outlined text-secondary cursor-pointer hover:scale-110 transition-transform" onclick="shareRVIP()" title="Share">share</span>
+<a href="mailto:ramonvv202618@icloud.com" title="Email us"><span class="material-symbols-outlined text-secondary cursor-pointer hover:scale-110 transition-transform">mail</span></a>
+<a href="tel:+19874163283" title="Call us"><span class="material-symbols-outlined text-secondary cursor-pointer hover:scale-110 transition-transform">call</span></a>
 </div>
+<script>
+function shareRVIP() {
+  if (navigator.share) {
+    navigator.share({
+      title: 'Seacoast RVIP — The Ride You Can Count On',
+      text: 'Premium private car service in the NH Seacoast area.',
+      url: window.location.origin
+    });
+  } else {
+    var opts = [
+      'Copy link: ' + window.location.origin,
+      'Or share via:',
+      '• Text a friend',
+      '• Email: ramonvv202618@icloud.com'
+    ];
+    var menu = window.open('', '_blank', 'width=300,height=200');
+    if (menu) {
+      menu.document.write('<p style="font-family:sans-serif;padding:1rem">' + opts.join('<br>') + '</p>');
+    } else {
+      navigator.clipboard && navigator.clipboard.writeText(window.location.origin);
+      alert('Link copied! Share it with your friends.');
+    }
+  }
+}
+</script>
 </div>
 <div class="flex flex-col gap-8 md:items-center">
 <div class="font-label text-[10px] uppercase tracking-widest text-secondary font-bold">Navigation</div>
 <ul class="flex flex-col gap-4 text-center">
 <li><a class="font-body text-xs text-gray-600 dark:text-gray-400 hover:underline decoration-secondary underline-offset-4 transition-all" href="services.html">Services &amp; Pricing</a></li>
-<li><a class="font-body text-xs text-gray-600 dark:text-gray-400 hover:underline decoration-secondary underline-offset-4 transition-all" href="#">Privacy Policy</a></li>
-<li><a class="font-body text-xs text-gray-600 dark:text-gray-400 hover:underline decoration-secondary underline-offset-4 transition-all" href="#">Terms of Service</a></li>
+<li><a class="font-body text-xs text-gray-600 dark:text-gray-400 hover:underline decoration-secondary underline-offset-4 transition-all" href="privacy.html" target="_blank">Privacy Policy</a></li>
+<li><a class="font-body text-xs text-gray-600 dark:text-gray-400 hover:underline decoration-secondary underline-offset-4 transition-all" href="terms.html" target="_blank">Terms of Service</a></li>
 </ul>
 </div>
 <div class="flex flex-col gap-8 md:items-end text-right">
 <div class="font-label text-[10px] uppercase tracking-widest text-secondary font-bold">Contact</div>
-<address class="not-italic font-body text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
-                    1200 Coastal Plaza Suite 400<br/>
-                    Portsmouth, NH 03801<br/>
-                    888.555.0123
-                </address>
-<p class="font-body text-[10px] text-gray-400 mt-auto">© 2024 Seacoast RVIP. The Distinguished Path. All rights reserved.</p>
+<div class="font-body text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
+<a href="tel:+19874163283" class="hover:text-secondary transition-colors">(987) 416-3283</a><br/>
+<a href="mailto:ramonvv202618@icloud.com" class="hover:text-secondary transition-colors">ramonvv202618@icloud.com</a>
+</div>
+<p class="font-body text-[10px] text-gray-400 mt-auto">© 2025 Seacoast RVIP. The Distinguished Path. All rights reserved.</p>
 </div>
 </div>
 </footer>

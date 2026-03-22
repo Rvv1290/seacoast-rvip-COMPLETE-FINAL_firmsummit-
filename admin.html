@@ -393,6 +393,8 @@ function render() {
           '<div style="font-size:0.7rem;color:#888;margin-bottom:10px">'+b.paymentMethod+'</div>'+
           '<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">'+
             '<button class="bg" onclick="openPay(\''+b.id+'\')"><span class="material-symbols-outlined">send</span>Send Link</button>'+
+            '<button style="background:#1d4ed8;color:white;font-family:Work Sans,sans-serif;font-size:0.7rem;font-weight:600;text-transform:uppercase;padding:0.5rem 0.875rem;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:4px" onclick="openReminder(\''+b.id+'\')">' +
+            '<span class="material-symbols-outlined" style="font-size:14px">notifications</span>Reminder</button>'+
             '<button class="bo" onclick="editBk(\''+b.id+'\')"><span class="material-symbols-outlined">edit</span></button>'+
             '<button class="br" onclick="delBk(\''+b.id+'\')"><span class="material-symbols-outlined">delete</span></button>'+
           '</div>'+
@@ -550,6 +552,33 @@ function mkPaid(id) {
 
 function cpTxt(txt) {
   navigator.clipboard.writeText(txt).then(function(){ toast('Copied!'); }).catch(function(){ alert(txt); });
+}
+
+
+function openReminder(id) {
+  var b = getBks().find(function(x){ return x.id===id; });
+  if (!b) return;
+  var fn = b.name.split(' ')[0];
+  var msgClient = 'Hi '+fn+'! Just a reminder your Seacoast RVIP ride is tomorrow '+b.date+' at '+ft(b.time)+'.\n\nI will be in the black SUV at '+b.pickup+'.\n\nQuestions? Call or text (987) 416-3283\nSee you then! — Seacoast RVIP';
+  var msgYou = 'REMINDER — Ride tomorrow '+b.date+' at '+ft(b.time)+'\nClient: '+b.name+' — '+b.phone+'\nPickup: '+b.pickup+'\nDest: '+b.destination+'\nPrice: $'+b.price;
+
+  var html = '<div style="background:#f9f9f9;border:1px solid #e2e2e2;padding:1rem;margin-bottom:1rem">'+
+    '<div style="font-weight:700">'+b.name+'</div>'+
+    '<div style="font-size:0.8rem;color:#555">'+b.phone+'</div>'+
+    '<div style="font-size:0.8rem;color:#555">'+b.date+' at '+ft(b.time)+'</div>'+
+  '</div>'+
+  '<p style="font-family:Work Sans,sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:#888;margin-bottom:8px">Reminder to client:</p>'+
+  '<textarea style="width:100%;background:#f9f9f9;border:1px solid #e2e2e2;padding:0.75rem;font-size:0.8rem;font-family:Inter,sans-serif;height:110px;resize:none;outline:none;margin-bottom:1rem;box-sizing:border-box">'+msgClient+'</textarea>'+
+  '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">'+
+    '<a href="sms:'+b.phone+'&body='+encodeURIComponent(msgClient)+'" class="bd" style="justify-content:center;padding:0.875rem;text-decoration:none"><span class="material-symbols-outlined" style="font-size:15px">sms</span>Text Client</a>'+
+    '<a href="https://wa.me/'+b.phone.replace(/\D/g,'')+'?text='+encodeURIComponent(msgClient)+'" target="_blank" class="bgr" style="justify-content:center;padding:0.875rem;text-decoration:none"><span class="material-symbols-outlined" style="font-size:15px">chat</span>WhatsApp</a>'+
+  '</div>'+
+  '<p style="font-family:Work Sans,sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:#888;margin-bottom:8px;margin-top:1rem">Reminder to yourself:</p>'+
+  '<a href="sms:+19874163283&body='+encodeURIComponent(msgYou)+'" class="bg" style="width:100%;justify-content:center;padding:0.875rem;display:flex;align-items:center;gap:6px;text-decoration:none"><span class="material-symbols-outlined" style="font-size:15px">person</span>Text Yourself</a>';
+
+  document.getElementById('m-pay-body').innerHTML = html;
+  document.getElementById('m-pay').querySelector('.modal-hd h2').textContent = 'Send Reminder';
+  document.getElementById('m-pay').style.display = 'block';
 }
 
 function toast(msg) {
