@@ -426,13 +426,11 @@ function openPay(id) {
 
   var link = SITE+'/payment.html?code='+encodeURIComponent(b.code);
   var fn = b.name.split(' ')[0];
-  var msg = 'Hi '+fn+'! Your Seacoast RVIP ride is confirmed.\n\n'+
-    'Date: '+b.date+' at '+ft(b.time)+'\n'+
-    'Route: '+b.pickup+' → '+b.destination+'\n'+
+  var msg = 'Hi '+fn+'! Your Seacoast RVIP ride is confirmed for '+b.date+' at '+ft(b.time)+'.\n\n'+
     'Total: $'+b.price+'\n\n'+
-    'Pay here:\n'+link+'\n\n'+
-    'Code: '+b.code+'\n'+
-    'Questions? (603) 000-0000\n'+
+    'Tap the link below to complete your payment:\n'+
+    link+'\n\n'+
+    'Questions? Call or text (603) 000-0000\n'+
     'See you soon! — Seacoast RVIP';
 
   document.getElementById('m-pay-body').innerHTML =
