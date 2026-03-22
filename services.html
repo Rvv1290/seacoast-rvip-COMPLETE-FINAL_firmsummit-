@@ -1,0 +1,345 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif:wght@400;700;900&amp;family=Inter:wght@300;400;500;600&amp;family=Work+Sans:wght@400;500&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-secondary-fixed-variant": "#5d4201",
+              "on-tertiary-container": "#858383",
+              "inverse-surface": "#2f3131",
+              "on-background": "#1a1c1c",
+              "tertiary": "#000000",
+              "surface-container-high": "#e8e8e8",
+              "surface-variant": "#e2e2e2",
+              "surface-bright": "#f9f9f9",
+              "background": "#f9f9f9",
+              "inverse-on-surface": "#f1f1f1",
+              "on-surface": "#1a1c1c",
+              "surface-container": "#eeeeee",
+              "surface": "#f9f9f9",
+              "surface-container-highest": "#e2e2e2",
+              "on-tertiary": "#ffffff",
+              "on-primary": "#ffffff",
+              "on-error-container": "#93000a",
+              "on-secondary-fixed": "#261900",
+              "secondary-container": "#fed488",
+              "on-tertiary-fixed": "#1b1c1c",
+              "primary-fixed-dim": "#c8c6c5",
+              "tertiary-container": "#1b1c1c",
+              "inverse-primary": "#c8c6c5",
+              "secondary-fixed-dim": "#e9c176",
+              "tertiary-fixed-dim": "#c8c6c5",
+              "surface-container-low": "#f3f3f3",
+              "on-tertiary-fixed-variant": "#474747",
+              "secondary-fixed": "#ffdea5",
+              "primary-fixed": "#e5e2e1",
+              "on-error": "#ffffff",
+              "on-primary-fixed-variant": "#474646",
+              "primary-container": "#1c1b1b",
+              "secondary": "#775a19",
+              "primary": "#000000",
+              "on-primary-fixed": "#1c1b1b",
+              "on-secondary-container": "#785a1a",
+              "on-secondary": "#ffffff",
+              "outline-variant": "#c4c7c7",
+              "surface-container-lowest": "#ffffff",
+              "outline": "#747878",
+              "error": "#ba1a1a",
+              "on-surface-variant": "#444748",
+              "on-primary-container": "#858383",
+              "surface-tint": "#5f5e5e",
+              "surface-dim": "#dadada",
+              "error-container": "#ffdad6",
+              "tertiary-fixed": "#e4e2e1"
+            },
+            fontFamily: {
+              "headline": ["Noto Serif"],
+              "body": ["Inter"],
+              "label": ["Work Sans"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+      }
+      body {
+        font-family: 'Inter', sans-serif;
+        background-color: #f9f9f9;
+        color: #1a1c1c;
+      }
+      h1, h2, h3 {
+        font-family: 'Noto Serif', serif;
+      }
+      .glass-nav {
+        background-color: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(20px);
+      }
+      .editorial-grid {
+        display: grid;
+        grid-template-columns: repeat(12, 1fr);
+        gap: 2rem;
+      }
+      .itinerary-line {
+        width: 1px;
+        background-color: #775a19;
+      }
+    </style>
+</head>
+<body class="bg-surface text-on-surface antialiased">
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full z-50 bg-white/80 dark:bg-black/80 backdrop-blur-md shadow-sm dark:shadow-none">
+<div class="flex justify-between items-center px-12 py-6 max-w-screen-2xl mx-auto">
+<div class="font-noto-serif font-black text-2xl tracking-tighter text-black dark:text-white" style="">
+                Seacoast RVIP
+            </div>
+<div class="hidden md:flex space-x-12">
+<a class="text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors font-inter text-sm uppercase tracking-widest" href="index.html" style="">Home</a>
+<a class="text-black dark:text-white font-bold border-b-2 border-yellow-700 pb-1 font-inter text-sm uppercase tracking-widest" href="services.html" style="">Services &amp; Pricing</a>
+<a class="text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors font-inter text-sm uppercase tracking-widest" href="about.html" style="">About</a>
+<a class="text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors font-inter text-sm uppercase tracking-widest" href="contact.html" style="">Contact</a>
+</div>
+<div class="flex items-center space-x-6">
+<button class="font-inter text-sm uppercase tracking-widest text-gray-500 hover:text-black transition-all" style="">Login</button>
+<button class="bg-primary text-on-primary px-8 py-3 rounded-md font-inter text-sm uppercase tracking-widest hover:opacity-80 transition-all border-b-2 border-secondary" style="">
+                    Book Now
+                </button>
+</div>
+</div>
+</nav>
+<main class="pt-32">
+<!-- Hero Section -->
+<section class="px-12 mb-24 max-w-screen-2xl mx-auto">
+<div class="editorial-grid">
+<div class="col-span-12 flex flex-col justify-center lg:col-span-8 lg:col-start-3 text-center items-center">
+<h1 class="text-primary font-headline font-black text-6xl leading-tight mb-8" style="">
+                        Services &amp; <br>Bespoke Pricing
+                    </h1>
+<p class="text-on-surface-variant font-body text-lg leading-relaxed max-w-md mb-12 mx-auto" style="">
+                        Professional chauffeured transportation tailored to the refined traveler. Experience the Seacoast with unparalleled punctuality and discretion.
+                    </p>
+</div>
+</div>
+</section>
+<!-- Tier Comparison Section -->
+<section class="bg-surface-container-low py-32 px-12">
+<div class="max-w-screen-2xl mx-auto">
+<div class="flex flex-col items-center mb-20">
+<span class="font-label text-sm uppercase tracking-widest text-secondary font-semibold mb-4" style="">Elite Fleet</span>
+<h2 class="text-4xl font-headline font-bold text-primary" style="">Distinguished Travel Tiers</h2>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-12">
+<!-- Regular SUV -->
+<div class="group relative bg-surface-container-lowest overflow-hidden transition-all duration-500 hover:shadow-2xl">
+<div class="aspect-[4/3] overflow-hidden">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" data-alt="Black Hyundai Palisade luxury exterior front view" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAgQOCR86rwezLHXnixSizrt90Eq1bW_jHluN92I6NXnerL6KU2PEJa9gVXAP-pHOiSnUFO4GWuA5kEkocP_oo2bO6c_HoHNlmGtXpohJLAMRtluVndxe9SKvl69zwvNXewoNlVbSUWT5M1pRRZ3HQ54KEIGKI4QJT0lKuj67FJGBZ3BywkyprsT3vuPfcNNv_wfbON9nfDxxeecMkZ1Xj-l9Ug2zJNERVvxwxmmXztU-czr3m1PaQ9JbDk3hHZllXHmu17C7Xbs6Lx" style="">
+</div>
+<div class="p-10">
+<div class="flex justify-between items-start mb-6">
+<div>
+<h3 class="text-2xl font-headline font-bold mb-1" style="">Regular SUV</h3>
+<p class="text-secondary font-label text-sm uppercase font-semibold" style=""><br></p>
+</div>
+<div class="bg-surface-container-low px-4 py-2 rounded-full flex items-center gap-2">
+<span class="material-symbols-outlined text-sm" style="">group</span>
+<span class="font-label text-xs font-medium" style="">Up to 6</span>
+</div>
+</div>
+<p class="font-body text-on-surface-variant leading-relaxed mb-8" style="">
+                                Professional and refined for small groups or business executives. Features premium leather seating and advanced safety tech for a smooth coastal commute.
+                            </p>
+<div class="flex items-center gap-4 text-on-surface-variant font-label text-xs uppercase tracking-widest">
+<span class="flex items-center gap-1" style=""><span class="material-symbols-outlined text-base" style="">check_circle</span> Professional</span>
+<span class="flex items-center gap-1" style=""><span class="material-symbols-outlined text-base" style="">check_circle</span> Refined</span>
+<span class="flex items-center gap-1" style=""><span class="material-symbols-outlined text-base" style="">check_circle</span> Reliable</span>
+</div>
+</div>
+</div>
+<!-- Black SUV Luxury -->
+<div class="group relative bg-surface-container-lowest overflow-hidden transition-all duration-500 hover:shadow-2xl">
+<div class="aspect-[4/3] overflow-hidden">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" data-alt="Black Chevrolet Suburban luxury full size SUV" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCsVs89WmuK2iMoxwKQQUakgbOFOcbtsiesmCxP1oB57i0c9MB3fyr03q4dOj_JFHwxiPgQn-Fk761yMwkLZiygdwARjXxs09OngaE04NkzXJLgfE84y8ZBHi884LQO1a5y5_b7hmmiI_HDSGFZFwbVV9nADu9iTofCTuTF4ujnX6qv6L4Vv-Tr0Dz8tfSXjvHKzBqOwvuWd5Zvune4ZMDuvHA-BY_td-LcAPObfm0dGhxCIj2K45hdLY1XgIcwI1AN_z52X3afmqLS" style="">
+</div>
+<div class="p-10">
+<div class="flex justify-between items-start mb-6">
+<div>
+<h3 class="text-2xl font-headline font-bold mb-1" style="">Black SUV Luxury</h3>
+<p class="text-secondary font-label text-sm uppercase font-semibold" style=""><br></p>
+</div>
+<div class="bg-surface-container-low px-4 py-2 rounded-full flex items-center gap-2">
+<span class="material-symbols-outlined text-sm" style="">group</span>
+<span class="font-label text-xs font-medium" style="">Up to 7</span>
+</div>
+</div>
+<p class="font-body text-on-surface-variant leading-relaxed mb-8" style="">
+                                The pinnacle of space, privacy, and prestige. Extended wheelbase, enhanced privacy glass, and captain's chairs provide the ultimate first-class ground experience.
+                            </p>
+<div class="flex items-center gap-4 text-on-surface-variant font-label text-xs uppercase tracking-widest">
+<span class="flex items-center gap-1" style=""><span class="material-symbols-outlined text-base" style="">stars</span> Pinnacle</span>
+<span class="flex items-center gap-1" style=""><span class="material-symbols-outlined text-base" style="">lock</span> Private</span>
+<span class="flex items-center gap-1" style=""><span class="material-symbols-outlined text-base" style="">workspace_premium</span> Prestige</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Service Categories Bento Grid -->
+<section class="py-32 px-12 max-w-screen-2xl mx-auto">
+<h2 class="text-4xl font-headline font-bold text-primary mb-16 text-center" style="">Schedule Your Occasion</h2>
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6 auto-rows-[300px]">
+<!-- Airport Transfers -->
+<div class="md:col-span-2 md:row-span-2 relative group overflow-hidden rounded-lg">
+<img class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="Modern airport terminal at blue hour" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCsVOP3MyVnddEZOBgVN98F1x7T4pdqAaXQTZszsjwwdIZVlQgTCUB2cF-jtxHQ33VJFqPPsakrhFtVCQG1DW4LXcCh0iW7SmKy4KTBBZ2__JfRbTpvLNd1N2wiuH57SXnAUXjFi3RIvjtm6iAl9bFzcUfugQ2pN6V1prM11ouSISu3UYBFrwuRayqiCMDRludSd4lIGq452IZxLmSVCPyo69AB_z5k4k58AIPVtWqy_mrEU-3OKka3KDLWwmQ5jZi_mZSVGD4wXcBh" style="">
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+<div class="absolute bottom-0 left-0 p-8">
+<h3 class="text-white font-headline text-3xl font-bold mb-2" style="">Airport Transfers</h3>
+<p class="text-white/70 font-body text-sm max-w-sm" style="">Seamless travel to Logan, Manchester, and Portland. Terminal meet-and-greet included.</p>
+</div>
+</div>
+<!-- Nights Out -->
+<div class="md:col-span-2 relative group overflow-hidden rounded-lg">
+<img class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="Evening city lights with luxury cocktails" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDcRcmCQexQYNv3yE21sCFERJVZcnPnmabYx_k6fEGPnw5JEnqr-zcGlmwQ21jIW4Hsa9k3tQ6n6ThG9Qq7VUSsFtTZHHeLjJh2OSEh-7X__b3pMIGINF2RJrUlzDge4O-faWNrWcPAxYLALiyA-ZvrLfntBxSGfGJH-pw5U1N4NCZV77dEWkUfJ8PtAj8MOn3d6B2FiTgJViSqy2W8nALBNzG0cYf4DJkpC1aIw311MNZ_LYU7z1akfQDPlsg9bP23Sqp18iqObLvC" style="">
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+<div class="absolute bottom-0 left-0 p-8">
+<h3 class="text-white font-headline text-2xl font-bold mb-2" style="">Nights Out</h3>
+</div>
+</div>
+<!-- Casino Runs -->
+<div class="relative group overflow-hidden rounded-lg">
+<img class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="Vibrant casino luxury interior" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDrRzvUaA-PZAoT7EHW_xQ7ECyZvBMlfwFM5Ebx5gsv7R_EPK59IdhGyf-XfQdr0pDxBgsmXNYIpXA0fb1PPbJHfEbfrsSActze5SJvIlj2Jib_l0D6DcgJeeBu50ieY-Z8-bVTF1QMR5d3-egNtFMQkCfSZ9xoezwje4WJf2aGgjNl9ay-JAxFWqOT1zSR9c9nK7liDlqurvDGqFmIzYmQcB8120-s6NiSy8Bpw0N1JlXHrL_PdKQs0vHFuRhDMJWScSLQf-egrHtk" style="">
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+<div class="absolute bottom-0 left-0 p-8">
+<h3 class="text-white font-headline text-2xl font-bold mb-2" style="">Casino Runs</h3>
+</div>
+</div>
+<!-- Special Events -->
+<div class="relative group overflow-hidden rounded-lg">
+<img class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="Elegant wedding event luxury setup" src="https://lh3.googleusercontent.com/aida-public/AB6AXuArpWcFQaLjSEexRvd5TXesOF2FHFPvX67hByuhPLzhvx99dDLNn-k09y89POCAbxAo9Fay-fR5zkE3bjAg0Um4UE2WPX2Tj4qw-tRNeyoDkTR5K6MFcWmNWt7BMFsdq0aFQZtxgUFjwaZAKzUs6eCa9y0ky1r2pWbuOwNTDIJJIDALL1T3XFnh7q1HQRSZI67VptFJir6Ldi5TWNgsEuBFdjnyDUOfUbdiKErbzH8RSS3U7G7lzZQeEX5YzkR_U6sz9-_hUOj2_4ih" style="">
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+<div class="absolute bottom-0 left-0 p-8">
+<h3 class="text-white font-headline text-2xl font-bold mb-2" style="">Special Events</h3>
+</div>
+</div>
+</div>
+</section>
+<!-- Pricing Section -->
+<section class="bg-white py-32 px-12">
+<div class="max-w-4xl mx-auto">
+<div class="flex flex-col items-center mb-16 text-center">
+<h2 class="text-4xl font-headline font-bold text-primary mb-6" style="">&nbsp;Seacoast Routes Rates</h2>
+<p class="font-body text-on-surface-variant max-w-lg" style="">
+                        Transparent, all-inclusive excellence. Our most frequent routes are offered at distinguished flat rates for predictable luxury.
+                    </p>
+</div>
+<div class="max-w-2xl mx-auto space-y-6">
+<div class="flex justify-between items-center py-6 border-b border-surface-container">
+<span class="font-headline text-xl font-bold text-primary" style="">Airport Transfers</span>
+<span class="font-label text-lg font-semibold text-secondary" style="">Starting at $140</span>
+</div>
+<div class="flex justify-between items-center py-6 border-b border-surface-container">
+<span class="font-headline text-xl font-bold text-primary" style="">Night Out</span>
+<span class="font-label text-lg font-semibold text-secondary" style="">Starting at $45</span>
+</div>
+<div class="flex justify-between items-center py-6 border-b border-surface-container">
+<span class="font-headline text-xl font-bold text-primary" style="">Casino Runs</span>
+<span class="font-label text-lg font-semibold text-secondary" style="">Starting at $55</span>
+</div>
+<div class="flex justify-between items-center py-6">
+<span class="font-headline text-xl font-bold text-primary" style="">Custom Routes</span>
+<span class="font-label text-sm font-bold uppercase tracking-widest text-on-surface-variant" style="">Contact us for a quote</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Itinerary Thread Visualizer -->
+<section class="py-32 px-12 max-w-screen-2xl mx-auto">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-24 items-center">
+<div>
+<h2 class="text-4xl font-headline font-bold text-primary mb-8" style="">The Discreet Journey</h2>
+<div class="space-y-12 relative">
+<!-- Itinerary Line -->
+<div class="absolute left-2.5 top-2 bottom-2 itinerary-line"></div>
+<div class="relative pl-12">
+<div class="absolute left-0 top-1 w-5 h-5 rounded-full border-2 border-secondary bg-primary"></div>
+<h4 class="font-label text-xs uppercase font-bold text-secondary mb-1" style="">Step 01</h4>
+<h3 class="font-headline text-xl font-bold mb-2" style="">Instant Confirmation</h3>
+<p class="font-body text-sm text-on-surface-variant" style="">Receive a detailed itinerary and driver details via our secure portal.</p>
+</div>
+<div class="relative pl-12">
+<div class="absolute left-0 top-1 w-5 h-5 rounded-full border-2 border-secondary bg-primary"></div>
+<h4 class="font-label text-xs uppercase font-bold text-secondary mb-1" style="">Step 02</h4>
+<h3 class="font-headline text-xl font-bold mb-2" style="">Punctual Arrival</h3>
+<p class="font-body text-sm text-on-surface-variant" style="">Your chauffeur arrives 15 minutes early, prepared for your specific route needs.</p>
+</div>
+<div class="relative pl-12">
+<div class="absolute left-0 top-1 w-5 h-5 rounded-full border-2 border-secondary bg-primary"></div>
+<h4 class="font-label text-xs uppercase font-bold text-secondary mb-1" style="">Step 03</h4>
+<h3 class="font-headline text-xl font-bold mb-2" style="">Premier Transit</h3>
+<p class="font-body text-sm text-on-surface-variant" style="">Silent service or engaging local insight—tailored to your preference.</p>
+</div>
+</div>
+</div>
+<div class="relative">
+<div class="aspect-square bg-surface-container-high overflow-hidden rounded-full p-4 border border-outline-variant/30">
+<img class="w-full h-full object-cover rounded-full" data-alt="Close up of luxury vehicle leather interior and watch" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDFp6bJCcj40KDW4xcXRN-nWKDU6cBwWvWdyFHolHTT24ZqCsc-xrd19Rk2QOZ8c1HpvhaJ4gi2Ptt839N91E17P24NckJD4N2CcbIfZidEBCWTBpwv5F9zJW3pB1TABKL7fuuViVsouDHqjLiUbCcFjv2CaTUSDa9Fkzh0vuV9LxMN-cP1vJ3qBpAVlHyg2sojo29rTElOFu-I6bSnXfJ2SVO72Yn2PGpYZuGEaqiiXQPTebKc1EEwDFllG58aSJncapJe0iz5VFtr" style="">
+</div>
+<div class="absolute top-0 right-0 bg-primary p-6 text-on-primary">
+<p class="font-headline text-3xl font-bold" style="">24/7</p>
+<p class="font-label text-xs uppercase tracking-widest" style="">Availability</p>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="w-full border-t border-gray-100 dark:border-zinc-900 tonal-shift bg-zinc-50 dark:bg-zinc-950">
+<div class="flex flex-col md:flex-row justify-between items-center px-12 py-12 w-full max-w-screen-2xl mx-auto">
+<div class="font-noto-serif font-bold text-lg text-black dark:text-white mb-6 md:mb-0" style="">
+                SEACOAST RVIP
+            </div>
+<div class="flex flex-wrap justify-center gap-8 mb-6 md:mb-0">
+<a class="text-gray-500 hover:text-black dark:hover:text-white font-inter text-xs tracking-normal underline decoration-yellow-700 underline-offset-4" href="#" style="">Privacy Policy</a>
+<a class="text-gray-500 hover:text-black dark:hover:text-white font-inter text-xs tracking-normal underline decoration-yellow-700 underline-offset-4" href="#" style="">Terms of Service</a>
+<a class="text-gray-500 hover:text-black dark:hover:text-white font-inter text-xs tracking-normal underline decoration-yellow-700 underline-offset-4" href="#" style="">Fleet Details</a>
+<a class="text-gray-500 hover:text-black dark:hover:text-white font-inter text-xs tracking-normal underline decoration-yellow-700 underline-offset-4" href="#" style="">FAQs</a>
+</div>
+<div class="text-gray-500 font-inter text-xs tracking-normal" style="">
+                © 2024 Seacoast RVIP. All rights reserved.
+            </div>
+</div>
+</footer>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  var bookingKeywords = ["Book Now", "Reserve Your Ride", "Book Your Trip", "Book Your Journey", "Book a Ride", "BOOK NOW", "Reserve Now", "Book Now"];
+  document.querySelectorAll("button").forEach(function(btn) {
+    var txt = btn.textContent.trim();
+    bookingKeywords.forEach(function(kw) {
+      if (txt === kw || txt.includes(kw)) {
+        if (!btn.closest("a") && !btn.closest("form[action]")) {
+          btn.style.cursor = "pointer";
+          btn.addEventListener("click", function(e) {
+            e.preventDefault();
+            window.location.href = "schedule.html";
+          });
+        }
+      }
+    });
+  });
+  document.querySelectorAll("a[href='#']").forEach(function(a) {
+    var txt = a.textContent.trim();
+    if (txt.includes("Fleet") || txt.includes("Our Fleet")) a.href = "services.html";
+    if (txt.includes("View Fleet")) a.href = "services.html";
+  });
+});
+</script>
+</body></html>

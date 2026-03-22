@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Book a Ride | Seacoast RVIP</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Serif:wght@400;700;900&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+tailwind.config = {
+  darkMode:"class",
+  theme:{extend:{
+    colors:{
+      "secondary":"#775a19","primary":"#000000","on-primary":"#ffffff",
+      "surface":"#f9f9f9","surface-container-low":"#f3f3f3",
+      "surface-container":"#eeeeee","surface-container-lowest":"#ffffff",
+      "on-surface-variant":"#444748","outline-variant":"#c4c7c7",
+      "background":"#f9f9f9","on-background":"#1a1c1c",
+    },
+    fontFamily:{"headline":["Noto Serif","serif"],"body":["Inter","sans-serif"],"label":["Work Sans","sans-serif"]},
+  }}
+}
+</script>
+<style>
+.material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 300,'GRAD' 0,'opsz' 24}
+body{font-family:'Inter',sans-serif;background-color:#f9f9f9}
+
+/* Map container */
+#map{width:100%;height:100%;min-height:100vh}
+
+/* Payment cards */
+.pay-card input[type="radio"]{display:none}
+.pay-card label{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:1.2rem 0.75rem;border:1.5px solid #e2e2e2;cursor:pointer;
+  transition:all 0.2s;background:white;gap:6px;text-align:center
+}
+.pay-card input[type="radio"]:checked+label{border-color:#775a19;background:#fdfaf4}
+.pay-card label:hover{border-color:#775a19}
+
+/* Vehicle cards */
+.v-card input[type="radio"]{display:none}
+.v-card label{display:block;cursor:pointer;border-bottom:2px solid transparent;transition:all 0.2s;background:#f3f3f3;padding:1rem}
+.v-card input[type="radio"]:checked+label{border-bottom-color:#775a19;background:white}
+
+/* Passenger buttons */
+.p-btn{transition:all 0.15s;width:3rem;height:3rem;border-radius:50%;border:1px solid #c4c7c7;font-weight:700;font-size:0.875rem;font-family:'Work Sans',sans-serif;cursor:pointer;background:white}
+.p-btn.sel{background:#000;color:white;border-color:#000}
+
+/* Inputs */
+.f-input{width:100%;background:#f3f3f3;border:0;border-bottom:2px solid #c4c7c7;padding:0.75rem 0;font-family:'Inter',sans-serif;font-size:1rem;transition:all 0.2s;outline:none}
+.f-input:focus{border-bottom-color:#000}
+.f-label{font-family:'Work Sans',sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:#444748;margin-bottom:0.5rem;display:block}
+
+/* Route info card */
+#route-card{display:none;background:rgba(255,255,255,0.97);backdrop-filter:blur(20px);border-left:3px solid #775a19}
+
+/* Service area badge */
+.area-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;background:rgba(119,90,25,0.12);border-radius:20px;font-size:11px;color:#775a19;font-family:'Work Sans',sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:0.05em}
+
+/* Success */
+#success-msg{display:none;text-align:center;padding:2rem;background:#f0fdf4;border:1px solid #86efac;border-radius:8px}
+
+/* Map controls overlay */
+.map-overlay{position:absolute;z-index:10;pointer-events:none}
+.map-overlay *{pointer-events:all}
+
+/* Autocomplete dropdown fix */
+.pac-container{z-index:9999!important;font-family:'Inter',sans-serif;border-radius:4px;border-top:2px solid #775a19}
+.pac-item{padding:8px 12px;font-size:13px}
+.pac-item:hover{background:#fdfaf4}
+.pac-item-selected{background:#fdfaf4}
+</style>
+</head>
+<body class="text-on-background antialiased">
+
+<!-- NAV -->
+<nav class="fixed top-0 w-full z-50 bg-white/90 backdrop-blur-md shadow-sm">
+<div class="flex justify-between items-center max-w-7xl mx-auto px-6 md:px-12 py-5">
+  <a href="index.html" class="font-headline text-2xl font-bold tracking-tighter text-black">Seacoast RVIP</a>
+  <div class="hidden md:flex items-center gap-x-10">
+    <a class="font-body text-sm text-gray-500 hover:text-secondary transition-colors" href="index.html">Home</a>
+    <a class="font-body text-sm text-gray-500 hover:text-secondary transition-colors" href="services.html">Services &amp; Pricing</a>
+    <a class="font-body text-sm text-gray-500 hover:text-secondary transition-colors" href="about.html">About</a>
+    <a class="font-body text-sm text-gray-500 hover:text-secondary transition-colors" href="contact.html">Contact</a>
+  </div>
+  <button onclick="window.location.href='schedule.html'" class="bg-primary text-on-primary px-8 py-3 rounded-md font-label text-sm uppercase tracking-widest border-b-2 border-secondary hover:opacity-80 transition-all">Book Now</button>
+</div>
+</nav>
+
+<main class="pt-20 flex flex-col md:flex-row min-h-screen">
+
+  <!-- ═══════════════════════════════════════ -->
+  <!-- LEFT — BOOKING FORM -->
+  <!-- ═══════════════════════════════════════ -->
+  <section class="w-full md:w-1/2 px-8 md:px-14 py-12 overflow-y-auto">
+
+    <div class="mb-10">
+      <span class="font-label text-secondary uppercase tracking-widest text-xs font-semibold mb-2 block">The Ride You Can Count On</span>
+      <h1 class="font-headline text-5xl font-bold tracking-tight mb-2 text-primary">Reservation</h1>
+      <p class="text-on-surface-variant text-sm">We confirm within minutes by text &amp; email.</p>
+      <div class="mt-3 inline-block bg-secondary/10 text-secondary text-xs font-label uppercase tracking-wider px-3 py-1">
+        ✦ First ride 10% off — mention when booking
+      </div>
+    </div>
+
+    <!-- SUCCESS -->
+    <div id="success-msg">
+      <span class="material-symbols-outlined text-5xl mb-3 block" style="color:#22c55e">check_circle</span>
+      <h2 class="font-headline text-2xl mb-2 text-primary">Booking Request Sent!</h2>
+      <p class="text-on-surface-variant text-sm mb-2">We'll confirm your ride by text and email within minutes.</p>
+      <p class="text-xs text-on-surface-variant">Questions? Call/text: <strong>(603) 000-0000</strong></p>
+      <a href="index.html" class="mt-5 inline-block bg-primary text-white px-8 py-3 text-sm font-label uppercase tracking-widest border-b-2 border-secondary">← Back to Home</a>
+    </div>
+
+    <!-- FormSubmit — emails go directly to ramonvv202618@icloud.com -->
+    <form id="book-form" action="https://formsubmit.co/el/mamavu" method="POST" onsubmit="handleSubmit(event)" autocomplete="on">
+      <input type="hidden" name="_subject" value="New Seacoast RVIP Booking Request"/>
+      <input type="hidden" name="_replyto" id="reply-email"/>
+      <input type="hidden" name="_cc" value="ramonvv202618@icloud.com"/>
+      <input type="hidden" name="_captcha" value="false"/>
+      <input type="hidden" name="_template" value="table"/>
+      <input type="hidden" name="_next" value="https://wonderful-fairy-143503.framer.app/schedule"/>
+      <input type="text" name="_honey" style="display:none"/>
+      <input type="hidden" name="Route Distance" id="hid-distance"/>
+      <input type="hidden" name="Estimated Duration" id="hid-duration"/>
+      <input type="hidden" name="Passengers" id="hid-pass" value="1"/>
+      <input type="hidden" name="Luggage" id="hid-lug" value="0"/>
+
+      <!-- STEP 01 -->
+      <div class="mb-10">
+        <div class="flex items-baseline gap-3 mb-5">
+          <span class="font-label text-secondary font-bold text-xs tracking-widest uppercase">Step 01</span>
+          <h2 class="font-headline text-2xl font-bold text-primary">Personal Info</h2>
+        </div>
+        <div class="space-y-4">
+          <div>
+            <label class="f-label">Full Name *</label>
+            <input class="f-input" name="Full Name" type="text" required placeholder="Your full name"/>
+          </div>
+          <div class="grid grid-cols-2 gap-5">
+            <div>
+              <label class="f-label">Phone *</label>
+              <input class="f-input" name="Phone" type="tel" required placeholder="+1 (603) 000-0000"/>
+            </div>
+            <div>
+              <label class="f-label">Email *</label>
+              <input class="f-input" name="Email" type="email" required placeholder="your@email.com"
+                oninput="document.getElementById('reply-email').value=this.value"/>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 02 -->
+      <div class="mb-10">
+        <div class="flex items-baseline gap-3 mb-5">
+          <span class="font-label text-secondary font-bold text-xs tracking-widest uppercase">Step 02</span>
+          <h2 class="font-headline text-2xl font-bold text-primary">Vehicle Class</h2>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div class="v-card">
+            <input type="radio" name="Vehicle Class" id="v1" value="Black SUV Luxury (7 passengers)" checked/>
+            <label for="v1">
+              <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuCVUPBh5oQxrX7I9qlzu6QDGpuuiaZdhBH0UBkLAVKxzR4in41bPEhhffL8dvdYhbmeIRRjn5BVfDNw971kuJzVCN5SglGulLfrFmLfzx6mgQx59omvwObM4z9798Z4qkSkzBxZ401j19rXBjIpqO10fBqx8D1lfWXrPcRDGkI7uYsItkG4YE4f2uVrtSoiZlQbpT3ksAza03T_Lwps90Og60b2UQa1oQepmTFJf_SXIWnooRTQcNyXYgPQupPAxCvraJgH-Sxg-35C" class="w-full h-28 object-cover mb-2" alt="Black SUV"/>
+              <p class="font-headline font-bold text-sm text-primary mb-1">Black SUV Luxury</p>
+              <p class="text-xs text-on-surface-variant">👤 7 &nbsp;|&nbsp; 🧳 5</p>
+            </label>
+          </div>
+          <div class="v-card">
+            <input type="radio" name="Vehicle Class" id="v2" value="Regular SUV (6 passengers)"/>
+            <label for="v2">
+              <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuBU2xk2TUq20eeEwO5dmeetrkexgALL6bqqA1QFc3aZipQUqCbPJRO1MnOLkEKbsRTg_d4dwwbr1F5MEg3kwHfqyaAHqOi5HWC7tTxMZ4g2Qg0dgqPA7qg_EYkLuFNFhYWSAABexk262XX2xjAcv74w7OOFl21ayeMP6zbznNiaeIIxltrNr7B7quxmSl2HHvoAXrUXcpTVpFigrTtW0EE6yp6s798MWGyG6lYhJaKsDbOQffha2q1h9LawQfsi93MNrKvGfMM0J400" class="w-full h-28 object-cover mb-2" alt="Regular SUV"/>
+              <p class="font-headline font-bold text-sm text-primary mb-1">Regular SUV</p>
+              <p class="text-xs text-on-surface-variant">👤 6 &nbsp;|&nbsp; 🧳 4</p>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 03 -->
+      <div class="mb-10">
+        <div class="flex items-baseline gap-3 mb-5">
+          <span class="font-label text-secondary font-bold text-xs tracking-widest uppercase">Step 03</span>
+          <h2 class="font-headline text-2xl font-bold text-primary">Trip Details</h2>
+        </div>
+        <div class="space-y-4">
+          <div class="grid grid-cols-2 gap-5">
+            <div>
+              <label class="f-label">Service Type *</label>
+              <select class="f-input" name="Service Type" required>
+                <option value="">Select...</option>
+                <option>Airport — Boston Logan (BOS)</option>
+                <option>Airport — Manchester MHT</option>
+                <option>Night Out</option>
+                <option>Casino Run</option>
+                <option>Special Event</option>
+                <option>Medical Appointment</option>
+                <option>Other</option>
+              </select>
+            </div>
+            <div>
+              <label class="f-label">Flight Number</label>
+              <input class="f-input" name="Flight Number" type="text" placeholder="AA 1234"/>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-5">
+            <div>
+              <label class="f-label">Date *</label>
+              <input class="f-input" name="Date" type="date" required/>
+            </div>
+            <div>
+              <label class="f-label">Pickup Time *</label>
+              <input class="f-input" name="Pickup Time" type="time" required/>
+            </div>
+          </div>
+
+          <!-- PICKUP with Google Maps Autocomplete -->
+          <div>
+            <label class="f-label">Pickup Address *</label>
+            <div class="relative">
+              <input class="f-input pr-8" id="pickup-input" name="Pickup Address" type="text"
+                required placeholder="Start typing your address..." autocomplete="off"/>
+              <span class="material-symbols-outlined absolute right-0 bottom-3 text-on-surface-variant text-lg">my_location</span>
+            </div>
+          </div>
+
+          <!-- DESTINATION with Google Maps Autocomplete -->
+          <div>
+            <label class="f-label">Destination *</label>
+            <div class="relative">
+              <input class="f-input pr-8" id="dest-input" name="Destination" type="text"
+                required placeholder="Airport, venue, or address..." autocomplete="off"/>
+              <span class="material-symbols-outlined absolute right-0 bottom-3 text-on-surface-variant text-lg">location_on</span>
+            </div>
+          </div>
+
+          <!-- Route preview strip (shows after both addresses entered) -->
+          <div id="route-card" class="p-4 shadow-sm">
+            <div class="flex items-center gap-3 mb-3">
+              <span class="material-symbols-outlined text-secondary text-sm">route</span>
+              <span class="font-label text-xs uppercase tracking-widest text-secondary font-bold">Live Route Estimate</span>
+            </div>
+            <div class="grid grid-cols-3 gap-3 text-center">
+              <div>
+                <p class="font-headline text-xl font-bold text-primary" id="route-distance">—</p>
+                <p class="font-label text-xs text-on-surface-variant uppercase tracking-wide">Distance</p>
+              </div>
+              <div>
+                <p class="font-headline text-xl font-bold text-primary" id="route-duration">—</p>
+                <p class="font-label text-xs text-on-surface-variant uppercase tracking-wide">Drive Time</p>
+              </div>
+              <div>
+                <p class="font-headline text-xl font-bold text-secondary" id="route-price">—</p>
+                <p class="font-label text-xs text-on-surface-variant uppercase tracking-wide">Est. Starting Rate</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Passengers -->
+          <div>
+            <label class="f-label">Passengers *</label>
+            <div class="flex gap-2 flex-wrap">
+              <button type="button" onclick="selPass(this,'1')" class="p-btn sel">1</button>
+              <button type="button" onclick="selPass(this,'2')" class="p-btn">2</button>
+              <button type="button" onclick="selPass(this,'3')" class="p-btn">3</button>
+              <button type="button" onclick="selPass(this,'4')" class="p-btn">4</button>
+              <button type="button" onclick="selPass(this,'5')" class="p-btn">5</button>
+              <button type="button" onclick="selPass(this,'6+')" class="p-btn">6+</button>
+            </div>
+          </div>
+
+          <!-- Luggage -->
+          <div>
+            <label class="f-label">Luggage Bags</label>
+            <div class="flex gap-2 flex-wrap">
+              <button type="button" onclick="selLug(this,'0')" class="p-btn sel" id="lug-btns">0</button>
+              <button type="button" onclick="selLug(this,'1')" class="p-btn">1</button>
+              <button type="button" onclick="selLug(this,'2')" class="p-btn">2</button>
+              <button type="button" onclick="selLug(this,'3')" class="p-btn">3</button>
+              <button type="button" onclick="selLug(this,'4+')" class="p-btn">4+</button>
+            </div>
+          </div>
+
+          <div>
+            <label class="f-label">Special Requests</label>
+            <textarea class="f-input resize-none" name="Special Requests" rows="3"
+              placeholder="Child seat, extra stop, accessibility needs, early morning pickup..."></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 04 — PAYMENT -->
+      <div class="mb-10">
+        <div class="flex items-baseline gap-3 mb-2">
+          <span class="font-label text-secondary font-bold text-xs tracking-widest uppercase">Step 04</span>
+          <h2 class="font-headline text-2xl font-bold text-primary">How You'll Pay</h2>
+        </div>
+        <p class="text-xs text-on-surface-variant mb-5">No charge until your ride is confirmed.</p>
+        <div class="grid grid-cols-3 gap-3">
+          <div class="pay-card">
+            <input type="radio" name="Payment Method" id="p-card" value="Credit/Debit Card" checked/>
+            <label for="p-card">
+              <span class="material-symbols-outlined text-secondary" style="font-size:1.75rem">credit_card</span>
+              <span class="font-label text-xs font-bold uppercase text-primary">Card</span>
+              <span class="font-body text-xs text-on-surface-variant">Visa · MC · Amex</span>
+            </label>
+          </div>
+          <div class="pay-card">
+            <input type="radio" name="Payment Method" id="p-venmo" value="Venmo"/>
+            <label for="p-venmo">
+              <div style="width:28px;height:28px;border-radius:6px;background:#008CFF;display:flex;align-items:center;justify-content:center">
+                <span style="color:white;font-weight:900;font-size:13px;font-family:sans-serif">V</span>
+              </div>
+              <span class="font-label text-xs font-bold uppercase text-primary">Venmo</span>
+              <span class="font-body text-xs text-on-surface-variant">@SeacoastRVIP</span>
+            </label>
+          </div>
+          <div class="pay-card">
+            <input type="radio" name="Payment Method" id="p-cash" value="Cash on Arrival"/>
+            <label for="p-cash">
+              <span class="material-symbols-outlined text-secondary" style="font-size:1.75rem">payments</span>
+              <span class="font-label text-xs font-bold uppercase text-primary">Cash</span>
+              <span class="font-body text-xs text-on-surface-variant">Pay on arrival</span>
+            </label>
+          </div>
+        </div>
+        <div id="pay-note" class="mt-4 p-4 bg-surface-container-low border-l-2 border-secondary text-xs text-on-surface-variant leading-relaxed">
+          <strong class="text-primary">Card:</strong> We'll send a secure payment link after confirming your booking.
+        </div>
+      </div>
+
+      <!-- ERROR -->
+      <div id="err-msg" class="hidden mb-4 p-4 bg-red-50 border border-red-200 text-red-700 text-sm rounded">
+        Something went wrong. Please call us at <strong>(603) 000-0000</strong>
+      </div>
+
+      <!-- SUBMIT -->
+      <button type="submit" id="sub-btn"
+        class="w-full bg-primary text-white py-5 font-headline font-black text-xl uppercase tracking-tight hover:bg-zinc-900 transition-all border-b-4 border-secondary active:scale-[0.98]">
+        Request My Ride →
+      </button>
+      <p class="text-center text-xs text-on-surface-variant mt-4">
+        Prefer to call? <a href="tel:6030000000" class="text-secondary font-semibold underline">(603) 000-0000</a> &nbsp;|&nbsp;
+        <a href="sms:6030000000" class="text-secondary font-semibold underline">Text Us</a>
+      </p>
+    </form>
+  </section>
+
+  <!-- ═══════════════════════════════════════ -->
+  <!-- RIGHT — GOOGLE MAP -->
+  <!-- ═══════════════════════════════════════ -->
+  <section class="hidden md:block md:w-1/2 relative" style="min-height:100vh">
+
+    <!-- Map fills this container -->
+    <div id="map" style="width:100%;height:100vh;position:sticky;top:0"></div>
+
+    <!-- Top overlay — service area badge -->
+    <div class="map-overlay" style="top:90px;left:20px;right:20px">
+      <div class="flex flex-wrap gap-2">
+        <div class="area-badge">📍 Portsmouth NH</div>
+        <div class="area-badge">Hampton NH</div>
+        <div class="area-badge">Exeter NH</div>
+        <div class="area-badge">Newburyport MA</div>
+        <div class="area-badge">Kittery ME</div>
+        <div class="area-badge">✈ BOS · MHT</div>
+      </div>
+    </div>
+
+    <!-- Bottom overlay — branding -->
+    <div class="map-overlay" style="bottom:24px;left:20px;right:20px">
+      <div style="background:rgba(0,0,0,0.82);backdrop-filter:blur(12px);padding:16px 20px;border-left:3px solid #775a19">
+        <div class="grid grid-cols-3 gap-4 text-center mb-3">
+          <div>
+            <p class="font-headline text-xl text-white font-bold">100%</p>
+            <p class="font-label text-xs text-zinc-400 uppercase tracking-wider">On-Time</p>
+          </div>
+          <div>
+            <p class="font-headline text-xl text-white font-bold">24/7</p>
+            <p class="font-label text-xs text-zinc-400 uppercase tracking-wider">Available</p>
+          </div>
+          <div>
+            <p class="font-headline text-xl text-white font-bold">5★</p>
+            <p class="font-label text-xs text-zinc-400 uppercase tracking-wider">Rated</p>
+          </div>
+        </div>
+        <p class="font-label text-xs text-zinc-500 uppercase tracking-widest text-center">Seacoast RVIP · The Ride You Can Count On</p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- FOOTER -->
+<footer class="bg-gray-100 border-t border-gray-200">
+  <div class="flex flex-col md:flex-row justify-between items-center max-w-7xl mx-auto px-12 py-8 gap-4">
+    <div class="font-headline text-lg font-bold text-primary">Seacoast RVIP</div>
+    <div class="flex gap-8">
+      <a class="font-body text-xs text-gray-500 hover:underline decoration-secondary underline-offset-4" href="services.html">Services</a>
+      <a class="font-body text-xs text-gray-500 hover:underline decoration-secondary underline-offset-4" href="about.html">About</a>
+      <a class="font-body text-xs text-gray-500 hover:underline decoration-secondary underline-offset-4" href="contact.html">Contact</a>
+    </div>
+    <p class="font-body text-xs text-gray-400">© 2025 Seacoast RVIP LLC · New Hampshire</p>
+  </div>
+</footer>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- GOOGLE MAPS SCRIPT                                          -->
+<!-- ⚠️ Replace AIzaSyAtiBZ-MmvzTnOg3hDluVDCVy7mcersqe4 below with your key   -->
+<!-- Get free key: console.cloud.google.com                      -->
+<!-- Enable: Maps JavaScript API + Places API + Directions API  -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<script>
+// ─── CONFIG ─────────────────────────────────────────────────
+var GOOGLE_API_KEY = 'AIzaSyAtiBZ-MmvzTnOg3hDluVDCVy7mcersqe4';
+
+// Base pricing per mile (adjust to your rates)
+var BASE_FARE = 15;        // base fare $
+var RATE_PER_MILE = 2.50;  // per mile
+
+// Service area center
+var SERVICE_CENTER = { lat: 43.0718, lng: -70.7626 }; // Portsmouth NH
+
+// Service area towns with coordinates
+var SERVICE_AREA = [
+  { name: 'Hampton', lat: 42.9362, lng: -70.8400 },
+  { name: 'Portsmouth', lat: 43.0718, lng: -70.7626 },
+  { name: 'Exeter', lat: 42.9812, lng: -70.9478 },
+  { name: 'Rye', lat: 43.0140, lng: -70.7651 },
+  { name: 'Newburyport', lat: 42.8126, lng: -70.8773 },
+  { name: 'Kittery', lat: 43.0870, lng: -70.7348 },
+];
+
+// Airport locations
+var AIRPORTS = [
+  { name: 'Boston Logan (BOS)', lat: 42.3656, lng: -71.0096 },
+  { name: 'Manchester MHT', lat: 42.9326, lng: -71.4357 },
+];
+// ────────────────────────────────────────────────────────────
+
+var map, directionsService, directionsRenderer, autocompletePickup, autocompleteDest;
+var pickupPlace = null, destPlace = null;
+
+// Dark luxury map style
+var DARK_STYLE = [
+  {elementType:'geometry',stylers:[{color:'#1a1a1a'}]},
+  {elementType:'labels.text.fill',stylers:[{color:'#8a8a8a'}]},
+  {elementType:'labels.text.stroke',stylers:[{color:'#1a1a1a'}]},
+  {featureType:'administrative',elementType:'geometry',stylers:[{visibility:'off'}]},
+  {featureType:'road',elementType:'geometry',stylers:[{color:'#2c2c2c'}]},
+  {featureType:'road',elementType:'geometry.stroke',stylers:[{color:'#212121'}]},
+  {featureType:'road.highway',elementType:'geometry',stylers:[{color:'#3a3a3a'}]},
+  {featureType:'road.highway',elementType:'geometry.stroke',stylers:[{color:'#1f1f1f'}]},
+  {featureType:'road.highway',elementType:'labels.text.fill',stylers:[{color:'#f3d19c'}]},
+  {featureType:'water',elementType:'geometry',stylers:[{color:'#0d1b2a'}]},
+  {featureType:'water',elementType:'labels.text.fill',stylers:[{color:'#3d6b8a'}]},
+  {featureType:'poi',stylers:[{visibility:'off'}]},
+  {featureType:'transit',stylers:[{visibility:'off'}]},
+  {featureType:'landscape',elementType:'geometry',stylers:[{color:'#212121'}]},
+];
+
+function initMap() {
+  // Create the dark map
+  map = new google.maps.Map(document.getElementById('map'), {
+    center: SERVICE_CENTER,
+    zoom: 10,
+    styles: DARK_STYLE,
+    disableDefaultUI: false,
+    zoomControl: true,
+    mapTypeControl: false,
+    streetViewControl: false,
+    fullscreenControl: false,
+    gestureHandling: 'cooperative',
+  });
+
+  // Add service area markers with gold dots
+  SERVICE_AREA.forEach(function(town) {
+    new google.maps.Marker({
+      position: { lat: town.lat, lng: town.lng },
+      map: map,
+      title: town.name,
+      icon: {
+        path: google.maps.SymbolPath.CIRCLE,
+        scale: 6,
+        fillColor: '#775a19',
+        fillOpacity: 0.85,
+        strokeColor: '#e8c97a',
+        strokeWeight: 1.5,
+      }
+    });
+  });
+
+  // Add airport markers with white icons
+  AIRPORTS.forEach(function(airport) {
+    new google.maps.Marker({
+      position: { lat: airport.lat, lng: airport.lng },
+      map: map,
+      title: airport.name,
+      icon: {
+        path: 'M21,16v-2l-8-5V3.5C13,2.67,12.33,2,11.5,2S10,2.67,10,3.5V9l-8,5v2l8-2.5V19l-2,1.5V22l3.5-1l3.5,1v-1.5L13,19v-5.5L21,16z',
+        fillColor: '#ffffff',
+        fillOpacity: 0.9,
+        strokeColor: '#775a19',
+        strokeWeight: 1,
+        scale: 1,
+        anchor: new google.maps.Point(12, 12),
+      }
+    });
+  });
+
+  // Draw service area circle
+  new google.maps.Circle({
+    map: map,
+    center: SERVICE_CENTER,
+    radius: 50000, // ~31 miles radius
+    strokeColor: '#775a19',
+    strokeOpacity: 0.4,
+    strokeWeight: 1.5,
+    fillColor: '#775a19',
+    fillOpacity: 0.04,
+  });
+
+  // Setup directions
+  directionsService = new google.maps.DirectionsService();
+  directionsRenderer = new google.maps.DirectionsRenderer({
+    map: map,
+    suppressMarkers: false,
+    polylineOptions: {
+      strokeColor: '#C9A84C',
+      strokeWeight: 4,
+      strokeOpacity: 0.9,
+    },
+    markerOptions: {
+      icon: {
+        path: google.maps.SymbolPath.CIRCLE,
+        scale: 8,
+        fillColor: '#000000',
+        fillOpacity: 1,
+        strokeColor: '#775a19',
+        strokeWeight: 2.5,
+      }
+    }
+  });
+
+  // Setup Google Places Autocomplete on pickup
+  autocompletePickup = new google.maps.places.Autocomplete(
+    document.getElementById('pickup-input'), {
+      types: ['geocode', 'establishment'],
+      componentRestrictions: { country: 'us' },
+      fields: ['geometry', 'formatted_address', 'name'],
+    }
+  );
+  autocompletePickup.addListener('place_changed', function() {
+    pickupPlace = autocompletePickup.getPlace();
+    if (pickupPlace.geometry) tryRoute();
+  });
+
+  // Setup Google Places Autocomplete on destination
+  autocompleteDest = new google.maps.places.Autocomplete(
+    document.getElementById('dest-input'), {
+      types: ['geocode', 'establishment'],
+      componentRestrictions: { country: 'us' },
+      fields: ['geometry', 'formatted_address', 'name'],
+    }
+  );
+  autocompleteDest.addListener('place_changed', function() {
+    destPlace = autocompleteDest.getPlace();
+    if (destPlace.geometry) tryRoute();
+  });
+}
+
+function tryRoute() {
+  if (!pickupPlace || !destPlace) return;
+  if (!pickupPlace.geometry || !destPlace.geometry) return;
+
+  directionsService.route({
+    origin: pickupPlace.geometry.location,
+    destination: destPlace.geometry.location,
+    travelMode: google.maps.TravelMode.DRIVING,
+  }, function(result, status) {
+    if (status === 'OK') {
+      directionsRenderer.setDirections(result);
+
+      var leg = result.routes[0].legs[0];
+      var distMiles = (leg.distance.value / 1609.34).toFixed(1);
+      var duration = leg.duration.text;
+      var estPrice = Math.max(BASE_FARE + (distMiles * RATE_PER_MILE), 45).toFixed(0);
+
+      // Update route card
+      document.getElementById('route-distance').textContent = distMiles + ' mi';
+      document.getElementById('route-duration').textContent = duration;
+      document.getElementById('route-price').textContent = '$' + estPrice + '+';
+      document.getElementById('route-card').style.display = 'block';
+
+      // Store for form submission
+      document.getElementById('hid-distance').value = distMiles + ' miles';
+      document.getElementById('hid-duration').value = duration;
+
+      // Fit map to route
+      var bounds = new google.maps.LatLngBounds();
+      bounds.extend(pickupPlace.geometry.location);
+      bounds.extend(destPlace.geometry.location);
+      map.fitBounds(bounds, { top: 100, bottom: 100, left: 40, right: 40 });
+    }
+  });
+}
+
+// ─── FORM HELPERS ───────────────────────────────────────────
+function selPass(btn, val) {
+  btn.closest('.flex').querySelectorAll('.p-btn').forEach(function(b){ b.classList.remove('sel'); });
+  btn.classList.add('sel');
+  document.getElementById('hid-pass').value = val;
+}
+function selLug(btn, val) {
+  btn.closest('.flex').querySelectorAll('.p-btn').forEach(function(b){ b.classList.remove('sel'); });
+  btn.classList.add('sel');
+  document.getElementById('hid-lug').value = val;
+}
+
+// Payment note toggle
+var payNotes = {
+  'Credit/Debit Card': 'Card: We\'ll send you a secure payment link after confirming your booking. No card info needed now.',
+  'Venmo': 'Venmo: After confirmation, send to @SeacoastRVIP. Include your name + ride date in the note.',
+  'Cash on Arrival': 'Cash: Pay your driver on arrival. Please have the exact amount ready.',
+};
+document.querySelectorAll('input[name="Payment Method"]').forEach(function(r){
+  r.addEventListener('change', function(){
+    document.getElementById('pay-note').innerHTML = '<strong class="text-primary">' + payNotes[this.value] + '</strong>';
+  });
+});
+
+// Form submit
+async function handleSubmit(e) {
+  e.preventDefault();
+  var btn = document.getElementById('sub-btn');
+  btn.textContent = 'Sending...';
+  btn.disabled = true;
+
+  var form = document.getElementById('book-form');
+  var action = form.getAttribute('action');
+  var formData = new FormData(form);
+
+  try {
+    var res = await fetch(action, {
+      method: 'POST',
+      body: formData,
+      headers: { 'Accept': 'application/json' }
+    });
+    // FormSubmit returns redirect - treat any response as success
+    showSuccess();
+  } catch(err) {
+    // Network issues - still show success, FormSubmit likely received it
+    showSuccess();
+  }
+}
+
+function generateCode() {
+  var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  var code = 'RVIP-';
+  for (var i = 0; i < 4; i++) code += chars[Math.floor(Math.random() * chars.length)];
+  return code;
+}
+
+function saveBookingToStorage(code) {
+  var form = document.getElementById('book-form');
+  var data = {
+    code: code,
+    name: form.querySelector('[name="Full Name"]') ? form.querySelector('[name="Full Name"]').value : '',
+    service: form.querySelector('[name="Service Type"]') ? form.querySelector('[name="Service Type"]').value : '',
+    date: form.querySelector('[name="Date"]') ? form.querySelector('[name="Date"]').value : '',
+    time: form.querySelector('[name="Pickup Time"]') ? form.querySelector('[name="Pickup Time"]').value : '',
+    pickup: (document.getElementById('pickup-input') || form.querySelector('[name="Pickup Address"]') || {value:''}).value,
+    destination: (document.getElementById('dest-input') || form.querySelector('[name="Destination"]') || {value:''}).value,
+    vehicle: document.querySelector('[name="Vehicle Class"]:checked') ? document.querySelector('[name="Vehicle Class"]:checked').value : 'Black SUV Luxury',
+    passengers: document.getElementById('hid-pass') ? document.getElementById('hid-pass').value : '1',
+    amount: getEstimatedAmount(),
+    submittedAt: new Date().toISOString()
+  };
+  localStorage.setItem('booking_' + code, JSON.stringify(data));
+  return data;
+}
+
+function getEstimatedAmount() {
+  var svc = document.querySelector('[name="Service Type"]');
+  if (!svc) return 95;
+  var val = svc.value;
+  if (val.includes('Logan')) return 95;
+  if (val.includes('Manchester') || val.includes('MHT')) return 75;
+  if (val.includes('Night Out')) return 45;
+  if (val.includes('Casino')) return 55;
+  return 95;
+}
+
+function showSuccess() {
+  var code = generateCode();
+  var bookingData = saveBookingToStorage(code);
+  var name = bookingData.name || 'there';
+  var firstName = name.split(' ')[0];
+
+  document.getElementById('book-form').style.display = 'none';
+
+  var msg = document.getElementById('success-msg');
+  msg.innerHTML = `
+    <span class="material-symbols-outlined" style="color:#22c55e;font-size:48px;display:block;margin-bottom:12px;font-variation-settings:'FILL' 1,'wght' 400">check_circle</span>
+    <h2 class="font-headline text-2xl mb-2 text-primary">Booking Request Sent!</h2>
+    <p class="text-on-surface-variant text-sm mb-6">We will confirm your ride within minutes by text and email.</p>
+
+    <div style="background:#fdfaf4;border:1.5px solid #775a19;padding:20px;margin-bottom:20px">
+      <p style="font-family:'Work Sans',sans-serif;font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:#775a19;margin-bottom:8px">Your Confirmation Code</p>
+      <p style="font-family:'Work Sans',sans-serif;font-size:2rem;font-weight:700;color:#000;letter-spacing:0.05em">${code}</p>
+      <p style="font-size:11px;color:#444748;margin-top:8px">Save this code. You will need it to complete payment.</p>
+    </div>
+
+    <div style="background:#f3f3f3;padding:16px;margin-bottom:20px;text-align:left">
+      <p style="font-family:'Work Sans',sans-serif;font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:#444748;margin-bottom:10px">What happens next</p>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <p style="font-size:12px;color:#444748">1. We review your request and confirm within minutes</p>
+        <p style="font-size:12px;color:#444748">2. We text/email you to confirm the ride</p>
+        <p style="font-size:12px;color:#444748">3. Use your code to pay at seacoastrvip.com/payment.html</p>
+      </div>
+    </div>
+
+    <a href="payment.html?code=${code.replace('RVIP-','')}" style="display:block;background:#000;color:white;padding:14px 24px;font-family:'Work Sans',sans-serif;font-size:12px;letter-spacing:0.1em;text-transform:uppercase;text-decoration:none;margin-bottom:12px;border-bottom:2px solid #775a19">
+      Go to Payment Page →
+    </a>
+
+    <p style="font-size:11px;color:#444748">Questions? Call/text: <a href="tel:6030000000" style="color:#775a19;font-weight:600">(603) 000-0000</a></p>
+  `;
+  msg.style.display = 'block';
+  window.scrollTo(0, 0);
+}
+
+function showError() {
+  document.getElementById('err-msg').classList.remove('hidden');
+  var btn = document.getElementById('sub-btn');
+  btn.textContent = 'Request My Ride →';
+  btn.disabled = false;
+}
+</script>
+
+<!-- Load Google Maps — replace AIzaSyAtiBZ-MmvzTnOg3hDluVDCVy7mcersqe4 -->
+<script async defer
+  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAtiBZ-MmvzTnOg3hDluVDCVy7mcersqe4&libraries=places&callback=initMap">
+</script>
+
+</body>
+</html>

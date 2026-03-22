@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Complete Your Payment | Seacoast RVIP</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Serif:wght@400;700;900&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+tailwind.config={darkMode:"class",theme:{extend:{colors:{"secondary":"#775a19","primary":"#000000","on-primary":"#ffffff","surface":"#f9f9f9","surface-container-low":"#f3f3f3","surface-container":"#eeeeee","surface-container-lowest":"#ffffff","on-surface-variant":"#444748","outline-variant":"#c4c7c7","background":"#f9f9f9","on-background":"#1a1c1c"},fontFamily:{"headline":["Noto Serif","serif"],"body":["Inter","sans-serif"],"label":["Work Sans","sans-serif"]}}}}
+</script>
+<style>
+*{-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%}
+.material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 300,'GRAD' 0,'opsz' 24}
+body{font-family:'Inter',sans-serif;background:#f9f9f9;margin:0;padding:0}
+.pay-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1.25rem 0.75rem;border:1.5px solid #e2e2e2;cursor:pointer;transition:all 0.15s;background:white;gap:6px;text-align:center;min-height:120px;width:100%;text-decoration:none;-webkit-user-select:none;user-select:none}
+.pay-btn:active{border-color:#775a19;background:#fdfaf4;transform:scale(0.97)}
+.pay-btn.selected{border-color:#775a19;background:#fdfaf4;border-width:2px}
+@media(min-width:640px){.pay-btn{min-height:140px;padding:1.75rem 1rem}.pay-btn:hover{border-color:#775a19;background:#fdfaf4}}
+.detail-row{display:flex;justify-content:space-between;align-items:flex-start;padding:0.75rem 0;border-bottom:1px solid #f3f3f3;gap:1rem}
+.detail-row:last-child{border:none}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.fade-up{animation:fadeUp 0.4s ease forwards}
+.section-hidden{display:none}
+.section-visible{display:block}
+.action-btn{display:flex;align-items:center;justify-content:center;gap:0.75rem;width:100%;padding:1.25rem;font-family:'Noto Serif',serif;font-weight:900;font-size:1.1rem;text-transform:uppercase;letter-spacing:0.05em;border:none;cursor:pointer;text-decoration:none;transition:all 0.15s;min-height:60px}
+.action-btn:active{transform:scale(0.98)}
+.price-hero{font-size:3.5rem}
+@media(min-width:480px){.price-hero{font-size:5rem}}
+
+/* Loading spinner */
+.spinner{width:40px;height:40px;border:3px solid #f3f3f3;border-top:3px solid #775a19;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Pulse for loading text */
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
+.pulse{animation:pulse 1.5s ease infinite}
+</style>
+</head>
+<body class="text-on-background antialiased min-h-screen">
+
+<!-- NAV -->
+<nav class="fixed top-0 w-full z-50 bg-white/90 backdrop-blur-md shadow-sm">
+<div class="flex justify-between items-center w-full max-w-3xl mx-auto" style="padding:0.875rem 1rem">
+  <a href="index.html" class="font-headline text-xl font-bold tracking-tighter text-black">Seacoast RVIP</a>
+  <a href="tel:6030000000" class="flex items-center gap-1.5 font-label font-bold" style="font-size:0.8rem;color:#775a19;text-decoration:none;background:#fdfaf4;border:1px solid #775a19;padding:0.5rem 0.875rem">
+    <span class="material-symbols-outlined" style="font-size:15px">call</span>(603) 000-0000
+  </a>
+</div>
+</nav>
+
+<main class="pt-20 pb-32 min-h-screen">
+<div class="w-full max-w-2xl mx-auto" style="padding:0 0.75rem">
+
+  <!-- LOADING STATE -->
+  <div id="state-loading" class="text-center py-20">
+    <div class="spinner mb-6"></div>
+    <p class="font-label text-xs uppercase tracking-widest text-on-surface-variant pulse">Loading your booking...</p>
+  </div>
+
+  <!-- NOT FOUND STATE -->
+  <div id="state-notfound" class="hidden text-center py-20">
+    <span class="material-symbols-outlined text-secondary block mb-4" style="font-size:3rem">error_outline</span>
+    <h2 class="font-headline text-3xl text-primary mb-3">Booking Not Found</h2>
+    <p class="text-on-surface-variant mb-2 text-sm">This link may be expired or the booking hasn't been confirmed yet.</p>
+    <p class="text-on-surface-variant mb-8 text-sm">Please contact us directly.</p>
+    <div class="flex gap-3 justify-center flex-wrap">
+      <a href="tel:6030000000" class="action-btn" style="background:#000;color:white;border-bottom:3px solid #775a19;max-width:160px">Call Us</a>
+      <a href="schedule.html" style="display:flex;align-items:center;justify-content:center;padding:1rem 1.5rem;border:1px solid #e2e2e2;color:#000;font-family:'Work Sans',sans-serif;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.1em;text-decoration:none;max-width:160px">Book a Ride</a>
+    </div>
+  </div>
+
+  <!-- MANUAL FALLBACK (no code in URL) -->
+  <div id="state-manual" class="hidden">
+    <div class="text-center mb-8 pt-4">
+      <span class="font-label text-secondary uppercase tracking-widest text-xs font-semibold mb-2 block">Payment Portal</span>
+      <h1 class="font-headline text-4xl font-bold text-primary mb-2">Complete Payment</h1>
+      <p class="text-on-surface-variant text-sm">Enter your confirmation code from your text or email.</p>
+    </div>
+    <div class="bg-white p-8 shadow-sm border-l-4 border-secondary mb-4">
+      <label class="font-label text-xs uppercase tracking-widest text-on-surface-variant mb-3 block">Confirmation Code</label>
+      <input id="manual-code" type="text" placeholder="RVIP-0000-XXX" maxlength="13" autocapitalize="characters"
+        style="width:100%;background:#f3f3f3;border:0;border-bottom:2px solid #c4c7c7;padding:1rem 0;font-family:'Work Sans',monospace;font-size:1.5rem;letter-spacing:0.2em;text-transform:uppercase;text-align:center;outline:none;box-sizing:border-box"
+        oninput="formatCode(this)" onkeydown="if(event.key==='Enter')manualLookup()"/>
+      <div id="manual-error" class="hidden mt-3 text-red-600 text-sm text-center">Code not found. Please check your confirmation text or call (603) 000-0000</div>
+      <div id="manual-loading" class="hidden mt-3 text-center">
+        <div class="spinner" style="width:24px;height:24px;border-width:2px;display:inline-block"></div>
+      </div>
+    </div>
+    <button onclick="manualLookup()" class="action-btn" style="background:#000;color:white;border-bottom:4px solid #775a19;font-size:1.1rem">
+      Find My Booking →
+    </button>
+  </div>
+
+  <!-- PAYMENT PAGE -->
+  <div id="state-payment" class="hidden fade-up">
+
+    <!-- Confirmed badge -->
+    <div class="text-center mb-6 pt-4">
+      <div class="inline-flex items-center gap-2 bg-green-50 border border-green-200 text-green-700 text-xs font-label uppercase tracking-wider px-4 py-2 mb-3">
+        <span class="material-symbols-outlined" style="font-size:14px">check_circle</span>Ride Confirmed
+      </div>
+      <h1 class="font-headline text-3xl font-bold text-primary mb-1" id="greeting">Hi there!</h1>
+      <p class="text-on-surface-variant text-sm">Your ride is locked in. Tap how you want to pay.</p>
+    </div>
+
+    <!-- Price hero -->
+    <div class="bg-primary text-white mb-5 text-center border-b-4 border-secondary" style="padding:1.5rem 1rem">
+      <p class="font-label text-xs uppercase tracking-widest opacity-60 mb-1">Total Amount Due</p>
+      <p class="font-headline font-bold mb-1 price-hero" id="price-display">$0</p>
+      <p class="font-label text-xs uppercase tracking-widest opacity-50 leading-relaxed" id="service-display">—</p>
+    </div>
+
+    <!-- 4 Payment buttons -->
+    <div class="mb-5">
+      <p class="font-label text-xs uppercase tracking-widest text-on-surface-variant mb-3 text-center">Tap how you will pay</p>
+      <div class="grid grid-cols-2 gap-3">
+
+        <a id="btn-apple" onclick="selectPay('apple');return false" href="#" class="pay-btn" style="border-color:#000">
+          <svg width="40" height="24" viewBox="0 0 60 28" fill="currentColor">
+            <path d="M11 6.5C10 7.7 8.4 8.6 6.8 8.5C6.6 6.9 7.4 5.2 8.3 4.1C9.3 3 11 2.2 12.4 2.1C12.6 3.8 11.9 5.4 11 6.5Z"/>
+            <path d="M12.4 8.8C10.1 8.7 8.1 10.1 7 10.1C5.9 10.1 4.2 8.9 2.3 8.9C-0.2 8.9-2.6 10.4-3.9 12.7C-6.5 17.3-4.6 24.2-2 27.9C-0.7 29.7 0.8 31.8 2.9 31.7C4.9 31.6 5.7 30.5 8.1 30.5C10.5 30.5 11.2 31.7 13.4 31.6C15.5 31.6 16.9 29.7 18.1 27.9C19.5 25.8 20.1 23.8 20.2 23.7C20.1 23.7 16 22 16 17.2C15.9 13.2 19.2 11.3 19.4 11.1C17.4 8.3 14.5 8.8 12.4 8.8Z"/>
+            <text x="24" y="20" font-family="system-ui,-apple-system,sans-serif" font-size="13" font-weight="700" fill="currentColor">Pay</text>
+          </svg>
+          <span class="font-label text-sm font-bold uppercase tracking-wider text-primary">Apple Pay</span>
+          <span class="font-body text-xs text-on-surface-variant">Face ID · Touch ID</span>
+        </a>
+
+        <a id="btn-card" onclick="selectPay('card');return false" href="#" class="pay-btn">
+          <span class="material-symbols-outlined text-secondary" style="font-size:2.25rem">credit_card</span>
+          <span class="font-label text-sm font-bold uppercase tracking-wider text-primary">Card</span>
+          <span class="font-body text-xs text-on-surface-variant">Visa · MC · Amex</span>
+        </a>
+
+        <a id="btn-venmo" onclick="selectPay('venmo');return false" href="#" class="pay-btn">
+          <div style="width:40px;height:40px;border-radius:10px;background:#008CFF;display:flex;align-items:center;justify-content:center">
+            <span style="color:white;font-weight:900;font-size:18px;font-family:sans-serif">V</span>
+          </div>
+          <span class="font-label text-sm font-bold uppercase tracking-wider text-primary">Venmo</span>
+          <span class="font-body text-xs text-on-surface-variant">@SeacoastRVIP</span>
+        </a>
+
+        <a id="btn-cash" onclick="selectPay('cash');return false" href="#" class="pay-btn">
+          <span class="material-symbols-outlined text-secondary" style="font-size:2.25rem">payments</span>
+          <span class="font-label text-sm font-bold uppercase tracking-wider text-primary">Cash</span>
+          <span class="font-body text-xs text-on-surface-variant">Pay on arrival</span>
+        </a>
+
+      </div>
+    </div>
+
+    <!-- APPLE PAY SECTION -->
+    <div id="section-apple" class="section-hidden bg-white p-5 mb-5 shadow-sm" style="border-left:4px solid #000">
+      <p class="font-label text-xs uppercase tracking-widest font-bold mb-3" style="color:#000">Apple Pay via Stripe</p>
+      <p class="text-xs text-on-surface-variant leading-relaxed mb-4">Tap below → Stripe opens in Safari → Apple Pay button appears → Face ID → done in seconds.</p>
+      <div class="text-xs text-gray-400 mb-4 p-3 bg-gray-50 rounded">⚠️ Apple Pay only works in Safari on iPhone, iPad, or Mac with Touch ID.</div>
+      <a id="apple-btn" href="#" target="_blank" class="action-btn" style="background:#000;color:white;border-bottom:4px solid #444">
+        <svg width="20" height="12" viewBox="0 0 60 28" fill="white"><path d="M11 6.5C10 7.7 8.4 8.6 6.8 8.5C6.6 6.9 7.4 5.2 8.3 4.1C9.3 3 11 2.2 12.4 2.1C12.6 3.8 11.9 5.4 11 6.5Z"/><path d="M12.4 8.8C10.1 8.7 8.1 10.1 7 10.1C5.9 10.1 4.2 8.9 2.3 8.9C-0.2 8.9-2.6 10.4-3.9 12.7C-6.5 17.3-4.6 24.2-2 27.9C-0.7 29.7 0.8 31.8 2.9 31.7C4.9 31.6 5.7 30.5 8.1 30.5C10.5 30.5 11.2 31.7 13.4 31.6C15.5 31.6 16.9 29.7 18.1 27.9C19.5 25.8 20.1 23.8 20.2 23.7C20.1 23.7 16 22 16 17.2C15.9 13.2 19.2 11.3 19.4 11.1C17.4 8.3 14.5 8.8 12.4 8.8Z"/><text x="24" y="20" font-family="system-ui" font-size="13" font-weight="700" fill="white">Pay</text></svg>
+        Pay $<span id="apple-amt">0</span> with Apple Pay →
+      </a>
+    </div>
+
+    <!-- CARD SECTION -->
+    <div id="section-card" class="section-hidden bg-white p-5 mb-5 border-l-4 border-secondary shadow-sm">
+      <div class="flex items-center gap-2 mb-3">
+        <span class="material-symbols-outlined text-secondary" style="font-size:18px">lock</span>
+        <p class="font-label text-xs uppercase tracking-widest text-secondary font-bold">Secure Card Payment via Stripe</p>
+      </div>
+      <p class="text-xs text-on-surface-variant leading-relaxed mb-4">Tap below → secure Stripe checkout → enter card → paid. Takes 30 seconds.</p>
+      <a id="card-btn" href="#" target="_blank" class="action-btn" style="background:#000;color:white;border-bottom:4px solid #775a19">
+        <span class="material-symbols-outlined" style="font-size:18px">lock</span>
+        Pay $<span id="card-amt">0</span> Securely →
+      </a>
+      <p class="text-center text-xs text-on-surface-variant mt-2">Powered by Stripe · 256-bit encryption</p>
+    </div>
+
+    <!-- VENMO SECTION -->
+    <div id="section-venmo" class="section-hidden bg-white p-5 mb-5 border-l-4 border-secondary shadow-sm">
+      <p class="font-label text-xs uppercase tracking-widest text-secondary font-bold mb-4">Venmo Steps</p>
+      <div class="space-y-3 mb-5">
+        <div class="flex items-center gap-3">
+          <span class="w-6 h-6 rounded-full bg-primary text-white font-bold text-xs flex items-center justify-center flex-shrink-0">1</span>
+          <p class="text-sm text-on-surface-variant">Search Venmo for <strong class="text-primary">@SeacoastRVIP</strong></p>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="w-6 h-6 rounded-full bg-primary text-white font-bold text-xs flex items-center justify-center flex-shrink-0">2</span>
+          <p class="text-sm text-on-surface-variant">Enter: <strong class="text-primary" id="venmo-amt">$0</strong></p>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="w-6 h-6 rounded-full bg-primary text-white font-bold text-xs flex items-center justify-center flex-shrink-0">3</span>
+          <p class="text-sm text-on-surface-variant">Note: <strong class="text-primary" id="venmo-code">—</strong></p>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="w-6 h-6 rounded-full bg-secondary text-white font-bold text-xs flex items-center justify-center flex-shrink-0">✓</span>
+          <p class="text-sm text-on-surface-variant">Tap Send — done!</p>
+        </div>
+      </div>
+      <a id="venmo-btn" href="https://venmo.com/SeacoastRVIP" target="_blank" class="action-btn" style="background:#008CFF;color:white;border-bottom:4px solid #0070CC">
+        <span style="font-weight:900;font-size:20px">V</span>Open Venmo →
+      </a>
+    </div>
+
+    <!-- CASH SECTION -->
+    <div id="section-cash" class="section-hidden bg-white p-5 mb-5 border-l-4 border-secondary shadow-sm">
+      <div class="bg-green-50 border border-green-200 p-5 mb-4 text-center">
+        <span class="material-symbols-outlined text-green-600 block mb-2" style="font-size:2rem">check_circle</span>
+        <p class="font-headline text-lg text-green-800 mb-1">You're All Set!</p>
+        <p class="text-xs text-green-700">No payment needed now — pay your driver on arrival.</p>
+      </div>
+      <ul class="space-y-3">
+        <li class="flex items-center gap-3 text-sm text-on-surface-variant">
+          <span class="material-symbols-outlined text-secondary" style="font-size:16px">payments</span>
+          Have <strong class="text-primary" id="cash-amt">exact amount</strong> ready
+        </li>
+        <li class="flex items-center gap-3 text-sm text-on-surface-variant">
+          <span class="material-symbols-outlined text-secondary" style="font-size:16px">schedule</span>
+          Driver arrives <strong class="text-primary">10 minutes early</strong>
+        </li>
+        <li class="flex items-center gap-3 text-sm text-on-surface-variant">
+          <span class="material-symbols-outlined text-secondary" style="font-size:16px">confirmation_number</span>
+          Your code: <strong class="text-primary" id="cash-code">—</strong>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Ride details accordion -->
+    <div class="bg-white shadow-sm mb-5">
+      <button onclick="toggleDetails()" class="w-full flex items-center justify-between p-4 text-left">
+        <div class="flex items-center gap-3">
+          <span class="material-symbols-outlined text-secondary" style="font-size:18px">directions_car</span>
+          <span class="font-label text-xs uppercase tracking-widest text-primary font-bold">View Ride Details</span>
+        </div>
+        <span class="material-symbols-outlined text-on-surface-variant" id="details-icon">expand_more</span>
+      </button>
+      <div id="ride-details-body" class="hidden px-4 pb-4 border-t border-surface-container">
+        <div id="ride-details-content" class="pt-3"></div>
+      </div>
+    </div>
+
+    <!-- Help -->
+    <div class="text-center p-5 bg-white shadow-sm">
+      <p class="font-label text-xs uppercase tracking-widest text-on-surface-variant mb-3">Need Help?</p>
+      <div class="flex gap-5 justify-center">
+        <a href="tel:6030000000" class="flex items-center gap-1.5 text-sm text-secondary font-semibold"><span class="material-symbols-outlined" style="font-size:15px">call</span>Call</a>
+        <span class="text-gray-300">|</span>
+        <a href="sms:6030000000" class="flex items-center gap-1.5 text-sm text-secondary font-semibold"><span class="material-symbols-outlined" style="font-size:15px">sms</span>Text</a>
+        <span class="text-gray-300">|</span>
+        <a href="contact.html" class="flex items-center gap-1.5 text-sm text-secondary font-semibold"><span class="material-symbols-outlined" style="font-size:15px">mail</span>Email</a>
+      </div>
+    </div>
+
+  </div>
+</div>
+</main>
+
+<footer class="bg-gray-100 border-t border-gray-200">
+  <div class="flex justify-between items-center max-w-3xl mx-auto px-6 py-6">
+    <div class="font-headline text-base font-bold text-primary">Seacoast RVIP</div>
+    <p class="font-body text-xs text-gray-400">© 2025 Seacoast RVIP LLC</p>
+  </div>
+</footer>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// SETUP — REPLACE THIS WITH YOUR GOOGLE SHEET CSV URL
+//
+// HOW TO GET YOUR SHEET URL:
+// 1. Create Google Sheet with these exact column headers in Row 1:
+//    Code | Name | Service | Date | Time | Pickup | Destination | Vehicle | Passengers | Price | Status
+//
+// 2. File → Share → Publish to web
+//    → Sheet1 → CSV → Publish
+//    → Copy the URL
+//
+// 3. Paste it below replacing YOUR_GOOGLE_SHEET_CSV_URL
+// ═══════════════════════════════════════════════════════════════
+var SHEET_CSV_URL = 'YOUR_GOOGLE_SHEET_CSV_URL';
+
+// ⚠️ Replace with your Stripe Payment Link
+// dashboard.stripe.com → Payment Links → Create
+var STRIPE_LINK = 'https://buy.stripe.com/YOUR_STRIPE_LINK';
+
+// ═══════════════════════════════════════════════════════════════
+
+var currentCode = '';
+var currentBooking = null;
+var allBookings = {};
+
+// States
+function showState(id) {
+  ['loading','notfound','manual','payment'].forEach(function(s){
+    document.getElementById('state-'+s).classList.add('hidden');
+  });
+  document.getElementById('state-'+id).classList.remove('hidden');
+}
+
+// Parse CSV from Google Sheets
+function parseCSV(csv) {
+  var lines = csv.trim().split('\n');
+  var headers = lines[0].split(',').map(function(h){ return h.trim().replace(/"/g,''); });
+  var result = {};
+  for (var i = 1; i < lines.length; i++) {
+    var vals = splitCSVLine(lines[i]);
+    if (vals.length < 2) continue;
+    var obj = {};
+    headers.forEach(function(h,idx){ obj[h] = (vals[idx]||'').trim().replace(/"/g,''); });
+    var code = obj['Code'] || obj['code'];
+    if (code && obj['Status'] !== 'Cancelled') {
+      result[code.toUpperCase()] = {
+        name: obj['Name'] || obj['name'] || '',
+        service: obj['Service'] || obj['service'] || '',
+        date: obj['Date'] || obj['date'] || '',
+        time: obj['Time'] || obj['time'] || '',
+        pickup: obj['Pickup'] || obj['pickup'] || '',
+        destination: obj['Destination'] || obj['destination'] || '',
+        vehicle: obj['Vehicle'] || obj['vehicle'] || '',
+        passengers: obj['Passengers'] || obj['passengers'] || '1',
+        price: parseInt(obj['Price'] || obj['price'] || '0'),
+      };
+    }
+  }
+  return result;
+}
+
+function splitCSVLine(line) {
+  var result = [], current = '', inQuotes = false;
+  for (var i = 0; i < line.length; i++) {
+    if (line[i] === '"') { inQuotes = !inQuotes; }
+    else if (line[i] === ',' && !inQuotes) { result.push(current); current = ''; }
+    else { current += line[i]; }
+  }
+  result.push(current);
+  return result;
+}
+
+// Fetch bookings from Google Sheet
+async function fetchBookings() {
+  if (SHEET_CSV_URL === 'YOUR_GOOGLE_SHEET_CSV_URL') {
+    // Demo mode — use sample data
+    allBookings = {
+      'RVIP-0001-TST': {name:'John',service:'Airport Transfer — Boston Logan',date:'April 2, 2025',time:'5:00 AM',pickup:'123 Main St, Hampton NH',destination:'Boston Logan Terminal B',vehicle:'Black SUV Luxury',passengers:'2',price:95},
+      'RVIP-0002-TST': {name:'Maria',service:'Night Out — Portsmouth',date:'April 5, 2025',time:'8:00 PM',pickup:'456 Ocean Blvd, Portsmouth NH',destination:'Downtown Portsmouth',vehicle:'Regular SUV',passengers:'3',price:45},
+    };
+    return true;
+  }
+  try {
+    var res = await fetch(SHEET_CSV_URL);
+    var csv = await res.text();
+    allBookings = parseCSV(csv);
+    return true;
+  } catch(e) {
+    console.error('Sheet fetch failed:', e);
+    return false;
+  }
+}
+
+// On load — read code from URL then fetch sheet
+window.addEventListener('load', async function() {
+  var params = new URLSearchParams(window.location.search);
+  var code = (params.get('code') || '').toUpperCase().trim();
+
+  var ok = await fetchBookings();
+
+  if (code) {
+    var booking = allBookings[code];
+    if (booking) {
+      currentCode = code;
+      currentBooking = booking;
+      showState('payment');
+      renderPayment(code, booking);
+    } else {
+      showState('notfound');
+    }
+  } else {
+    showState('manual');
+  }
+});
+
+// Manual lookup
+async function manualLookup() {
+  var code = document.getElementById('manual-code').value.trim().toUpperCase();
+  if (!code) return;
+  document.getElementById('manual-loading').classList.remove('hidden');
+  document.getElementById('manual-error').classList.add('hidden');
+
+  // Re-fetch in case new bookings were added
+  await fetchBookings();
+  document.getElementById('manual-loading').classList.add('hidden');
+
+  var booking = allBookings[code];
+  if (booking) {
+    currentCode = code;
+    currentBooking = booking;
+    showState('payment');
+    renderPayment(code, booking);
+    window.scrollTo(0,0);
+  } else {
+    document.getElementById('manual-error').classList.remove('hidden');
+  }
+}
+
+function formatCode(el) {
+  var v = el.value.replace(/[^A-Z0-9]/g,'');
+  var out = '';
+  if (v.length>0) out += v.substring(0,4);
+  if (v.length>4) out += '-'+v.substring(4,8);
+  if (v.length>8) out += '-'+v.substring(8,11);
+  el.value = out;
+  document.getElementById('manual-error').classList.add('hidden');
+}
+
+// Render payment page
+function renderPayment(code, b) {
+  document.getElementById('greeting').textContent = 'Hi ' + b.name + '!';
+  document.getElementById('price-display').textContent = '$' + b.price;
+  document.getElementById('service-display').textContent = b.service;
+  document.getElementById('apple-amt').textContent = b.price;
+  document.getElementById('card-amt').textContent = b.price;
+  document.getElementById('venmo-amt').textContent = '$' + b.price;
+  document.getElementById('venmo-code').textContent = code;
+  document.getElementById('cash-amt').textContent = '$' + b.price + ' cash';
+  document.getElementById('cash-code').textContent = code;
+
+  // Set Stripe links
+  document.getElementById('apple-btn').href = STRIPE_LINK;
+  document.getElementById('card-btn').href = STRIPE_LINK;
+
+  // Venmo deep link
+  document.getElementById('venmo-btn').href =
+    'venmo://paycharge?txn=pay&recipients=SeacoastRVIP&amount=' + b.price + '&note=' + encodeURIComponent(code);
+
+  // Ride details
+  var rows = [
+    ['Service', b.service],
+    ['Date', b.date],
+    ['Time', b.time],
+    ['Pickup', b.pickup],
+    ['Destination', b.destination],
+    ['Vehicle', b.vehicle],
+    ['Passengers', b.passengers],
+    ['Confirmation', code],
+  ];
+  document.getElementById('ride-details-content').innerHTML = rows.map(function(r){
+    return '<div class="detail-row"><span style="font-family:Work Sans,sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:#444748;min-width:90px;flex-shrink:0">'+r[0]+'</span><span style="font-size:0.875rem;color:#1a1c1c;text-align:right;font-family:Inter,sans-serif">'+r[1]+'</span></div>';
+  }).join('');
+}
+
+// Payment method toggle
+function selectPay(method) {
+  ['apple','card','venmo','cash'].forEach(function(m){
+    document.getElementById('btn-'+m).classList.remove('selected');
+    document.getElementById('section-'+m).classList.remove('section-visible');
+    document.getElementById('section-'+m).classList.add('section-hidden');
+  });
+  document.getElementById('btn-'+method).classList.add('selected');
+  document.getElementById('section-'+method).classList.remove('section-hidden');
+  document.getElementById('section-'+method).classList.add('section-visible');
+  setTimeout(function(){
+    document.getElementById('section-'+method).scrollIntoView({behavior:'smooth',block:'nearest'});
+  },50);
+}
+
+// Details accordion
+function toggleDetails() {
+  var body = document.getElementById('ride-details-body');
+  var icon = document.getElementById('details-icon');
+  body.classList.toggle('hidden');
+  icon.textContent = body.classList.contains('hidden') ? 'expand_more' : 'expand_less';
+}
+</script>
+
+</body>
+</html>
