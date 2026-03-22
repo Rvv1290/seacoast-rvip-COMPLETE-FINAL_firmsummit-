@@ -85,23 +85,46 @@
             grid-template-columns: 1.2fr 0.8fr;
         }
     </style>
-<style>
-.font-headline { font-family: "Times New Roman", Times, serif !important; }
-</style>
+
+
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.json"/>
+  <meta name="theme-color" content="#775a19"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="Seacoast RVIP"/>
+  <link rel="apple-touch-icon" href="/seacoast_rvip_favicon_180.png"/>
+  <link rel="icon" type="image/png" sizes="32x32" href="/seacoast_rvip_favicon_32.png"/>
 </head>
 <body class="bg-background text-on-background font-body selection:bg-secondary-container selection:text-on-secondary-container">
-<!-- TopAppBar -->
-<nav class="fixed top-0 w-full z-50 glass-nav flex justify-between items-center px-12 py-6 max-w-full mx-auto">
-<div class="text-2xl font-bold font-headline text-black tracking-tighter" style="">Seacoast RVIP</div>
-<div class="hidden md:flex gap-12 items-center">
-<a class="text-slate-500 font-medium hover:text-yellow-700 transition-colors duration-300 font-body text-sm" href="index.html" style="">Home</a>
-<a class="text-slate-500 font-medium hover:text-yellow-700 transition-colors duration-300 font-body text-sm" href="services.html" style="">Services &amp; Pricing</a>
-<a class="text-black border-b-2 border-secondary pb-1 font-semibold font-body text-sm" href="about.html" style="">About</a>
-<a class="text-slate-500 font-medium hover:text-yellow-700 transition-colors duration-300 font-body text-sm" href="contact.html" style="">Contact</a>
+<div id="pwa-install-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:100;background:#000;color:white;padding:1rem 1.25rem;align-items:center;justify-content:space-between;border-top:2px solid #775a19;gap:1rem">
+  <div>
+    <div style="font-family:'Times New Roman',serif;font-weight:700;font-size:0.95rem">Seacoast RVIP</div>
+    <div style="font-size:0.7rem;color:#999;font-family:sans-serif">Add to your home screen</div>
+  </div>
+  <button onclick="installPWA()" style="background:#775a19;color:white;border:none;padding:0.625rem 1.25rem;font-family:sans-serif;font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;cursor:pointer;white-space:nowrap">Install App</button>
+  <button onclick="document.getElementById('pwa-install-banner').style.display='none'" style="background:none;border:none;color:#555;cursor:pointer;font-size:1.25rem;padding:0.25rem">✕</button>
 </div>
-<button class="bg-primary text-on-primary px-8 py-3 rounded-md font-medium text-sm border-b-2 border-secondary hover:opacity-90 transition-all active:scale-[0.98]" style="">
-            Book Now
-        </button>
+
+<!-- TopAppBar -->
+<nav class="fixed top-0 w-full z-50 bg-white/90 backdrop-blur-md shadow-sm transition-all duration-300">
+<div class="flex justify-between items-center max-w-7xl mx-auto px-6 md:px-12 py-5">
+<div class="font-headline text-2xl font-bold tracking-tighter text-black">
+                Seacoast RVIP
+            </div>
+<div class="hidden md:flex items-center gap-x-10">
+<a class="font-body text-sm tracking-wide text-black font-medium hover:text-secondary transition-colors duration-300" href="index.html">Home</a>
+<a class="font-body text-sm tracking-wide text-gray-500 font-medium hover:text-secondary transition-colors duration-300" href="services.html">Services &amp; Pricing</a>
+<a class="font-body text-sm tracking-wide text-black border-b-2 border-secondary pb-1 font-semibold transition-colors duration-300" href="about.html">About</a>
+<a class="font-body text-sm tracking-wide text-gray-500 font-medium hover:text-secondary transition-colors duration-300" href="contact.html">Contact</a>
+</div>
+<div>
+<button class="bg-primary text-on-primary px-8 py-3 rounded-md font-label text-sm uppercase tracking-widest border-b-2 border-secondary hover:opacity-80 active:scale-[0.99] transition-all">
+                    Book Now
+                </button>
+</div>
+</div>
 </nav>
 <main class="pt-24">
 <!-- Hero Section -->
@@ -247,40 +270,58 @@
 </section>
 </main>
 <!-- Footer -->
-<footer class="bg-slate-50 py-16 px-12 mt-auto">
-<div class="grid grid-cols-1 md:grid-cols-4 gap-12 w-full max-w-7xl mx-auto">
-<div class="col-span-1 md:col-span-1">
-<div class="text-xl font-headline text-black mb-6" style="">Seacoast RVIP</div>
-<p class="text-slate-500 text-sm leading-relaxed" style="">
-                    The Seacoast's premier distinguished travel service. Born in New Hampshire, serving the world.
-                </p>
+<footer class="bg-gray-100 dark:bg-zinc-900 text-black dark:text-white border-t border-transparent">
+<div class="grid grid-cols-1 md:grid-cols-3 gap-12 max-w-7xl mx-auto px-12 py-16">
+<div class="flex flex-col gap-6">
+<div class="font-headline text-xl font-bold text-black dark:text-white">Seacoast RVIP</div>
+<p class="font-body text-xs text-gray-600 dark:text-gray-400 max-w-xs leading-relaxed">Providing the distinguished path for travelers who value time, discretion, and the finer details of coastal luxury.</p>
+<div class="flex gap-4 items-center">
+<span class="material-symbols-outlined text-secondary cursor-pointer hover:scale-110 transition-transform" onclick="shareRVIP()" title="Share">share</span>
+<a href="/cdn-cgi/l/email-protection#a1d3c0cccecfd7d7939193979099e1c8c2cdced4c58fc2cecc" title="Email us"><span class="material-symbols-outlined text-secondary cursor-pointer hover:scale-110 transition-transform">mail</span></a>
+<a href="tel:+19874163283" title="Call us"><span class="material-symbols-outlined text-secondary cursor-pointer hover:scale-110 transition-transform">call</span></a>
 </div>
-<div>
-<h4 class="font-label font-bold text-xs uppercase tracking-widest text-primary mb-6" style="">Company</h4>
-<ul class="flex flex-col gap-4">
-<li class="" style=""></li>
-<li class="" style=""><a class="text-slate-500 text-sm hover:underline decoration-yellow-700/50 underline-offset-4" href="#" style="">FAQ</a></li>
-<li class="" style=""><a class="text-slate-500 text-sm hover:underline decoration-yellow-700/50 underline-offset-4" href="services.html" style="">Services</a></li>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+function shareRVIP() {
+  if (navigator.share) {
+    navigator.share({
+      title: 'Seacoast RVIP — The Ride You Can Count On',
+      text: 'Premium private car service in the NH Seacoast area.',
+      url: window.location.origin
+    });
+  } else {
+    var opts = [
+      'Copy link: ' + window.location.origin,
+      'Or share via:',
+      '• Text a friend',
+      '• Email: ramonvv202618@icloud.com'
+    ];
+    var menu = window.open('', '_blank', 'width=300,height=200');
+    if (menu) {
+      menu.document.write('<p style="font-family:sans-serif;padding:1rem">' + opts.join('<br>') + '</p>');
+    } else {
+      navigator.clipboard && navigator.clipboard.writeText(window.location.origin);
+      alert('Link copied! Share it with your friends.');
+    }
+  }
+}
+</script>
+</div>
+<div class="flex flex-col gap-8 md:items-center">
+<div class="font-label text-[10px] uppercase tracking-widest text-secondary font-bold">Navigation</div>
+<ul class="flex flex-col gap-4 text-center">
+<li><a class="font-body text-xs text-gray-600 dark:text-gray-400 hover:underline decoration-secondary underline-offset-4 transition-all" href="services.html">Services &amp; Pricing</a></li>
+<li><a class="font-body text-xs text-gray-600 dark:text-gray-400 hover:underline decoration-secondary underline-offset-4 transition-all" href="privacy.html" target="_blank">Privacy Policy</a></li>
+<li><a class="font-body text-xs text-gray-600 dark:text-gray-400 hover:underline decoration-secondary underline-offset-4 transition-all" href="terms.html" target="_blank">Terms of Service</a></li>
 </ul>
 </div>
-<div>
-<h4 class="font-label font-bold text-xs uppercase tracking-widest text-primary mb-6" style="">Legal</h4>
-<ul class="flex flex-col gap-4">
-<li class="" style=""><a class="text-slate-500 text-sm hover:underline decoration-yellow-700/50 underline-offset-4" href="privacy.html" target="_blank" style="">Privacy Policy</a></li>
-<li class="" style=""><a class="text-slate-500 text-sm hover:underline decoration-yellow-700/50 underline-offset-4" href="terms.html" target="_blank" style="">Terms of Service</a></li>
-</ul>
+<div class="flex flex-col gap-8 md:items-end text-right">
+<div class="font-label text-[10px] uppercase tracking-widest text-secondary font-bold">Contact</div>
+<div class="font-body text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
+<a href="tel:+19874163283" class="hover:text-secondary transition-colors">(987) 416-3283</a><br/>
+<a href="/cdn-cgi/l/email-protection#addfccc0c2c3dbdb9f9d9f9b9c95edc4cec1c2d8c983cec2c0" class="hover:text-secondary transition-colors"><span class="__cf_email__" data-cfemail="344655595b5a424206040602050c745d57585b41501a575b59">[email&#160;protected]</span></a>
 </div>
-<div>
-<h4 class="font-label font-bold text-xs uppercase tracking-widest text-primary mb-6" style="">Connect</h4>
-<div class="flex gap-4">
-<span class="material-symbols-outlined text-slate-400 cursor-pointer hover:text-secondary transition-colors" data-icon="mail" style="">mail</span>
-<span class="material-symbols-outlined text-slate-400 cursor-pointer hover:text-secondary transition-colors" data-icon="call" style="">call</span>
-<span class="material-symbols-outlined text-slate-400 cursor-pointer hover:text-secondary transition-colors" data-icon="location_city" style="">location_city</span>
+<p class="font-body text-[10px] text-gray-400 mt-auto">© 2025 Seacoast RVIP. The Distinguished Path. All rights reserved.</p>
 </div>
-</div>
-</div>
-<div class="mt-16 pt-8 border-t border-outline-variant/10 text-center">
-<p class="text-slate-400 text-xs font-label" style="">© 2025 Seacoast RVIP. The Distinguished Path.</p>
 </div>
 </footer>
 <script>
@@ -306,5 +347,32 @@ document.addEventListener("DOMContentLoaded", function() {
     if (txt.includes("View Fleet")) a.href = "services.html";
   });
 });
+</script>
+
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('/sw.js')
+      .then(function(reg) { console.log('SW registered:', reg.scope); })
+      .catch(function(err) { console.log('SW error:', err); });
+  });
+}
+// PWA install prompt
+var deferredPrompt;
+window.addEventListener('beforeinstallprompt', function(e) {
+  e.preventDefault();
+  deferredPrompt = e;
+  var banner = document.getElementById('pwa-install-banner');
+  if (banner) banner.style.display = 'flex';
+});
+function installPWA() {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then(function(result) {
+    deferredPrompt = null;
+    var banner = document.getElementById('pwa-install-banner');
+    if (banner) banner.style.display = 'none';
+  });
+}
 </script>
 </body></html>

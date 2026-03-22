@@ -1,0 +1,50 @@
+{
+  "name": "Seacoast RVIP",
+  "short_name": "RVIP",
+  "description": "Premium private car service in the NH Seacoast area. The Ride You Can Count On.",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#775a19",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/seacoast_rvip_favicon_32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "/seacoast_rvip_favicon_64.png",
+      "sizes": "64x64",
+      "type": "image/png"
+    },
+    {
+      "src": "/seacoast_rvip_favicon_180.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "apple touch icon"
+    },
+    {
+      "src": "/seacoast_rvip_logo_2x.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Book a Ride",
+      "short_name": "Book",
+      "url": "/schedule.html",
+      "icons": [{ "src": "/seacoast_rvip_favicon_32.png", "sizes": "32x32" }]
+    },
+    {
+      "name": "Pay Now",
+      "short_name": "Pay",
+      "url": "/payment.html",
+      "icons": [{ "src": "/seacoast_rvip_favicon_32.png", "sizes": "32x32" }]
+    }
+  ],
+  "categories": ["travel", "transportation"],
+  "lang": "en-US"
+}
