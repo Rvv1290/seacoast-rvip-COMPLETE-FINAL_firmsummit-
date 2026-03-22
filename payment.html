@@ -40,27 +40,8 @@ body{font-family:'Inter',sans-serif;background:#f9f9f9;margin:0;padding:0}
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-
-  <!-- PWA -->
-  <link rel="manifest" href="/manifest.json"/>
-  <meta name="theme-color" content="#775a19"/>
-  <meta name="mobile-web-app-capable" content="yes"/>
-  <meta name="apple-mobile-web-app-capable" content="yes"/>
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
-  <meta name="apple-mobile-web-app-title" content="Seacoast RVIP"/>
-  <link rel="apple-touch-icon" href="/seacoast_rvip_favicon_180.png"/>
-  <link rel="icon" type="image/png" sizes="32x32" href="/seacoast_rvip_favicon_32.png"/>
 </head>
 <body class="text-on-background antialiased min-h-screen">
-<div id="pwa-install-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:100;background:#000;color:white;padding:1rem 1.25rem;align-items:center;justify-content:space-between;border-top:2px solid #775a19;gap:1rem">
-  <div>
-    <div style="font-family:'Times New Roman',serif;font-weight:700;font-size:0.95rem">Seacoast RVIP</div>
-    <div style="font-size:0.7rem;color:#999;font-family:sans-serif">Add to your home screen</div>
-  </div>
-  <button onclick="installPWA()" style="background:#775a19;color:white;border:none;padding:0.625rem 1.25rem;font-family:sans-serif;font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;cursor:pointer;white-space:nowrap">Install App</button>
-  <button onclick="document.getElementById('pwa-install-banner').style.display='none'" style="background:none;border:none;color:#555;cursor:pointer;font-size:1.25rem;padding:0.25rem">✕</button>
-</div>
-
 
 <!-- NAV -->
 <nav class="fixed top-0 w-full z-50 bg-white/90 backdrop-blur-md shadow-sm">
@@ -570,32 +551,5 @@ function toggleDetails() {
 }
 </script>
 
-
-<script>
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', function() {
-    navigator.serviceWorker.register('/sw.js')
-      .then(function(reg) { console.log('SW registered:', reg.scope); })
-      .catch(function(err) { console.log('SW error:', err); });
-  });
-}
-// PWA install prompt
-var deferredPrompt;
-window.addEventListener('beforeinstallprompt', function(e) {
-  e.preventDefault();
-  deferredPrompt = e;
-  var banner = document.getElementById('pwa-install-banner');
-  if (banner) banner.style.display = 'flex';
-});
-function installPWA() {
-  if (!deferredPrompt) return;
-  deferredPrompt.prompt();
-  deferredPrompt.userChoice.then(function(result) {
-    deferredPrompt = null;
-    var banner = document.getElementById('pwa-install-banner');
-    if (banner) banner.style.display = 'none';
-  });
-}
-</script>
 </body>
 </html>

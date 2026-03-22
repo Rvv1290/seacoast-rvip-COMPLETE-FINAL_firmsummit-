@@ -83,32 +83,12 @@
         .work-sans { font-family: 'Work Sans', sans-serif; }
     </style>
 <style>
-.font-headline, h1.font-headline, h2.font-headline, h3.font-headline,
-nav .font-headline, footer .font-headline {
-  font-family: "Times New Roman", Times, Georgia, serif !important;
+.font-headline, .logo-text {
+  font-family: "Times New Roman", Times, serif !important;
 }
 </style>
-
-  <!-- PWA -->
-  <link rel="manifest" href="/manifest.json"/>
-  <meta name="theme-color" content="#775a19"/>
-  <meta name="mobile-web-app-capable" content="yes"/>
-  <meta name="apple-mobile-web-app-capable" content="yes"/>
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
-  <meta name="apple-mobile-web-app-title" content="Seacoast RVIP"/>
-  <link rel="apple-touch-icon" href="/seacoast_rvip_favicon_180.png"/>
-  <link rel="icon" type="image/png" sizes="32x32" href="/seacoast_rvip_favicon_32.png"/>
 </head>
 <body class="text-on-background antialiased overflow-x-hidden">
-<div id="pwa-install-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:100;background:#000;color:white;padding:1rem 1.25rem;align-items:center;justify-content:space-between;border-top:2px solid #775a19;gap:1rem">
-  <div>
-    <div style="font-family:'Times New Roman',serif;font-weight:700;font-size:0.95rem">Seacoast RVIP</div>
-    <div style="font-size:0.7rem;color:#999;font-family:sans-serif">Add to your home screen</div>
-  </div>
-  <button onclick="installPWA()" style="background:#775a19;color:white;border:none;padding:0.625rem 1.25rem;font-family:sans-serif;font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;cursor:pointer;white-space:nowrap">Install App</button>
-  <button onclick="document.getElementById('pwa-install-banner').style.display='none'" style="background:none;border:none;color:#555;cursor:pointer;font-size:1.25rem;padding:0.25rem">✕</button>
-</div>
-
 <nav class="fixed top-0 w-full z-50 bg-white/90 backdrop-blur-md shadow-sm transition-all duration-300">
 <div class="flex justify-between items-center max-w-7xl mx-auto px-6 md:px-12 py-5">
 <div class="font-headline text-2xl font-bold tracking-tighter text-black">
@@ -250,10 +230,10 @@ nav .font-headline, footer .font-headline {
 <p class="font-body text-xs text-gray-600 dark:text-gray-400 max-w-xs leading-relaxed">Providing the distinguished path for travelers who value time, discretion, and the finer details of coastal luxury.</p>
 <div class="flex gap-4 items-center">
 <span class="material-symbols-outlined text-secondary cursor-pointer hover:scale-110 transition-transform" onclick="shareRVIP()" title="Share">share</span>
-<a href="/cdn-cgi/l/email-protection#a1d3c0cccecfd7d7939193979099e1c8c2cdced4c58fc2cecc" title="Email us"><span class="material-symbols-outlined text-secondary cursor-pointer hover:scale-110 transition-transform">mail</span></a>
+<a href="mailto:ramonvv202618@icloud.com" title="Email us"><span class="material-symbols-outlined text-secondary cursor-pointer hover:scale-110 transition-transform">mail</span></a>
 <a href="tel:+19874163283" title="Call us"><span class="material-symbols-outlined text-secondary cursor-pointer hover:scale-110 transition-transform">call</span></a>
 </div>
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+<script>
 function shareRVIP() {
   if (navigator.share) {
     navigator.share({
@@ -291,13 +271,13 @@ function shareRVIP() {
 <div class="font-label text-[10px] uppercase tracking-widest text-secondary font-bold">Contact</div>
 <div class="font-body text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
 <a href="tel:+19874163283" class="hover:text-secondary transition-colors">(987) 416-3283</a><br/>
-<a href="/cdn-cgi/l/email-protection#addfccc0c2c3dbdb9f9d9f9b9c95edc4cec1c2d8c983cec2c0" class="hover:text-secondary transition-colors"><span class="__cf_email__" data-cfemail="344655595b5a424206040602050c745d57585b41501a575b59">[email&#160;protected]</span></a>
+<a href="mailto:ramonvv202618@icloud.com" class="hover:text-secondary transition-colors">ramonvv202618@icloud.com</a>
 </div>
 <p class="font-body text-[10px] text-gray-400 mt-auto">© 2025 Seacoast RVIP. The Distinguished Path. All rights reserved.</p>
 </div>
 </div>
 </footer>
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+<script>
 document.addEventListener("DOMContentLoaded", function() {
   var bookingKeywords = ["Book Now", "Reserve Your Ride", "Book Your Trip", "Book Your Journey", "Book a Ride", "BOOK NOW", "Reserve Now", "Book Now"];
   document.querySelectorAll("button").forEach(function(btn) {
@@ -307,4 +287,18 @@ document.addEventListener("DOMContentLoaded", function() {
         if (!btn.closest("a") && !btn.closest("form[action]")) {
           btn.style.cursor = "pointer";
           btn.addEventListener("click", function(e) {
-     
+            e.preventDefault();
+            window.location.href = "schedule.html";
+          });
+        }
+      }
+    });
+  });
+  document.querySelectorAll("a[href='#']").forEach(function(a) {
+    var txt = a.textContent.trim();
+    if (txt.includes("Fleet") || txt.includes("Our Fleet")) a.href = "services.html";
+    if (txt.includes("View Fleet")) a.href = "services.html";
+  });
+});
+</script>
+</body></html>

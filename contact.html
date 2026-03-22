@@ -83,45 +83,18 @@
             background: radial-gradient(circle at top right, #1c1b1b 0%, #000000 100%);
         }
     </style>
-
-  <!-- PWA -->
-  <link rel="manifest" href="/manifest.json"/>
-  <meta name="theme-color" content="#775a19"/>
-  <meta name="mobile-web-app-capable" content="yes"/>
-  <meta name="apple-mobile-web-app-capable" content="yes"/>
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
-  <meta name="apple-mobile-web-app-title" content="Seacoast RVIP"/>
-  <link rel="apple-touch-icon" href="/seacoast_rvip_favicon_180.png"/>
-  <link rel="icon" type="image/png" sizes="32x32" href="/seacoast_rvip_favicon_32.png"/>
-</head>
+<style>.font-headline{font-family:"Times New Roman",Times,serif!important}</style></head>
 <body class="bg-surface font-body text-on-surface antialiased">
-<div id="pwa-install-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:100;background:#000;color:white;padding:1rem 1.25rem;align-items:center;justify-content:space-between;border-top:2px solid #775a19;gap:1rem">
-  <div>
-    <div style="font-family:'Times New Roman',serif;font-weight:700;font-size:0.95rem">Seacoast RVIP</div>
-    <div style="font-size:0.7rem;color:#999;font-family:sans-serif">Add to your home screen</div>
-  </div>
-  <button onclick="installPWA()" style="background:#775a19;color:white;border:none;padding:0.625rem 1.25rem;font-family:sans-serif;font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;cursor:pointer;white-space:nowrap">Install App</button>
-  <button onclick="document.getElementById('pwa-install-banner').style.display='none'" style="background:none;border:none;color:#555;cursor:pointer;font-size:1.25rem;padding:0.25rem">✕</button>
-</div>
-
 <!-- TopNavBar -->
-<nav class="fixed top-0 w-full z-50 bg-white/90 backdrop-blur-md shadow-sm transition-all duration-300">
-<div class="flex justify-between items-center max-w-7xl mx-auto px-6 md:px-12 py-5">
-<div class="font-headline text-2xl font-bold tracking-tighter text-black">
-                Seacoast RVIP
-            </div>
-<div class="hidden md:flex items-center gap-x-10">
-<a class="font-body text-sm tracking-wide text-black font-medium hover:text-secondary transition-colors duration-300" href="index.html">Home</a>
-<a class="font-body text-sm tracking-wide text-gray-500 font-medium hover:text-secondary transition-colors duration-300" href="services.html">Services &amp; Pricing</a>
-<a class="font-body text-sm tracking-wide text-gray-500 font-medium hover:text-secondary transition-colors duration-300" href="about.html">About</a>
-<a class="font-body text-sm tracking-wide text-black border-b-2 border-secondary pb-1 font-semibold transition-colors duration-300" href="contact.html">Contact</a>
+<nav class="fixed top-0 w-full z-50 glass-nav flex justify-between items-center px-12 py-6 max-w-full mx-auto">
+<div class="text-2xl font-bold tracking-tighter text-black font-serif" style="">Seacoast RVIP</div>
+<div class="hidden md:flex gap-10 items-center">
+<a class="text-gray-500 hover:text-[#775a19] transition-all duration-300 font-body text-sm" href="index.html" style="">Home</a>
+<a class="text-gray-500 hover:text-[#775a19] transition-all duration-300 font-body text-sm" href="services.html" style="">Services &amp; Pricing</a>
+<a class="text-gray-500 hover:text-[#775a19] transition-all duration-300 font-body text-sm" href="about.html" style="">About</a>
+<a class="text-black font-bold border-b-2 border-[#775a19] pb-1 font-body text-sm" href="contact.html" style="">Contact</a>
 </div>
-<div>
-<button class="bg-primary text-on-primary px-8 py-3 rounded-md font-label text-sm uppercase tracking-widest border-b-2 border-secondary hover:opacity-80 active:scale-[0.99] transition-all">
-                    Book Now
-                </button>
-</div>
-</div>
+<a href="schedule.html"><button class="bg-primary text-on-primary px-6 py-2 rounded-md hover:bg-opacity-90 transition-all text-sm font-medium border-b-2 border-secondary" style="">Book Now</button></a>
 </nav>
 <main class="pt-24">
 <!-- Hero Section -->
@@ -288,84 +261,304 @@
 </section>
 </main>
 <!-- Footer -->
-<footer class="bg-gray-100 dark:bg-zinc-900 text-black dark:text-white border-t border-transparent">
-<div class="grid grid-cols-1 md:grid-cols-3 gap-12 max-w-7xl mx-auto px-12 py-16">
+<footer class="w-full py-16 px-12 bg-gray-100 dark:bg-[#1c1b1b] mt-auto">
+<div class="grid grid-cols-1 md:grid-cols-3 gap-12 max-w-7xl mx-auto">
+<div>
+<div class="text-xl font-bold text-black dark:text-white mb-6" style="">Seacoast RVIP</div>
+<p class="text-gray-600 dark:text-gray-400 font-body text-sm leading-relaxed" style="">Defining the gold standard in private travel. Uncompromising quality, absolute discretion.</p>
+</div>
+<div class="flex flex-col gap-4">
+<h4 class="font-label text-xs uppercase tracking-widest text-secondary font-semibold" style="">Explore</h4>
+<div class="flex flex-col gap-2">
+<a class="text-gray-600 dark:text-gray-400 hover:text-[#775a19] underline-offset-4 hover:underline transition-opacity duration-200" href="privacy.html" target="_blank" style="">Privacy Policy</a>
+<a class="text-gray-600 dark:text-gray-400 hover:text-[#775a19] underline-offset-4 hover:underline transition-opacity duration-200" href="terms.html" target="_blank" style="">Terms of Service</a>
+
+
+</div>
+</div>
 <div class="flex flex-col gap-6">
-<div class="font-headline text-xl font-bold text-black dark:text-white">Seacoast RVIP</div>
-<p class="font-body text-xs text-gray-600 dark:text-gray-400 max-w-xs leading-relaxed">Providing the distinguished path for travelers who value time, discretion, and the finer details of coastal luxury.</p>
-<div class="flex gap-4 items-center">
-<span class="material-symbols-outlined text-secondary cursor-pointer hover:scale-110 transition-transform" onclick="shareRVIP()" title="Share">share</span>
-<a href="/cdn-cgi/l/email-protection#a1d3c0cccecfd7d7939193979099e1c8c2cdced4c58fc2cecc" title="Email us"><span class="material-symbols-outlined text-secondary cursor-pointer hover:scale-110 transition-transform">mail</span></a>
-<a href="tel:+19874163283" title="Call us"><span class="material-symbols-outlined text-secondary cursor-pointer hover:scale-110 transition-transform">call</span></a>
+TYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&amp;family=Noto+Serif:ital,wght@0,400;0,700;1,400&amp;family=Work+Sans:wght@400;500&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-secondary-container": "#785a1a",
+              "outline": "#747878",
+              "on-error-container": "#93000a",
+              "on-error": "#ffffff",
+              "surface-bright": "#f9f9f9",
+              "on-primary": "#ffffff",
+              "surface-container-highest": "#e2e2e2",
+              "inverse-on-surface": "#f1f1f1",
+              "surface-tint": "#5f5e5e",
+              "on-tertiary-fixed": "#1b1c1c",
+              "tertiary": "#000000",
+              "on-secondary-fixed": "#261900",
+              "background": "#f9f9f9",
+              "inverse-surface": "#2f3131",
+              "secondary-fixed": "#ffdea5",
+              "primary-fixed": "#e5e2e1",
+              "tertiary-fixed": "#e4e2e1",
+              "tertiary-container": "#1b1c1c",
+              "on-secondary-fixed-variant": "#5d4201",
+              "surface": "#f9f9f9",
+              "primary": "#000000",
+              "error": "#ba1a1a",
+              "on-secondary": "#ffffff",
+              "secondary-fixed-dim": "#e9c176",
+              "surface-container-high": "#e8e8e8",
+              "on-primary-fixed-variant": "#474646",
+              "surface-variant": "#e2e2e2",
+              "primary-fixed-dim": "#c8c6c5",
+              "on-primary-container": "#858383",
+              "inverse-primary": "#c8c6c5",
+              "error-container": "#ffdad6",
+              "tertiary-fixed-dim": "#c8c6c5",
+              "on-tertiary": "#ffffff",
+              "on-surface-variant": "#444748",
+              "surface-container": "#eeeeee",
+              "on-surface": "#1a1c1c",
+              "secondary": "#775a19",
+              "secondary-container": "#fed488",
+              "on-tertiary-fixed-variant": "#474747",
+              "primary-container": "#1c1b1b",
+              "on-background": "#1a1c1c",
+              "outline-variant": "#c4c7c7",
+              "surface-container-lowest": "#ffffff",
+              "surface-container-low": "#f3f3f3",
+              "on-primary-fixed": "#1c1b1b",
+              "surface-dim": "#dadada",
+              "on-tertiary-container": "#858383"
+            },
+            fontFamily: {
+              "headline": ["Noto Serif"],
+              "body": ["Inter"],
+              "label": ["Work Sans"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-nav {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+        }
+        .hero-gradient {
+            background: radial-gradient(circle at top right, #1c1b1b 0%, #000000 100%);
+        }
+    </style>
+</head>
+<body class="bg-surface font-body text-on-surface antialiased">
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full z-50 glass-nav flex justify-between items-center px-12 py-6 max-w-full mx-auto">
+<div class="text-2xl font-bold tracking-tighter text-black font-serif" style="">Seacoast RVIP</div>
+<div class="hidden md:flex gap-10 items-center">
+<a class="text-gray-500 hover:text-[#775a19] transition-all duration-300 font-body text-sm" href="index.html" style="">Home</a>
+<a class="text-gray-500 hover:text-[#775a19] transition-all duration-300 font-body text-sm" href="services.html" style="">Services &amp; Pricing</a>
+<a class="text-gray-500 hover:text-[#775a19] transition-all duration-300 font-body text-sm" href="about.html" style="">About</a>
+<a class="text-black font-bold border-b-2 border-[#775a19] pb-1 font-body text-sm" href="contact.html" style="">Contact</a>
 </div>
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
-function shareRVIP() {
-  if (navigator.share) {
-    navigator.share({
-      title: 'Seacoast RVIP — The Ride You Can Count On',
-      text: 'Premium private car service in the NH Seacoast area.',
-      url: window.location.origin
-    });
-  } else {
-    var opts = [
-      'Copy link: ' + window.location.origin,
-      'Or share via:',
-      '• Text a friend',
-      '• Email: ramonvv202618@icloud.com'
-    ];
-    var menu = window.open('', '_blank', 'width=300,height=200');
-    if (menu) {
-      menu.document.write('<p style="font-family:sans-serif;padding:1rem">' + opts.join('<br>') + '</p>');
-    } else {
-      navigator.clipboard && navigator.clipboard.writeText(window.location.origin);
-      alert('Link copied! Share it with your friends.');
-    }
-  }
-}
-</script>
+<a href="schedule.html"><button class="bg-primary text-on-primary px-6 py-2 rounded-md hover:bg-opacity-90 transition-all text-sm font-medium border-b-2 border-secondary" style="">Book Now</button></a>
+</nav>
+<main class="pt-24">
+<!-- Hero Section -->
+<section class="hero-gradient text-on-primary py-24 px-12 overflow-hidden relative">
+<div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+<div class="z-10">
+<span class="font-label text-secondary tracking-widest uppercase text-xs mb-4 block" style="">Concierge Support</span>
+<h1 class="font-headline text-5xl md:text-6xl font-bold mb-6 leading-tight" style="">Always at Your <br>Service.</h1>
+<p class="text-on-primary-container text-lg max-w-md leading-relaxed font-light" style="">Whether you require a bespoke itinerary or have questions about our fleet, our distinguished team is ready to assist you 24/7.</p>
 </div>
-<div class="flex flex-col gap-8 md:items-center">
-<div class="font-label text-[10px] uppercase tracking-widest text-secondary font-bold">Navigation</div>
-<ul class="flex flex-col gap-4 text-center">
-<li><a class="font-body text-xs text-gray-600 dark:text-gray-400 hover:underline decoration-secondary underline-offset-4 transition-all" href="services.html">Services &amp; Pricing</a></li>
-<li><a class="font-body text-xs text-gray-600 dark:text-gray-400 hover:underline decoration-secondary underline-offset-4 transition-all" href="privacy.html" target="_blank">Privacy Policy</a></li>
-<li><a class="font-body text-xs text-gray-600 dark:text-gray-400 hover:underline decoration-secondary underline-offset-4 transition-all" href="terms.html" target="_blank">Terms of Service</a></li>
-</ul>
-</div>
-<div class="flex flex-col gap-8 md:items-end text-right">
-<div class="font-label text-[10px] uppercase tracking-widest text-secondary font-bold">Contact</div>
-<div class="font-body text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
-<a href="tel:+19874163283" class="hover:text-secondary transition-colors">(987) 416-3283</a><br/>
-<a href="/cdn-cgi/l/email-protection#addfccc0c2c3dbdb9f9d9f9b9c95edc4cec1c2d8c983cec2c0" class="hover:text-secondary transition-colors"><span class="__cf_email__" data-cfemail="344655595b5a424206040602050c745d57585b41501a575b59">[email&#160;protected]</span></a>
-</div>
-<p class="font-body text-[10px] text-gray-400 mt-auto">© 2025 Seacoast RVIP. The Distinguished Path. All rights reserved.</p>
+<div class="hidden md:block relative h-64">
+<div class="absolute inset-0 bg-secondary/10 rounded-full blur-3xl"></div>
 </div>
 </div>
-</footer>
-<script>
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', function() {
-    navigator.serviceWorker.register('/sw.js')
-      .then(function(reg) { console.log('SW registered'); })
-      .catch(function(err) { console.log('SW error:', err); });
-  });
-}
-var deferredPrompt;
-window.addEventListener('beforeinstallprompt', function(e) {
-  e.preventDefault();
-  deferredPrompt = e;
-  var banner = document.getElementById('pwa-install-banner');
-  if (banner) banner.style.display = 'flex';
-});
-function installPWA() {
-  if (!deferredPrompt) return;
-  deferredPrompt.prompt();
-  deferredPrompt.userChoice.then(function() {
-    deferredPrompt = null;
-    var banner = document.getElementById('pwa-install-banner');
-    if (banner) banner.style.display = 'none';
-  });
-}
-</script>
-</body>
-</html>
+</section>
+<!-- Contact Options Grid -->
+<section class="py-16 px-12 bg-surface">
+<div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
+<div class="bg-surface-container-lowest p-8 flex flex-col items-center text-center group hover:bg-surface-container-high transition-colors duration-300">
+<span class="material-symbols-outlined text-secondary text-4xl mb-4" data-icon="phone_iphone" style="">phone_iphone</span>
+<h3 class="font-headline text-xl mb-2" style="">Call Us</h3>
+<p class="text-on-surface-variant font-label" style="">(987) 416-3283</p>
+<p class="text-on-surface-variant font-label text-xs mt-2 uppercase tracking-tighter opacity-60" style="">Priority Desk</p>
+</div>
+<div class="bg-surface-container-lowest p-8 flex flex-col items-center text-center group hover:bg-surface-container-high transition-colors duration-300">
+<span class="material-symbols-outlined text-secondary text-4xl mb-4" data-icon="mail" style="">mail</span>
+<h3 class="font-headline text-xl mb-2" style="">Email</h3>
+<p class="text-on-surface-variant font-label" style=""><a ramonvv202618@icloud.com</p>
+<p class="text-on-surface-variant font-label text-xs mt-2 uppercase tracking-tighter opacity-60" style="">24hr Response Goal</p>
+</div>
+<div class="bg-surface-container-lowest p-8 flex flex-col items-center text-center group hover:bg-surface-container-high transition-colors duration-300">
+<span class="material-symbols-outlined text-secondary text-4xl mb-4" data-icon="chat" style="">chat</span>
+<h3 class="font-headline text-xl mb-2" style="">Message</h3>
+<p class="text-on-surface-variant font-label" style="">(987) 416-3283</p>
+<p class="text-on-surface-variant font-label text-xs mt-2 uppercase tracking-tighter opacity-60" style="">Instant Messaging</p>
+</div>
+</div>
+</section>
+<!-- Professional Inquiry Form & Visual -->
+<section class="py-24 px-12 bg-surface-container-low">
+<div class="max-w-7xl mx-auto flex flex-col md:flex-row gap-24">
+<div class="w-full md:w-1/2">
+<h2 class="font-headline text-4xl mb-8" style="">Direct Inquiry</h2>
+<form class="space-y-8">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+<div class="relative group">
+<label class="font-label text-xs uppercase text-on-surface-variant mb-2 block" style="">Full Name</label>
+<input class="w-full bg-surface-container-low border-b-2 border-outline-variant focus:border-primary focus:ring-0 transition-colors py-2 outline-none" placeholder="Mr. Sterling Archer" type="text">
+</div>
+<div class="relative group">
+<label class="font-label text-xs uppercase text-on-surface-variant mb-2 block" style="">Email Address</label>
+<input class="w-full bg-surface-container-low border-b-2 border-outline-variant focus:border-primary focus:ring-0 transition-colors py-2 outline-none" placeholder="sterling@agency.com" type="email">
+</div>
+</div>
+<div class="relative group">
+<label class="font-label text-xs uppercase text-on-surface-variant mb-2 block" style="">Service Interest</label>
+<select class="w-full bg-surface-container-low border-b-2 border-outline-variant focus:border-primary focus:ring-0 transition-colors py-2 outline-none appearance-none cursor-pointer">
+<option>Airport Transfer</option>
+<option>Hourly Chauffeur</option>
+<option>Corporate Fleet</option>
+<option>Special Event</option>
+</select>
+</div>
+<div class="relative group">
+<label class="font-label text-xs uppercase text-on-surface-variant mb-2 block" style="">Message</label>
+<textarea class="w-full bg-surface-container-low border-b-2 border-outline-variant focus:border-primary focus:ring-0 transition-colors py-2 outline-none resize-none" placeholder="Detail your specific requirements..." rows="4"></textarea>
+</div>
+<button class="bg-primary text-on-primary px-12 py-4 font-label uppercase tracking-widest text-sm hover:scale-[0.98] transition-transform flex items-center gap-4" type="submit" style="">
+                            Send Request
+                            <span class="material-symbols-outlined text-sm" data-icon="arrow_forward" style="">arrow_forward</span>
+</button>
+</form>
+</div>
+<div class="w-full md:w-1/2 hidden md:block">
+<div class="aspect-[4/5] bg-surface-container shadow-2xl relative overflow-hidden group">
+<img alt="Luxury car interior" class="w-full h-full object-cover opacity-90 transition-transform duration-700 group-hover:scale-105" data-alt="Interior of a luxury sedan with leather seats and soft lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCXoHVJ_NGSVuvSlj9xaO_vHqKyNLq-s_TfMN_FA4ZOHsCSSkqwgcxwljDOT_GKIk4RJCOp2HEadC-3v6G_rV50tdpOrfhAw_ptEkNO6kd4P-32CjMb8l261WONCyOF7z5l6rDOmwssI-g-ATQlD2JIALYtQJRRcmCeqQDpI9FQOa_P4-DIMkV2u90wHVTlKYHwGWZr7kFCK7z9noy5qCY2i43vOGa61iiguO5ZLSI4xqI2m0XYsKJ_6HkUrllMAzmOBN-OpFcQgkk6" style="">
+<div class="absolute bottom-12 left-12 right-12 text-on-primary p-8 glass-nav bg-primary/20">
+<h4 class="font-headline text-2xl mb-2" style="">Our Promise</h4>
+<p class="text-sm font-light italic leading-relaxed" style="">"Every detail is curated to ensure your journey is as distinguished as your destination."</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- FAQ Section -->
+<section class="py-24 px-12 bg-surface">
+<div class="max-w-4xl mx-auto">
+<div class="text-center mb-16">
+<h2 class="font-headline text-4xl mb-4" style="">Frequently Asked Questions</h2>
+<p class="text-on-surface-variant font-label uppercase tracking-widest text-xs" style="">Essentials &amp; Policies</p>
+</div>
+<div class="space-y-0">
+<!-- FAQ Item 1 -->
+<div class="py-8 border-b border-outline-variant group">
+<button class="w-full flex justify-between items-center text-left" style="">
+<span class="font-headline text-xl" style="">What is the booking process?</span>
+<span class="material-symbols-outlined text-secondary transition-transform group-hover:rotate-45" data-icon="add" style="">add</span>
+</button>
+<div class="mt-4 text-on-surface-variant leading-relaxed max-w-2xl text-sm" style="">
+                            Reservations can be made through our digital portal or via our concierge desk. We recommend booking at least 24 hours in advance to guarantee your preferred vehicle selection.
+                        </div>
+</div>
+<!-- FAQ Item 2 -->
+<div class="py-8 border-b border-outline-variant group">
+<button class="w-full flex justify-between items-center text-left" style="">
+<span class="font-headline text-xl" style="">How do you handle flight tracking?</span>
+<span class="material-symbols-outlined text-secondary transition-transform group-hover:rotate-45" data-icon="add" style="">add</span>
+</button>
+<div class="mt-4 text-on-surface-variant leading-relaxed max-w-2xl text-sm" style="">
+                            We utilize real-time flight telemetry. Your chauffeur will automatically adjust their arrival time based on actual landing schedules, ensuring a seamless exit from the terminal.
+                        </div>
+</div>
+<!-- FAQ Item 3 -->
+<div class="py-8 border-b border-outline-variant group">
+<button class="w-full flex justify-between items-center text-left" style="">
+<span class="font-headline text-xl" style="">What is the cancellation policy?</span>
+<span class="material-symbols-outlined text-secondary transition-transform group-hover:rotate-45" data-icon="add" style="">add</span>
+</button>
+<div class="mt-4 text-on-surface-variant leading-relaxed max-w-2xl text-sm" style="">
+                            Cancellations made more than 12 hours prior to the scheduled pick-up are eligible for a full refund. Late cancellations may incur a service fee.
+                        </div>
+</div>
+<!-- FAQ Item 4 -->
+<div class="py-8 border-b border-outline-variant group">
+<button class="w-full flex justify-between items-center text-left" style="">
+<span class="font-headline text-xl" style="">Accepted payment methods?</span>
+<span class="material-symbols-outlined text-secondary transition-transform group-hover:rotate-45" data-icon="add" style="">add</span>
+</button>
+<div class="mt-4 text-on-surface-variant leading-relaxed max-w-2xl text-sm" style="">
+                            We accept all major credit cards, corporate account billing, and secure digital payments. We accept Cash, Venmo, Cash App, Apple Pay, and all major debit and credit cards.
+                        </div>
+</div>
+<!-- FAQ Item 5 -->
+<div class="py-8 border-b border-outline-variant group">
+<button class="w-full flex justify-between items-center text-left" style="">
+<span class="font-headline text-xl" style="">Vehicle availability and passenger capacity?</span>
+<span class="material-symbols-outlined text-secondary transition-transform group-hover:rotate-45" data-icon="add" style="">add</span>
+</button>
+<div class="mt-4 text-on-surface-variant leading-relaxed max-w-2xl text-sm" style="">
+                            Our fleet includes SUVs (6 passengers), Black SUVs (up to 7 passengers). All vehicles are late-model and impeccably maintained.
+                        </div>
+</div>
+<!-- FAQ Item 6 -->
+<div class="py-8 border-b border-outline-variant group">
+<button class="w-full flex justify-between items-center text-left" style="">
+<span class="font-headline text-xl" style="">Which service areas do you cover?</span>
+<span class="material-symbols-outlined text-secondary transition-transform group-hover:rotate-45" data-icon="add" style="">add</span>
+</button>
+<div class="mt-4 text-on-surface-variant leading-relaxed max-w-2xl text-sm" style="">
+                            While we primarily serve the Seacoast and major metropolitan hubs, we offer long-distance interstate transfers upon request.
+                        </div>
+</div>
+</div>
+</div>
+</section>
+<!-- Signature Component: Itinerary Thread (Brief) -->
+<section class="py-16 px-12 bg-surface-container-low overflow-hidden">
+<div class="max-w-7xl mx-auto flex flex-col items-center">
+<div class="h-24 w-px bg-secondary opacity-30 mb-8"></div>
+<div class="w-3 h-3 rounded-full bg-primary mb-8 outline outline-4 outline-secondary/20"></div>
+<p class="font-headline text-2xl text-center italic max-w-xl" style="">"We are there when nobody is available to pick you up wheather is early morning or late night."</p>
+<div class="h-24 w-px bg-secondary opacity-30 mt-8"></div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="w-full py-16 px-12 bg-gray-100 dark:bg-[#1c1b1b] mt-auto">
+<div class="grid grid-cols-1 md:grid-cols-3 gap-12 max-w-7xl mx-auto">
+<div>
+<div class="text-xl font-bold text-black dark:text-white mb-6" style="">Seacoast RVIP</div>
+<p class="text-gray-600 dark:text-gray-400 font-body text-sm leading-relaxed" style="">Defining the gold standard in private travel. Uncompromising quality, absolute discretion.</p>
+</div>
+<div class="flex flex-col gap-4">
+<h4 class="font-label text-xs uppercase tracking-widest text-secondary font-semibold" style="">Explore</h4>
+<div class="flex flex-col gap-2">
+<a class="text-gray-600 dark:text-gray-400 hover:text-[#775a19] underline-offset-4 hover:underline transition-opacity duration-200" href="privacy.html" target="_blank" style="">Privacy Policy</a>
+<a class="text-gray-600 dark:text-gray-400 hover:text-[#775a19] underline-offset-4 hover:underline transition-opacity duration-200" href="terms.html" target="_blank" style="">Terms of Service</a>
+
+
+</div>
+</div>
+<div class="flex flex-col gap-6">
+<h4 class="font-label text-xs uppercase tracking-widest text-secondary font-semibold" style="">Newsletter</h4>
+<div class="flex gap-2">
+<input class="bg-transparent border-b border-outline-variant focus:border-secondary outline-none py-2 text-sm w-full" placeholder="Your email address" type="email">
+<button class="text-secondary" style=""><span class="material-symbols-outlined" data-icon="send" style="">send</span></button>
+</div>
+<p class="text-[10px] text-gra
