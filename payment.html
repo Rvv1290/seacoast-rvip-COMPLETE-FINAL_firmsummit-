@@ -334,25 +334,40 @@ function splitCSVLine(line) {
   return result;
 }
 
-// Fetch bookings from Google Sheet
+// Load bookings from localStorage (saved by admin panel)
 async function fetchBookings() {
-  if (SHEET_CSV_URL === 'YOUR_GOOGLE_SHEET_CSV_URL') {
-    // Demo mode — use sample data
-    allBookings = {
-      'RVIP-0001-TST': {name:'John',service:'Airport Transfer — Boston Logan',date:'April 2, 2025',time:'5:00 AM',pickup:'123 Main St, Hampton NH',destination:'Boston Logan Terminal B',vehicle:'Black SUV Luxury',passengers:'2',price:95},
-      'RVIP-0002-TST': {name:'Maria',service:'Night Out — Portsmouth',date:'April 5, 2025',time:'8:00 PM',pickup:'456 Ocean Blvd, Portsmouth NH',destination:'Downtown Portsmouth',vehicle:'Regular SUV',passengers:'3',price:45},
-    };
-    return true;
-  }
   try {
-    var res = await fetch(SHEET_CSV_URL);
-    var csv = await res.text();
-    allBookings = parseCSV(csv);
-    return true;
+    var raw = localStorage.getItem('rv-bks');
+    if (raw) {
+      var arr = JSON.parse(raw);
+      allBookings = {};
+      arr.forEach(function(b) {
+        if (b.code && b.status !== 'Cancelled') {
+          allBookings[b.code.toUpperCase()] = {
+            name: b.name || '',
+            service: b.service || '',
+            date: b.date || '',
+            time: b.time || '',
+            pickup: b.pickup || '',
+            destination: b.destination || '',
+            vehicle: b.vehicle || '',
+            passengers: b.passengers || '1',
+            price: parseFloat(b.price) || 0,
+          };
+        }
+      });
+      console.log('Loaded bookings:', Object.keys(allBookings));
+      return true;
+    }
   } catch(e) {
-    console.error('Sheet fetch failed:', e);
-    return false;
+    console.error('LocalStorage error:', e);
   }
+  // Fallback demo data for testing
+  allBookings = {
+    'RVIP-0001-TST': {name:'John',service:'Airport Transfer — Boston Logan',date:'April 2, 2025',time:'5:00 AM',pickup:'123 Main St, Hampton NH',destination:'Boston Logan Terminal B',vehicle:'Black SUV Luxury',passengers:'2',price:95},
+    'RVIP-0002-TST': {name:'Maria',service:'Night Out — Portsmouth',date:'April 5, 2025',time:'8:00 PM',pickup:'456 Ocean Blvd, Portsmouth NH',destination:'Downtown Portsmouth',vehicle:'Regular SUV',passengers:'3',price:45},
+  };
+  return true;
 }
 
 // On load — read code from URL then fetch sheet
