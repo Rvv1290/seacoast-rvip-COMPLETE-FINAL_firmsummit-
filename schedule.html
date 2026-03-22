@@ -115,7 +115,7 @@ body{font-family:'Inter',sans-serif;background-color:#f9f9f9}
     </div>
 
     <!-- FormSubmit — emails go directly to ramonvv202618@icloud.com -->
-    <form id="book-form" action="https://formsubmit.co/el/mamavu" method="POST" onsubmit="handleSubmit(event)" autocomplete="on">
+    <form id="book-form" action="https://formsubmit.co/ramonvv202618@icloud.com" method="POST" onsubmit="handleSubmit(event)" autocomplete="on">
       <input type="hidden" name="_subject" value="New Seacoast RVIP Booking Request"/>
       <input type="hidden" name="_replyto" id="reply-email"/>
       <input type="hidden" name="_cc" value="ramonvv202618@icloud.com"/>
@@ -671,7 +671,7 @@ function handleSubmit(e) {
   var fd = new FormData(form);
 
   // Submit to FormSubmit via fetch
-  fetch('https://formsubmit.co/el/mamavu', {
+  fetch('https://formsubmit.co/ramonvv202618@icloud.com', {
     method: 'POST',
     body: fd
   }).then(function(r) {
@@ -684,7 +684,7 @@ function handleSubmit(e) {
     setTimeout(function() {
       var f2 = document.createElement('form');
       f2.method = 'POST';
-      f2.action = 'https://formsubmit.co/el/mamavu';
+      f2.action = 'https://formsubmit.co/ramonvv202618@icloud.com';
       f2.style.display = 'none';
       var fd2 = new FormData(form);
       fd2.forEach(function(val, key) {
