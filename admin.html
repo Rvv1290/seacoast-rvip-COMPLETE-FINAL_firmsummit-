@@ -34,7 +34,7 @@ body{font-family:'Inter',sans-serif;background:#f3f3f3}
 <div id="toast-msg" class="toast-msg"></div>
 
 <!-- LOGIN -->
-<div id="login-screen" class="min-h-screen flex items-center justify-center p-4">
+<div id="login-screen" style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1rem">
   <div class="w-full max-w-xs">
     <div class="text-center mb-8">
       <div style="font-size:1.5rem;font-weight:700;letter-spacing:-0.02em">Seacoast RVIP</div>
@@ -50,7 +50,7 @@ body{font-family:'Inter',sans-serif;background:#f3f3f3}
 </div>
 
 <!-- DASHBOARD -->
-<div id="dash" class="hidden">
+<div id="dash" style="display:none">
 
   <!-- Top bar -->
   <div style="background:white;border-bottom:1px solid #e2e2e2">
@@ -242,10 +242,10 @@ function doLogin() {
     document.getElementById('pwd').value = '';
   }
 }
-function doLogout() { localStorage.removeItem('rv-auth'); location.reload(); }
+function doLogout() { localStorage.removeItem('rv-auth'); document.getElementById('dash').style.display='none'; document.getElementById('login-screen').style.display='flex'; document.getElementById('pwd').value=''; }
 function show() {
-  document.getElementById('login-screen').classList.add('hidden');
-  document.getElementById('dash').classList.remove('hidden');
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('dash').style.display='block';
   document.getElementById('today-date').textContent = new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
   render();
 }
@@ -479,8 +479,11 @@ function toast(msg) {
 });
 
 // Auto login
-window.addEventListener('load', function(){
+document.addEventListener('DOMContentLoaded', function(){
   if (localStorage.getItem('rv-auth')==='1') show();
+  // Focus password field
+  var p = document.getElementById('pwd');
+  if(p) p.focus();
 });
 </script>
 </body>
