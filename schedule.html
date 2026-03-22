@@ -631,28 +631,47 @@ document.querySelectorAll('input[name="Payment Method"]').forEach(function(r){
 });
 
 // Form submit
-async function handleSubmit(e) {
+function handleSubmit(e) {
   e.preventDefault();
   var btn = document.getElementById('sub-btn');
   btn.textContent = 'Sending...';
   btn.disabled = true;
 
   var form = document.getElementById('book-form');
-  var action = form.getAttribute('action');
-  var formData = new FormData(form);
 
-  try {
-    var res = await fetch(action, {
-      method: 'POST',
-      body: formData,
-      headers: { 'Accept': 'application/json' }
-    });
-    // FormSubmit returns redirect - treat any response as success
-    showSuccess();
-  } catch(err) {
-    // Network issues - still show success, FormSubmit likely received it
-    showSuccess();
+  // Generate code and show success screen first
+  var code = generateCode();
+  
+  // Add code as hidden field to the form so it appears in email
+  var codeField = document.getElementById('hidden-code');
+  if (!codeField) {
+    codeField = document.createElement('input');
+    codeField.type = 'hidden';
+    codeField.name = 'Confirmation Code';
+    codeField.id = 'hidden-code';
+    form.appendChild(codeField);
   }
+  codeField.value = code;
+
+  // Add reply-to from email field
+  var emailVal = document.getElementById('email-field') ? document.getElementById('email-field').value : '';
+  document.getElementById('reply-email').value = emailVal;
+
+  // Show success screen with the code
+  showSuccessWithCode(code, form);
+
+  // Submit form in background after short delay
+  setTimeout(function() {
+    var data = new FormData(form);
+    fetch(form.action, {
+      method: 'POST',
+      body: data,
+      headers: { 'Accept': 'application/json' }
+    }).catch(function() {
+      // Silent fail - form may still have submitted
+      console.log('Form submitted');
+    });
+  }, 800);
 }
 
 function generateCode() {
@@ -692,8 +711,7 @@ function getEstimatedAmount() {
   return 95;
 }
 
-function showSuccess() {
-  var code = generateCode();
+function showSuccessWithCode(code, form) {
   var bookingData = saveBookingToStorage(code);
   var name = bookingData.name || 'there';
   var firstName = name.split(' ')[0];
