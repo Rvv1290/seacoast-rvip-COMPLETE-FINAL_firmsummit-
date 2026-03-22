@@ -138,7 +138,7 @@ body{font-family:'Inter',sans-serif;background:#f9f9f9;margin:0;padding:0}
             <span style="color:white;font-weight:900;font-size:18px;font-family:sans-serif">V</span>
           </div>
           <span class="font-label text-sm font-bold uppercase tracking-wider text-primary">Venmo</span>
-          <span class="font-body text-xs text-on-surface-variant">@SeacoastRVIP</span>
+          <span class="font-body text-xs text-on-surface-variant">@Ramon-Vargas-83</span>
         </a>
 
         <a id="btn-cash" onclick="selectPay('cash');return false" href="#" class="pay-btn">
@@ -181,7 +181,7 @@ body{font-family:'Inter',sans-serif;background:#f9f9f9;margin:0;padding:0}
       <div class="space-y-3 mb-5">
         <div class="flex items-center gap-3">
           <span class="w-6 h-6 rounded-full bg-primary text-white font-bold text-xs flex items-center justify-center flex-shrink-0">1</span>
-          <p class="text-sm text-on-surface-variant">Search Venmo for <strong class="text-primary">@SeacoastRVIP</strong></p>
+          <p class="text-sm text-on-surface-variant">Search Venmo for <strong class="text-primary">@Ramon-Vargas-83</strong></p>
         </div>
         <div class="flex items-center gap-3">
           <span class="w-6 h-6 rounded-full bg-primary text-white font-bold text-xs flex items-center justify-center flex-shrink-0">2</span>
@@ -196,7 +196,7 @@ body{font-family:'Inter',sans-serif;background:#f9f9f9;margin:0;padding:0}
           <p class="text-sm text-on-surface-variant">Tap Send — done!</p>
         </div>
       </div>
-      <a id="venmo-btn" href="https://venmo.com/SeacoastRVIP" target="_blank" class="action-btn" style="background:#008CFF;color:white;border-bottom:4px solid #0070CC">
+      <a id="venmo-btn" href="https://venmo.com/u/Ramon-Vargas-83" target="_blank" class="action-btn" style="background:#008CFF;color:white;border-bottom:4px solid #0070CC">
         <span style="font-weight:900;font-size:20px">V</span>Open Venmo →
       </a>
     </div>
@@ -279,7 +279,7 @@ var SHEET_CSV_URL = 'YOUR_GOOGLE_SHEET_CSV_URL';
 
 // ⚠️ Replace with your Stripe Payment Link
 // dashboard.stripe.com → Payment Links → Create
-var STRIPE_LINK = 'https://buy.stripe.com/YOUR_STRIPE_LINK';
+var STRIPE_LINK = 'https://checkout.square.site/merchant/MLXF7THRGCXJC/checkout/JPSFJKF4BYHK7TB6HWPVZIYP?src=sheet';
 
 // ═══════════════════════════════════════════════════════════════
 
@@ -428,7 +428,7 @@ function renderPayment(code, b) {
 
   // Venmo deep link
   document.getElementById('venmo-btn').href =
-    'venmo://paycharge?txn=pay&recipients=SeacoastRVIP&amount=' + b.price + '&note=' + encodeURIComponent(code);
+    'venmo://paycharge?txn=pay&recipients=Ramon-Vargas-83&amount=' + b.price + '&note=' + encodeURIComponent(code);
 
   // Ride details
   var rows = [
