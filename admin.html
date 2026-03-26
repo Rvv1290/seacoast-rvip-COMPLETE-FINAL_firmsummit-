@@ -2,496 +2,392 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Seacoast RVIP Admin</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Seacoast RVIP — Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-<style>
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-body{font-family:'Inter',sans-serif;background:#f3f3f3;min-height:100vh}
-.material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 300,'GRAD' 0,'opsz' 24;font-size:16px;vertical-align:middle}
-button{cursor:pointer}
-a{text-decoration:none}
-
-/* LOGIN */
-#pg-login{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:1rem}
-.login-box{background:white;border-left:4px solid #775a19;padding:2rem;width:100%;max-width:320px}
-.login-title{text-align:center;margin-bottom:2rem}
-.login-title h1{font-size:1.5rem;font-weight:700}
-.login-title p{font-size:0.65rem;color:#999;text-transform:uppercase;letter-spacing:0.15em;margin-top:4px}
-.lbl{font-family:'Work Sans',sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:#888;display:block;margin-bottom:6px}
-.inp{width:100%;background:#f9f9f9;border:1.5px solid #e2e2e2;padding:0.75rem;font-family:'Inter',sans-serif;font-size:1rem;outline:none}
-.inp:focus{border-color:#775a19}
-#login-err{color:#dc2626;font-size:0.8rem;text-align:center;padding:0.5rem;display:none}
-.btn-login{width:100%;background:#000;color:white;font-family:'Work Sans',sans-serif;font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;padding:0.875rem;border:none;margin-top:1rem;border-bottom:3px solid #775a19}
-
-/* DASHBOARD */
-#pg-dash{display:none}
-.topbar{background:white;border-bottom:1px solid #e8e8e8;padding:0.75rem 1rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;position:sticky;top:0;z-index:10}
-.topbar-title{font-weight:700;font-size:1rem}
-.topbar-sub{font-size:0.6rem;color:#999;text-transform:uppercase;letter-spacing:0.1em}
-.stats{display:grid;grid-template-columns:repeat(5,1fr);background:white;border-bottom:1px solid #e8e8e8}
-.stat{padding:0.875rem 0.5rem;text-align:center;border-right:1px solid #f0f0f0}
-.stat:last-child{border:none}
-.stat-num{font-size:1.5rem;font-weight:700}
-.stat-lbl{font-size:0.55rem;text-transform:uppercase;letter-spacing:0.08em;color:#999;margin-top:2px}
-.tabs{display:flex;background:white;border-bottom:1px solid #e8e8e8;overflow-x:auto}
-.tab-btn{padding:0.75rem 1rem;font-family:'Work Sans',sans-serif;font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:#888;background:none;border:none;border-bottom:2px solid transparent;white-space:nowrap}
-.tab-btn.on{color:#000;border-bottom-color:#775a19}
-.content{padding:1rem;max-width:1000px;margin:0 auto}
-
-/* BUTTONS */
-.bg{background:#775a19;color:white;font-family:'Work Sans',sans-serif;font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;padding:0.5rem 0.875rem;border:none;display:inline-flex;align-items:center;gap:5px}
-.bd{background:#000;color:white;font-family:'Work Sans',sans-serif;font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;padding:0.5rem 0.875rem;border:none;display:inline-flex;align-items:center;gap:5px}
-.bo{background:white;color:#000;font-family:'Work Sans',sans-serif;font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;padding:0.5rem 0.875rem;border:1px solid #e2e2e2;display:inline-flex;align-items:center;gap:5px}
-.bgr{background:#16a34a;color:white;font-family:'Work Sans',sans-serif;font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;padding:0.5rem 0.875rem;border:none;display:inline-flex;align-items:center;gap:5px}
-.br{background:#dc2626;color:white;padding:0.4rem 0.6rem;border:none;display:inline-flex;align-items:center}
-
-/* BOOKING CARD */
-.bk-card{background:white;border-left:3px solid #775a19;padding:1rem;margin-bottom:0.75rem}
-.bk-name{font-weight:700;font-size:1rem}
-.bk-code{font-family:monospace;font-size:0.7rem;color:#775a19;background:#fdfaf4;padding:2px 6px;border:1px solid #e8c97a;margin-left:8px}
-.bk-meta{font-size:0.78rem;color:#555;margin-top:4px}
-.bk-price{font-size:1.75rem;font-weight:700;color:#775a19}
-.badge{display:inline-block;padding:2px 8px;font-size:0.65rem;font-family:'Work Sans',sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-left:6px}
-.b-pending{background:#fef9c3;color:#a16207}
-.b-confirmed{background:#dbeafe;color:#1d4ed8}
-.b-paid{background:#dcfce7;color:#15803d}
-.b-completed{background:#dcfce7;color:#15803d}
-.b-cancelled{background:#fee2e2;color:#dc2626}
-
-/* MODAL */
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:50;overflow-y:auto;padding:1rem;display:none}
-.modal{background:white;max-width:640px;margin:2rem auto}
-.modal-hd{padding:1rem 1.5rem;border-bottom:1px solid #e8e8e8;display:flex;justify-content:space-between;align-items:center}
-.modal-hd h2{font-weight:700;font-size:1rem}
-.modal-bd{padding:1.5rem}
-.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:0.875rem}
-.form-grid .full{grid-column:span 2}
-.flbl{font-family:'Work Sans',sans-serif;font-size:0.6rem;text-transform:uppercase;letter-spacing:0.08em;color:#888;display:block;margin-bottom:4px}
-.finp{width:100%;background:#f9f9f9;border:1px solid #e2e2e2;padding:0.6rem 0.75rem;font-family:'Inter',sans-serif;font-size:0.875rem;outline:none}
-.finp:focus{border-color:#775a19}
-.fsel{width:100%;background:#f9f9f9;border:1px solid #e2e2e2;padding:0.6rem 0.75rem;font-family:'Inter',sans-serif;font-size:0.875rem;outline:none;appearance:none}
-
-/* TOAST */
-#toast{position:fixed;top:1rem;right:1rem;z-index:200;background:#000;color:white;padding:0.75rem 1.25rem;font-family:'Work Sans',sans-serif;font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;border-left:3px solid #775a19;display:none}
-
-/* EMPTY */
-.empty{text-align:center;padding:3rem 0;color:#bbb}
-.empty .material-symbols-outlined{font-size:3rem;display:block;margin-bottom:0.75rem}
-.pf-row{display:flex;justify-content:space-between;align-items:center;padding:0.625rem 0;border-bottom:1px solid #f5f5f5;font-size:0.875rem}
-.pf-row:last-child{border:none}
-</style>
-<!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <style>
-.font-headline, h1.font-headline, h2.font-headline, h3.font-headline,
-nav .font-headline, footer .font-headline {
-  font-family: "Times New Roman", Times, Georgia, serif !important;
-}
+*{-webkit-tap-highlight-color:transparent}
+.material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 300,'GRAD' 0,'opsz' 24}
+body{font-family:'Inter',sans-serif;background:#f3f3f3}
+.card{background:white;border-left:3px solid #775a19}
+.btn-gold{background:#775a19;color:white;font-family:'Work Sans',sans-serif;font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;padding:0.625rem 1.25rem;border:none;cursor:pointer}
+.btn-dark{background:#000;color:white;font-family:'Work Sans',sans-serif;font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;padding:0.625rem 1.25rem;border:none;cursor:pointer}
+.btn-outline{background:white;color:#000;font-family:'Work Sans',sans-serif;font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;padding:0.625rem 1.25rem;border:1px solid #e2e2e2;cursor:pointer}
+.btn-green{background:#16a34a;color:white;font-family:'Work Sans',sans-serif;font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;padding:0.625rem 1.25rem;border:none;cursor:pointer}
+.btn-red{background:#dc2626;color:white;font-family:'Work Sans',sans-serif;font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;padding:0.625rem 1.25rem;border:none;cursor:pointer}
+.btn-purple{background:#7c3aed;color:white;font-family:'Work Sans',sans-serif;font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;padding:0.5rem 0.875rem;border:none;cursor:pointer}
+.f-in{width:100%;background:#f9f9f9;border:1px solid #e2e2e2;padding:0.625rem 0.75rem;font-family:'Inter',sans-serif;font-size:0.875rem;outline:none}
+.f-in:focus{border-color:#775a19}
+.f-sel{width:100%;background:#f9f9f9;border:1px solid #e2e2e2;padding:0.625rem 0.75rem;font-family:'Inter',sans-serif;font-size:0.875rem;outline:none;appearance:none}
+.badge{display:inline-flex;align-items:center;padding:2px 10px;font-size:11px;font-family:'Work Sans',sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:0.05em}
+.bg-green{background:#dcfce7;color:#15803d}
+.bg-yellow{background:#fef9c3;color:#a16207}
+.bg-red{background:#fee2e2;color:#dc2626}
+.bg-blue{background:#dbeafe;color:#1d4ed8}
+.bg-purple{background:#ede9fe;color:#6d28d9}
+.tab{padding:0.5rem 1rem;font-family:'Work Sans',sans-serif;font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;cursor:pointer;border-bottom:2px solid transparent;color:#888;background:none;border-left:none;border-right:none;border-top:none}
+.tab.active{color:#000;border-bottom-color:#775a19}
+@keyframes slideIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+.slide-in{animation:slideIn 0.25s ease}
+.toast{position:fixed;top:1rem;right:1rem;z-index:100;background:#000;color:white;padding:0.75rem 1.25rem;font-family:'Work Sans',sans-serif;font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;display:none;border-left:3px solid #775a19}
+.msg-card{background:white;border-left:3px solid #e2e2e2;padding:0.875rem 1rem;margin-bottom:0.5rem;cursor:pointer}
+.msg-card:hover{border-left-color:#775a19;background:#fafafa}
 </style>
 </head>
-<body>
-
-<div id="toast"></div>
+<body class="min-h-screen">
+<div id="toast" class="toast"></div>
 
 <!-- ═══ LOGIN ═══ -->
-<div id="pg-login">
-  <div>
-    <div class="login-title">
-      <h1>Seacoast RVIP</h1>
-      <p>Private Admin</p>
+<div id="login-screen" class="min-h-screen flex items-center justify-center p-4">
+  <div class="w-full max-w-sm">
+    <div class="text-center mb-8">
+      <h1 style="font-family:'Times New Roman',serif;font-size:1.5rem;font-weight:700">Seacoast RVIP</h1>
+      <p style="font-size:0.75rem;color:#888;text-transform:uppercase;letter-spacing:0.1em;margin-top:4px">Admin Dashboard</p>
     </div>
-    <div class="login-box">
-      <label class="lbl">Password</label>
-      <input class="inp" id="pwd" type="password" placeholder="Enter password" onkeydown="if(event.key==='Enter')doLogin()"/>
-      <div id="login-err">Wrong password. Please try again.</div>
-      <button class="btn-login" onclick="doLogin()">Enter Dashboard</button>
+    <div class="card p-8">
+      <div class="mb-4">
+        <label style="font-family:'Work Sans',sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:#888;display:block;margin-bottom:6px">Password</label>
+        <input id="pwd-input" type="password" class="f-in" placeholder="Enter password" onkeydown="if(event.key==='Enter')checkLogin()"/>
+      </div>
+      <div id="login-error" class="hidden mb-4 text-red-600 text-xs text-center">Wrong password. Try again.</div>
+      <button onclick="checkLogin()" class="btn-dark w-full" style="padding:0.875rem;font-size:0.8rem">Enter Dashboard →</button>
+      <p style="font-size:0.65rem;color:#bbb;text-align:center;margin-top:1rem">seacoastrvip.com/admin.html · Private</p>
     </div>
   </div>
 </div>
 
 <!-- ═══ DASHBOARD ═══ -->
-<div id="pg-dash" style="display:none">
+<div id="dashboard" class="hidden">
 
-  <!-- Top bar -->
-  <div class="topbar">
-    <div>
-      <div class="topbar-title">Seacoast RVIP</div>
-      <div class="topbar-sub">Admin Dashboard &nbsp;·&nbsp; <span id="today"></span></div>
-    </div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="bg" onclick="openAdd()"><span class="material-symbols-outlined">add</span>New Booking</button>
-      <button class="bo" onclick="doLogout()">Logout</button>
+  <!-- Header -->
+  <div style="background:white;border-bottom:1px solid #e2e2e2;padding:0 1rem">
+    <div class="max-w-7xl mx-auto flex justify-between items-center py-4">
+      <div>
+        <h1 style="font-family:'Times New Roman',serif;font-size:1.1rem;font-weight:700">Seacoast RVIP</h1>
+        <p style="font-size:0.7rem;color:#888;text-transform:uppercase;letter-spacing:0.08em">Admin · <span id="dash-date"></span></p>
+      </div>
+      <div class="flex items-center gap-3">
+        <button onclick="openAddBooking()" class="btn-gold flex items-center gap-2">
+          <span class="material-symbols-outlined" style="font-size:16px">add</span>New Booking
+        </button>
+        <button onclick="doLogout()" class="btn-outline">Logout</button>
+      </div>
     </div>
   </div>
 
   <!-- Stats -->
-  <div class="stats">
-    <div class="stat"><div id="s1" class="stat-num">0</div><div class="stat-lbl">Total</div></div>
-    <div class="stat"><div id="s2" class="stat-num" style="color:#775a19">0</div><div class="stat-lbl">Upcoming</div></div>
-    <div class="stat"><div id="s3" class="stat-num" style="color:#16a34a">$0</div><div class="stat-lbl">Collected</div></div>
-    <div class="stat"><div id="s4" class="stat-num" style="color:#d97706">0</div><div class="stat-lbl">Awaiting Pay</div></div>
-      <div class="stat"><div id="s5" class="stat-num" style="color:#7c3aed">0</div><div class="stat-lbl">Clients</div></div>
-  </div>
-
-  <!-- Tabs -->
-  <div class="tabs">
-    <button class="tab-btn on" onclick="setTab('all',this)">All</button>
-    <button class="tab-btn" onclick="setTab('upcoming',this)">Upcoming</button>
-    <button class="tab-btn" onclick="setTab('awaiting',this)">Awaiting Payment</button>
-    <button class="tab-btn" onclick="setTab('done',this)">Completed</button>
-    <button class="tab-btn" onclick="setTab('clients',this)" style="color:#775a19;font-weight:700">Clients ●</button>
-    <button class="tab-btn" onclick="setTab('messages',this)" style="color:#1d4ed8;font-weight:700">Messages ✉</button>
-  </div>
-
-  <!-- Bookings section -->
-  <div id="section-bookings" class="content">
-    <div id="bk-list"></div>
-    <div id="bk-empty" class="empty" style="display:none">
-      <span class="material-symbols-outlined">directions_car</span>
-      <div>No bookings yet</div>
-      <button class="bg" style="margin-top:1rem" onclick="openAdd()">Add First Booking</button>
-    </div>
-  </div>
-
-  <!-- Clients section -->
-  <div id="section-clients" class="content" style="display:none">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
-      <div>
-        <div style="font-family:'Times New Roman',serif;font-size:1.1rem;font-weight:700">Registered Clients</div>
-        <div style="font-size:0.75rem;color:#888;margin-top:2px">Clients who signed up via My Account</div>
+  <div style="background:white;border-bottom:1px solid #e2e2e2">
+    <div class="max-w-7xl mx-auto grid grid-cols-5" style="divide-color:#e2e2e2">
+      <div style="padding:1rem 1.5rem;text-align:center;border-right:1px solid #e2e2e2">
+        <p id="s-total" style="font-size:1.75rem;font-weight:700">0</p>
+        <p style="font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:#888">Total</p>
       </div>
-      <button onclick="loadClients()" class="bo" style="font-size:0.65rem;padding:0.375rem 0.75rem">
-        <span class="material-symbols-outlined" style="font-size:14px">refresh</span>Refresh
-      </button>
-    </div>
-    <div id="clients-list">
-      <div style="text-align:center;padding:3rem 0;color:#bbb">
-        <span class="material-symbols-outlined" style="font-size:2.5rem;display:block;margin-bottom:0.5rem">people</span>
-        <div style="font-size:0.8rem">Click Refresh to load clients</div>
+      <div style="padding:1rem 1.5rem;text-align:center;border-right:1px solid #e2e2e2">
+        <p id="s-upcoming" style="font-size:1.75rem;font-weight:700;color:#775a19">0</p>
+        <p style="font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:#888">Upcoming</p>
+      </div>
+      <div style="padding:1rem 1.5rem;text-align:center;border-right:1px solid #e2e2e2">
+        <p id="s-revenue" style="font-size:1.75rem;font-weight:700;color:#16a34a">$0</p>
+        <p style="font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:#888">Revenue</p>
+      </div>
+      <div style="padding:1rem 1.5rem;text-align:center;border-right:1px solid #e2e2e2">
+        <p id="s-pending" style="font-size:1.75rem;font-weight:700;color:#d97706">0</p>
+        <p style="font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:#888">Pending Pay</p>
+      </div>
+      <div style="padding:1rem 1.5rem;text-align:center">
+        <p id="s-clients" style="font-size:1.75rem;font-weight:700;color:#7c3aed">0</p>
+        <p style="font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:#888">Clients</p>
       </div>
     </div>
   </div>
 
-  <!-- ═══ MESSAGES SECTION ═══ -->
-  <div id="section-messages" class="content" style="display:none">
-    <div style="margin-bottom:1.5rem">
-      <div style="font-family:'Times New Roman',serif;font-size:1.1rem;font-weight:700;margin-bottom:4px">Message Templates</div>
-      <div style="font-size:0.75rem;color:#888">Tap any template to preview and send. Edit the message before sending.</div>
-    </div>
-    <div style="background:#fdfaf4;border:1px solid #e8c97a;padding:1rem;margin-bottom:1.5rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.75rem">
-      <div>
-        <div style="font-family:Work Sans,sans-serif;font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:#775a19;margin-bottom:2px">Broadcast to All Clients</div>
-        <div style="font-size:0.72rem;color:#888">Load Clients tab first, then use Send All on any template</div>
-      </div>
-      <div id="broadcast-count" style="font-family:Work Sans,sans-serif;font-size:0.7rem;font-weight:700;color:#775a19">Loading...</div>
-    </div>
-    <div id="msg-templates">
-      <div style="text-align:center;padding:2rem;color:#bbb;font-size:0.8rem">Loading templates...</div>
-    </div>
-  </div>
+  <div class="max-w-7xl mx-auto p-4">
 
+    <!-- Tabs -->
+    <div class="flex gap-0 mb-4" style="border-bottom:1px solid #e2e2e2;overflow-x:auto">
+      <button class="tab active" onclick="switchTab('all',this)">All</button>
+      <button class="tab" onclick="switchTab('upcoming',this)">Upcoming</button>
+      <button class="tab" onclick="switchTab('pending',this)">Awaiting Payment</button>
+      <button class="tab" onclick="switchTab('completed',this)">Completed</button>
+      <button class="tab" onclick="switchTab('clients',this)" style="color:#7c3aed">Clients ●</button>
+      <button class="tab" onclick="switchTab('messages',this)" style="color:#1d4ed8">Messages ✉</button>
+    </div>
+
+    <!-- Bookings section -->
+    <div id="section-bookings">
+      <div id="bookings-list"></div>
+      <div id="empty-state" class="hidden text-center py-20">
+        <span class="material-symbols-outlined" style="font-size:3rem;color:#ddd;display:block;margin-bottom:1rem">directions_car</span>
+        <p style="font-family:'Work Sans',sans-serif;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.1em;color:#bbb">No bookings yet</p>
+        <button onclick="openAddBooking()" class="btn-gold mt-4">Add First Booking</button>
+      </div>
+    </div>
+
+    <!-- Clients section -->
+    <div id="section-clients" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+        <div>
+          <div style="font-family:'Times New Roman',serif;font-size:1.1rem;font-weight:700">Registered Clients</div>
+          <div style="font-size:0.75rem;color:#888;margin-top:2px">Clients signed up via My Account</div>
+        </div>
+        <button onclick="loadClients()" class="btn-outline flex items-center gap-1" style="font-size:0.65rem">
+          <span class="material-symbols-outlined" style="font-size:14px">refresh</span>Refresh
+        </button>
+      </div>
+      <div id="clients-list">
+        <div style="text-align:center;padding:3rem 0;color:#bbb">
+          <span class="material-symbols-outlined" style="font-size:2.5rem;display:block;margin-bottom:0.5rem">people</span>
+          <div style="font-size:0.8rem">Click Refresh to load clients</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Messages section -->
+    <div id="section-messages" style="display:none">
+      <div style="margin-bottom:1.5rem">
+        <div style="font-family:'Times New Roman',serif;font-size:1.1rem;font-weight:700;margin-bottom:4px">Message Templates</div>
+        <div style="font-size:0.75rem;color:#888">Tap any message to open, edit, and send to clients.</div>
+      </div>
+      <div style="background:#fdfaf4;border:1px solid #e8c97a;padding:1rem;margin-bottom:1.5rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.75rem">
+        <div>
+          <div style="font-family:'Work Sans',sans-serif;font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:#775a19;margin-bottom:2px">Broadcast</div>
+          <div style="font-size:0.72rem;color:#888">Open any template → Send All to text every client</div>
+        </div>
+        <div id="broadcast-count" style="font-family:'Work Sans',sans-serif;font-size:0.8rem;font-weight:700;color:#775a19">— clients</div>
+      </div>
+      <div id="msg-templates"></div>
+    </div>
+
+  </div>
 </div>
-</div>
 
-<!-- ═══ ADD/EDIT MODAL ═══ -->
-<div class="overlay" id="m-add">
-  <div class="modal">
-    <div class="modal-hd">
-      <h2 id="m-add-ttl">New Booking</h2>
-      <button onclick="closeAdd()" style="background:none;border:none;font-size:1.25rem;color:#888">✕</button>
+<!-- ADD/EDIT BOOKING MODAL -->
+<div id="modal-overlay" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:50;overflow-y:auto;padding:1rem">
+  <div class="max-w-2xl mx-auto mt-8 mb-8 bg-white slide-in">
+    <div style="padding:1.25rem 1.5rem;border-bottom:1px solid #e2e2e2;display:flex;justify-content:space-between;align-items:center">
+      <h2 id="modal-title" style="font-family:'Times New Roman',serif;font-weight:700;font-size:1.1rem">New Booking</h2>
+      <button onclick="closeModal()" style="background:none;border:none;cursor:pointer;color:#888"><span class="material-symbols-outlined">close</span></button>
     </div>
-    <div class="modal-bd">
-      <input type="hidden" id="e-id"/>
-      <div class="form-grid">
-        <div><label class="flbl">Client Name *</label><input id="e-name" class="finp" placeholder="John Smith"/></div>
-        <div><label class="flbl">Phone *</label><input id="e-phone" class="finp" placeholder="Your phone number" type="tel"/></div>
-        <div><label class="flbl">Email</label><input id="e-email" class="finp" placeholder="client@email.com" type="email"/></div>
-        <div><label class="flbl">Service *</label>
-          <select id="e-service" class="fsel">
+    <div style="padding:1.5rem">
+      <input type="hidden" id="edit-id"/>
+      <div class="grid grid-cols-2 gap-4 mb-4">
+        <div><label style="font-family:'Work Sans',sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:#888;display:block;margin-bottom:5px">Client Name *</label><input id="f-name" class="f-in" placeholder="John Smith" type="text"/></div>
+        <div><label style="font-family:'Work Sans',sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:#888;display:block;margin-bottom:5px">Phone *</label><input id="f-phone" class="f-in" placeholder="Phone number" type="tel"/></div>
+        <div><label style="font-family:'Work Sans',sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:#888;display:block;margin-bottom:5px">Email</label><input id="f-email" class="f-in" placeholder="client@email.com" type="email"/></div>
+        <div><label style="font-family:'Work Sans',sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:#888;display:block;margin-bottom:5px">Service *</label>
+          <select id="f-service" class="f-sel">
             <option>Airport Transfer — Boston Logan</option>
             <option>Airport Transfer — Manchester MHT</option>
-            <option>Night Out</option>
-            <option>Casino Run</option>
-            <option>Special Event</option>
-            <option>Medical Appointment</option>
-            <option>Other</option>
+            <option>Night Out</option><option>Casino Run</option>
+            <option>Special Event</option><option>Medical Appointment</option><option>Other</option>
           </select>
         </div>
-        <div><label class="flbl">Date *</label><input id="e-date" class="finp" type="date"/></div>
-        <div><label class="flbl">Pickup Time *</label><input id="e-time" class="finp" type="time"/></div>
-        <div class="full"><label class="flbl">Pickup Address</label><input id="e-pickup" class="finp" placeholder="Full pickup address"/></div>
-        <div class="full"><label class="flbl">Destination</label><input id="e-dest" class="finp" placeholder="Airport, venue, or address"/></div>
-        <div><label class="flbl">Vehicle</label>
-          <select id="e-vehicle" class="fsel">
-            <option>Black SUV Luxury</option>
-            <option>Regular SUV</option>
-          </select>
+        <div><label style="font-family:'Work Sans',sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:#888;display:block;margin-bottom:5px">Date *</label><input id="f-date" class="f-in" type="date"/></div>
+        <div><label style="font-family:'Work Sans',sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:#888;display:block;margin-bottom:5px">Pickup Time</label><input id="f-time" class="f-in" type="time"/></div>
+        <div class="col-span-2"><label style="font-family:'Work Sans',sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:#888;display:block;margin-bottom:5px">Pickup Address</label><input id="f-pickup" class="f-in" placeholder="Full pickup address" type="text"/></div>
+        <div class="col-span-2"><label style="font-family:'Work Sans',sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:#888;display:block;margin-bottom:5px">Destination</label><input id="f-dest" class="f-in" placeholder="Airport, venue, or address" type="text"/></div>
+        <div><label style="font-family:'Work Sans',sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:#888;display:block;margin-bottom:5px">Vehicle</label>
+          <select id="f-vehicle" class="f-sel"><option>Black SUV Luxury</option><option>Regular Black SUV</option></select>
         </div>
-        <div><label class="flbl">Passengers</label>
-          <select id="e-pass" class="fsel">
-            <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6+</option>
-          </select>
+        <div><label style="font-family:'Work Sans',sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:#888;display:block;margin-bottom:5px">Passengers</label>
+          <select id="f-passengers" class="f-sel"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6+</option></select>
         </div>
-        <div><label class="flbl">💰 Price ($) *</label><input id="e-price" class="finp" placeholder="95" type="number" min="0" step="5"/></div>
-        <div><label class="flbl">Payment Method</label>
-          <select id="e-paymeth" class="fsel">
-            <option>Card / Apple Pay</option>
-            <option>Venmo</option>
-            <option>Cash on Arrival</option>
-          </select>
+        <div><label style="font-family:'Work Sans',sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:#888;display:block;margin-bottom:5px">💰 Price ($) *</label><input id="f-price" class="f-in" placeholder="145" type="number" min="0" step="5"/></div>
+        <div><label style="font-family:'Work Sans',sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:#888;display:block;margin-bottom:5px">Status</label>
+          <select id="f-status" class="f-sel"><option>Confirmed</option><option>Pending</option><option>Paid</option><option>Completed</option><option>Cancelled</option></select>
         </div>
-        <div><label class="flbl">Status</label>
-          <select id="e-status" class="fsel">
-            <option>Pending</option>
-            <option>Confirmed</option>
-            <option>Paid</option>
-            <option>Completed</option>
-            <option>Cancelled</option>
-          </select>
-        </div>
-        <div>
-          <label class="flbl">Confirmation Code</label>
-          <div style="display:flex;gap:6px">
-            <input id="e-code" class="finp" placeholder="RVIP-0000-XXX" style="font-family:monospace;letter-spacing:0.08em"/>
-            <button onclick="makeCode()" class="bo" style="padding:0.5rem 0.75rem;flex-shrink:0"><span class="material-symbols-outlined">refresh</span></button>
+        <div><label style="font-family:'Work Sans',sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:#888;display:block;margin-bottom:5px">Confirmation Code</label>
+          <div class="flex gap-2">
+            <input id="f-code" class="f-in" placeholder="RVIP-0000-XXX" type="text" style="font-family:monospace;letter-spacing:0.1em"/>
+            <button onclick="genCode()" class="btn-outline" style="white-space:nowrap;padding:0.625rem 0.75rem"><span class="material-symbols-outlined" style="font-size:16px">refresh</span></button>
           </div>
         </div>
-        <div class="full"><label class="flbl">Notes / Flight Number</label><input id="e-notes" class="finp" placeholder="Flight number, special requests..."/></div>
+        <div class="col-span-2"><label style="font-family:'Work Sans',sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:#888;display:block;margin-bottom:5px">Notes</label><input id="f-notes" class="f-in" placeholder="Flight number, special requests..." type="text"/></div>
       </div>
-      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:1.25rem">
-        <button onclick="closeAdd()" class="bo">Cancel</button>
-        <button onclick="saveBk()" class="bd" style="padding:0.75rem 2rem">Save Booking</button>
+      <div class="flex gap-3 justify-end">
+        <button onclick="closeModal()" class="btn-outline">Cancel</button>
+        <button onclick="saveBooking()" class="btn-dark" style="padding:0.75rem 2rem">Save Booking</button>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ═══ SEND PAYMENT MODAL ═══ -->
-<div class="overlay" id="m-pay">
-  <div class="modal" style="max-width:460px">
-    <div class="modal-hd">
-      <h2>Send Payment Link</h2>
-      <button onclick="closePay()" style="background:none;border:none;font-size:1.25rem;color:#888">✕</button>
+<!-- SEND PAYMENT MODAL -->
+<div id="pay-modal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:50;overflow-y:auto;padding:1rem">
+  <div class="max-w-lg mx-auto mt-16 bg-white slide-in">
+    <div style="padding:1.25rem 1.5rem;border-bottom:1px solid #e2e2e2;display:flex;justify-content:space-between;align-items:center">
+      <h2 style="font-family:'Times New Roman',serif;font-weight:700;font-size:1.1rem">Send Payment Link</h2>
+      <button onclick="closePayModal()" style="background:none;border:none;cursor:pointer;color:#888"><span class="material-symbols-outlined">close</span></button>
     </div>
-    <div class="modal-bd" id="m-pay-body"></div>
+    <div style="padding:1.5rem"><div id="pay-modal-content"></div></div>
+  </div>
+</div>
+
+<!-- ADD TO CLIENT MODAL -->
+<div id="history-modal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:50;overflow-y:auto;padding:1rem">
+  <div class="max-w-md mx-auto mt-20 bg-white slide-in">
+    <div style="padding:1.25rem 1.5rem;border-bottom:1px solid #e2e2e2;display:flex;justify-content:space-between;align-items:center">
+      <h2 style="font-family:'Times New Roman',serif;font-weight:700;font-size:1rem">Add Trip to Client Account</h2>
+      <button onclick="document.getElementById('history-modal').classList.add('hidden')" style="background:none;border:none;cursor:pointer;color:#888"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <div style="padding:1.5rem">
+      <div id="history-booking-info" style="background:#f9f9f9;border-left:3px solid #775a19;padding:1rem;margin-bottom:1.25rem;font-size:0.85rem"></div>
+      <label style="font-family:'Work Sans',sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:#888;display:block;margin-bottom:6px">Client Phone Number</label>
+      <input id="history-phone" type="tel" placeholder="Phone number" class="f-in" style="margin-bottom:1rem"/>
+      <label style="font-family:'Work Sans',sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:#888;display:block;margin-bottom:6px">Trip Status</label>
+      <select id="history-status" class="f-sel" style="margin-bottom:1.25rem">
+        <option value="completed">Completed — counts toward loyalty</option>
+        <option value="upcoming">Upcoming — not yet completed</option>
+        <option value="paid">Paid — waiting for ride</option>
+      </select>
+      <div id="history-error" style="display:none;color:#dc2626;font-size:0.8rem;margin-bottom:0.75rem;padding:0.5rem;background:#fef2f2;border-left:2px solid #dc2626"></div>
+      <div id="history-success" style="display:none;color:#15803d;font-size:0.8rem;margin-bottom:0.75rem;padding:0.75rem;background:#f0fdf4;border-left:2px solid #16a34a">✅ Trip added!</div>
+      <button onclick="saveToClientHistory()" class="btn-purple w-full" style="padding:0.875rem;font-size:0.8rem">Add to Client Account</button>
+    </div>
+  </div>
+</div>
+
+<!-- MESSAGE MODAL -->
+<div id="msg-modal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:50;overflow-y:auto;padding:1rem">
+  <div class="max-w-lg mx-auto mt-8 bg-white slide-in">
+    <div style="padding:1.25rem 1.5rem;border-bottom:1px solid #e2e2e2;display:flex;justify-content:space-between;align-items:center">
+      <h2 id="msg-modal-title" style="font-family:'Times New Roman',serif;font-weight:700;font-size:1rem">Send Message</h2>
+      <button onclick="document.getElementById('msg-modal').classList.add('hidden')" style="background:none;border:none;cursor:pointer;color:#888"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <div style="padding:1.5rem">
+      <label style="font-family:'Work Sans',sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:#888;display:block;margin-bottom:6px">Message (edit before sending)</label>
+      <textarea id="msg-text" rows="7" style="width:100%;background:#f9f9f9;border:1px solid #e2e2e2;border-bottom:2px solid #c4c7c7;padding:0.75rem;font-family:Inter,sans-serif;font-size:0.85rem;outline:none;resize:vertical;margin-bottom:1.25rem;box-sizing:border-box;line-height:1.6"></textarea>
+      <div style="margin-bottom:1rem">
+        <label style="font-family:'Work Sans',sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:#888;display:block;margin-bottom:6px">Send to specific client (or leave blank for broadcast)</label>
+        <div style="display:flex;gap:6px">
+          <select id="msg-client-sel" onchange="if(this.value)document.getElementById('msg-phone').value=this.value" style="flex:1;background:#f9f9f9;border:1px solid #e2e2e2;border-bottom:2px solid #c4c7c7;padding:0.625rem;font-family:Inter,sans-serif;font-size:0.8rem;outline:none;appearance:none">
+            <option value="">— Select client or type below —</option>
+          </select>
+          <button onclick="loadMsgClients()" class="btn-outline" style="padding:0.5rem 0.75rem;flex-shrink:0"><span class="material-symbols-outlined" style="font-size:14px">refresh</span></button>
+        </div>
+        <input id="msg-phone" type="tel" placeholder="Or type phone number directly" class="f-in" style="margin-top:8px"/>
+      </div>
+      <div id="msg-result" style="display:none;font-size:0.8rem;padding:0.75rem;margin-bottom:1rem;border-radius:2px"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.625rem;margin-bottom:0.625rem">
+        <button onclick="msgSendOne()" class="btn-dark" style="padding:0.875rem;font-size:0.65rem;display:flex;flex-direction:column;align-items:center;gap:3px"><span class="material-symbols-outlined" style="font-size:18px">sms</span>Text Client</button>
+        <a id="msg-wa-btn" href="#" target="_blank" class="btn-green" style="padding:0.875rem;font-size:0.65rem;display:flex;flex-direction:column;align-items:center;gap:3px;text-decoration:none"><span class="material-symbols-outlined" style="font-size:18px">chat</span>WhatsApp</a>
+        <button onclick="msgSendAll()" class="btn-gold" style="padding:0.875rem;font-size:0.65rem;display:flex;flex-direction:column;align-items:center;gap:3px"><span class="material-symbols-outlined" style="font-size:18px">group</span>Send All</button>
+      </div>
+      <button onclick="msgCopy()" class="btn-outline w-full" style="padding:0.75rem;font-size:0.65rem;display:flex;align-items:center;justify-content:center;gap:5px"><span class="material-symbols-outlined" style="font-size:15px">content_copy</span>Copy to Clipboard</button>
+      <p style="font-family:Inter,sans-serif;font-size:0.65rem;color:#bbb;text-align:center;margin-top:0.875rem">"Send All" opens your text app for each client one at a time.</p>
+    </div>
   </div>
 </div>
 
 <script>
-// ═══════════════════════════════════════════════════
-// CONFIG — CHANGE THESE
-var PWD  = 'seacoast2025';
-var SITE = 'https://seacoast-rvip-complete-final-firmsu.vercel.app';
+// ── CONFIG ───────────────────────────────────────────────
+var ADMIN_PWD = 'seacoast2025';
+var SITE_URL  = 'https://seacoast-rvip-complete-final-firmsu.vercel.app';
+var GOOGLE_REVIEW_LINK = 'https://g.page/r/YOUR_GOOGLE_REVIEW_LINK';
 
-// FIREBASE CONFIG
-// ⚠️ Replace with YOUR Firebase config after setup
-// Get it from: console.firebase.google.com
-// Project Settings → Your Apps → Web App → Config
 var FB_CONFIG = {
-  apiKey:            "AIzaSyDGel0ktZDQYcdlOuoZo4bAqZWCuGvOVbc",
-  authDomain:        "seacoast-rip.firebaseapp.com",
-  projectId:         "seacoast-rip",
-  storageBucket:     "seacoast-rip.firebasestorage.app",
-  messagingSenderId: "684535453116",
-  appId:             "1:684535453116:web:922c843b5bad3b81ad47b9"
+  apiKey:"AIzaSyDGel0ktZDQYcdlOuoZo4bAqZWCuGvOVbc",
+  authDomain:"seacoast-rip.firebaseapp.com",
+  projectId:"seacoast-rip",
+  storageBucket:"seacoast-rip.firebasestorage.app",
+  messagingSenderId:"684535453116",
+  appId:"1:684535453116:web:922c843b5bad3b81ad47b9"
 };
 
-// Firebase init for admin
-var db_fb = null;
+var db = null;
 try {
   if (!firebase.apps.length) firebase.initializeApp(FB_CONFIG);
-  else firebase.app();
-  db_fb = firebase.firestore();
-  console.log('✅ Firebase ready in admin');
+  db = firebase.firestore();
 } catch(e) { console.log('Firebase:', e); }
 
-// ═══════════════════════════════════════════════════
+var currentTab = 'all';
+var historyBooking = null;
 
-// Firebase state
-var db = null;
-var fbReady = false;
-
-function initFirebase() {
-  try {
-    firebase.initializeApp(FB_CONFIG);
-    db = firebase.firestore();
-    fbReady = true;
-    console.log('✅ Firebase connected');
-  } catch(e) {
-    console.log('Firebase not configured yet — using localStorage');
-    fbReady = false;
-  }
-}
-
-var activeTab = 'all';
-
-// ── LOGIN ──
-function doLogin() {
-  var v = document.getElementById('pwd').value;
-  if (v === PWD) {
-    localStorage.setItem('rv-auth','1');
-    goToDash();
+// ── LOGIN ─────────────────────────────────────────────────
+function checkLogin() {
+  var pwd = document.getElementById('pwd-input').value;
+  if (pwd === ADMIN_PWD) {
+    localStorage.setItem('rvip-admin','1');
+    document.getElementById('login-screen').classList.add('hidden');
+    document.getElementById('dashboard').classList.remove('hidden');
+    initDash();
   } else {
-    document.getElementById('login-err').style.display = 'block';
-    document.getElementById('pwd').value = '';
-    document.getElementById('pwd').focus();
+    document.getElementById('login-error').classList.remove('hidden');
+    document.getElementById('pwd-input').value='';
   }
 }
+function doLogout() { localStorage.removeItem('rvip-admin'); location.reload(); }
 
-async function goToDash() {
-  document.getElementById('pg-login').style.display = 'none';
-  document.getElementById('pg-dash').style.display = 'block';
-  document.getElementById('today').textContent = new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
-  // Load from Firebase if connected
-  if (fbReady) {
-    toast('Loading bookings...');
-    await fbLoad();
-    // Sync all local bookings to Firebase
-    var bks = getBks();
-    bks.forEach(function(bk){ fbSaveBooking(bk); });
-  }
-  render();
+// ── STORAGE ───────────────────────────────────────────────
+function getBks() { try { return JSON.parse(localStorage.getItem('rvip-bookings')||'[]'); } catch(e){ return []; } }
+function setBks(b) { localStorage.setItem('rvip-bookings', JSON.stringify(b)); }
+
+// ── INIT ──────────────────────────────────────────────────
+function initDash() {
+  document.getElementById('dash-date').textContent = new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+  renderAll();
+  if (db) syncBksToFirebase();
 }
 
-function doLogout() {
-  localStorage.removeItem('rv-auth');
-  document.getElementById('pg-dash').style.display = 'none';
-  document.getElementById('pg-login').style.display = 'flex';
-  document.getElementById('pwd').value = '';
-}
-
-// ── DATA — Firebase + localStorage fallback ──
-function getBks() {
-  try { return JSON.parse(localStorage.getItem('rv-bks') || '[]'); }
-  catch(e) { return []; }
-}
-function setBks(b) {
-  localStorage.setItem('rv-bks', JSON.stringify(b));
-}
-
-// Save booking to Firebase (both collections for compatibility)
-async function fbSave(bk) {
-  if (!fbReady) return;
-  try {
-    await db.collection('bookings').doc(bk.id).set(bk);
-  } catch(e) { console.error('fbSave:', e); }
-}
-
-async function fbSaveBooking(bk) {
-  if (!db_fb && !fbReady) return;
-  var db_use = db_fb || db;
-  if (!db_use) return;
-  try {
-    // Save to bookings collection with code as searchable field
-    var bookingData = {
-      id: bk.id,
-      code: (bk.code||'').toUpperCase(),
-      name: bk.name||'',
-      clientName: bk.name||'',
-      phone: bk.phone||'',
-      email: bk.email||'',
-      service: bk.service||'',
-      date: bk.date||'',
-      time: bk.time||'',
-      pickup: bk.pickup||'',
-      destination: bk.destination||'',
-      vehicle: bk.vehicle||'',
-      passengers: bk.passengers||'1',
-      price: parseFloat(bk.price)||0,
-      paymentMethod: bk.paymentMethod||'',
-      status: bk.status||'Confirmed',
-      notes: bk.notes||'',
-      updatedAt: new Date().toISOString()
-    };
-    await db_use.collection('bookings').doc(bk.id).set(bookingData, {merge:true});
-    console.log('✅ Booking synced to Firestore:', bk.code);
-  } catch(e) {
-    console.error('fbSaveBooking error:', e.code, e.message);
-  }
-}
-
-// Delete from Firebase
-async function fbDelete(id) {
-  if (!fbReady) return;
-  try {
-    await db.collection('bookings').doc(id).delete();
-  } catch(e) {
-    console.error('Firebase delete error:', e);
-  }
-}
-
-// Load all bookings from Firebase
-async function fbLoad() {
-  if (!fbReady) return false;
-  try {
-    var snap = await db.collection('bookings').get();
-    var bks = [];
-    snap.forEach(function(doc) { bks.push(doc.data()); });
-    localStorage.setItem('rv-bks', JSON.stringify(bks));
-    console.log('✅ Loaded '+bks.length+' bookings from Firebase');
-    return true;
-  } catch(e) {
-    console.error('Firebase load error:', e);
-    return false;
-  }
-}
-
-// ── RENDER ──
-function render() {
+function renderAll() {
   var bks = getBks();
-  var up = bks.filter(function(b){ return b.status==='Pending'||b.status==='Confirmed'; }).length;
-  var rev = bks.filter(function(b){ return b.status==='Paid'||b.status==='Completed'; }).reduce(function(s,b){ return s+(parseFloat(b.price)||0); },0);
-  var aw = bks.filter(function(b){ return b.status==='Confirmed'; }).length;
-  document.getElementById('s1').textContent = bks.length;
-  document.getElementById('s2').textContent = up;
-  document.getElementById('s3').textContent = '$'+rev.toFixed(0);
-  document.getElementById('s4').textContent = aw;
+  updateStats(bks);
+  renderBks(bks, currentTab);
+}
 
-  var f = bks.filter(function(b){
-    if(activeTab==='all') return true;
-    if(activeTab==='upcoming') return b.status==='Pending'||b.status==='Confirmed';
-    if(activeTab==='awaiting') return b.status==='Confirmed';
-    if(activeTab==='done') return b.status==='Paid'||b.status==='Completed';
+function updateStats(bks) {
+  var upcoming = bks.filter(function(b){ return b.status==='Confirmed'||b.status==='Pending'; }).length;
+  var revenue = bks.filter(function(b){ return b.status==='Paid'||b.status==='Completed'; }).reduce(function(s,b){ return s+(parseFloat(b.price)||0); },0);
+  var pending = bks.filter(function(b){ return b.status==='Confirmed'; }).length;
+  document.getElementById('s-total').textContent = bks.length;
+  document.getElementById('s-upcoming').textContent = upcoming;
+  document.getElementById('s-revenue').textContent = '$'+revenue.toFixed(0);
+  document.getElementById('s-pending').textContent = pending;
+  if (db) db.collection('clients').get().then(function(s){ document.getElementById('s-clients').textContent = s.size; }).catch(function(){});
+}
+
+function renderBks(bks, tab) {
+  var filtered = bks.filter(function(b){
+    if (tab==='all') return true;
+    if (tab==='upcoming') return b.status==='Confirmed'||b.status==='Pending';
+    if (tab==='pending') return b.status==='Confirmed';
+    if (tab==='completed') return b.status==='Completed'||b.status==='Paid';
     return true;
   }).sort(function(a,b){ return new Date(a.date)-new Date(b.date); });
 
-  var el = document.getElementById('bk-list');
-  var em = document.getElementById('bk-empty');
+  var list = document.getElementById('bookings-list');
+  var empty = document.getElementById('empty-state');
 
-  if (!f.length) { el.innerHTML=''; em.style.display='block'; return; }
-  em.style.display='none';
+  if (!filtered.length) { list.innerHTML=''; empty.classList.remove('hidden'); return; }
+  empty.classList.add('hidden');
 
-  var bc = {Pending:'b-pending',Confirmed:'b-confirmed',Paid:'b-paid',Completed:'b-completed',Cancelled:'b-cancelled'};
-
-  el.innerHTML = f.map(function(b){
-    return '<div class="bk-card">'+
-      '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap">'+
-        '<div style="flex:1;min-width:200px">'+
-          '<div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;margin-bottom:6px">'+
-            '<span class="bk-name">'+b.name+'</span>'+
-            '<span class="badge '+(bc[b.status]||'b-pending')+'">'+b.status+'</span>'+
-            '<span class="bk-code">'+b.code+'</span>'+
+  var sc = {'Pending':'bg-yellow','Confirmed':'bg-blue','Paid':'bg-green','Completed':'bg-green','Cancelled':'bg-red'};
+  list.innerHTML = filtered.map(function(b){
+    var payLink = SITE_URL+'/payment.html?code='+encodeURIComponent(b.code);
+    return '<div class="card p-4 mb-3 slide-in">'+
+      '<div class="flex justify-between items-start flex-wrap gap-3">'+
+        '<div class="flex-1">'+
+          '<div class="flex items-center gap-3 mb-2 flex-wrap">'+
+            '<span style="font-weight:700;font-size:1rem">'+b.name+'</span>'+
+            '<span class="badge '+(sc[b.status]||'bg-yellow')+'">'+b.status+'</span>'+
+            '<span style="font-family:monospace;font-size:0.75rem;color:#775a19;background:#fdfaf4;padding:2px 8px;border:1px solid #e8c97a">'+b.code+'</span>'+
           '</div>'+
-          '<div class="bk-meta"><span class="material-symbols-outlined">calendar_today</span> '+b.date+' at '+ft(b.time)+'</div>'+
-          '<div class="bk-meta"><span class="material-symbols-outlined">directions_car</span> '+b.service+'</div>'+
-          (b.pickup?'<div class="bk-meta"><span class="material-symbols-outlined">location_on</span> '+b.pickup+' → '+b.destination+'</div>':'')+
-          '<div class="bk-meta"><span class="material-symbols-outlined">phone</span> '+b.phone+(b.email?' · '+b.email:'')+'</div>'+
-          (b.notes?'<div class="bk-meta" style="color:#888">📝 '+b.notes+'</div>':'')+
+          '<div style="font-size:0.8rem;color:#555;margin-bottom:3px"><span class="material-symbols-outlined" style="font-size:14px;vertical-align:middle;margin-right:4px">calendar_today</span>'+b.date+' at '+fmtTime(b.time)+'</div>'+
+          '<div style="font-size:0.8rem;color:#555;margin-bottom:3px"><span class="material-symbols-outlined" style="font-size:14px;vertical-align:middle;margin-right:4px">directions_car</span>'+b.service+'</div>'+
+          '<div style="font-size:0.8rem;color:#555;margin-bottom:3px"><span class="material-symbols-outlined" style="font-size:14px;vertical-align:middle;margin-right:4px">location_on</span>'+b.pickup+' → '+b.destination+'</div>'+
+          '<div style="font-size:0.8rem;color:#555"><span class="material-symbols-outlined" style="font-size:14px;vertical-align:middle;margin-right:4px">phone</span>'+b.phone+(b.email?' · '+b.email:'')+'</div>'+
         '</div>'+
         '<div style="text-align:right;flex-shrink:0">'+
-          '<div class="bk-price">$'+b.price+'</div>'+
-          '<div style="font-size:0.7rem;color:#888;margin-bottom:10px">'+b.paymentMethod+'</div>'+
+          '<div style="font-size:1.75rem;font-weight:700;color:#775a19;margin-bottom:8px">$'+(b.price||'—')+'</div>'+
           '<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">'+
-            '<button class="bg" onclick="openPay(\''+b.id+'\')"><span class="material-symbols-outlined">send</span>Send Link</button>'+
-            '<button style="background:#1d4ed8;color:white;font-family:Work Sans,sans-serif;font-size:0.7rem;font-weight:600;text-transform:uppercase;padding:0.5rem 0.875rem;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:4px" onclick="openReminder(\''+b.id+'\')">' +
-            '<span class="material-symbols-outlined" style="font-size:14px">notifications</span>Reminder</button>'+
-            '<button style="background:#7c3aed;color:white;font-family:Work Sans,sans-serif;font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;padding:0.5rem 0.625rem;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:3px" onclick=\"openAddToHistory(\'"+b.id+"\')\">'+'<span class=\"material-symbols-outlined\" style=\"font-size:13px\">person_add</span>Client</button>'+
-            '<button class="bo" onclick="editBk(\''+b.id+'\')"><span class="material-symbols-outlined">edit</span></button>'+
-            '<button class="br" onclick="delBk(\''+b.id+'\')"><span class="material-symbols-outlined">delete</span></button>'+
+            '<button onclick="openPay(''+b.id+'')" class="btn-gold flex items-center gap-1"><span class="material-symbols-outlined" style="font-size:14px">send</span>Send</button>'+
+            '<button onclick="openAddToHistory(''+b.id+'')" class="btn-purple flex items-center gap-1"><span class="material-symbols-outlined" style="font-size:13px">person_add</span>Client</button>'+
+            '<button onclick="editBk(''+b.id+'')" class="btn-outline"><span class="material-symbols-outlined" style="font-size:14px">edit</span></button>'+
+            '<button onclick="delBk(''+b.id+'')" class="btn-red"><span class="material-symbols-outlined" style="font-size:14px">delete</span></button>'+
           '</div>'+
         '</div>'+
       '</div>'+
@@ -499,748 +395,474 @@ function render() {
   }).join('');
 }
 
-function ft(t) {
-  if(!t) return '';
-  try { var p=t.split(':'),h=parseInt(p[0]),m=p[1],a=h>=12?'PM':'AM'; h=h%12||12; return h+':'+m+' '+a; }
-  catch(e){ return t; }
+function fmtTime(t) {
+  if (!t) return '';
+  try { var p=t.split(':'),h=parseInt(p[0]),m=p[1],ap=h>=12?'PM':'AM'; h=h%12||12; return h+':'+m+' '+ap; } catch(e){ return t; }
 }
 
-function setTab(tab,btn) {
-  activeTab=tab;
-  document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.remove('on'); });
-  btn.classList.add('on');
-  render();
+// ── TABS ──────────────────────────────────────────────────
+function switchTab(tab, btn) {
+  currentTab = tab;
+  document.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('active'); });
+  btn.classList.add('active');
+  ['bookings','clients','messages'].forEach(function(s){
+    document.getElementById('section-'+s).style.display = 'none';
+  });
+  if (tab==='clients') { document.getElementById('section-clients').style.display='block'; loadClients(); }
+  else if (tab==='messages') { document.getElementById('section-messages').style.display='block'; renderMsgTemplates(); loadBroadcastCount(); }
+  else { document.getElementById('section-bookings').style.display='block'; renderBks(getBks(), tab); }
 }
 
-// ── ADD/EDIT ──
-function openAdd() {
-  document.getElementById('m-add-ttl').textContent = 'New Booking';
-  document.getElementById('e-id').value = '';
-  ['e-name','e-phone','e-email','e-date','e-time','e-pickup','e-dest','e-price','e-code','e-notes'].forEach(function(id){ document.getElementById(id).value=''; });
-  document.getElementById('e-status').value = 'Confirmed';
-  makeCode();
-  document.getElementById('m-add').style.display = 'block';
+// ── ADD/EDIT BOOKING ──────────────────────────────────────
+function openAddBooking() {
+  document.getElementById('modal-title').textContent = 'New Booking';
+  document.getElementById('edit-id').value = '';
+  ['f-name','f-phone','f-email','f-date','f-time','f-pickup','f-dest','f-price','f-code','f-notes'].forEach(function(id){ document.getElementById(id).value=''; });
+  document.getElementById('f-status').value = 'Confirmed';
+  genCode();
+  document.getElementById('modal-overlay').classList.remove('hidden');
 }
 
 function editBk(id) {
   var b = getBks().find(function(x){ return x.id===id; });
   if (!b) return;
-  document.getElementById('m-add-ttl').textContent = 'Edit Booking';
-  document.getElementById('e-id').value = id;
-  document.getElementById('e-name').value = b.name||'';
-  document.getElementById('e-phone').value = b.phone||'';
-  document.getElementById('e-email').value = b.email||'';
-  document.getElementById('e-service').value = b.service||'';
-  document.getElementById('e-date').value = b.date||'';
-  document.getElementById('e-time').value = b.time||'';
-  document.getElementById('e-pickup').value = b.pickup||'';
-  document.getElementById('e-dest').value = b.destination||'';
-  document.getElementById('e-vehicle').value = b.vehicle||'Black SUV Luxury';
-  document.getElementById('e-pass').value = b.passengers||'1';
-  document.getElementById('e-price').value = b.price||'';
-  document.getElementById('e-paymeth').value = b.paymentMethod||'Card / Apple Pay';
-  document.getElementById('e-status').value = b.status||'Confirmed';
-  document.getElementById('e-code').value = b.code||'';
-  document.getElementById('e-notes').value = b.notes||'';
-  document.getElementById('m-add').style.display = 'block';
+  document.getElementById('modal-title').textContent = 'Edit Booking';
+  document.getElementById('edit-id').value = id;
+  document.getElementById('f-name').value = b.name||'';
+  document.getElementById('f-phone').value = b.phone||'';
+  document.getElementById('f-email').value = b.email||'';
+  document.getElementById('f-service').value = b.service||'';
+  document.getElementById('f-date').value = b.date||'';
+  document.getElementById('f-time').value = b.time||'';
+  document.getElementById('f-pickup').value = b.pickup||'';
+  document.getElementById('f-dest').value = b.destination||'';
+  document.getElementById('f-vehicle').value = b.vehicle||'';
+  document.getElementById('f-passengers').value = b.passengers||'1';
+  document.getElementById('f-price').value = b.price||'';
+  document.getElementById('f-status').value = b.status||'Confirmed';
+  document.getElementById('f-code').value = b.code||'';
+  document.getElementById('f-notes').value = b.notes||'';
+  document.getElementById('modal-overlay').classList.remove('hidden');
 }
 
-function closeAdd() { document.getElementById('m-add').style.display = 'none'; }
+function closeModal() { document.getElementById('modal-overlay').classList.add('hidden'); }
 
-function makeCode() {
-  var c='ABCDEFGHJKLMNPQRSTUVWXYZ';
-  var n=String(Math.floor(Math.random()*9000)+1000);
-  var r=c[Math.floor(Math.random()*c.length)]+c[Math.floor(Math.random()*c.length)]+c[Math.floor(Math.random()*c.length)];
-  document.getElementById('e-code').value='RVIP-'+n+'-'+r;
+function genCode() {
+  var ch='ABCDEFGHJKLMNPQRSTUVWXYZ', n=String(Math.floor(Math.random()*9000)+1000);
+  var r=ch[Math.floor(Math.random()*ch.length)]+ch[Math.floor(Math.random()*ch.length)]+ch[Math.floor(Math.random()*ch.length)];
+  document.getElementById('f-code').value='RVIP-'+n+'-'+r;
 }
 
-function saveBk() {
-  var nm=document.getElementById('e-name').value.trim();
-  var ph=document.getElementById('e-phone').value.trim();
-  var pr=document.getElementById('e-price').value.trim();
-  var dt=document.getElementById('e-date').value.trim();
-  if(!nm||!ph||!pr||!dt){ toast('Fill in Name, Phone, Price and Date'); return; }
+function saveBooking() {
+  var name=document.getElementById('f-name').value.trim();
+  var phone=document.getElementById('f-phone').value.trim();
+  var price=document.getElementById('f-price').value.trim();
+  var date=document.getElementById('f-date').value.trim();
+  if (!name||!phone||!price||!date) { showToast('Please fill required fields'); return; }
 
-  var bks=getBks(), eid=document.getElementById('e-id').value;
+  var bks=getBks(), eid=document.getElementById('edit-id').value;
   var bk={
     id:eid||Date.now().toString(),
-    name:nm, phone:ph,
-    email:document.getElementById('e-email').value.trim(),
-    service:document.getElementById('e-service').value,
-    date:dt, time:document.getElementById('e-time').value,
-    pickup:document.getElementById('e-pickup').value.trim(),
-    destination:document.getElementById('e-dest').value.trim(),
-    vehicle:document.getElementById('e-vehicle').value,
-    passengers:document.getElementById('e-pass').value,
-    price:parseFloat(pr),
-    paymentMethod:document.getElementById('e-paymeth').value,
-    status:document.getElementById('e-status').value,
-    code:document.getElementById('e-code').value.trim(),
-    notes:document.getElementById('e-notes').value.trim(),
+    name:name, phone:phone, email:document.getElementById('f-email').value.trim(),
+    service:document.getElementById('f-service').value, date:date,
+    time:document.getElementById('f-time').value,
+    pickup:document.getElementById('f-pickup').value.trim(),
+    destination:document.getElementById('f-dest').value.trim(),
+    vehicle:document.getElementById('f-vehicle').value,
+    passengers:document.getElementById('f-passengers').value,
+    price:parseFloat(price),
+    status:document.getElementById('f-status').value,
+    code:document.getElementById('f-code').value.trim(),
+    notes:document.getElementById('f-notes').value.trim(),
+    createdAt:eid?(bks.find(function(b){return b.id===eid;})||{}).createdAt:new Date().toISOString()
   };
 
-  if(eid){ var i=bks.findIndex(function(b){ return b.id===eid; }); if(i>-1) bks[i]=bk; }
+  if (eid) { var idx=bks.findIndex(function(b){return b.id===eid;}); if(idx>-1)bks[idx]=bk; }
   else bks.push(bk);
 
   setBks(bks);
-  // Save to Firebase bookings collection (so payment page can read it)
-  fbSaveBooking(bk);
-  closeAdd();
-  render();
-  toast(eid ? 'Updated! ☁️' : 'Booking saved! ☁️');
+  if (db) syncBkToFirebase(bk);
+  closeModal();
+  renderAll();
+  showToast(eid?'Updated!':'Booking saved! ☁️');
 }
 
 function delBk(id) {
-  if(!confirm('Delete this booking?')) return;
-  setBks(getBks().filter(function(b){ return b.id!==id; }));
-  fbDelete(id);
-  render();
-  toast('Deleted');
+  if (!confirm('Delete this booking?')) return;
+  setBks(getBks().filter(function(b){return b.id!==id;}));
+  if (db) db.collection('bookings').doc(id).delete().catch(function(){});
+  renderAll();
+  showToast('Deleted');
 }
 
-// ── SEND PAYMENT ──
+// ── FIREBASE SYNC ─────────────────────────────────────────
+async function syncBkToFirebase(bk) {
+  if (!db) return;
+  try {
+    await db.collection('bookings').doc(bk.id).set(Object.assign({}, bk, {
+      code: (bk.code||'').toUpperCase()
+    }), {merge:true});
+    console.log('✅ Synced:', bk.code);
+  } catch(e) { console.log('Sync error:', e); }
+}
+
+async function syncBksToFirebase() {
+  var bks = getBks();
+  bks.forEach(function(bk){ syncBkToFirebase(bk); });
+}
+
+// ── SEND PAYMENT ──────────────────────────────────────────
 function openPay(id) {
-  var b=getBks().find(function(x){ return x.id===id; });
-  if(!b) return;
+  var b=getBks().find(function(x){return x.id===id;}); if(!b) return;
+  var payLink=SITE_URL+'/payment.html?code='+encodeURIComponent(b.code);
+  var sms='Hi '+b.name.split(' ')[0]+'! Your Seacoast RVIP ride is confirmed for '+b.date+' at '+fmtTime(b.time)+'.
 
-  // Clean short URL — booking data stored in Firebase cloud
-  var link = SITE+'/payment.html?code='+encodeURIComponent(b.code);
-  var fn = b.name.split(' ')[0];
-  var msg = 'Hi '+fn+'! Your Seacoast RVIP ride is confirmed for '+b.date+' at '+ft(b.time)+'.\n\n'+
-    'Total: $'+b.price+'\n\n'+
-    'Tap the link below to complete your payment:\n'+
-    link+'\n\n'+
-    'Questions? Call or text (603) 000-0000\n'+
-    'See you soon! — Seacoast RVIP';
+Fare: $'+b.price+'
+Pay here: '+payLink+'
 
-  document.getElementById('m-pay-body').innerHTML =
-    '<div style="background:#f9f9f9;border:1px solid #e2e2e2;padding:0.875rem;margin-bottom:1rem">'+
-      '<div style="font-weight:700">'+b.name+'</div>'+
-      '<div style="font-size:0.8rem;color:#555">'+b.phone+'</div>'+
-      '<div style="font-size:0.8rem;color:#555">'+(b.email||'No email')+'</div>'+
+Code: '+b.code+'
+
+— Ramon (987) 416-3283';
+  document.getElementById('pay-modal-content').innerHTML=
+    '<div style="background:#f9f9f9;border:1px solid #e2e2e2;padding:1rem;margin-bottom:1.25rem">'+
+      '<div style="font-weight:700;font-size:1rem;margin-bottom:4px">'+b.name+'</div>'+
+      '<div style="font-size:0.8rem;color:#555">'+b.phone+' · '+b.date+'</div>'+
+      '<div style="font-size:0.8rem;color:#555">'+b.service+' · $'+b.price+'</div>'+
     '</div>'+
-    '<div style="background:#fdfaf4;border:1px solid #e8c97a;padding:1rem;margin-bottom:1rem;text-align:center">'+
-      '<div style="font-size:0.6rem;text-transform:uppercase;letter-spacing:0.1em;color:#775a19;margin-bottom:4px">Payment Link</div>'+
-      '<div style="font-size:0.7rem;color:#555;word-break:break-all;margin-bottom:6px">'+link+'</div>'+
+    '<div style="background:#fdfaf4;border:1px solid #e8c97a;padding:1rem;margin-bottom:1.25rem;text-align:center">'+
+      '<div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:#775a19;margin-bottom:4px">Payment Link</div>'+
+      '<div style="font-size:0.75rem;color:#555;word-break:break-all;margin-bottom:0.75rem">'+payLink+'</div>'+
       '<div style="font-size:2rem;font-weight:700">$'+b.price+'</div>'+
     '</div>'+
-    '<textarea id="msg-txt" style="width:100%;background:#f9f9f9;border:1px solid #e2e2e2;padding:0.75rem;font-size:0.8rem;font-family:Inter,sans-serif;height:130px;resize:none;outline:none;margin-bottom:0.875rem;box-sizing:border-box">'+msg+'</textarea>'+
-    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">'+
-      '<a href="sms:'+b.phone+'&body='+encodeURIComponent(msg)+'" class="bd" style="justify-content:center;padding:0.875rem"><span class="material-symbols-outlined">sms</span>Text</a>'+
-      '<a href="mailto:'+(b.email||'')+'?subject='+encodeURIComponent('Seacoast RVIP Confirmed')+'&body='+encodeURIComponent(msg)+'" class="bo" style="justify-content:center;padding:0.875rem"><span class="material-symbols-outlined">mail</span>Email</a>'+
+    '<div style="margin-bottom:1rem">'+
+      '<div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:#888;margin-bottom:6px">Message preview</div>'+
+      '<textarea style="width:100%;background:#f9f9f9;border:1px solid #e2e2e2;padding:0.75rem;font-size:0.8rem;font-family:Inter,sans-serif;resize:none;outline:none;height:140px;box-sizing:border-box">'+sms+'</textarea>'+
     '</div>'+
-    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">'+
-      '<a href="https://wa.me/'+b.phone.replace(/\D/g,'')+'?text='+encodeURIComponent(msg)+'" target="_blank" class="bgr" style="justify-content:center;padding:0.875rem"><span class="material-symbols-outlined">chat</span>WhatsApp</a>'+
-      '<button onclick="cpTxt(\''+link+'\')" class="bo" style="padding:0.875rem;justify-content:center"><span class="material-symbols-outlined">content_copy</span>Copy Link</button>'+
+    '<div class="grid grid-cols-2 gap-3 mb-3">'+
+      '<a href="sms:'+b.phone+'&body='+encodeURIComponent(sms)+'" class="btn-dark flex items-center justify-center gap-2" style="text-decoration:none;padding:0.875rem"><span class="material-symbols-outlined" style="font-size:16px">sms</span>Text</a>'+
+      '<a href="mailto:'+(b.email||'')+'?subject='+encodeURIComponent('Seacoast RVIP — Confirmed + Payment')+'&body='+encodeURIComponent(sms)+'" class="btn-outline flex items-center justify-center gap-2" style="text-decoration:none;padding:0.875rem"><span class="material-symbols-outlined" style="font-size:16px">mail</span>Email</a>'+
     '</div>'+
-    '<button onclick="mkPaid(\''+id+'\')" class="bg" style="width:100%;justify-content:center;padding:0.875rem;margin-top:4px"><span class="material-symbols-outlined">check_circle</span>Mark as Paid</button>';
-
-  document.getElementById('m-pay').style.display = 'block';
+    '<div class="grid grid-cols-2 gap-3 mb-3">'+
+      '<a href="https://wa.me/'+b.phone.replace(/\D/g,'')+'?text='+encodeURIComponent(sms)+'" target="_blank" class="btn-green flex items-center justify-center gap-2" style="text-decoration:none;padding:0.875rem"><span class="material-symbols-outlined" style="font-size:16px">chat</span>WhatsApp</a>'+
+      '<button onclick="navigator.clipboard.writeText(''+payLink+'').then(function(){showToast('Link copied!');})" class="btn-outline flex items-center justify-center gap-2" style="padding:0.875rem"><span class="material-symbols-outlined" style="font-size:16px">content_copy</span>Copy Link</button>'+
+    '</div>'+
+    '<button onclick="mkPaid(''+id+'')" class="btn-green w-full flex items-center justify-center gap-2" style="padding:0.875rem;margin-top:0.5rem"><span class="material-symbols-outlined" style="font-size:16px">check_circle</span>Mark as Paid</button>';
+  document.getElementById('pay-modal').classList.remove('hidden');
 }
-
-function closePay() { document.getElementById('m-pay').style.display = 'none'; }
 
 function mkPaid(id) {
-  var bks=getBks(), b=bks.find(function(x){ return x.id===id; });
-  if(b){ b.status='Paid'; setBks(bks); }
-  closePay(); render(); toast('Marked as Paid!');
+  var bks=getBks(), b=bks.find(function(x){return x.id===id;});
+  if(b){b.status='Paid';setBks(bks);if(db)syncBkToFirebase(b);}
+  closePayModal(); renderAll(); showToast('✅ Marked as Paid!');
+}
+function closePayModal() { document.getElementById('pay-modal').classList.add('hidden'); }
+
+// ── ADD TO CLIENT HISTORY ──────────────────────────────────
+function openAddToHistory(id) {
+  historyBooking = getBks().find(function(x){return x.id===id;});
+  if (!historyBooking) return;
+  document.getElementById('history-booking-info').innerHTML=
+    '<div style="font-weight:600;margin-bottom:4px">'+historyBooking.name+' — '+historyBooking.service+'</div>'+
+    '<div style="color:#666;font-size:0.8rem">'+historyBooking.date+' · $'+historyBooking.price+'</div>';
+  document.getElementById('history-phone').value = historyBooking.phone||'';
+  document.getElementById('history-error').style.display='none';
+  document.getElementById('history-success').style.display='none';
+  document.getElementById('history-modal').classList.remove('hidden');
 }
 
-function cpTxt(txt) {
-  navigator.clipboard.writeText(txt).then(function(){ toast('Copied!'); }).catch(function(){ alert(txt); });
-}
+async function saveToClientHistory() {
+  if (!historyBooking||!db) { showErr('Firebase not connected'); return; }
+  var rawPhone = document.getElementById('history-phone').value.replace(/\D/g,'');
+  if (rawPhone.length<7) { showErr('Enter a valid phone number'); return; }
+  var phone = rawPhone.length===10?'+1'+rawPhone:(rawPhone.length===11&&rawPhone[0]==='1'?'+'+rawPhone:'+'+rawPhone);
+  var status = document.getElementById('history-status').value;
+  var b = historyBooking;
 
-
-function openReminder(id) {
-  var b = getBks().find(function(x){ return x.id===id; });
-  if (!b) return;
-  var fn = b.name.split(' ')[0];
-  var msgClient = 'Hi '+fn+'! Just a reminder your Seacoast RVIP ride is tomorrow '+b.date+' at '+ft(b.time)+'.\n\nI will be in the black SUV at '+b.pickup+'.\n\nQuestions? Call or text (987) 416-3283\nSee you then! — Seacoast RVIP';
-  var msgYou = 'REMINDER — Ride tomorrow '+b.date+' at '+ft(b.time)+'\nClient: '+b.name+' — '+b.phone+'\nPickup: '+b.pickup+'\nDest: '+b.destination+'\nPrice: $'+b.price;
-
-  var html = '<div style="background:#f9f9f9;border:1px solid #e2e2e2;padding:1rem;margin-bottom:1rem">'+
-    '<div style="font-weight:700">'+b.name+'</div>'+
-    '<div style="font-size:0.8rem;color:#555">'+b.phone+'</div>'+
-    '<div style="font-size:0.8rem;color:#555">'+b.date+' at '+ft(b.time)+'</div>'+
-  '</div>'+
-  '<p style="font-family:Work Sans,sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:#888;margin-bottom:8px">Reminder to client:</p>'+
-  '<textarea style="width:100%;background:#f9f9f9;border:1px solid #e2e2e2;padding:0.75rem;font-size:0.8rem;font-family:Inter,sans-serif;height:110px;resize:none;outline:none;margin-bottom:1rem;box-sizing:border-box">'+msgClient+'</textarea>'+
-  '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">'+
-    '<a href="sms:'+b.phone+'&body='+encodeURIComponent(msgClient)+'" class="bd" style="justify-content:center;padding:0.875rem;text-decoration:none"><span class="material-symbols-outlined" style="font-size:15px">sms</span>Text Client</a>'+
-    '<a href="https://wa.me/'+b.phone.replace(/\D/g,'')+'?text='+encodeURIComponent(msgClient)+'" target="_blank" class="bgr" style="justify-content:center;padding:0.875rem;text-decoration:none"><span class="material-symbols-outlined" style="font-size:15px">chat</span>WhatsApp</a>'+
-  '</div>'+
-  '<p style="font-family:Work Sans,sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:#888;margin-bottom:8px;margin-top:1rem">Reminder to yourself:</p>'+
-  '<a href="sms:+19874163283&body='+encodeURIComponent(msgYou)+'" class="bg" style="width:100%;justify-content:center;padding:0.875rem;display:flex;align-items:center;gap:6px;text-decoration:none"><span class="material-symbols-outlined" style="font-size:15px">person</span>Text Yourself</a>';
-
-  document.getElementById('m-pay-body').innerHTML = html;
-  document.getElementById('m-pay').querySelector('.modal-hd h2').textContent = 'Send Reminder';
-  document.getElementById('m-pay').style.display = 'block';
-}
-
-function toast(msg) {
-  var t=document.getElementById('toast');
-  t.textContent=msg; t.style.display='block';
-  setTimeout(function(){ t.style.display='none'; },3000);
-}
-
-// Close overlays on bg click
-document.getElementById('m-add').addEventListener('click',function(e){ if(e.target===this) closeAdd(); });
-document.getElementById('m-pay').addEventListener('click',function(e){ if(e.target===this) closePay(); });
-
-// Init
-document.addEventListener('DOMContentLoaded', function(){
-  initFirebase();
-  if(localStorage.getItem('rv-auth')==='1') goToDash();
-  else document.getElementById('pwd').focus();
-});
-
-
-// ═══════════════════════════════════════════════════════════
-// MESSAGE TEMPLATES SYSTEM
-// ═══════════════════════════════════════════════════════════
-
-var GOOGLE_REVIEW_LINK = 'https://g.page/r/YOUR_GOOGLE_REVIEW_LINK';
-
-var MSG_TEMPLATES = [
-  {
-    category: 'After the Ride',
-    color: '#16a34a',
-    icon: 'directions_car',
-    messages: [
-      { title: 'Thank You', desc: 'Send right after dropping off', text: 'Hi [Name]! Thank you so much for choosing Seacoast RVIP today. It was a pleasure!\n\nWhenever you need a ride again, I\'m just one text away.\n\nSee you next time! — Ramon\n(987) 416-3283' },
-      { title: 'Thank You + Google Review', desc: 'BEST for building your reviews — send after every ride', text: 'Hi [Name]! Thank you for riding with Seacoast RVIP today — really appreciate your support!\n\nIf you enjoyed the experience, a quick Google review would mean the world to me. It only takes 30 seconds:\n\nGOOGLE_REVIEW_LINK_PLACEHOLDER\n\nThank you! — Ramon\n(987) 416-3283' },
-      { title: 'Airport — Safe Flight', desc: 'After dropping at airport', text: 'Hi [Name]! Hope you made it through security smoothly! ✈️\n\nHave a safe and wonderful trip. When you\'re back, Seacoast RVIP will be ready to pick you up.\n\nSafe travels! — Ramon\n(987) 416-3283' }
-    ]
-  },
-  {
-    category: 'Ride Reminders',
-    color: '#1d4ed8',
-    icon: 'notifications',
-    messages: [
-      { title: 'Day Before Reminder', desc: 'Send the night before the ride', text: 'Hi [Name]! Quick reminder — your Seacoast RVIP ride is tomorrow [Date] at [Time].\n\nI will be at [Pickup Address] 5 minutes early in the black SUV.\n\nQuestions? Call or text anytime.\n(987) 416-3283\n\nSee you tomorrow! — Ramon' },
-      { title: 'Morning of Ride', desc: 'Send 1-2 hours before pickup', text: 'Good morning [Name]! Your Seacoast RVIP ride is today at [Time].\n\nI will be at [Pickup Address] a few minutes early. Black SUV, you can\'t miss me!\n\nSee you soon! — Ramon\n(987) 416-3283' },
-      { title: 'On My Way', desc: 'Send when leaving to pick up', text: 'Hi [Name]! I\'m on my way — arriving at [Pickup Address] in about [X] minutes.\n\nSee you shortly! — Ramon' },
-      { title: 'I Have Arrived', desc: 'Send when waiting outside', text: 'Hi [Name]! I\'m outside at [Pickup Address] — black SUV, ready when you are!\n\n— Ramon' }
-    ]
-  },
-  {
-    category: 'Holidays & Special Events',
-    color: '#775a19',
-    icon: 'celebration',
-    messages: [
-      { title: 'New Years Eve', desc: 'Send Dec 28-30 to all clients', text: 'Hi [Name]! Happy almost New Year!\n\nPlanning to celebrate New Year\'s Eve? Do not risk driving — let Seacoast RVIP get you there and back safely.\n\nSpots fill fast. Text me to reserve yours:\n(987) 416-3283\n\nHave a wonderful New Year! — Ramon' },
-      { title: '4th of July', desc: 'Send July 1-3 to all clients', text: 'Hi [Name]! Happy 4th of July weekend!\n\nHeading to a cookout, fireworks, or celebration? I\'ve got you covered with a safe ride!\n\nJust text me and let\'s get you there.\n(987) 416-3283\n\nEnjoy the holiday! — Ramon, Seacoast RVIP' },
-      { title: 'Thanksgiving', desc: 'Send Nov 20-25', text: 'Hi [Name]! Wishing you and your family a wonderful Thanksgiving!\n\nIf you need a ride to family dinner or the airport this holiday weekend, Seacoast RVIP is here for you.\n\nStay safe and enjoy the holiday!\n— Ramon\n(987) 416-3283' },
-      { title: "St. Patrick's Day", desc: 'Send March 15-16', text: "Hi [Name]! St. Patrick's Day is this weekend!\n\nHeading out to celebrate? Let Seacoast RVIP be your safe ride so you can enjoy the night worry-free!\n\nBook your spot now — busy night!\n(987) 416-3283\n\n— Ramon, Seacoast RVIP" },
-      { title: 'Casino Night Run', desc: 'Send for Foxwoods/Mohegan weekends', text: 'Hi [Name]! Feeling lucky this weekend?\n\nSeacoast RVIP offers casino runs to Foxwoods and Mohegan Sun — comfortable ride, no parking hassle!\n\nInterested? Text me to reserve your seat.\n(987) 416-3283\n\n— Ramon, Seacoast RVIP' },
-      { title: 'Summer Kickoff', desc: 'Send Memorial Day weekend', text: 'Hi [Name]! Summer is here!\n\nWhether you\'re heading to Hampton Beach, a boat party, or a summer event, Seacoast RVIP will get you there in style.\n\nText me to plan your summer rides!\n(987) 416-3283\n\nHave an amazing summer! — Ramon' },
-      { title: 'Christmas & Holidays', desc: 'Send Dec 15-20', text: 'Hi [Name]! Wishing you and your loved ones a wonderful holiday season!\n\nIf you need airport rides, holiday party transportation, or a safe way home this season — Seacoast RVIP has you covered.\n\nThank you for your support this year. It means everything.\n\nHappy Holidays! — Ramon\n(987) 416-3283' }
-    ]
-  },
-  {
-    category: 'Business Growth',
-    color: '#7c3aed',
-    icon: 'trending_up',
-    messages: [
-      { title: 'Referral Program', desc: 'Ask loyal clients to refer friends', text: 'Hi [Name]! Quick favor to ask.\n\nIf you know anyone who needs reliable transportation in the Seacoast area, I would love a referral!\n\nRefer a friend who books a ride and I will give you $10 off your next trip as a thank you!\n\nThank you for your continued support!\n— Ramon, Seacoast RVIP\n(987) 416-3283' },
-      { title: "Haven't Heard From You", desc: 'Send to clients quiet for 60+ days', text: 'Hi [Name]! It has been a little while — just checking in!\n\nSeacoast RVIP is here whenever you need a ride. Airport transfers, nights out, casino runs, or anything in between.\n\nReady when you are!\n— Ramon\n(987) 416-3283' },
-      { title: 'Check In After Ride', desc: 'Send 2-3 days after a ride', text: 'Hi [Name]! Just checking in — hope everything went smoothly the other day!\n\nYour feedback means a lot. If there is anything I can do better, let me know. And if you were happy, a Google review is always appreciated!\n\nGOOGLE_REVIEW_LINK_PLACEHOLDER\n\nTalk soon! — Ramon\n(987) 416-3283' },
-      { title: 'Winter Storm Advisory', desc: 'Send before major NH storms', text: 'Hi [Name]! Big winter storm coming to the Seacoast area.\n\nIf you have airport travel or any trips planned, Seacoast RVIP is experienced in all NH weather. I will get you there safely — no matter what.\n\nStay safe!\n— Ramon\n(987) 416-3283' },
-      { title: 'Corporate Account Offer', desc: 'Send to clients with businesses', text: 'Hi [Name]! Quick question — does your company ever need professional transportation for clients, employees, or airport runs?\n\nSeacoast RVIP offers reliable corporate transportation in the NH Seacoast area. I would love to be your go-to transportation partner with priority booking and simplified billing.\n\nLet me know if you would like to talk!\n— Ramon\n(987) 416-3283' }
-    ]
+  try {
+    // Find client by phone (try multiple formats)
+    var formats = [phone, rawPhone, '+1'+rawPhone.slice(-10)];
+    var clientId = null;
+    for (var i=0; i<formats.length; i++) {
+      var snap = await db.collection('clients').where('phone','==',formats[i]).limit(1).get();
+      if (!snap.empty) { snap.forEach(function(d){clientId=d.id;}); break; }
+    }
+    if (!clientId) {
+      var ref = db.collection('clients').doc();
+      clientId = ref.id;
+      await ref.set({phone:phone,name:b.name||'',email:b.email||'',address:b.pickup||'',createdAt:new Date().toISOString(),createdByAdmin:true});
+    }
+    await db.collection('clients').doc(clientId).collection('trips').add({
+      service:b.service||'', date:b.date||'', time:b.time||'',
+      pickup:b.pickup||'', destination:b.destination||'',
+      vehicle:b.vehicle||'', passengers:b.passengers||'1',
+      price:b.price||0, code:b.code||'', status:status,
+      addedAt:new Date().toISOString()
+    });
+    document.getElementById('history-success').style.display='block';
+    document.getElementById('history-error').style.display='none';
+    showToast('Trip added!');
+    setTimeout(function(){document.getElementById('history-modal').classList.add('hidden');},2000);
+  } catch(e) {
+    document.getElementById('history-error').textContent='Error: '+e.message;
+    document.getElementById('history-error').style.display='block';
   }
+}
+function showErr(msg){document.getElementById('history-error').textContent=msg;document.getElementById('history-error').style.display='block';}
+
+// ── LOAD CLIENTS ──────────────────────────────────────────
+async function loadClients() {
+  if (!db){document.getElementById('clients-list').innerHTML='<div style="color:#dc2626;padding:1rem">Firebase not connected</div>';return;}
+  var list = document.getElementById('clients-list');
+  list.innerHTML = '<div style="text-align:center;padding:2rem;color:#888;font-size:0.8rem">Loading...</div>';
+  try {
+    var snap = await db.collection('clients').orderBy('createdAt','desc').limit(100).get();
+    var clients=[]; snap.forEach(function(d){clients.push(Object.assign({id:d.id},d.data()));});
+    document.getElementById('s-clients').textContent=clients.length;
+    if(!clients.length){list.innerHTML='<div style="text-align:center;padding:3rem 0;color:#bbb"><div style="font-size:0.8rem">No clients signed up yet</div></div>';return;}
+    list.innerHTML=clients.map(function(cl){
+      var since=cl.createdAt?new Date(cl.createdAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'—';
+      var tag=cl.createdByAdmin?'<span style="background:#fef9c3;color:#92400e;font-size:0.6rem;font-family:Work Sans,sans-serif;font-weight:600;text-transform:uppercase;padding:1px 6px;margin-left:6px">by you</span>':'<span style="background:#dcfce7;color:#15803d;font-size:0.6rem;font-family:Work Sans,sans-serif;font-weight:600;text-transform:uppercase;padding:1px 6px;margin-left:6px">self signup</span>';
+      return '<div class="card p-4 mb-3" style="cursor:default">'+
+        '<div class="flex justify-between items-start">'+
+          '<div>'+
+            '<div style="font-weight:700;font-size:0.95rem;margin-bottom:4px">'+(cl.name||cl.phone||'Unknown')+tag+'</div>'+
+            '<div style="font-size:0.8rem;color:#555;margin-bottom:2px">📞 '+(cl.phone||'—')+'</div>'+
+            (cl.email?'<div style="font-size:0.8rem;color:#555;margin-bottom:2px">✉ '+cl.email+'</div>':'')+
+            (cl.address?'<div style="font-size:0.8rem;color:#555">🏠 '+cl.address+'</div>':'')+
+          '</div>'+
+          '<div style="text-align:right">'+
+            '<div style="font-size:0.7rem;color:#888;margin-bottom:8px">Since '+since+'</div>'+
+            '<a href="sms:'+(cl.phone||'')+'" class="btn-dark flex items-center gap-1" style="text-decoration:none;font-size:0.65rem"><span class="material-symbols-outlined" style="font-size:12px">sms</span>Text</a>'+
+          '</div>'+
+        '</div>'+
+      '</div>';
+    }).join('');
+  } catch(e){list.innerHTML='<div style="color:#dc2626;padding:1rem">Error: '+e.message+'<br><br><strong>Fix:</strong> Update Firebase Rules to allow read/write for clients collection.</div>';}
+}
+
+// ── MESSAGES ──────────────────────────────────────────────
+var MSG_TEMPLATES = [
+  {cat:'After the Ride',color:'#16a34a',msgs:[
+    {title:'Thank You',desc:'Send right after the ride',text:'Hi [Name]! Thank you so much for choosing Seacoast RVIP today. It was a pleasure!
+
+Whenever you need a ride again, just text me.
+
+— Ramon
+(987) 416-3283'},
+    {title:'Thank You + Google Review',desc:'Best for building reviews — send after every ride',text:'Hi [Name]! Thank you for riding with Seacoast RVIP today!
+
+If you enjoyed the experience, a quick Google review would mean the world to me:
+
+'+GOOGLE_REVIEW_LINK+'
+
+Thank you! — Ramon
+(987) 416-3283'},
+    {title:'Airport Safe Flight',desc:'After dropping at airport',text:'Hi [Name]! Hope you made it through security smoothly! ✈️
+
+Have a safe trip. Seacoast RVIP will be ready when you return.
+
+— Ramon (987) 416-3283'}
+  ]},
+  {cat:'Ride Reminders',color:'#1d4ed8',msgs:[
+    {title:'Day Before Reminder',desc:'Send the night before',text:'Hi [Name]! Quick reminder — your Seacoast RVIP ride is tomorrow [Date] at [Time].
+
+I will be at [Pickup] 5 minutes early in the black SUV.
+
+Questions? Call or text anytime.
+— Ramon (987) 416-3283'},
+    {title:'Morning of Ride',desc:'Send 1-2 hours before pickup',text:'Good morning [Name]! Your ride is today at [Time].
+
+I will be at [Pickup] a few minutes early. Black SUV, you cannot miss me!
+
+— Ramon (987) 416-3283'},
+    {title:'On My Way',desc:'Send when leaving to pick up',text:'Hi [Name]! On my way — arriving at [Pickup] in about [X] minutes. 🚗
+
+— Ramon'},
+    {title:'I Have Arrived',desc:'Send when waiting outside',text:'Hi [Name]! I am outside at [Pickup] — black SUV, ready when you are!
+
+— Ramon'}
+  ]},
+  {cat:'Holidays & Events',color:'#775a19',msgs:[
+    {title:'New Years Eve',desc:'Send Dec 28-30',text:'Hi [Name]! Happy almost New Year! 🥂
+
+Planning to celebrate New Year's Eve? Let Seacoast RVIP get you there safely. Spots fill fast!
+
+Text me to reserve: (987) 416-3283
+
+— Ramon'},
+    {title:'4th of July',desc:'Send July 1-3',text:'Hi [Name]! Happy 4th of July weekend! 🇺🇸
+
+Heading to fireworks or a celebration? I have you covered with a safe ride.
+
+— Ramon (987) 416-3283'},
+    {title:'Thanksgiving',desc:'Send Nov 20-25',text:'Hi [Name]! Wishing you a wonderful Thanksgiving! 🦃
+
+Need a ride to family dinner or the airport this holiday? Seacoast RVIP is here.
+
+— Ramon (987) 416-3283'},
+    {title:'Casino Night',desc:'Send for casino weekends',text:'Hi [Name]! Feeling lucky this weekend? 🎰
+
+Seacoast RVIP runs to Foxwoods and Mohegan Sun — comfortable ride, no parking hassle!
+
+Interested? Text me: (987) 416-3283
+
+— Ramon'},
+    {title:'Christmas Holidays',desc:'Send Dec 15-20',text:'Hi [Name]! Wishing you a wonderful holiday season! 🎄
+
+Need airport rides or holiday party transportation? Seacoast RVIP has you covered.
+
+Thank you for your support this year!
+— Ramon (987) 416-3283'}
+  ]},
+  {cat:'Business Growth',color:'#7c3aed',msgs:[
+    {title:'Referral Program',desc:'Ask loyal clients to refer friends',text:'Hi [Name]! Quick favor — if you know anyone who needs reliable transportation in the Seacoast area, I would love a referral!
+
+Refer a friend who books and I will give you $10 off your next trip!
+
+Thank you! — Ramon (987) 416-3283'},
+    {title:'Re-engagement',desc:'Send to clients quiet 60+ days',text:'Hi [Name]! It has been a while — just checking in! 👋
+
+Seacoast RVIP is here whenever you need a ride. Airport, nights out, casino runs — ready when you are!
+
+— Ramon (987) 416-3283'},
+    {title:'Check In After Ride',desc:'Send 2-3 days after ride',text:'Hi [Name]! Just checking in — hope everything went smoothly the other day!
+
+Your feedback means a lot. And if you were happy, a Google review is always appreciated:
+
+'+GOOGLE_REVIEW_LINK+'
+
+— Ramon (987) 416-3283'},
+    {title:'Corporate Offer',desc:'Send to clients with businesses',text:'Hi [Name]! Does your company ever need professional transportation for clients or airport runs?
+
+Seacoast RVIP offers reliable corporate transportation in the NH Seacoast area with priority booking.
+
+— Ramon (987) 416-3283'}
+  ]}
 ];
 
-// Replace placeholder with real link
-MSG_TEMPLATES.forEach(function(cat) {
-  cat.messages.forEach(function(m) {
-    m.text = m.text.replace(/GOOGLE_REVIEW_LINK_PLACEHOLDER/g, GOOGLE_REVIEW_LINK);
-  });
-});
-
-function renderMessageTemplates() {
+function renderMsgTemplates() {
   var container = document.getElementById('msg-templates');
-  if (!container) return;
-  loadBroadcastCount();
-
-  // Flatten all messages into an indexed array for easy lookup
-  window._msgList = [];
-  MSG_TEMPLATES.forEach(function(cat) {
-    cat.messages.forEach(function(m) {
-      window._msgList.push({text: m.text, title: m.title, color: cat.color});
-    });
-  });
-
-  container.innerHTML = MSG_TEMPLATES.map(function(cat) {
-    return '<div style="margin-bottom:2rem">' +
-      '<div style="display:flex;align-items:center;gap:0.625rem;margin-bottom:0.875rem;padding-bottom:0.5rem;border-bottom:2px solid ' + cat.color + '">' +
-        '<span class="material-symbols-outlined" style="color:' + cat.color + ';font-size:18px">' + cat.icon + '</span>' +
-        '<div style="font-family:Work Sans,sans-serif;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:' + cat.color + '">' + cat.category + '</div>' +
-        '<div style="font-size:0.65rem;color:#bbb;margin-left:auto">' + cat.messages.length + ' templates</div>' +
-      '</div>' +
-      cat.messages.map(function(m) {
-        var idx = window._msgList.findIndex(function(x){ return x.title === m.title; });
-        return '<div style="background:white;border:1px solid #f0f0f0;border-left:3px solid ' + cat.color + ';padding:0.875rem 1rem;margin-bottom:0.5rem;cursor:pointer;transition:all 0.15s" ' +
-          'data-msgidx="' + idx + '" ' +
-          'onclick="openMsgByIndex(this.dataset.msgidx)">' + +
-          '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem">' +
-            '<div style="flex:1">' +
-              '<div style="font-family:Work Sans,sans-serif;font-size:0.8rem;font-weight:600;color:#000;margin-bottom:3px">' + m.title + '</div>' +
-              '<div style="font-size:0.7rem;color:#999">' + m.desc + '</div>' +
-            '</div>' +
-            '<span class="material-symbols-outlined" style="font-size:18px;color:#ddd;flex-shrink:0">chevron_right</span>' +
-          '</div>' +
-          '<div style="margin-top:0.5rem;font-size:0.72rem;color:#bbb;line-height:1.5;max-height:36px;overflow:hidden">' + m.text.substring(0, 100) + '...</div>' +
+  container.innerHTML = MSG_TEMPLATES.map(function(cat){
+    return '<div style="margin-bottom:2rem">'+
+      '<div style="display:flex;align-items:center;gap:0.625rem;margin-bottom:0.875rem;padding-bottom:0.5rem;border-bottom:2px solid '+cat.color+'">'+
+        '<div style="font-family:Work Sans,sans-serif;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:'+cat.color+'">'+cat.cat+'</div>'+
+        '<div style="font-size:0.65rem;color:#bbb;margin-left:auto">'+cat.msgs.length+' templates</div>'+
+      '</div>'+
+      cat.msgs.map(function(m){
+        var safeText = JSON.stringify(m.text);
+        var safeTitle = JSON.stringify(m.title);
+        return '<div class="msg-card" style="border-left-color:'+cat.color+'" onclick="openMsgModal('+safeText+','+safeTitle+')">'+
+          '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem">'+
+            '<div>'+
+              '<div style="font-family:Work Sans,sans-serif;font-size:0.8rem;font-weight:600;color:#000;margin-bottom:3px">'+m.title+'</div>'+
+              '<div style="font-size:0.7rem;color:#999">'+m.desc+'</div>'+
+            '</div>'+
+            '<span class="material-symbols-outlined" style="font-size:18px;color:#ddd;flex-shrink:0">chevron_right</span>'+
+          '</div>'+
+          '<div style="margin-top:0.5rem;font-size:0.72rem;color:#bbb;line-height:1.5;max-height:36px;overflow:hidden">'+m.text.replace(/
+/g,' · ').substring(0,100)+'...</div>'+
         '</div>';
-      }).join('') +
+      }).join('')+
     '</div>';
   }).join('');
 }
 
-function openMsgByIndex(idx) {
-  var m = window._msgList && window._msgList[parseInt(idx)];
-  if (!m) return;
-  openMsgModal(m.text, m.title);
-}
-
-
 function openMsgModal(text, title) {
-  document.getElementById('m-msg-title').textContent = title;
-  document.getElementById('m-msg-text').value = text;
-  document.getElementById('m-msg-phone').value = '';
-  var el = document.getElementById('m-msg-result');
-  if (el) el.style.display = 'none';
-  // Auto-load clients dropdown
-  loadMsgClients();
-  updateWALink(text, '');
-  document.getElementById('m-msg').style.display = 'flex';
+  document.getElementById('msg-modal-title').textContent = title;
+  document.getElementById('msg-text').value = text;
+  document.getElementById('msg-phone').value = '';
+  document.getElementById('msg-result').style.display='none';
+  updateWA(text,'');
+  document.getElementById('msg-modal').classList.remove('hidden');
 }
 
-function updateWALink(text, phone) {
-  var num = phone.replace(/\D/g, '');
-  var link = num.length >= 8
-    ? 'https://wa.me/' + num + '?text=' + encodeURIComponent(text)
-    : 'https://wa.me/?text=' + encodeURIComponent(text);
-  var btn = document.getElementById('msg-whatsapp-btn');
-  if (btn) btn.href = link;
+function updateWA(text, phone) {
+  var num = phone.replace(/\D/g,'');
+  var link = num.length>=7 ? 'https://wa.me/'+num+'?text='+encodeURIComponent(text) : 'https://wa.me/?text='+encodeURIComponent(text);
+  document.getElementById('msg-wa-btn').href = link;
+}
+
+async function loadMsgClients() {
+  var sel = document.getElementById('msg-client-sel');
+  if (!db) { sel.innerHTML='<option value="">Firebase not connected</option>'; return; }
+  sel.innerHTML = '<option value="">Loading...</option>';
+  try {
+    var snap = await db.collection('clients').get();
+    var opts = ['<option value="">— Select client —</option>'];
+    snap.forEach(function(d){
+      var c=d.data();
+      if(c.phone) opts.push('<option value="'+c.phone+'">'+(c.name||c.phone)+' · '+c.phone+'</option>');
+    });
+    sel.innerHTML = opts.join('');
+  } catch(e){ sel.innerHTML='<option value="">Error loading</option>'; }
 }
 
 function msgSendOne() {
-  var phone = document.getElementById('m-msg-phone').value.replace(/\D/g, '');
-  var text = document.getElementById('m-msg-text').value;
-  if (!phone || phone.length < 7) { showMsgResult('Enter a client phone number first', false); return; }
-  window.open('sms:' + phone + '&body=' + encodeURIComponent(text));
-  showMsgResult('Text app opened! Review and hit Send.', true);
+  var phone = document.getElementById('msg-phone').value.replace(/\D/g,'');
+  var text = document.getElementById('msg-text').value;
+  if (!phone||phone.length<7) { showMsgRes('Enter a client phone number first',false); return; }
+  window.open('sms:+'+phone+'&body='+encodeURIComponent(text));
+  showMsgRes('Text app opened!',true);
 }
 
 async function msgSendAll() {
-  var text = document.getElementById('m-msg-text').value;
-  if (!text.trim()) { showMsgResult('Message is empty', false); return; }
-  if (!db_fb) { showMsgResult('Firebase not connected', false); return; }
+  var text = document.getElementById('msg-text').value;
+  if (!text.trim()) { showMsgRes('Message is empty',false); return; }
+  if (!db) { showMsgRes('Firebase not connected',false); return; }
   if (!confirm('This will open your text app for each client one by one. Continue?')) return;
   try {
-    var snap = await db_fb.collection('clients').get();
-    var phones = [];
-    snap.forEach(function(d) { var p = d.data().phone; if (p) phones.push(p); });
-    if (!phones.length) { showMsgResult('No clients found. Load Clients tab first.', false); return; }
-    showMsgResult('Opening for ' + phones.length + ' clients...', true);
-    phones.forEach(function(phone, i) {
-      setTimeout(function() {
-        window.open('sms:' + phone + '&body=' + encodeURIComponent(text));
-      }, i * 900);
-    });
-  } catch(e) { showMsgResult('Error: ' + e.message, false); }
+    var snap = await db.collection('clients').get();
+    var phones=[]; snap.forEach(function(d){var p=d.data().phone;if(p)phones.push(p);});
+    if(!phones.length){showMsgRes('No clients found',false);return;}
+    showMsgRes('Opening for '+phones.length+' clients...',true);
+    phones.forEach(function(ph,i){ setTimeout(function(){window.open('sms:'+ph+'&body='+encodeURIComponent(text));},i*900); });
+  } catch(e){ showMsgRes('Error: '+e.message,false); }
 }
 
 function msgCopy() {
-  var text = document.getElementById('m-msg-text').value;
-  navigator.clipboard.writeText(text).then(function() {
-    showMsgResult('Copied to clipboard!', true);
-  }).catch(function() { showMsgResult('Select and copy the text above manually', false); });
+  navigator.clipboard.writeText(document.getElementById('msg-text').value).then(function(){showMsgRes('Copied!',true);}).catch(function(){showMsgRes('Select and copy manually',false);});
 }
 
-function showMsgResult(msg, ok) {
-  var el = document.getElementById('m-msg-result');
-  if (!el) return;
-  el.textContent = msg;
-  el.style.background = ok ? '#f0fdf4' : '#fef2f2';
-  el.style.color = ok ? '#15803d' : '#dc2626';
-  el.style.borderLeft = ok ? '3px solid #16a34a' : '3px solid #dc2626';
-  el.style.padding = '0.75rem';
-  el.style.display = 'block';
+function showMsgRes(msg,ok) {
+  var el=document.getElementById('msg-result');
+  el.textContent=msg; el.style.background=ok?'#f0fdf4':'#fef2f2';
+  el.style.color=ok?'#15803d':'#dc2626'; el.style.padding='0.75rem'; el.style.display='block';
 }
 
 async function loadBroadcastCount() {
-  var el = document.getElementById('broadcast-count');
-  if (!el || !db_fb) { if(el) el.textContent = 'Firebase not ready'; return; }
-  try {
-    var snap = await db_fb.collection('clients').get();
-    el.textContent = snap.size + ' clients';
-  } catch(e) { el.textContent = '—'; }
+  if (!db) return;
+  try { var s=await db.collection('clients').get(); document.getElementById('broadcast-count').textContent=s.size+' clients'; } catch(e){}
 }
 
-// ── OVERRIDE setTab TO HANDLE ALL 3 SECTIONS ─────────────
-var _baseSetTab = setTab;
-setTab = function(tab, btn) {
-  // Update button styles
-  document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('on'); });
-  if (btn) btn.classList.add('on');
-
-  // Hide all sections
-  ['section-bookings','section-clients','section-messages'].forEach(function(id) {
-    var el = document.getElementById(id);
-    if (el) el.style.display = 'none';
-  });
-
-  if (tab === 'clients') {
-    var sc = document.getElementById('section-clients');
-    if (sc) sc.style.display = 'block';
-    loadClients();
-  } else if (tab === 'messages') {
-    var sm = document.getElementById('section-messages');
-    if (sm) sm.style.display = 'block';
-    renderMessageTemplates();
-    loadMsgClients();
-  } else {
-    var sb = document.getElementById('section-bookings');
-    if (sb) sb.style.display = 'block';
-    activeTab = tab;
-    render();
-  }
-};
-
-// Close msg modal on bg click
-document.addEventListener('DOMContentLoaded', function() {
-  var mm = document.getElementById('m-msg');
-  if (mm) {
-    mm.addEventListener('click', function(e) { if (e.target === this) this.style.display = 'none'; });
-  }
-  // Live update whatsapp link
-  var ta = document.getElementById('m-msg-text');
-  var ph = document.getElementById('m-msg-phone');
-  if (ta) ta.addEventListener('input', function() { if(ph) updateWALink(this.value, ph.value); });
-  if (ph) ph.addEventListener('input', function() { if(ta) updateWALink(ta.value, this.value); });
+// Live update WA link
+document.addEventListener('DOMContentLoaded', function(){
+  var ta=document.getElementById('msg-text'), ph=document.getElementById('msg-phone');
+  if(ta) ta.addEventListener('input',function(){if(ph)updateWA(this.value,ph.value);});
+  if(ph) ph.addEventListener('input',function(){if(ta)updateWA(ta.value,this.value);});
 });
 
+// ── TOAST ─────────────────────────────────────────────────
+function showToast(msg){var t=document.getElementById('toast');t.textContent=msg;t.style.display='block';setTimeout(function(){t.style.display='none';},3000);}
 
-// ── LOAD CLIENTS ─────────────────────────────────────────
-async function loadClients() {
-  if (!db_fb) { toast('Firebase not connected'); return; }
-  var list = document.getElementById('clients-list');
-  if (!list) return;
-  list.innerHTML = '<div style="text-align:center;padding:2rem;color:#888;font-size:0.8rem">Loading clients...</div>';
-
-  try {
-    // Load all clients
-    var snap = await db_fb.collection('clients').orderBy('createdAt','desc').limit(100).get();
-    var clients = [];
-    snap.forEach(function(d){ clients.push(Object.assign({id:d.id}, d.data())); });
-
-    // Update stat
-    var s5 = document.getElementById('s5');
-    if (s5) s5.textContent = clients.length;
-
-    if (!clients.length) {
-      list.innerHTML = '<div style="text-align:center;padding:3rem 0;color:#bbb"><span class="material-symbols-outlined" style="font-size:2.5rem;display:block;margin-bottom:0.5rem">people</span><div style="font-size:0.8rem">No clients have signed up yet</div></div>';
-      return;
-    }
-
-    list.innerHTML = clients.map(function(cl) {
-      var since = cl.createdAt ? new Date(cl.createdAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—';
-      var tag = cl.createdByAdmin
-        ? '<span style="background:#fef9c3;color:#92400e;font-size:0.6rem;font-family:Work Sans,sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;padding:1px 6px;margin-left:6px">added by you</span>'
-        : '<span style="background:#dcfce7;color:#15803d;font-size:0.6rem;font-family:Work Sans,sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;padding:1px 6px;margin-left:6px">self signup</span>';
-
-      var safeId = JSON.stringify(cl.id);
-      return '<div class="bk-card" style="cursor:pointer;border-left-color:#7c3aed" onclick="openClientDetail(' + safeId + ')">' +
-        '<div style="display:flex;justify-content:space-between;align-items:flex-start">' +
-          '<div>' +
-            '<div style="font-weight:700;font-size:0.95rem;margin-bottom:4px">' + (cl.name || cl.phone || 'Unknown') + tag + '</div>' +
-            '<div class="bk-meta"><span class="material-symbols-outlined">phone</span> ' + (cl.phone||'—') + '</div>' +
-            (cl.email ? '<div class="bk-meta"><span class="material-symbols-outlined">mail</span> ' + cl.email + '</div>' : '') +
-            (cl.address ? '<div class="bk-meta"><span class="material-symbols-outlined">home</span> ' + cl.address + '</div>' : '') +
-          '</div>' +
-          '<div style="text-align:right;flex-shrink:0">' +
-            '<div style="font-size:0.7rem;color:#888;margin-bottom:8px">Since ' + since + '</div>' +
-            '<a href="sms:' + (cl.phone||'') + '" style="background:#000;color:white;font-family:Work Sans,sans-serif;font-size:0.65rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;padding:0.375rem 0.625rem;text-decoration:none;display:inline-flex;align-items:center;gap:3px;border-bottom:1px solid #775a19"><span class="material-symbols-outlined" style="font-size:12px">sms</span>Text</a>' +
-          '</div>' +
-        '</div>' +
-      '</div>';
-    }).join('');
-
-  } catch(e) {
-    list.innerHTML = '<div style="color:#dc2626;font-size:0.85rem;padding:1rem">Error loading clients: ' + e.message + '</div>';
-    console.error(e);
+// ── AUTO LOGIN ────────────────────────────────────────────
+window.addEventListener('load', function(){
+  if(localStorage.getItem('rvip-admin')==='1'){
+    document.getElementById('login-screen').classList.add('hidden');
+    document.getElementById('dashboard').classList.remove('hidden');
+    initDash();
   }
-}
-
-// ── CLIENT DETAIL ─────────────────────────────────────────
-async function openClientDetail(clientId) {
-  if (!db_fb) return;
-  try {
-    var doc = await db_fb.collection('clients').doc(clientId).get();
-    if (!doc.exists) { toast('Client not found'); return; }
-    var cl = doc.data();
-    cl.id = doc.id;
-
-    // Load their trips
-    var tripsSnap = await db_fb.collection('clients').doc(clientId).collection('trips').orderBy('date','desc').limit(20).get();
-    var trips = [];
-    tripsSnap.forEach(function(d){ trips.push(d.data()); });
-    var completed = trips.filter(function(t){ return t.status==='completed'||t.status==='paid'; }).length;
-
-    document.getElementById('m-client-title').textContent = cl.name || cl.phone || 'Client';
-    document.getElementById('m-client-body').innerHTML =
-      '<div style="display:flex;flex-direction:column;gap:0;margin-bottom:1.5rem">' +
-        '<div class="pf-row"><span style="font-size:0.7rem;color:#888;font-family:Work Sans,sans-serif;text-transform:uppercase;letter-spacing:0.08em">Name</span><span style="font-weight:600">'+(cl.name||'—')+'</span></div>' +
-        '<div class="pf-row"><span style="font-size:0.7rem;color:#888;font-family:Work Sans,sans-serif;text-transform:uppercase;letter-spacing:0.08em">Phone</span><a href="tel:'+(cl.phone||'')+'" style="font-weight:600;color:#775a19;text-decoration:none">'+(cl.phone||'—')+'</a></div>' +
-        (cl.email?'<div class="pf-row"><span style="font-size:0.7rem;color:#888;font-family:Work Sans,sans-serif;text-transform:uppercase;letter-spacing:0.08em">Email</span><span style="font-weight:600">'+(cl.email||'—')+'</span></div>':'') +
-        (cl.address?'<div class="pf-row"><span style="font-size:0.7rem;color:#888;font-family:Work Sans,sans-serif;text-transform:uppercase;letter-spacing:0.08em">Address</span><span style="font-weight:600;text-align:right;max-width:55%">'+(cl.address||'—')+'</span></div>':'') +
-        '<div class="pf-row"><span style="font-size:0.7rem;color:#888;font-family:Work Sans,sans-serif;text-transform:uppercase;letter-spacing:0.08em">Completed Rides</span><span style="font-weight:700;color:#775a19">'+completed+' rides</span></div>' +
-        '<div class="pf-row"><span style="font-size:0.7rem;color:#888;font-family:Work Sans,sans-serif;text-transform:uppercase;letter-spacing:0.08em">Loyalty</span><span style="font-weight:600">'+(completed>=10?'🥈 Silver':'🎯 '+completed+'/10 rides')+'</span></div>' +
-      '</div>' +
-      (trips.length ? '<div style="font-family:Work Sans,sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:#888;margin-bottom:0.5rem">Recent Trips</div>' +
-        trips.slice(0,3).map(function(t){ return '<div style="background:#f9f9f9;padding:0.625rem 0.75rem;margin-bottom:4px;font-size:0.78rem;border-left:2px solid #775a19"><span style="font-weight:600">'+t.service+'</span> · $'+t.price+' · '+t.date+'</div>'; }).join('') : '') +
-      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:1rem">' +
-        '<a href="sms:'+cl.phone+'" style="background:#000;color:white;font-family:Work Sans,sans-serif;font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;padding:0.875rem;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:5px;border-bottom:2px solid #775a19"><span class="material-symbols-outlined" style="font-size:14px">sms</span>Text</a>' +
-        '<a href="tel:'+cl.phone+'" style="background:white;color:#000;font-family:Work Sans,sans-serif;font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;padding:0.875rem;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:5px;border:1px solid #e2e2e2"><span class="material-symbols-outlined" style="font-size:14px">call</span>Call</a>' +
-      '</div>';
-
-    document.getElementById('m-client').style.display = 'block';
-  } catch(e) {
-    console.error(e);
-    toast('Error loading client: ' + e.message);
+  // Focus password field if not already logged in
+  if(localStorage.getItem('rvip-admin') !== '1') {
+    var pwd = document.getElementById('pwd-input');
+    if(pwd) setTimeout(function(){ pwd.focus(); }, 100);
   }
-}
+});
 
-// ── ADD TO CLIENT HISTORY ──────────────────────────────────
-var _currentHistoryBooking = null;
-
-function openAddToHistory(id) {
-  var b = getBks().find(function(x){ return x.id===id; });
-  if (!b) return;
-  _currentHistoryBooking = b;
-  document.getElementById('history-booking-info').innerHTML =
-    '<div style="font-weight:600;margin-bottom:4px">'+b.name+' — '+b.service+'</div>'+
-    '<div style="color:#666;font-size:0.8rem">'+b.date+' · $'+b.price+'</div>';
-  document.getElementById('history-phone').value = b.phone ? b.phone.replace(/\D/g,'') : '';
-  document.getElementById('history-error').style.display='none';
-  document.getElementById('history-success').style.display='none';
-  document.getElementById('m-history').style.display='block';
-}
-
-async function saveToClientHistory() {
-  if (!_currentHistoryBooking || !db_fb) {
-    document.getElementById('history-error').textContent = 'Firebase not connected';
-    document.getElementById('history-error').style.display='block';
-    return;
-  }
-  var rawPhone = document.getElementById('history-phone').value.replace(/\D/g,'');
-  if (rawPhone.length < 7) {
-    document.getElementById('history-error').textContent = 'Please enter a valid phone number';
-    document.getElementById('history-error').style.display='block';
-    return;
-  }
-  var phone = rawPhone.startsWith('1') && rawPhone.length === 11 ? '+' + rawPhone : (rawPhone.length === 10 ? '+1' + rawPhone : '+' + rawPhone);
-  var status = document.getElementById('history-status').value;
-  var b = _currentHistoryBooking;
-
-  try {
-    // Find client by phone
-    var snap = await db_fb.collection('clients').where('phone','==',phone).limit(1).get();
-    var clientId = null;
-
-    if (!snap.empty) {
-      snap.forEach(function(d){ clientId = d.id; });
-    } else {
-      // Also try raw digits search
-      var snap2 = await db_fb.collection('clients').where('phone','==',rawPhone).limit(1).get();
-      if (!snap2.empty) {
-        snap2.forEach(function(d){ clientId = d.id; });
-      }
-    }
-
-    if (!clientId) {
-      // Create new client record
-      var newRef = db_fb.collection('clients').doc();
-      await newRef.set({
-        phone: phone,
-        name: b.name || '',
-        email: b.email || '',
-        address: b.pickup || '',
-        vehicle: b.vehicle || 'No preference',
-        createdAt: new Date().toISOString(),
-        createdByAdmin: true
-      });
-      clientId = newRef.id;
-    }
-
-    // Add trip
-    await db_fb.collection('clients').doc(clientId).collection('trips').add({
-      service: b.service || '',
-      date: b.date || '',
-      time: b.time || '',
-      pickup: b.pickup || '',
-      destination: b.destination || '',
-      vehicle: b.vehicle || '',
-      passengers: b.passengers || '1',
-      price: b.price || 0,
-      code: b.code || '',
-      status: status,
-      addedAt: new Date().toISOString()
-    });
-
-    document.getElementById('history-error').style.display='none';
-    document.getElementById('history-success').style.display='block';
-    toast('Trip added to client account!');
-    setTimeout(function(){ document.getElementById('m-history').style.display='none'; }, 2000);
-
-  } catch(e) {
-    console.error(e);
-    document.getElementById('history-error').textContent = 'Error: ' + e.message;
-    document.getElementById('history-error').style.display='block';
-  }
-}
-
-// pf-row style for client modal
-var _pfrStyle = 'display:flex;justify-content:space-between;align-items:center;padding:0.625rem 0;border-bottom:1px solid #f5f5f5';
-
-
-// ── MESSAGE CLIENT SELECTOR ────────────────────────────────
-async async function loadMsgClients() {
-  var sel = document.getElementById('m-msg-client-select');
-  if (!sel) return;
-  sel.innerHTML = '<option value="">Loading clients...</option>';
-  
-  // First try Firebase
-  var clients = [];
-  if (db_fb) {
-    try {
-      var snap = await db_fb.collection('clients').orderBy('createdAt','desc').limit(100).get();
-      snap.forEach(function(d){
-        var c = d.data();
-        clients.push({name: c.name||'Unknown', phone: c.phone||'', id: d.id});
-      });
-    } catch(e) {}
-  }
-  
-  // Also add clients from local bookings
-  getBks().forEach(function(b) {
-    if (b.phone && !clients.find(function(c){ return c.phone===b.phone; })) {
-      clients.push({name: b.name||'Client', phone: b.phone, id: b.id});
-    }
-  });
-
-  sel.innerHTML = '<option value="">— Pick a client —</option>' +
-    clients.map(function(c) {
-      return '<option value="' + c.phone + '">' + c.name + ' — ' + c.phone + '</option>';
-    }).join('');
-}
-
-function selectMsgClient(phone) {
-  if (phone) document.getElementById('m-msg-phone').value = phone;
-}
-
+// Close modals on overlay click
+['modal-overlay','pay-modal','history-modal','msg-modal'].forEach(function(id){
+  var el=document.getElementById(id);
+  if(el) el.addEventListener('click',function(e){if(e.target===this)this.classList.add('hidden');});
+});
 </script>
-
-<!-- ADD TO CLIENT HISTORY MODAL -->
-<div class="overlay" id="m-history" style="display:none">
-  <div class="modal" style="max-width:420px">
-    <div class="modal-hd">
-      <h2 style="font-family:'Times New Roman',serif">Add Trip to Client Account</h2>
-      <button onclick="document.getElementById('m-history').style.display='none'" style="background:none;border:none;font-size:1.25rem;color:#888;cursor:pointer">✕</button>
-    </div>
-    <div style="padding:1.5rem">
-      <div id="history-booking-info" style="background:#f9f9f9;border-left:3px solid #775a19;padding:1rem;margin-bottom:1.25rem;font-size:0.85rem"></div>
-      <label style="font-family:Work Sans,sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:#888;display:block;margin-bottom:6px">Client Phone Number</label>
-      <div style="display:flex;gap:6px;margin-bottom:0.75rem">
-        <div style="background:#f9f9f9;border:1px solid #e2e2e2;border-bottom:2px solid #c4c7c7;padding:0.6rem 0.75rem;font-size:0.875rem;color:#444;white-space:nowrap">+1</div>
-        <input id="history-phone" type="tel" placeholder="(987) 416-3283"
-          style="flex:1;background:#f9f9f9;border:1px solid #e2e2e2;border-bottom:2px solid #c4c7c7;padding:0.6rem 0.75rem;font-family:Inter,sans-serif;font-size:0.875rem;outline:none"/>
-      </div>
-      <label style="font-family:Work Sans,sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:#888;display:block;margin-bottom:6px">Trip Status</label>
-      <select id="history-status" style="width:100%;background:#f9f9f9;border:1px solid #e2e2e2;border-bottom:2px solid #c4c7c7;padding:0.6rem 0.75rem;font-family:Inter,sans-serif;font-size:0.875rem;outline:none;appearance:none;margin-bottom:1.25rem">
-        <option value="completed">Completed — counts toward loyalty</option>
-        <option value="upcoming">Upcoming — not yet completed</option>
-        <option value="paid">Paid — waiting for ride</option>
-      </select>
-      <div id="history-error" style="display:none;color:#dc2626;font-size:0.8rem;margin-bottom:0.75rem;padding:0.5rem;background:#fef2f2;border-left:2px solid #dc2626"></div>
-      <div id="history-success" style="display:none;color:#15803d;font-size:0.8rem;margin-bottom:0.75rem;padding:0.75rem;background:#f0fdf4;border-left:2px solid #16a34a">
-        ✅ Trip added to client account!
-      </div>
-      <button onclick="saveToClientHistory()" class="bd" style="width:100%;padding:0.875rem;justify-content:center;font-size:0.8rem">
-        <span class="material-symbols-outlined" style="font-size:16px">person_add</span>
-        Add to Client Account
-      </button>
-      <p style="font-family:Inter,sans-serif;font-size:0.7rem;color:#aaa;text-align:center;margin-top:0.75rem">Client must have an account at seacoastrvip.com/account.html</p>
-    </div>
-  </div>
-</div>
-
-<!-- CLIENT DETAIL MODAL -->
-<div class="overlay" id="m-client" style="display:none">
-  <div class="modal" style="max-width:460px">
-    <div class="modal-hd">
-      <h2 id="m-client-title" style="font-family:'Times New Roman',serif">Client Details</h2>
-      <button onclick="document.getElementById('m-client').style.display='none'" style="background:none;border:none;font-size:1.25rem;color:#888;cursor:pointer">✕</button>
-    </div>
-    <div style="padding:1.5rem" id="m-client-body"></div>
-  </div>
-</div>
-
-
-<!-- MESSAGE MODAL -->
-<div class="overlay" id="m-msg" style="display:none">
-  <div class="modal" style="max-width:500px">
-    <div class="modal-hd">
-      <h2 id="m-msg-title" style="font-family:'Times New Roman',serif">Send Message</h2>
-      <button onclick="document.getElementById('m-msg').style.display='none'" style="background:none;border:none;font-size:1.25rem;color:#888;cursor:pointer">✕</button>
-    </div>
-    <div style="padding:1.5rem">
-
-      <!-- Message preview / edit -->
-      <label style="font-family:Work Sans,sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:#888;display:block;margin-bottom:6px">Message (edit before sending)</label>
-      <textarea id="m-msg-text" rows="7" style="width:100%;background:#f9f9f9;border:1px solid #e2e2e2;border-bottom:2px solid #c4c7c7;padding:0.75rem;font-family:Inter,sans-serif;font-size:0.85rem;outline:none;resize:vertical;margin-bottom:1.25rem;box-sizing:border-box;line-height:1.6"></textarea>
-
-      <!-- Send options -->
-      <div style="margin-bottom:1rem">
-        <label style="font-family:Work Sans,sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:#888;display:block;margin-bottom:6px">Send to client (select or type number)</label>
-        <div style="display:flex;gap:6px;margin-bottom:6px">
-          <select id="m-msg-client-select" onchange="selectMsgClient(this.value)" style="flex:1;background:#f9f9f9;border:1px solid #e2e2e2;border-bottom:2px solid #c4c7c7;padding:0.625rem;font-family:Inter,sans-serif;font-size:0.8rem;outline:none;appearance:none">
-            <option value="">— Pick a client from list —</option>
-          </select>
-          <button onclick="loadMsgClients()" class="bo" style="padding:0.5rem 0.75rem;flex-shrink:0;font-size:0.65rem">
-            <span class="material-symbols-outlined" style="font-size:14px">refresh</span>
-          </button>
-        </div>
-        <input id="m-msg-phone" type="tel" placeholder="Or type phone number directly"
-          style="width:100%;background:#f9f9f9;border:1px solid #e2e2e2;border-bottom:2px solid #c4c7c7;padding:0.625rem;font-family:Inter,sans-serif;font-size:0.875rem;outline:none;box-sizing:border-box"/>
-        <div style="font-size:0.65rem;color:#aaa;margin-top:4px">Leave blank → "Send All" texts all clients</div>
-      </div>
-
-      <div id="m-msg-result" style="display:none;font-size:0.8rem;padding:0.75rem;margin-bottom:1rem;border-radius:2px"></div>
-
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.625rem">
-        <button onclick="msgSendOne()" class="bd" style="padding:0.875rem;justify-content:center;flex-direction:column;gap:3px;font-size:0.65rem">
-          <span class="material-symbols-outlined" style="font-size:18px">sms</span>Text Client
-        </button>
-        <a id="msg-whatsapp-btn" href="#" target="_blank" class="bgr" style="padding:0.875rem;justify-content:center;flex-direction:column;gap:3px;font-size:0.65rem;text-decoration:none">
-          <span class="material-symbols-outlined" style="font-size:18px">chat</span>WhatsApp
-        </a>
-        <button onclick="msgSendAll()" class="bg" style="padding:0.875rem;justify-content:center;flex-direction:column;gap:3px;font-size:0.65rem">
-          <span class="material-symbols-outlined" style="font-size:18px">group</span>Send All
-        </button>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.625rem;margin-top:0.625rem">
-        <button onclick="msgCopy()" class="bo" style="padding:0.75rem;justify-content:center;font-size:0.65rem">
-          <span class="material-symbols-outlined" style="font-size:15px">content_copy</span>Copy Text
-        </button>
-        <button onclick="document.getElementById('m-msg').style.display='none'" class="bo" style="padding:0.75rem;justify-content:center;font-size:0.65rem;color:#888">Cancel</button>
-      </div>
-      <p style="font-family:Inter,sans-serif;font-size:0.65rem;color:#bbb;text-align:center;margin-top:0.875rem">"Send All" opens your text app for each client — approve each one individually.</p>
-    </div>
-  </div>
-</div>
-
 </body>
 </html>
