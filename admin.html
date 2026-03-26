@@ -30,7 +30,7 @@ a{text-decoration:none}
 .topbar{background:white;border-bottom:1px solid #e8e8e8;padding:0.75rem 1rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;position:sticky;top:0;z-index:10}
 .topbar-title{font-weight:700;font-size:1rem}
 .topbar-sub{font-size:0.6rem;color:#999;text-transform:uppercase;letter-spacing:0.1em}
-.stats{display:grid;grid-template-columns:repeat(4,1fr);background:white;border-bottom:1px solid #e8e8e8}
+.stats{display:grid;grid-template-columns:repeat(5,1fr);background:white;border-bottom:1px solid #e8e8e8}
 .stat{padding:0.875rem 0.5rem;text-align:center;border-right:1px solid #f0f0f0}
 .stat:last-child{border:none}
 .stat-num{font-size:1.5rem;font-weight:700}
@@ -81,6 +81,7 @@ a{text-decoration:none}
 .empty .material-symbols-outlined{font-size:3rem;display:block;margin-bottom:0.75rem}
 </style>
 <!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <style>
@@ -131,6 +132,7 @@ nav .font-headline, footer .font-headline {
     <div class="stat"><div id="s2" class="stat-num" style="color:#775a19">0</div><div class="stat-lbl">Upcoming</div></div>
     <div class="stat"><div id="s3" class="stat-num" style="color:#16a34a">$0</div><div class="stat-lbl">Collected</div></div>
     <div class="stat"><div id="s4" class="stat-num" style="color:#d97706">0</div><div class="stat-lbl">Awaiting Pay</div></div>
+      <div class="stat"><div id="s5" class="stat-num" style="color:#7c3aed">0</div><div class="stat-lbl">Clients</div></div>
   </div>
 
   <!-- Tabs -->
@@ -139,15 +141,36 @@ nav .font-headline, footer .font-headline {
     <button class="tab-btn" onclick="setTab('upcoming',this)">Upcoming</button>
     <button class="tab-btn" onclick="setTab('awaiting',this)">Awaiting Payment</button>
     <button class="tab-btn" onclick="setTab('done',this)">Completed</button>
+    <button class="tab-btn" onclick="setTab('clients',this)" style="color:#775a19;font-weight:700">Clients ●</button>
+    <button class="tab-btn" onclick="setTab('messages',this)" style="color:#1d4ed8;font-weight:700">Messages ✉</button>
   </div>
 
-  <!-- Bookings -->
-  <div class="content">
+  <!-- Bookings section -->
+  <div id="section-bookings" class="content">
     <div id="bk-list"></div>
     <div id="bk-empty" class="empty" style="display:none">
       <span class="material-symbols-outlined">directions_car</span>
       <div>No bookings yet</div>
       <button class="bg" style="margin-top:1rem" onclick="openAdd()">Add First Booking</button>
+    </div>
+  </div>
+
+  <!-- Clients section -->
+  <div id="section-clients" class="content" style="display:none">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+      <div>
+        <div style="font-family:'Times New Roman',serif;font-size:1.1rem;font-weight:700">Registered Clients</div>
+        <div style="font-size:0.75rem;color:#888;margin-top:2px">Clients who signed up via My Account</div>
+      </div>
+      <button onclick="loadClients()" class="bo" style="font-size:0.65rem;padding:0.375rem 0.75rem">
+        <span class="material-symbols-outlined" style="font-size:14px">refresh</span>Refresh
+      </button>
+    </div>
+    <div id="clients-list">
+      <div style="text-align:center;padding:3rem 0;color:#bbb">
+        <span class="material-symbols-outlined" style="font-size:2.5rem;display:block;margin-bottom:0.5rem">people</span>
+        <div style="font-size:0.8rem">Click Refresh to load clients</div>
+      </div>
     </div>
   </div>
 </div>
@@ -254,6 +277,16 @@ var FB_CONFIG = {
   messagingSenderId: "684535453116",
   appId:             "1:684535453116:web:922c843b5bad3b81ad47b9"
 };
+
+// Firebase init for admin
+var db_fb = null;
+try {
+  if (!firebase.apps.length) firebase.initializeApp(FB_CONFIG);
+  else firebase.app();
+  db_fb = firebase.firestore();
+  console.log('✅ Firebase ready in admin');
+} catch(e) { console.log('Firebase:', e); }
+
 // ═══════════════════════════════════════════════════
 
 // Firebase state
@@ -401,6 +434,7 @@ function render() {
             '<button class="bg" onclick="openPay(\''+b.id+'\')"><span class="material-symbols-outlined">send</span>Send Link</button>'+
             '<button style="background:#1d4ed8;color:white;font-family:Work Sans,sans-serif;font-size:0.7rem;font-weight:600;text-transform:uppercase;padding:0.5rem 0.875rem;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:4px" onclick="openReminder(\''+b.id+'\')">' +
             '<span class="material-symbols-outlined" style="font-size:14px">notifications</span>Reminder</button>'+
+            '<button style="background:#7c3aed;color:white;font-family:Work Sans,sans-serif;font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;padding:0.5rem 0.625rem;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:3px" onclick=\"openAddToHistory(\'"+b.id+"\')\">'+'<span class=\"material-symbols-outlined\" style=\"font-size:13px\">person_add</span>Client</button>'+
             '<button class="bo" onclick="editBk(\''+b.id+'\')"><span class="material-symbols-outlined">edit</span></button>'+
             '<button class="br" onclick="delBk(\''+b.id+'\')"><span class="material-symbols-outlined">delete</span></button>'+
           '</div>'+
@@ -604,5 +638,96 @@ document.addEventListener('DOMContentLoaded', function(){
   else document.getElementById('pwd').focus();
 });
 </script>
+
+<!-- ADD TO CLIENT HISTORY MODAL -->
+<div class="overlay" id="m-history" style="display:none">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-hd">
+      <h2 style="font-family:'Times New Roman',serif">Add Trip to Client Account</h2>
+      <button onclick="document.getElementById('m-history').style.display='none'" style="background:none;border:none;font-size:1.25rem;color:#888;cursor:pointer">✕</button>
+    </div>
+    <div style="padding:1.5rem">
+      <div id="history-booking-info" style="background:#f9f9f9;border-left:3px solid #775a19;padding:1rem;margin-bottom:1.25rem;font-size:0.85rem"></div>
+      <label style="font-family:Work Sans,sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:#888;display:block;margin-bottom:6px">Client Phone Number</label>
+      <div style="display:flex;gap:6px;margin-bottom:0.75rem">
+        <div style="background:#f9f9f9;border:1px solid #e2e2e2;border-bottom:2px solid #c4c7c7;padding:0.6rem 0.75rem;font-size:0.875rem;color:#444;white-space:nowrap">+1</div>
+        <input id="history-phone" type="tel" placeholder="(987) 416-3283"
+          style="flex:1;background:#f9f9f9;border:1px solid #e2e2e2;border-bottom:2px solid #c4c7c7;padding:0.6rem 0.75rem;font-family:Inter,sans-serif;font-size:0.875rem;outline:none"/>
+      </div>
+      <label style="font-family:Work Sans,sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:#888;display:block;margin-bottom:6px">Trip Status</label>
+      <select id="history-status" style="width:100%;background:#f9f9f9;border:1px solid #e2e2e2;border-bottom:2px solid #c4c7c7;padding:0.6rem 0.75rem;font-family:Inter,sans-serif;font-size:0.875rem;outline:none;appearance:none;margin-bottom:1.25rem">
+        <option value="completed">Completed — counts toward loyalty</option>
+        <option value="upcoming">Upcoming — not yet completed</option>
+        <option value="paid">Paid — waiting for ride</option>
+      </select>
+      <div id="history-error" style="display:none;color:#dc2626;font-size:0.8rem;margin-bottom:0.75rem;padding:0.5rem;background:#fef2f2;border-left:2px solid #dc2626"></div>
+      <div id="history-success" style="display:none;color:#15803d;font-size:0.8rem;margin-bottom:0.75rem;padding:0.75rem;background:#f0fdf4;border-left:2px solid #16a34a">
+        ✅ Trip added to client account!
+      </div>
+      <button onclick="saveToClientHistory()" class="bd" style="width:100%;padding:0.875rem;justify-content:center;font-size:0.8rem">
+        <span class="material-symbols-outlined" style="font-size:16px">person_add</span>
+        Add to Client Account
+      </button>
+      <p style="font-family:Inter,sans-serif;font-size:0.7rem;color:#aaa;text-align:center;margin-top:0.75rem">Client must have an account at seacoastrvip.com/account.html</p>
+    </div>
+  </div>
+</div>
+
+<!-- CLIENT DETAIL MODAL -->
+<div class="overlay" id="m-client" style="display:none">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-hd">
+      <h2 id="m-client-title" style="font-family:'Times New Roman',serif">Client Details</h2>
+      <button onclick="document.getElementById('m-client').style.display='none'" style="background:none;border:none;font-size:1.25rem;color:#888;cursor:pointer">✕</button>
+    </div>
+    <div style="padding:1.5rem" id="m-client-body"></div>
+  </div>
+</div>
+
+
+<!-- MESSAGE MODAL -->
+<div class="overlay" id="m-msg" style="display:none">
+  <div class="modal" style="max-width:500px">
+    <div class="modal-hd">
+      <h2 id="m-msg-title" style="font-family:'Times New Roman',serif">Send Message</h2>
+      <button onclick="document.getElementById('m-msg').style.display='none'" style="background:none;border:none;font-size:1.25rem;color:#888;cursor:pointer">✕</button>
+    </div>
+    <div style="padding:1.5rem">
+
+      <!-- Message preview / edit -->
+      <label style="font-family:Work Sans,sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:#888;display:block;margin-bottom:6px">Message (edit before sending)</label>
+      <textarea id="m-msg-text" rows="7" style="width:100%;background:#f9f9f9;border:1px solid #e2e2e2;border-bottom:2px solid #c4c7c7;padding:0.75rem;font-family:Inter,sans-serif;font-size:0.85rem;outline:none;resize:vertical;margin-bottom:1.25rem;box-sizing:border-box;line-height:1.6"></textarea>
+
+      <!-- Send options -->
+      <div style="margin-bottom:1rem">
+        <label style="font-family:Work Sans,sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:#888;display:block;margin-bottom:6px">Send to specific client (optional)</label>
+        <input id="m-msg-phone" type="tel" placeholder="(987) 416-3283 — leave blank to send to all"
+          style="width:100%;background:#f9f9f9;border:1px solid #e2e2e2;border-bottom:2px solid #c4c7c7;padding:0.625rem;font-family:Inter,sans-serif;font-size:0.875rem;outline:none;box-sizing:border-box"/>
+      </div>
+
+      <div id="m-msg-result" style="display:none;font-size:0.8rem;padding:0.75rem;margin-bottom:1rem;border-radius:2px"></div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.625rem">
+        <button onclick="msgSendOne()" class="bd" style="padding:0.875rem;justify-content:center;flex-direction:column;gap:3px;font-size:0.65rem">
+          <span class="material-symbols-outlined" style="font-size:18px">sms</span>Text Client
+        </button>
+        <a id="msg-whatsapp-btn" href="#" target="_blank" class="bgr" style="padding:0.875rem;justify-content:center;flex-direction:column;gap:3px;font-size:0.65rem;text-decoration:none">
+          <span class="material-symbols-outlined" style="font-size:18px">chat</span>WhatsApp
+        </a>
+        <button onclick="msgSendAll()" class="bg" style="padding:0.875rem;justify-content:center;flex-direction:column;gap:3px;font-size:0.65rem">
+          <span class="material-symbols-outlined" style="font-size:18px">group</span>Send All
+        </button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.625rem;margin-top:0.625rem">
+        <button onclick="msgCopy()" class="bo" style="padding:0.75rem;justify-content:center;font-size:0.65rem">
+          <span class="material-symbols-outlined" style="font-size:15px">content_copy</span>Copy Text
+        </button>
+        <button onclick="document.getElementById('m-msg').style.display='none'" class="bo" style="padding:0.75rem;justify-content:center;font-size:0.65rem;color:#888">Cancel</button>
+      </div>
+      <p style="font-family:Inter,sans-serif;font-size:0.65rem;color:#bbb;text-align:center;margin-top:0.875rem">"Send All" opens your text app for each client — approve each one individually.</p>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>

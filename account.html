@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>My Account | Seacoast RVIP</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link rel="manifest" href="/manifest.json"/>
+<meta name="theme-color" content="#775a19"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-title" content="Seacoast RVIP"/>
+<link rel="apple-touch-icon" href="/seacoast_rvip_favicon_180.png"/>
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+.material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 300,'GRAD' 0,'opsz' 24}
+body{font-family:'Inter',sans-serif;background:#f5f5f5;min-height:100vh}
+.font-serif{font-family:"Times New Roman",Times,serif!important}
+
+/* NAV */
+nav{position:fixed;top:0;width:100%;z-index:50;background:rgba(255,255,255,0.96);backdrop-filter:blur(12px);border-bottom:1px solid rgba(0,0,0,0.06)}
+.nav-inner{display:flex;justify-content:space-between;align-items:center;padding:0 1.5rem;height:64px}
+.logo{font-family:"Times New Roman",serif;font-size:1.25rem;font-weight:700;color:#000;text-decoration:none}
+
+/* CARDS */
+.card{background:white;border-radius:0;margin-bottom:1rem;overflow:hidden}
+.card-hd{padding:1rem 1.25rem;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;gap:0.75rem}
+.card-hd-title{font-family:"Times New Roman",serif;font-size:1rem;font-weight:700;color:#000}
+.card-body{padding:1.25rem}
+
+/* INPUTS */
+.inp{width:100%;background:#f9f9f9;border:1px solid #e2e2e2;border-bottom:2px solid #c4c7c7;padding:0.75rem;font-family:Inter,sans-serif;font-size:1rem;outline:none;transition:border-color 0.2s;-webkit-appearance:none}
+.inp:focus{border-bottom-color:#775a19}
+.lbl{font-family:"Work Sans",sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:#888;display:block;margin-bottom:6px}
+
+/* BUTTONS */
+.btn-primary{width:100%;background:#000;color:white;font-family:"Work Sans",sans-serif;font-size:0.8rem;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;padding:1rem;border:none;border-bottom:3px solid #775a19;cursor:pointer;transition:opacity 0.2s}
+.btn-primary:active{opacity:0.85}
+.btn-primary:disabled{opacity:0.5;cursor:not-allowed}
+.btn-gold{background:#775a19;color:white;font-family:"Work Sans",sans-serif;font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;padding:0.625rem 1.25rem;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:5px}
+.btn-outline{background:white;color:#000;font-family:"Work Sans",sans-serif;font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;padding:0.625rem 1.25rem;border:1px solid #e2e2e2;cursor:pointer;display:inline-flex;align-items:center;gap:5px}
+
+/* TRIP CARDS */
+.trip-card{background:white;border-left:3px solid #e2e2e2;padding:1rem;margin-bottom:0.625rem;cursor:pointer;transition:border-color 0.2s}
+.trip-card:hover{border-left-color:#775a19}
+.trip-card.completed{border-left-color:#16a34a}
+.trip-card.upcoming{border-left-color:#1d4ed8}
+
+/* LOYALTY BAR */
+.loyalty-bar-bg{background:#f0f0f0;height:8px;border-radius:4px;overflow:hidden;margin:0.75rem 0}
+.loyalty-bar-fill{background:linear-gradient(90deg,#775a19,#b8860b);height:100%;border-radius:4px;transition:width 0.8s ease}
+
+/* BADGE */
+.badge{display:inline-block;padding:2px 8px;font-size:0.65rem;font-family:"Work Sans",sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:0.05em}
+.badge-green{background:#dcfce7;color:#15803d}
+.badge-blue{background:#dbeafe;color:#1d4ed8}
+.badge-gold{background:#fef9c3;color:#92400e}
+
+/* STATES */
+#state-login{display:block}
+#state-verify{display:none}
+#state-dashboard{display:none}
+
+/* SKELETON */
+.skeleton{background:#f0f0f0;border-radius:2px;animation:pulse 1.5s ease infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
+
+/* TOAST */
+#toast{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);background:#000;color:white;padding:0.75rem 1.5rem;font-family:"Work Sans",sans-serif;font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;border-bottom:2px solid #775a19;display:none;z-index:100;white-space:nowrap}
+
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:60;overflow-y:auto;padding:1rem}
+.modal-box{background:white;max-width:420px;margin:3rem auto}
+.modal-hd{padding:1rem 1.25rem;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center}
+
+/* PROFILE FIELDS */
+.profile-field{display:flex;justify-content:space-between;align-items:center;padding:0.75rem 0;border-bottom:1px solid #f5f5f5}
+.profile-field:last-child{border:none}
+
+/* CODE INPUT */
+.code-inputs{display:flex;gap:0.5rem;justify-content:center;margin:1.5rem 0}
+.code-digit{width:48px;height:56px;text-align:center;font-size:1.5rem;font-family:monospace;font-weight:700;background:#f9f9f9;border:2px solid #e2e2e2;outline:none;transition:border-color 0.2s}
+.code-digit:focus{border-color:#775a19}
+
+@media(min-width:640px){
+  .main-inner{max-width:600px;margin:0 auto}
+}
+</style>
+</head>
+<body>
+
+<div id="toast"></div>
+
+<!-- NAV -->
+<nav>
+<div class="nav-inner">
+  <a href="index.html" class="logo">Seacoast RVIP</a>
+  <div style="display:flex;align-items:center;gap:0.75rem">
+    <a href="schedule.html" style="background:#000;color:white;padding:0.5rem 1rem;font-family:'Work Sans',sans-serif;font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;text-decoration:none;border-bottom:2px solid #775a19">Book</a>
+    <button id="nav-logout" onclick="signOut()" style="display:none;background:none;border:1px solid #e2e2e2;font-family:'Work Sans',sans-serif;font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;padding:0.5rem 0.875rem;cursor:pointer;color:#888">Sign Out</button>
+  </div>
+</div>
+</nav>
+
+<main style="padding-top:80px;padding-bottom:4rem;padding-left:1rem;padding-right:1rem">
+<div class="main-inner">
+
+<!-- ═══ LOGIN STATE ═══ -->
+<div id="state-login">
+  <div style="text-align:center;padding:2rem 0 1.5rem">
+    <div style="font-family:'Times New Roman',serif;font-size:1.75rem;font-weight:700;color:#000;margin-bottom:0.5rem">My Account</div>
+    <p style="font-size:0.85rem;color:#666;max-width:300px;margin:0 auto;line-height:1.6">New or returning client? Enter your phone number — if you're new we'll create your account automatically.</p>
+    <div style="display:flex;align-items:center;gap:0.75rem;justify-content:center;margin-top:1rem">
+      <span style="background:#dcfce7;color:#15803d;font-family:Work Sans,sans-serif;font-size:0.65rem;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;padding:3px 8px">New Client</span>
+      <span style="font-size:0.75rem;color:#aaa">→ Account created instantly</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:0.75rem;justify-content:center;margin-top:0.5rem">
+      <span style="background:#dbeafe;color:#1d4ed8;font-family:Work Sans,sans-serif;font-size:0.65rem;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;padding:3px 8px">Returning</span>
+      <span style="font-size:0.75rem;color:#aaa">→ See your trips & rewards</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-hd">
+      <span class="material-symbols-outlined" style="color:#775a19;font-size:20px">phone_iphone</span>
+      <span class="card-hd-title">Sign In with Phone</span>
+    </div>
+    <div class="card-body">
+      <label class="lbl">Your Phone Number</label>
+      <div style="display:flex;gap:0.5rem;margin-bottom:1rem">
+        <div style="background:#f9f9f9;border:1px solid #e2e2e2;border-bottom:2px solid #c4c7c7;padding:0.75rem;font-size:0.875rem;color:#444;white-space:nowrap">+1</div>
+        <input class="inp" id="phone-input" type="tel" placeholder="(987) 416-3283" maxlength="14" oninput="formatPhone(this)"/>
+      </div>
+      <div id="recaptcha-container" style="margin-bottom:1rem"></div>
+      <div id="login-error" style="display:none;color:#dc2626;font-size:0.8rem;margin-bottom:0.75rem;padding:0.5rem;background:#fef2f2;border-left:3px solid #dc2626"></div>
+      <button class="btn-primary" id="send-code-btn" onclick="sendCode()">
+        Continue with Phone Number →
+      </button>
+      <p style="font-size:0.7rem;color:#aaa;text-align:center;margin-top:1rem">We'll text you a 6-digit code. Standard rates apply.</p>
+    </div>
+  </div>
+
+  <!-- Benefits preview -->
+  <div class="card">
+    <div class="card-body">
+      <div style="font-family:'Times New Roman',serif;font-size:0.95rem;font-weight:700;margin-bottom:1rem">What you get with an account</div>
+      <div style="display:flex;flex-direction:column;gap:0.75rem">
+        <div style="display:flex;align-items:center;gap:0.75rem"><span class="material-symbols-outlined" style="color:#775a19;font-size:18px">history</span><span style="font-size:0.85rem;color:#444">Full trip history</span></div>
+        <div style="display:flex;align-items:center;gap:0.75rem"><span class="material-symbols-outlined" style="color:#775a19;font-size:18px">person</span><span style="font-size:0.85rem;color:#444">Saved name, phone &amp; address</span></div>
+        <div style="display:flex;align-items:center;gap:0.75rem"><span class="material-symbols-outlined" style="color:#775a19;font-size:18px">replay</span><span style="font-size:0.85rem;color:#444">One-tap rebooking</span></div>
+        <div style="display:flex;align-items:center;gap:0.75rem"><span class="material-symbols-outlined" style="color:#775a19;font-size:18px">star</span><span style="font-size:0.85rem;color:#444">Loyalty rewards — earn free rides</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ VERIFY STATE ═══ -->
+<div id="state-verify">
+  <div style="text-align:center;padding:2rem 0 1.5rem">
+    <span class="material-symbols-outlined" style="font-size:3rem;color:#775a19;display:block;margin-bottom:0.75rem">sms</span>
+    <div style="font-family:'Times New Roman',serif;font-size:1.5rem;font-weight:700;margin-bottom:0.5rem">Check Your Texts</div>
+    <p style="font-size:0.85rem;color:#888" id="verify-subtitle">We sent a 6-digit code to your number</p>
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+      <label class="lbl" style="text-align:center;display:block">Enter 6-digit code</label>
+      <div class="code-inputs">
+        <input class="code-digit" id="d0" maxlength="1" type="number" oninput="codeInput(this,0)" onkeydown="codeBksp(event,0)"/>
+        <input class="code-digit" id="d1" maxlength="1" type="number" oninput="codeInput(this,1)" onkeydown="codeBksp(event,1)"/>
+        <input class="code-digit" id="d2" maxlength="1" type="number" oninput="codeInput(this,2)" onkeydown="codeBksp(event,2)"/>
+        <input class="code-digit" id="d3" maxlength="1" type="number" oninput="codeInput(this,3)" onkeydown="codeBksp(event,3)"/>
+        <input class="code-digit" id="d4" maxlength="1" type="number" oninput="codeInput(this,4)" onkeydown="codeBksp(event,4)"/>
+        <input class="code-digit" id="d5" maxlength="1" type="number" oninput="codeInput(this,5)" onkeydown="codeBksp(event,5)"/>
+      </div>
+      <div id="verify-error" style="display:none;color:#dc2626;font-size:0.8rem;text-align:center;margin-bottom:0.75rem"></div>
+      <button class="btn-primary" id="verify-btn" onclick="verifyCode()">Verify &amp; Sign In →</button>
+      <button onclick="goBackToLogin()" style="width:100%;background:none;border:none;color:#888;font-family:'Inter',sans-serif;font-size:0.8rem;padding:0.75rem;cursor:pointer;margin-top:0.5rem">← Use a different number</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ DASHBOARD STATE ═══ -->
+<div id="state-dashboard">
+
+  <!-- Profile header -->
+  <div style="background:#000;color:white;padding:1.5rem;margin-bottom:1rem;position:relative;border-bottom:3px solid #775a19">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start">
+      <div>
+        <div style="font-size:0.65rem;font-family:'Work Sans',sans-serif;text-transform:uppercase;letter-spacing:0.15em;color:#775a19;margin-bottom:0.375rem">Welcome back</div>
+        <div id="dash-name" style="font-family:'Times New Roman',serif;font-size:1.5rem;font-weight:700">—</div>
+        <div id="dash-phone" style="font-size:0.8rem;color:rgba(255,255,255,0.5);margin-top:2px">—</div>
+      </div>
+      <button onclick="openEditProfile()" style="background:rgba(255,255,255,0.08);border:none;color:white;padding:0.5rem 0.75rem;font-family:'Work Sans',sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.08em;cursor:pointer">Edit</button>
+    </div>
+  </div>
+
+  <!-- Loyalty Card -->
+  <div class="card" style="border-top:3px solid #775a19">
+    <div class="card-body">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem">
+        <div>
+          <span class="material-symbols-outlined" style="color:#775a19;font-size:16px;vertical-align:middle;margin-right:4px">star</span>
+          <span style="font-family:'Times New Roman',serif;font-weight:700;font-size:0.95rem">Loyalty Rewards</span>
+        </div>
+        <span id="loyalty-badge" class="badge badge-gold">—</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:0.375rem">
+        <span style="font-size:0.75rem;color:#666"><span id="loyalty-rides">0</span> rides completed</span>
+        <span style="font-size:0.75rem;color:#775a19;font-weight:600"><span id="loyalty-remaining">10</span> until free ride</span>
+      </div>
+      <div class="loyalty-bar-bg">
+        <div class="loyalty-bar-fill" id="loyalty-bar" style="width:0%"></div>
+      </div>
+      <div id="loyalty-message" style="font-size:0.75rem;color:#888;margin-top:0.375rem"></div>
+    </div>
+  </div>
+
+  <!-- Quick Actions -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:1rem">
+    <a href="schedule.html" id="quick-book-btn" style="background:#000;color:white;padding:1rem;text-decoration:none;text-align:center;border-bottom:3px solid #775a19;display:flex;flex-direction:column;align-items:center;gap:0.375rem">
+      <span class="material-symbols-outlined" style="font-size:22px">directions_car</span>
+      <span style="font-family:'Work Sans',sans-serif;font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em">Book a Ride</span>
+    </a>
+    <button onclick="reBookLast()" style="background:white;color:#000;padding:1rem;border:1px solid #e2e2e2;display:flex;flex-direction:column;align-items:center;gap:0.375rem;cursor:pointer;width:100%">
+      <span class="material-symbols-outlined" style="font-size:22px;color:#775a19">replay</span>
+      <span style="font-family:'Work Sans',sans-serif;font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em">Rebook Last Trip</span>
+    </button>
+    <a href="quote.html" style="background:white;color:#000;padding:1rem;text-decoration:none;text-align:center;border:1px solid #e2e2e2;display:flex;flex-direction:column;align-items:center;gap:0.375rem">
+      <span class="material-symbols-outlined" style="font-size:22px;color:#775a19">request_quote</span>
+      <span style="font-family:'Work Sans',sans-serif;font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em">Get a Quote</span>
+    </a>
+    <a href="contact.html" style="background:white;color:#000;padding:1rem;text-decoration:none;text-align:center;border:1px solid #e2e2e2;display:flex;flex-direction:column;align-items:center;gap:0.375rem">
+      <span class="material-symbols-outlined" style="font-size:22px;color:#775a19">support_agent</span>
+      <span style="font-family:'Work Sans',sans-serif;font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em">Contact Ramon</span>
+    </a>
+  </div>
+
+  <!-- Trip History -->
+  <div class="card">
+    <div class="card-hd">
+      <span class="material-symbols-outlined" style="color:#775a19;font-size:20px">history</span>
+      <span class="card-hd-title">Trip History</span>
+    </div>
+    <div class="card-body" id="trips-container">
+      <div style="text-align:center;padding:2rem 0;color:#bbb">
+        <span class="material-symbols-outlined" style="font-size:2.5rem;display:block;margin-bottom:0.5rem">directions_car</span>
+        <div style="font-size:0.8rem">No trips yet — book your first ride!</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Saved Info -->
+  <div class="card">
+    <div class="card-hd" style="justify-content:space-between">
+      <div style="display:flex;align-items:center;gap:0.75rem">
+        <span class="material-symbols-outlined" style="color:#775a19;font-size:20px">person</span>
+        <span class="card-hd-title">Saved Info</span>
+      </div>
+      <button onclick="openEditProfile()" class="btn-outline" style="font-size:0.65rem;padding:0.375rem 0.75rem">Edit</button>
+    </div>
+    <div class="card-body">
+      <div class="profile-field">
+        <span style="font-size:0.75rem;color:#888;font-family:'Work Sans',sans-serif;text-transform:uppercase;letter-spacing:0.08em">Name</span>
+        <span id="profile-name" style="font-size:0.875rem;font-weight:500">—</span>
+      </div>
+      <div class="profile-field">
+        <span style="font-size:0.75rem;color:#888;font-family:'Work Sans',sans-serif;text-transform:uppercase;letter-spacing:0.08em">Phone</span>
+        <span id="profile-phone" style="font-size:0.875rem;font-weight:500">—</span>
+      </div>
+      <div class="profile-field">
+        <span style="font-size:0.75rem;color:#888;font-family:'Work Sans',sans-serif;text-transform:uppercase;letter-spacing:0.08em">Email</span>
+        <span id="profile-email" style="font-size:0.875rem;font-weight:500">—</span>
+      </div>
+      <div class="profile-field">
+        <span style="font-size:0.75rem;color:#888;font-family:'Work Sans',sans-serif;text-transform:uppercase;letter-spacing:0.08em">Home Address</span>
+        <span id="profile-address" style="font-size:0.875rem;font-weight:500;text-align:right;max-width:55%">—</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+</main>
+
+<!-- EDIT PROFILE MODAL -->
+<div class="modal-overlay" id="modal-profile">
+  <div class="modal-box">
+    <div class="modal-hd">
+      <span style="font-family:'Times New Roman',serif;font-weight:700">Edit Your Info</span>
+      <button onclick="closeModal('modal-profile')" style="background:none;border:none;font-size:1.25rem;cursor:pointer;color:#888">✕</button>
+    </div>
+    <div style="padding:1.25rem">
+      <div style="margin-bottom:1rem"><label class="lbl">Full Name</label><input class="inp" id="edit-name" type="text" placeholder="Your full name"/></div>
+      <div style="margin-bottom:1rem"><label class="lbl">Email</label><input class="inp" id="edit-email" type="email" placeholder="your@email.com"/></div>
+      <div style="margin-bottom:1rem"><label class="lbl">Home / Usual Pickup Address</label><input class="inp" id="edit-address" type="text" placeholder="123 Main St, Hampton NH"/></div>
+      <div style="margin-bottom:1.25rem"><label class="lbl">Preferred Vehicle</label>
+        <select class="inp" id="edit-vehicle" style="appearance:none">
+          <option>No preference</option>
+          <option>Black SUV Luxury</option>
+          <option>Regular Black SUV</option>
+        </select>
+      </div>
+      <button onclick="saveProfile()" class="btn-primary">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- REBOOK MODAL -->
+<div class="modal-overlay" id="modal-rebook">
+  <div class="modal-box">
+    <div class="modal-hd">
+      <span style="font-family:'Times New Roman',serif;font-weight:700">Rebook Last Trip</span>
+      <button onclick="closeModal('modal-rebook')" style="background:none;border:none;font-size:1.25rem;cursor:pointer;color:#888">✕</button>
+    </div>
+    <div style="padding:1.25rem">
+      <div id="rebook-details" style="background:#f9f9f9;border-left:3px solid #775a19;padding:1rem;margin-bottom:1.25rem;font-size:0.85rem"></div>
+      <div style="margin-bottom:1rem"><label class="lbl">New Date</label><input class="inp" id="rebook-date" type="date"/></div>
+      <div style="margin-bottom:1.25rem"><label class="lbl">New Time</label><input class="inp" id="rebook-time" type="time"/></div>
+      <button onclick="submitRebook()" class="btn-primary">Request This Ride →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════
+// FIREBASE CONFIG — Seacoast RVIP
+// ═══════════════════════════════════════════════════
+var FB_CONFIG = {
+  apiKey:            "AIzaSyDGel0ktZDQYcdlOuoZo4bAqZWCuGvOVbc",
+  authDomain:        "seacoast-rip.firebaseapp.com",
+  projectId:         "seacoast-rip",
+  storageBucket:     "seacoast-rip.firebasestorage.app",
+  messagingSenderId: "684535453116",
+  appId:             "1:684535453116:web:922c843b5bad3b81ad47b9"
+};
+// ═══════════════════════════════════════════════════
+
+firebase.initializeApp(FB_CONFIG);
+var auth = firebase.auth();
+var db   = firebase.firestore();
+var confirmationResult = null;
+var currentUser = null;
+var userProfile = null;
+var userTrips = [];
+
+// ── AUTH STATE ──────────────────────────────────────
+auth.onAuthStateChanged(async function(user) {
+  if (user) {
+    currentUser = user;
+    document.getElementById('nav-logout').style.display = 'block';
+    showState('dashboard');
+    await loadUserData(user.uid, user.phoneNumber);
+  } else {
+    currentUser = null;
+    document.getElementById('nav-logout').style.display = 'none';
+    showState('login');
+    initRecaptcha();
+  }
+});
+
+function showState(s) {
+  ['login','verify','dashboard'].forEach(function(x){
+    document.getElementById('state-'+x).style.display = s===x ? 'block' : 'none';
+  });
+}
+
+// ── RECAPTCHA ───────────────────────────────────────
+function initRecaptcha() {
+  try {
+    if (window.recaptchaVerifier) {
+      window.recaptchaVerifier.clear();
+    }
+    window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
+      size: 'invisible',
+      callback: function() {}
+    });
+  } catch(e) { console.log('reCAPTCHA init:', e); }
+}
+
+// ── PHONE FORMAT ────────────────────────────────────
+function formatPhone(el) {
+  var v = el.value.replace(/\D/g,'');
+  if (v.length<=3) el.value=v;
+  else if (v.length<=6) el.value='('+v.slice(0,3)+') '+v.slice(3);
+  else el.value='('+v.slice(0,3)+') '+v.slice(3,6)+'-'+v.slice(6,10);
+}
+
+// ── SEND CODE ───────────────────────────────────────
+async function sendCode() {
+  var raw = document.getElementById('phone-input').value.replace(/\D/g,'');
+  if (raw.length < 10) { showError('login-error','Please enter a valid 10-digit phone number'); return; }
+  var phone = '+1' + raw;
+  var btn = document.getElementById('send-code-btn');
+  btn.textContent = 'Sending...';
+  btn.disabled = true;
+  hideError('login-error');
+  try {
+    if (!window.recaptchaVerifier) initRecaptcha();
+    confirmationResult = await auth.signInWithPhoneNumber(phone, window.recaptchaVerifier);
+    document.getElementById('verify-subtitle').textContent = 'Code sent to +1 ' + raw.slice(0,3) + '-' + raw.slice(3,6) + '-' + raw.slice(6);
+    showState('verify');
+    setTimeout(function(){ document.getElementById('d0').focus(); }, 300);
+  } catch(e) {
+    console.error(e);
+    showError('login-error', 'Could not send code. Check your number and try again.');
+    btn.textContent = 'Continue with Phone Number →';
+    btn.disabled = false;
+    initRecaptcha();
+  }
+}
+
+// ── CODE INPUT HELPERS ──────────────────────────────
+function codeInput(el, idx) {
+  var v = el.value.replace(/\D/g,'');
+  el.value = v.slice(-1);
+  if (v && idx < 5) document.getElementById('d'+(idx+1)).focus();
+  if (idx === 5 && v) verifyCode();
+}
+function codeBksp(e, idx) {
+  if (e.key==='Backspace' && !e.target.value && idx>0) document.getElementById('d'+(idx-1)).focus();
+}
+
+// ── VERIFY CODE ─────────────────────────────────────
+async function verifyCode() {
+  var code = '';
+  for (var i=0;i<6;i++) code += document.getElementById('d'+i).value;
+  if (code.length < 6) { showError('verify-error','Please enter all 6 digits'); return; }
+  var btn = document.getElementById('verify-btn');
+  btn.textContent = 'Verifying...';
+  btn.disabled = true;
+  hideError('verify-error');
+  try {
+    await confirmationResult.confirm(code);
+    // Auth state change handles the rest
+  } catch(e) {
+    showError('verify-error','Wrong code. Please try again.');
+    btn.textContent = 'Verify & Sign In →';
+    btn.disabled = false;
+  }
+}
+
+function goBackToLogin() {
+  showState('login');
+  for (var i=0;i<6;i++) document.getElementById('d'+i).value='';
+}
+
+// ── LOAD USER DATA ──────────────────────────────────
+async function loadUserData(uid, phone) {
+  // Load or create profile
+  var profileRef = db.collection('clients').doc(uid);
+  var snap = await profileRef.get();
+  if (snap.exists) {
+    userProfile = snap.data();
+  } else {
+    userProfile = { phone: phone, name: '', email: '', address: '', vehicle: 'No preference', createdAt: new Date().toISOString() };
+    await profileRef.set(userProfile);
+  }
+  renderProfile();
+
+  // Load trips
+  var tripsSnap = await db.collection('clients').doc(uid).collection('trips').orderBy('date','desc').limit(20).get();
+  userTrips = [];
+  tripsSnap.forEach(function(d){ userTrips.push(d.data()); });
+  renderTrips();
+  renderLoyalty();
+}
+
+// ── RENDER PROFILE ──────────────────────────────────
+function renderProfile() {
+  var p = userProfile;
+  document.getElementById('dash-name').textContent = p.name || 'Welcome!';
+  document.getElementById('dash-phone').textContent = p.phone || '';
+  document.getElementById('profile-name').textContent = p.name || 'Not set';
+  document.getElementById('profile-phone').textContent = p.phone || '';
+  document.getElementById('profile-email').textContent = p.email || 'Not set';
+  document.getElementById('profile-address').textContent = p.address || 'Not set';
+}
+
+// ── RENDER TRIPS ────────────────────────────────────
+function renderTrips() {
+  var container = document.getElementById('trips-container');
+  if (!userTrips.length) {
+    container.innerHTML = '<div style="text-align:center;padding:2rem 0;color:#bbb"><span class="material-symbols-outlined" style="font-size:2.5rem;display:block;margin-bottom:0.5rem">directions_car</span><div style="font-size:0.8rem">No trips yet — book your first ride!</div><a href="schedule.html" style="display:inline-block;margin-top:1rem;background:#000;color:white;padding:0.625rem 1.25rem;font-family:Work Sans,sans-serif;font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;text-decoration:none;border-bottom:2px solid #775a19">Book Now</a></div>';
+    return;
+  }
+  var statusColors = { completed:'badge-green', upcoming:'badge-blue', paid:'badge-green' };
+  container.innerHTML = userTrips.map(function(t,i) {
+    var sc = statusColors[t.status] || 'badge-gold';
+    return '<div class="trip-card '+(t.status||'')+'" onclick="openRebookFromTrip('+i+')">'+
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.5rem">'+
+        '<div style="font-weight:600;font-size:0.9rem;color:#000">'+t.service+'</div>'+
+        '<span class="badge '+ sc +'">'+'$'+(t.price||'—')+'</span>'+
+      '</div>'+
+      '<div style="font-size:0.75rem;color:#666;margin-bottom:0.25rem">'+t.date+(t.time?' at '+t.time:'')+'</div>'+
+      '<div style="font-size:0.75rem;color:#999">'+
+        (t.pickup?'<span class="material-symbols-outlined" style="font-size:12px;vertical-align:middle">location_on</span> '+t.pickup:'')+
+      '</div>'+
+      '<div style="font-size:0.65rem;color:#bbb;margin-top:0.5rem;text-align:right;font-family:Work Sans,sans-serif;text-transform:uppercase;letter-spacing:0.05em">Tap to rebook</div>'+
+    '</div>';
+  }).join('');
+}
+
+// ── LOYALTY ─────────────────────────────────────────
+function renderLoyalty() {
+  var completed = userTrips.filter(function(t){ return t.status==='completed'||t.status==='paid'; }).length;
+  var cycle = completed % 10;
+  var freeRides = Math.floor(completed / 10);
+  var pct = (cycle / 10) * 100;
+  var remaining = 10 - cycle;
+
+  document.getElementById('loyalty-rides').textContent = completed;
+  document.getElementById('loyalty-remaining').textContent = remaining;
+  document.getElementById('loyalty-bar').style.width = pct + '%';
+
+  var badge, msg;
+  if (completed >= 30) { badge = 'Gold Member'; msg = 'You've earned '+freeRides+' free ride'+(freeRides>1?'s':'')+'! Contact Ramon to redeem.'; }
+  else if (completed >= 10) { badge = 'Silver Member'; msg = 'Amazing! You've earned '+freeRides+' free ride'+(freeRides>1?'s':'')+'! Contact Ramon to redeem.'; }
+  else { badge = 'New Member'; msg = remaining+' more ride'+(remaining>1?'s':'')+' until your first free ride!'; }
+
+  document.getElementById('loyalty-badge').textContent = badge;
+  document.getElementById('loyalty-message').textContent = msg;
+}
+
+// ── EDIT PROFILE ────────────────────────────────────
+function openEditProfile() {
+  document.getElementById('edit-name').value = userProfile.name || '';
+  document.getElementById('edit-email').value = userProfile.email || '';
+  document.getElementById('edit-address').value = userProfile.address || '';
+  document.getElementById('edit-vehicle').value = userProfile.vehicle || 'No preference';
+  document.getElementById('modal-profile').style.display = 'block';
+}
+
+async function saveProfile() {
+  var updates = {
+    name: document.getElementById('edit-name').value.trim(),
+    email: document.getElementById('edit-email').value.trim(),
+    address: document.getElementById('edit-address').value.trim(),
+    vehicle: document.getElementById('edit-vehicle').value,
+  };
+  await db.collection('clients').doc(currentUser.uid).update(updates);
+  Object.assign(userProfile, updates);
+  renderProfile();
+  closeModal('modal-profile');
+  showToast('Profile saved!');
+  
+  // Pre-fill booking form via localStorage
+  localStorage.setItem('rvip-client', JSON.stringify(userProfile));
+}
+
+// ── REBOOK ──────────────────────────────────────────
+function reBookLast() {
+  if (!userTrips.length) { window.location.href='schedule.html'; return; }
+  openRebookFromTrip(0);
+}
+
+function openRebookFromTrip(idx) {
+  var t = userTrips[idx];
+  document.getElementById('rebook-details').innerHTML =
+    '<div style="font-weight:600;margin-bottom:0.375rem">'+t.service+'</div>'+
+    '<div style="color:#666;font-size:0.8rem">'+t.pickup+' → '+(t.destination||'')+'</div>';
+  var today = new Date(); today.setDate(today.getDate()+1);
+  document.getElementById('rebook-date').value = today.toISOString().split('T')[0];
+  document.getElementById('rebook-time').value = t.time || '08:00';
+  document.getElementById('modal-rebook').dataset.tripIdx = idx;
+  document.getElementById('modal-rebook').style.display = 'block';
+}
+
+function submitRebook() {
+  var idx = parseInt(document.getElementById('modal-rebook').dataset.tripIdx)||0;
+  var t = userTrips[idx];
+  var date = document.getElementById('rebook-date').value;
+  var time = document.getElementById('rebook-time').value;
+  // Store rebook data and go to schedule
+  localStorage.setItem('rvip-rebook', JSON.stringify({
+    service: t.service, pickup: t.pickup, destination: t.destination,
+    passengers: t.passengers, date: date, time: time,
+    name: userProfile.name, phone: userProfile.phone, email: userProfile.email,
+  }));
+  closeModal('modal-rebook');
+  window.location.href = 'schedule.html?rebook=1';
+}
+
+// ── SIGN OUT ────────────────────────────────────────
+async function signOut() {
+  await auth.signOut();
+  localStorage.removeItem('rvip-client');
+  showToast('Signed out');
+}
+
+// ── UTILS ───────────────────────────────────────────
+function showError(id, msg) {
+  var el = document.getElementById(id);
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+function hideError(id) { document.getElementById(id).style.display='none'; }
+function closeModal(id) { document.getElementById(id).style.display='none'; }
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg; t.style.display='block';
+  setTimeout(function(){ t.style.display='none'; }, 3000);
+}
+
+// Close modals on bg click
+['modal-profile','modal-rebook'].forEach(function(id){
+  document.getElementById(id).addEventListener('click', function(e){
+    if (e.target===this) closeModal(id);
+  });
+});
+</script>
+</body>
+</html>
