@@ -302,9 +302,13 @@ async function doLogin() {
     }
   }
   
-  // Save to localStorage
+  // Ensure phone is stored in normalized format for admin sync
+  if (!currentProfile.phone) currentProfile.phone = phone;
+  
+  // Save to localStorage in multiple keys for compatibility
   localStorage.setItem(storageKey(), JSON.stringify(currentProfile));
   localStorage.setItem('rvip_last_phone', phone);
+  localStorage.setItem('rvip-client', JSON.stringify(Object.assign({}, currentProfile, {phone: phone})));
   
   showDash();
 }
@@ -395,8 +399,10 @@ async function saveProfile() {
     phone: currentPhone
   };
   Object.assign(currentProfile, updates);
+  // Keep all localStorage keys in sync
   localStorage.setItem(storageKey(), JSON.stringify(currentProfile));
-  localStorage.setItem('rvip-client', JSON.stringify(currentProfile));
+  localStorage.setItem('rvip-client', JSON.stringify(Object.assign({}, currentProfile, {phone: currentPhone})));
+  localStorage.setItem('rvip_last_phone', currentPhone);
   
   if (db && currentClientId) {
     try { await db.collection('clients').doc(currentClientId).update(updates); }

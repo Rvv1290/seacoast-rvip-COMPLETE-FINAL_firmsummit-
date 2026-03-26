@@ -79,6 +79,8 @@ a{text-decoration:none}
 /* EMPTY */
 .empty{text-align:center;padding:3rem 0;color:#bbb}
 .empty .material-symbols-outlined{font-size:3rem;display:block;margin-bottom:0.75rem}
+.pf-row{display:flex;justify-content:space-between;align-items:center;padding:0.625rem 0;border-bottom:1px solid #f5f5f5;font-size:0.875rem}
+.pf-row:last-child{border:none}
 </style>
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -866,6 +868,189 @@ document.addEventListener('DOMContentLoaded', function() {
   if (ta) ta.addEventListener('input', function() { if(ph) updateWALink(this.value, ph.value); });
   if (ph) ph.addEventListener('input', function() { if(ta) updateWALink(ta.value, this.value); });
 });
+
+
+// ── LOAD CLIENTS ─────────────────────────────────────────
+async function loadClients() {
+  if (!db_fb) { toast('Firebase not connected'); return; }
+  var list = document.getElementById('clients-list');
+  if (!list) return;
+  list.innerHTML = '<div style="text-align:center;padding:2rem;color:#888;font-size:0.8rem">Loading clients...</div>';
+
+  try {
+    // Load all clients
+    var snap = await db_fb.collection('clients').orderBy('createdAt','desc').limit(100).get();
+    var clients = [];
+    snap.forEach(function(d){ clients.push(Object.assign({id:d.id}, d.data())); });
+
+    // Update stat
+    var s5 = document.getElementById('s5');
+    if (s5) s5.textContent = clients.length;
+
+    if (!clients.length) {
+      list.innerHTML = '<div style="text-align:center;padding:3rem 0;color:#bbb"><span class="material-symbols-outlined" style="font-size:2.5rem;display:block;margin-bottom:0.5rem">people</span><div style="font-size:0.8rem">No clients have signed up yet</div></div>';
+      return;
+    }
+
+    list.innerHTML = clients.map(function(cl) {
+      var since = cl.createdAt ? new Date(cl.createdAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—';
+      var tag = cl.createdByAdmin
+        ? '<span style="background:#fef9c3;color:#92400e;font-size:0.6rem;font-family:Work Sans,sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;padding:1px 6px;margin-left:6px">added by you</span>'
+        : '<span style="background:#dcfce7;color:#15803d;font-size:0.6rem;font-family:Work Sans,sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;padding:1px 6px;margin-left:6px">self signup</span>';
+
+      var safeId = JSON.stringify(cl.id);
+      return '<div class="bk-card" style="cursor:pointer;border-left-color:#7c3aed" onclick="openClientDetail(' + safeId + ')">' +
+        '<div style="display:flex;justify-content:space-between;align-items:flex-start">' +
+          '<div>' +
+            '<div style="font-weight:700;font-size:0.95rem;margin-bottom:4px">' + (cl.name || cl.phone || 'Unknown') + tag + '</div>' +
+            '<div class="bk-meta"><span class="material-symbols-outlined">phone</span> ' + (cl.phone||'—') + '</div>' +
+            (cl.email ? '<div class="bk-meta"><span class="material-symbols-outlined">mail</span> ' + cl.email + '</div>' : '') +
+            (cl.address ? '<div class="bk-meta"><span class="material-symbols-outlined">home</span> ' + cl.address + '</div>' : '') +
+          '</div>' +
+          '<div style="text-align:right;flex-shrink:0">' +
+            '<div style="font-size:0.7rem;color:#888;margin-bottom:8px">Since ' + since + '</div>' +
+            '<a href="sms:' + (cl.phone||'') + '" style="background:#000;color:white;font-family:Work Sans,sans-serif;font-size:0.65rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;padding:0.375rem 0.625rem;text-decoration:none;display:inline-flex;align-items:center;gap:3px;border-bottom:1px solid #775a19"><span class="material-symbols-outlined" style="font-size:12px">sms</span>Text</a>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+
+  } catch(e) {
+    list.innerHTML = '<div style="color:#dc2626;font-size:0.85rem;padding:1rem">Error loading clients: ' + e.message + '</div>';
+    console.error(e);
+  }
+}
+
+// ── CLIENT DETAIL ─────────────────────────────────────────
+async function openClientDetail(clientId) {
+  if (!db_fb) return;
+  try {
+    var doc = await db_fb.collection('clients').doc(clientId).get();
+    if (!doc.exists) { toast('Client not found'); return; }
+    var cl = doc.data();
+    cl.id = doc.id;
+
+    // Load their trips
+    var tripsSnap = await db_fb.collection('clients').doc(clientId).collection('trips').orderBy('date','desc').limit(20).get();
+    var trips = [];
+    tripsSnap.forEach(function(d){ trips.push(d.data()); });
+    var completed = trips.filter(function(t){ return t.status==='completed'||t.status==='paid'; }).length;
+
+    document.getElementById('m-client-title').textContent = cl.name || cl.phone || 'Client';
+    document.getElementById('m-client-body').innerHTML =
+      '<div style="display:flex;flex-direction:column;gap:0;margin-bottom:1.5rem">' +
+        '<div class="pf-row"><span style="font-size:0.7rem;color:#888;font-family:Work Sans,sans-serif;text-transform:uppercase;letter-spacing:0.08em">Name</span><span style="font-weight:600">'+(cl.name||'—')+'</span></div>' +
+        '<div class="pf-row"><span style="font-size:0.7rem;color:#888;font-family:Work Sans,sans-serif;text-transform:uppercase;letter-spacing:0.08em">Phone</span><a href="tel:'+(cl.phone||'')+'" style="font-weight:600;color:#775a19;text-decoration:none">'+(cl.phone||'—')+'</a></div>' +
+        (cl.email?'<div class="pf-row"><span style="font-size:0.7rem;color:#888;font-family:Work Sans,sans-serif;text-transform:uppercase;letter-spacing:0.08em">Email</span><span style="font-weight:600">'+(cl.email||'—')+'</span></div>':'') +
+        (cl.address?'<div class="pf-row"><span style="font-size:0.7rem;color:#888;font-family:Work Sans,sans-serif;text-transform:uppercase;letter-spacing:0.08em">Address</span><span style="font-weight:600;text-align:right;max-width:55%">'+(cl.address||'—')+'</span></div>':'') +
+        '<div class="pf-row"><span style="font-size:0.7rem;color:#888;font-family:Work Sans,sans-serif;text-transform:uppercase;letter-spacing:0.08em">Completed Rides</span><span style="font-weight:700;color:#775a19">'+completed+' rides</span></div>' +
+        '<div class="pf-row"><span style="font-size:0.7rem;color:#888;font-family:Work Sans,sans-serif;text-transform:uppercase;letter-spacing:0.08em">Loyalty</span><span style="font-weight:600">'+(completed>=10?'🥈 Silver':'🎯 '+completed+'/10 rides')+'</span></div>' +
+      '</div>' +
+      (trips.length ? '<div style="font-family:Work Sans,sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:#888;margin-bottom:0.5rem">Recent Trips</div>' +
+        trips.slice(0,3).map(function(t){ return '<div style="background:#f9f9f9;padding:0.625rem 0.75rem;margin-bottom:4px;font-size:0.78rem;border-left:2px solid #775a19"><span style="font-weight:600">'+t.service+'</span> · $'+t.price+' · '+t.date+'</div>'; }).join('') : '') +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:1rem">' +
+        '<a href="sms:'+cl.phone+'" style="background:#000;color:white;font-family:Work Sans,sans-serif;font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;padding:0.875rem;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:5px;border-bottom:2px solid #775a19"><span class="material-symbols-outlined" style="font-size:14px">sms</span>Text</a>' +
+        '<a href="tel:'+cl.phone+'" style="background:white;color:#000;font-family:Work Sans,sans-serif;font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;padding:0.875rem;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:5px;border:1px solid #e2e2e2"><span class="material-symbols-outlined" style="font-size:14px">call</span>Call</a>' +
+      '</div>';
+
+    document.getElementById('m-client').style.display = 'block';
+  } catch(e) {
+    console.error(e);
+    toast('Error loading client: ' + e.message);
+  }
+}
+
+// ── ADD TO CLIENT HISTORY ──────────────────────────────────
+var _currentHistoryBooking = null;
+
+function openAddToHistory(id) {
+  var b = getBks().find(function(x){ return x.id===id; });
+  if (!b) return;
+  _currentHistoryBooking = b;
+  document.getElementById('history-booking-info').innerHTML =
+    '<div style="font-weight:600;margin-bottom:4px">'+b.name+' — '+b.service+'</div>'+
+    '<div style="color:#666;font-size:0.8rem">'+b.date+' · $'+b.price+'</div>';
+  document.getElementById('history-phone').value = b.phone ? b.phone.replace(/\D/g,'') : '';
+  document.getElementById('history-error').style.display='none';
+  document.getElementById('history-success').style.display='none';
+  document.getElementById('m-history').style.display='block';
+}
+
+async function saveToClientHistory() {
+  if (!_currentHistoryBooking || !db_fb) {
+    document.getElementById('history-error').textContent = 'Firebase not connected';
+    document.getElementById('history-error').style.display='block';
+    return;
+  }
+  var rawPhone = document.getElementById('history-phone').value.replace(/\D/g,'');
+  if (rawPhone.length < 7) {
+    document.getElementById('history-error').textContent = 'Please enter a valid phone number';
+    document.getElementById('history-error').style.display='block';
+    return;
+  }
+  var phone = rawPhone.startsWith('1') && rawPhone.length === 11 ? '+' + rawPhone : (rawPhone.length === 10 ? '+1' + rawPhone : '+' + rawPhone);
+  var status = document.getElementById('history-status').value;
+  var b = _currentHistoryBooking;
+
+  try {
+    // Find client by phone
+    var snap = await db_fb.collection('clients').where('phone','==',phone).limit(1).get();
+    var clientId = null;
+
+    if (!snap.empty) {
+      snap.forEach(function(d){ clientId = d.id; });
+    } else {
+      // Also try raw digits search
+      var snap2 = await db_fb.collection('clients').where('phone','==',rawPhone).limit(1).get();
+      if (!snap2.empty) {
+        snap2.forEach(function(d){ clientId = d.id; });
+      }
+    }
+
+    if (!clientId) {
+      // Create new client record
+      var newRef = db_fb.collection('clients').doc();
+      await newRef.set({
+        phone: phone,
+        name: b.name || '',
+        email: b.email || '',
+        address: b.pickup || '',
+        vehicle: b.vehicle || 'No preference',
+        createdAt: new Date().toISOString(),
+        createdByAdmin: true
+      });
+      clientId = newRef.id;
+    }
+
+    // Add trip
+    await db_fb.collection('clients').doc(clientId).collection('trips').add({
+      service: b.service || '',
+      date: b.date || '',
+      time: b.time || '',
+      pickup: b.pickup || '',
+      destination: b.destination || '',
+      vehicle: b.vehicle || '',
+      passengers: b.passengers || '1',
+      price: b.price || 0,
+      code: b.code || '',
+      status: status,
+      addedAt: new Date().toISOString()
+    });
+
+    document.getElementById('history-error').style.display='none';
+    document.getElementById('history-success').style.display='block';
+    toast('Trip added to client account!');
+    setTimeout(function(){ document.getElementById('m-history').style.display='none'; }, 2000);
+
+  } catch(e) {
+    console.error(e);
+    document.getElementById('history-error').textContent = 'Error: ' + e.message;
+    document.getElementById('history-error').style.display='block';
+  }
+}
+
+// pf-row style for client modal
+var _pfrStyle = 'display:flex;justify-content:space-between;align-items:center;padding:0.625rem 0;border-bottom:1px solid #f5f5f5';
 
 </script>
 
