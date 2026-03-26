@@ -132,7 +132,7 @@ nav{position:fixed;top:0;width:100%;z-index:50;background:rgba(255,255,255,0.96)
     <div class="card-body">
       <label class="lbl">Your Phone Number</label>
       <div style="display:flex;gap:0.5rem;margin-bottom:1rem">
-        <div style="background:#f9f9f9;border:1px solid #e2e2e2;border-bottom:2px solid #c4c7c7;padding:0.75rem;font-size:0.875rem;color:#444;white-space:nowrap">+1</div>
+        
         <input class="inp" id="phone-input" type="tel" placeholder="(987) 416-3283" maxlength="14" oninput="formatPhone(this)"/>
       </div>
       <div id="recaptcha-container" style="margin-bottom:1rem"></div>
@@ -384,17 +384,19 @@ function initRecaptcha() {
 
 // ── PHONE FORMAT ────────────────────────────────────
 function formatPhone(el) {
-  var v = el.value.replace(/\D/g,'');
-  if (v.length<=3) el.value=v;
-  else if (v.length<=6) el.value='('+v.slice(0,3)+') '+v.slice(3);
-  else el.value='('+v.slice(0,3)+') '+v.slice(3,6)+'-'+v.slice(6,10);
+  // Allow any phone format - international friendly
+  // Just keep digits, spaces, +, -, (, )
+  el.value = el.value.replace(/[^0-9+\-() ]/g, '');
 }
 
 // ── SEND CODE ───────────────────────────────────────
 async function sendCode() {
-  var raw = document.getElementById('phone-input').value.replace(/\D/g,'');
-  if (raw.length < 10) { showError('login-error','Please enter a valid 10-digit phone number'); return; }
-  var phone = '+1' + raw;
+  var input = document.getElementById('phone-input').value.trim();
+  // Clean the number
+  var raw = input.replace(/[^0-9+]/g, '');
+  // Add + if not present, handle international
+  var phone = raw.startsWith('+') ? raw : (raw.length === 10 ? '+1' + raw : '+' + raw);
+  if (phone.length < 8) { showError('login-error','Please enter a valid phone number'); return; }
   var btn = document.getElementById('send-code-btn');
   btn.textContent = 'Sending...';
   btn.disabled = true;
@@ -402,7 +404,7 @@ async function sendCode() {
   try {
     if (!window.recaptchaVerifier) initRecaptcha();
     confirmationResult = await auth.signInWithPhoneNumber(phone, window.recaptchaVerifier);
-    document.getElementById('verify-subtitle').textContent = 'Code sent to +1 ' + raw.slice(0,3) + '-' + raw.slice(3,6) + '-' + raw.slice(6);
+    document.getElementById('verify-subtitle').textContent = 'Code sent to ' + phone;
     showState('verify');
     setTimeout(function(){ document.getElementById('d0').focus(); }, 300);
   } catch(e) {
