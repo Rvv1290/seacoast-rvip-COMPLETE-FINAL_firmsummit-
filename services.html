@@ -3,25 +3,7 @@
 <meta content="width=device-width, initial-scale=1.0" name="viewport">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif:wght@400;700;900&amp;family=Inter:wght@300;400;500;600&amp;family=Work+Sans:wght@400;500&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries">
-function shareRVIP() {
-  if (navigator.share) {
-    navigator.share({
-      title: 'Seacoast RVIP — The Ride You Can Count On',
-      text: 'Premium private car service in the NH Seacoast area.',
-      url: 'https://seacoast-rvip-complete-final-firmsu.vercel.app'
-    }).catch(function(){});
-  } else {
-    var url = 'https://seacoast-rvip-complete-final-firmsu.vercel.app';
-    navigator.clipboard && navigator.clipboard.writeText(url).then(function(){
-      alert('Link copied! Share it with your friends.');
-    }).catch(function(){
-      prompt('Copy this link:', url);
-    });
-  }
-}
-
-</script>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <script id="tailwind-config">
       tailwind.config = {
         darkMode: "class",
@@ -141,7 +123,7 @@ function shareRVIP() {
 </div>
 
 <!-- TopNavBar -->
-<nav style="position:fixed;top:0;width:100%;z-index:48;background:rgba(255,255,255,0.95);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid rgba(0,0,0,0.06);transition:all 0.3s">
+<nav style="position:fixed;top:0;width:100%;z-index:50;background:rgba(255,255,255,0.95);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid rgba(0,0,0,0.06);transition:all 0.3s">
 <div style="display:flex;justify-content:space-between;align-items:center;max-width:100%;padding:0 2rem;height:68px">
 
   <!-- Logo -->
@@ -171,7 +153,7 @@ function shareRVIP() {
 </div>
 
 <!-- Mobile drawer -->
-<div id="mobile-menu" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:#000000;z-index:99;flex-direction:column;padding:5rem 2rem 2rem;gap:0;overflow-y:auto;-webkit-overflow-scrolling:touch">
+<div id="mobile-menu" style="display:none;position:fixed;top:68px;left:0;right:0;bottom:0;background:#000000;z-index:49;flex-direction:column;padding:2.5rem 2rem;gap:0">
   <a href="index.html" onclick="toggleMenu()" style="font-family:Inter,sans-serif;font-size:1.1rem;font-weight:600;color:white;text-decoration:none;padding:0.875rem 0;border-bottom:1px solid rgba(255,255,255,0.08);display:block;text-transform:uppercase;letter-spacing:0.08em" onmouseover="this.style.color='#775a19'" onmouseout="this.style.color='white'">Home</a>
   <a href="services.html" onclick="toggleMenu()" style="font-family:Inter,sans-serif;font-size:1.1rem;font-weight:600;color:white;text-decoration:none;padding:0.875rem 0;border-bottom:1px solid rgba(255,255,255,0.08);display:block;text-transform:uppercase;letter-spacing:0.08em" onmouseover="this.style.color='#775a19'" onmouseout="this.style.color='white'">Services</a>
   <a href="about.html" onclick="toggleMenu()" style="font-family:Inter,sans-serif;font-size:1.1rem;font-weight:600;color:white;text-decoration:none;padding:0.875rem 0;border-bottom:1px solid rgba(255,255,255,0.08);display:block;text-transform:uppercase;letter-spacing:0.08em" onmouseover="this.style.color='#775a19'" onmouseout="this.style.color='white'">About</a>
@@ -352,19 +334,19 @@ window.addEventListener('DOMContentLoaded', checkWidth);
 </div>
 <div class="max-w-2xl mx-auto space-y-6">
 <div class="flex justify-between items-center py-6 border-b border-surface-container">
-<span style="font-family:'Times New Roman',serif;font-size:1.25rem;font-weight:700;color:#000">Airport Transfers</span>
-<span style="font-family:'Times New Roman',serif;font-size:1.25rem;font-weight:700;color:#775a19">Starting at $145</span>
+<span class="font-headline text-xl font-bold text-primary" style="">Airport Transfers</span>
+<span class="font-label text-lg font-semibold text-secondary" style="">Starting at $140</span>
 </div>
 <div class="flex justify-between items-center py-6 border-b border-surface-container">
-<span style="font-family:'Times New Roman',serif;font-size:1.25rem;font-weight:700;color:#000">Night Out</span>
-<span style="font-family:'Times New Roman',serif;font-size:1.25rem;font-weight:700;color:#775a19">Starting at $55</span>
-<div>
+<span class="font-headline text-xl font-bold text-primary" style="">Night Out</span>
+<span class="font-label text-lg font-semibold text-secondary" style="">Starting at $45</span>
+</div>
 <div class="flex justify-between items-center py-6 border-b border-surface-container">
-<span style="font-family:'Times New Roman',serif;font-size:1.25rem;font-weight:700;color:#000">Casino Runs</span>
-<span style="font-family:'Times New Roman',serif;font-size:1.25rem;font-weight:700;color:#775a19">Starting at $45</span>
+<span class="font-headline text-xl font-bold text-primary" style="">Casino Runs</span>
+<span class="font-label text-lg font-semibold text-secondary" style="">Starting at $55</span>
 </div>
 <div class="flex justify-between items-center py-6">
-<span style="font-family:'Times New Roman',serif;font-size:1.25rem;font-weight:700;color:#000">Custom Routes</span>
+<span class="font-headline text-xl font-bold text-primary" style="">Custom Routes</span>
 <span class="font-label text-sm font-bold uppercase tracking-widest text-on-surface-variant" style="">Contact us for a quote</span>
 </div>
 </div>
@@ -421,21 +403,12 @@ window.addEventListener('DOMContentLoaded', checkWidth);
       <div>
         <div style="font-family:'Times New Roman',Times,serif;font-size:1.5rem;font-weight:700;color:white;margin-bottom:0.75rem">Seacoast RVIP</div>
         <p style="font-family:Inter,sans-serif;font-size:0.8rem;color:rgba(255,255,255,0.45);line-height:1.7;max-width:280px;margin-bottom:1.25rem">The Ride You Can Count On. Premium private car service in the NH Seacoast area.</p>
-        <div style="display:flex;gap:1.25rem;align-items:center;flex-wrap:wrap">
-          <button onclick="shareRVIP()" style="cursor:pointer;color:#775a19;font-family:Inter,sans-serif;font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;background:none;border:none;padding:0;display:inline-flex;align-items:center;gap:4px">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#775a19" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-            Share
-          </button>
+        <div style="display:flex;gap:1rem;align-items:center">
+          <span onclick="shareRVIP()" style="cursor:pointer;color:#775a19;font-family:Inter,sans-serif;font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em">Share</span>
           <span style="color:rgba(255,255,255,0.15)">|</span>
-          <a href="/cdn-cgi/l/email-protection#3d4f5c5052534b4b0f0d0f0b0c057d545e51524859135e5250" style="color:#775a19;font-family:Inter,sans-serif;font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;text-decoration:none;display:inline-flex;align-items:center;gap:4px">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#775a19" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-            Email
-          </a>
+          <a href="/cdn-cgi/l/email-protection#d7a5b6bab8b9a1a1e5e7e5e1e6ef97beb4bbb8a2b3f9b4b8ba" style="color:#775a19;font-family:Inter,sans-serif;font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;text-decoration:none">Email</a>
           <span style="color:rgba(255,255,255,0.15)">|</span>
-          <a href="tel:+19874163283" style="color:#775a19;font-family:Inter,sans-serif;font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;text-decoration:none;display:inline-flex;align-items:center;gap:4px">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#775a19" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.93 19.79 19.79 0 0 1 1.69 5.38 2 2 0 0 1 3.68 3.21h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 10.9a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 17.92z"/></svg>
-            Call
-          </a>
+          <a href="tel:+19874163283" style="color:#775a19;font-family:Inter,sans-serif;font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;text-decoration:none">Call</a>
         </div>
       </div>
 
@@ -456,7 +429,7 @@ window.addEventListener('DOMContentLoaded', checkWidth);
         <div style="font-family:Inter,sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.15em;color:#775a19;font-weight:600;margin-bottom:1rem">Contact</div>
         <div style="display:flex;flex-direction:column;gap:0.5rem">
           <a href="tel:+19874163283" style="font-family:Inter,sans-serif;font-size:0.8rem;color:rgba(255,255,255,0.55);text-decoration:none">(987) 416-3283</a>
-          <a href="/cdn-cgi/l/email-protection#0371626e6c6d757531333135323b436a606f6c76672d606c6e" style="font-family:Inter,sans-serif;font-size:0.8rem;color:rgba(255,255,255,0.55);text-decoration:none"><span class="__cf_email__" data-cfemail="9ae8fbf7f5f4ececa8aaa8acaba2daf3f9f6f5effeb4f9f5f7">[email&#160;protected]</span></a>
+          <a href="/cdn-cgi/l/email-protection#e092818d8f8e9696d2d0d2d6d1d8a089838c8f9584ce838f8d" style="font-family:Inter,sans-serif;font-size:0.8rem;color:rgba(255,255,255,0.55);text-decoration:none"><span class="__cf_email__" data-cfemail="2052414d4f4e56561210121611186049434c4f55440e434f4d">[email&#160;protected]</span></a>
           <a href="schedule.html" style="display:inline-block;margin-top:0.75rem;background:#775a19;color:white;padding:0.625rem 1.25rem;font-family:Inter,sans-serif;font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;text-decoration:none;border-bottom:2px solid #5d4201">Book Now</a>
         </div>
       </div>
@@ -478,7 +451,7 @@ window.addEventListener('DOMContentLoaded', checkWidth);
   }
   </style>
 </footer>
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 document.addEventListener("DOMContentLoaded", function() {
   var bookingKeywords = ["Book Now", "Reserve Your Ride", "Book Your Trip", "Book Your Journey", "Book a Ride", "BOOK NOW", "Reserve Now", "Book Now"];
   document.querySelectorAll("button").forEach(function(btn) {
@@ -508,4 +481,15 @@ if ('serviceWorker' in navigator) {
   window.addEventListener('load', function() {
     navigator.serviceWorker.register('/sw.js')
       .then(function(reg) { console.log('SW registered:', reg.scope); })
-      .catch(function(err) { conso
+      .catch(function(err) { console.log('SW error:', err); });
+  });
+}
+// PWA install prompt
+var deferredPrompt;
+window.addEventListener('beforeinstallprompt', function(e) {
+  e.preventDefault();
+  deferredPrompt = e;
+  var banner = document.getElementById('pwa-install-banner');
+  if (banner) banner.style.display = 'flex';
+});
+func
