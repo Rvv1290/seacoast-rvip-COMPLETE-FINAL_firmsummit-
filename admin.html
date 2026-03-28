@@ -111,6 +111,7 @@ body{font-family:'Inter',sans-serif;background:#f2f2f2;min-height:100vh}
       <button class="tab-btn" onclick="switchTab('done',this)">Completed</button>
       <button class="tab-btn" onclick="switchTab('clients',this)" style="color:#7c3aed;font-weight:700">Clients ●</button>
       <button class="tab-btn" onclick="switchTab('messages',this)" style="color:#1d4ed8;font-weight:700">Messages ✉</button>
+      <button class="tab-btn" onclick="switchTab('quotes',this)" style="color:#16a34a;font-weight:700">Quotes ●</button>
     </div>
 
     <div id="sec-bk">
@@ -144,6 +145,24 @@ body{font-family:'Inter',sans-serif;background:#f2f2f2;min-height:100vh}
       </div>
       <div id="msg-tpl-list"></div>
     </div>
+
+    <!-- QUOTES SECTION -->
+    <div id="sec-quotes" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;flex-wrap:wrap;gap:.75rem">
+        <div>
+          <div style="font-family:'Times New Roman',serif;font-size:1.1rem;font-weight:700">Quote Requests</div>
+          <div style="font-size:.75rem;color:#888;margin-top:3px">Submitted from the Get a Quote page · click Convert to create a booking</div>
+        </div>
+        <button onclick="loadQuotes()" class="btn bo"><span class="material-symbols-outlined" style="font-size:14px">refresh</span>Refresh</button>
+      </div>
+      <div id="quotes-list">
+        <div style="text-align:center;padding:3rem;color:#ccc">
+          <span class="material-symbols-outlined" style="font-size:2.5rem;display:block;margin-bottom:.75rem">request_quote</span>
+          <div style="font-size:.8rem">Click Refresh to load quote requests</div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -284,7 +303,34 @@ function doLogout() { localStorage.removeItem('rv-auth'); location.reload(); }
 function initDash() {
   document.getElementById('today-lbl').textContent = new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
   renderDash();
-  if (db) getBks().forEach(function(b){ fbSync(b); });
+  if (db) {
+    getBks().forEach(function(b){ fbSync(b); });
+    // Pull any NEW bookings submitted from website forms
+    loadFirebaseBookings();
+  }
+}
+
+async function loadFirebaseBookings() {
+  if (!db) return;
+  try {
+    var snap = await db.collection('bookings').orderBy('createdAt','desc').limit(200).get();
+    var existing = getBks();
+    var existingIds = {};
+    existing.forEach(function(b){ existingIds[b.id]=true; });
+    var added = 0;
+    snap.forEach(function(d){
+      var b = d.data();
+      if (!existingIds[b.id]) {
+        existing.push(b);
+        added++;
+      }
+    });
+    if (added > 0) {
+      setBks(existing);
+      renderDash();
+      toast(added + ' new booking' + (added>1?'s':'') + ' loaded from website!');
+    }
+  } catch(e) { console.warn('loadFirebaseBookings:', e.message); }
 }
 
 // ══════════════ RENDER ══════════════
@@ -349,9 +395,10 @@ function switchTab(tab, btn) {
   activeTab = tab;
   document.querySelectorAll('.tab-btn').forEach(function(b){b.classList.remove('on');});
   btn.classList.add('on');
-  ['sec-bk','sec-cl','sec-msg'].forEach(function(id){document.getElementById(id).style.display='none';});
+  ['sec-bk','sec-cl','sec-msg','sec-quotes'].forEach(function(id){document.getElementById(id).style.display='none';});
   if(tab==='clients')  {document.getElementById('sec-cl').style.display='block';loadClients();}
   else if(tab==='messages'){document.getElementById('sec-msg').style.display='block';buildMsgTpl();loadBcCount();}
+  else if(tab==='quotes')  {document.getElementById('sec-quotes').style.display='block';loadQuotes();}
   else {document.getElementById('sec-bk').style.display='block';renderDash();}
 }
 
@@ -560,6 +607,119 @@ function closeM(id){document.getElementById(id).classList.remove('open');documen
 
 // ══════════════ TOAST ══════════════
 function toast(msg){var t=document.getElementById('toast');t.textContent=msg;t.style.display='block';setTimeout(function(){t.style.display='none';},3000);}
+
+
+// ══════════════ QUOTES ══════════════
+async function loadQuotes() {
+  var el = document.getElementById('quotes-list');
+  if (!db) {
+    el.innerHTML = '<div style="background:#fef2f2;border-left:3px solid #dc2626;padding:1.25rem;font-size:.83rem;color:#b91c1c"><strong>Firebase not connected</strong><br>Update Firebase Rules to allow read/write.</div>';
+    return;
+  }
+  el.innerHTML = '<div style="text-align:center;padding:2rem;color:#aaa;font-size:.8rem">Loading...</div>';
+  try {
+    var snap = await db.collection('quotes').orderBy('createdAt','desc').limit(100).get();
+    var quotes = [];
+    snap.forEach(function(d){ quotes.push(Object.assign({docId:d.id}, d.data())); });
+
+    if (!quotes.length) {
+      el.innerHTML = '<div style="text-align:center;padding:3rem;color:#ccc"><span class="material-symbols-outlined" style="font-size:2.5rem;display:block;margin-bottom:.75rem">request_quote</span><div style="font-size:.8rem">No quote requests yet</div></div>';
+      return;
+    }
+
+    el.innerHTML = quotes.map(function(q) {
+      var since = q.createdAt ? new Date(q.createdAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '—';
+      var sc = q.status==='converted' ? 'bg' : q.status==='dismissed' ? 'br' : 'by';
+      var sl = q.status==='converted' ? 'Converted' : q.status==='dismissed' ? 'Dismissed' : 'New';
+      return '<div class="bk-card" style="border-left-color:#16a34a;margin-bottom:.75rem">' +
+        '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:.75rem">' +
+          '<div style="flex:1;min-width:200px">' +
+            '<div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;margin-bottom:.5rem">' +
+              '<span class="bk-name">' + x(q.name||'—') + '</span>' +
+              '<span class="badge ' + sc + '">' + sl + '</span>' +
+            '</div>' +
+            '<div class="bk-meta"><span class="material-symbols-outlined">directions_car</span>' + x(q.service||'—') + '</div>' +
+            (q.date ? '<div class="bk-meta"><span class="material-symbols-outlined">calendar_today</span>' + x(q.date) + (q.time?' at '+q.time:'') + '</div>' : '') +
+            (q.pickup ? '<div class="bk-meta"><span class="material-symbols-outlined">location_on</span>' + x(q.pickup) + ' → ' + x(q.destination||'?') + '</div>' : '') +
+            '<div class="bk-meta"><span class="material-symbols-outlined">phone</span>' + x(q.phone||'—') + (q.email?' · '+x(q.email):'') + '</div>' +
+            (q.notes ? '<div class="bk-meta"><span class="material-symbols-outlined">notes</span>' + x(q.notes) + '</div>' : '') +
+            '<div style="font-size:.65rem;color:#bbb;margin-top:.375rem">Received ' + since + '</div>' +
+          '</div>' +
+          '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:.5rem">' +
+            (q.passengers ? '<div style="font-size:.78rem;color:#888;">' + q.passengers + ' pax</div>' : '') +
+            '<div style="display:flex;gap:.375rem;flex-wrap:wrap;justify-content:flex-end">' +
+              '<button onclick="convertQuote(' + JSON.stringify(q).replace(/'/g,"\'") + ')" class="btn bgr" style="font-size:.65rem"><span class="material-symbols-outlined" style="font-size:13px">add_task</span>Convert</button>' +
+              '<button onclick="replyQuote(' + JSON.stringify(q).replace(/'/g,"\'") + ')" class="btn bbl" style="font-size:.65rem"><span class="material-symbols-outlined" style="font-size:13px">sms</span>Reply</button>' +
+              '<button onclick="dismissQuote('' + q.docId + '')" class="btn bo" style="font-size:.65rem"><span class="material-symbols-outlined" style="font-size:13px">close</span>Dismiss</button>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+
+  } catch(e) {
+    el.innerHTML = '<div style="background:#fef2f2;border-left:3px solid #dc2626;padding:1.25rem;font-size:.83rem;color:#b91c1c"><strong>Error:</strong> ' + e.message + '<br>Check Firebase Rules.</div>';
+  }
+}
+
+function convertQuote(q) {
+  // Pre-fill the Add Booking modal with quote data
+  document.getElementById('add-ttl').textContent = 'New Booking (from Quote)';
+  document.getElementById('eid').value = '';
+  document.getElementById('fn').value  = q.name        || '';
+  document.getElementById('fp').value  = q.phone       || '';
+  document.getElementById('fe').value  = q.email       || '';
+  document.getElementById('fsv').value = q.service     || '';
+  document.getElementById('fd').value  = q.date        || '';
+  document.getElementById('ft').value  = q.time        || '';
+  document.getElementById('fpu').value = q.pickup      || '';
+  document.getElementById('fde').value = q.destination || '';
+  document.getElementById('fno').value = q.notes       || '';
+  document.getElementById('fpr').value = '';
+  document.getElementById('fst').value = 'Confirmed';
+  genCode();
+  openM('m-add');
+
+  // Mark quote as converted in Firebase after booking saved
+  window._pendingQuoteId = q.docId;
+}
+
+// Patch saveBk to also mark quote as converted
+var _origSaveBk = saveBk;
+saveBk = function() {
+  _origSaveBk();
+  if (window._pendingQuoteId && db) {
+    db.collection('quotes').doc(window._pendingQuoteId).update({status:'converted'}).catch(function(){});
+    window._pendingQuoteId = null;
+  }
+};
+
+function replyQuote(q) {
+  var msg = 'Hi ' + (q.name||'there').split(' ')[0] + '! Thank you for your quote request for ' + (q.service||'your trip') + '.
+
+Here is my quote: $[PRICE]
+
+To confirm your booking, visit:
+' + 'https://seacoast-rvip-complete-final-firmsu.vercel.app/schedule.html
+
+— Ramon (987) 416-3283';
+  document.getElementById('msg-ttl').textContent = 'Reply to ' + (q.name||'Client');
+  document.getElementById('msg-txt').value = msg;
+  document.getElementById('msg-ph').value = q.phone || '';
+  document.getElementById('msg-res').style.display = 'none';
+  updWA(msg, q.phone||'');
+  openM('m-msg');
+}
+
+async function dismissQuote(docId) {
+  if (!db) return;
+  if (!confirm('Mark this quote as dismissed?')) return;
+  try {
+    await db.collection('quotes').doc(docId).update({status:'dismissed'});
+    toast('Quote dismissed');
+    loadQuotes();
+  } catch(e) { toast('Error: ' + e.message); }
+}
 
 // ══════════════ BOOT ══════════════
 window.addEventListener('DOMContentLoaded',function(){
