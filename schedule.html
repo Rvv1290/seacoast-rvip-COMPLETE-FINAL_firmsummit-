@@ -1,1033 +1,337 @@
 <!DOCTYPE html>
-<html class="light" lang="en">
+<html lang="en">
 <head>
 <meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>Book a Ride | Seacoast RVIP</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Serif:wght@400;700;900&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries">
-function shareRVIP() {
-  if (navigator.share) {
-    navigator.share({
-      title: 'Seacoast RVIP — The Ride You Can Count On',
-      text: 'Premium private car service in the NH Seacoast area.',
-      url: 'https://seacoast-rvip-complete-final-firmsu.vercel.app'
-    }).catch(function(){});
-  } else {
-    var url = 'https://seacoast-rvip-complete-final-firmsu.vercel.app';
-    navigator.clipboard && navigator.clipboard.writeText(url).then(function(){
-      alert('Link copied! Share it with your friends.');
-    }).catch(function(){
-      prompt('Copy this link:', url);
-    });
-  }
-}
-
-</script>
-<script>
-tailwind.config = {
-  darkMode:"class",
-  theme:{extend:{
-    colors:{
-      "secondary":"#775a19","primary":"#000000","on-primary":"#ffffff",
-      "surface":"#f9f9f9","surface-container-low":"#f3f3f3",
-      "surface-container":"#eeeeee","surface-container-lowest":"#ffffff",
-      "on-surface-variant":"#444748","outline-variant":"#c4c7c7",
-      "background":"#f9f9f9","on-background":"#1a1c1c",
-    },
-    fontFamily:{"headline":["Noto Serif","serif"],"body":["Inter","sans-serif"],"label":["Work Sans","sans-serif"]},
-  }}
-}
-</script>
-<style>
-.material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 300,'GRAD' 0,'opsz' 24}
-body{font-family:'Inter',sans-serif;background-color:#f9f9f9}
-
-/* Map container */
-#map{width:100%;height:100%;min-height:100vh}
-
-/* Payment cards */
-.pay-card input[type="radio"]{display:none}
-.pay-card label{
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  padding:1.2rem 0.75rem;border:1.5px solid #e2e2e2;cursor:pointer;
-  transition:all 0.2s;background:white;gap:6px;text-align:center
-}
-.pay-card input[type="radio"]:checked+label{border-color:#775a19;background:#fdfaf4}
-.pay-card label:hover{border-color:#775a19}
-
-/* Vehicle cards */
-.v-card input[type="radio"]{display:none}
-.v-card label{display:block;cursor:pointer;border-bottom:2px solid transparent;transition:all 0.2s;background:#f3f3f3;padding:1rem}
-.v-card input[type="radio"]:checked+label{border-bottom-color:#775a19;background:white}
-
-/* Passenger buttons */
-.p-btn{transition:all 0.15s;width:3rem;height:3rem;border-radius:50%;border:1px solid #c4c7c7;font-weight:700;font-size:0.875rem;font-family:'Work Sans',sans-serif;cursor:pointer;background:white}
-.p-btn.sel{background:#000;color:white;border-color:#000}
-
-/* Inputs */
-.f-input{width:100%;background:#f3f3f3;border:0;border-bottom:2px solid #c4c7c7;padding:0.75rem 0;font-family:'Inter',sans-serif;font-size:1rem;transition:all 0.2s;outline:none}
-.f-input:focus{border-bottom-color:#000}
-.f-label{font-family:'Work Sans',sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:#444748;margin-bottom:0.5rem;display:block}
-
-/* Route info card */
-#route-card{display:none;background:rgba(255,255,255,0.97);backdrop-filter:blur(20px);border-left:3px solid #775a19}
-
-/* Service area badge */
-.area-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;background:rgba(119,90,25,0.12);border-radius:20px;font-size:11px;color:#775a19;font-family:'Work Sans',sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:0.05em}
-
-/* Success */
-#success-msg{display:none;text-align:center;padding:2rem;background:#f0fdf4;border:1px solid #86efac;border-radius:8px}
-
-/* Map controls overlay */
-.map-overlay{position:absolute;z-index:10;pointer-events:none}
-.map-overlay *{pointer-events:all}
-
-/* Autocomplete dropdown fix */
-.pac-container{z-index:9999!important;font-family:'Inter',sans-serif;border-radius:4px;border-top:2px solid #775a19}
-.pac-item{padding:8px 12px;font-size:13px}
-.pac-item:hover{background:#fdfaf4}
-.pac-item-selected{background:#fdfaf4}
-</style>
-
-  <!-- PWA -->
-  <link rel="manifest" href="/manifest.json"/>
-  <meta name="theme-color" content="#775a19"/>
-  <meta name="mobile-web-app-capable" content="yes"/>
-  <meta name="apple-mobile-web-app-capable" content="yes"/>
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
-  <meta name="apple-mobile-web-app-title" content="Seacoast RVIP"/>
-  <link rel="apple-touch-icon" href="/seacoast_rvip_favicon_180.png"/>
-  <link rel="icon" type="image/png" sizes="32x32" href="/seacoast_rvip_favicon_32.png"/>
-<style>
-.font-headline,h1,h2,h3,h4{font-family:"Times New Roman",Times,Georgia,serif!important}
-/* Expand content to full width */
-.max-w-7xl{max-width:100%!important}
-.max-w-3xl{max-width:900px!important}
-.max-w-5xl{max-width:100%!important}
-</style>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script>
 (function(){
-  var cfg={
-    apiKey:"AIzaSyDGel0ktZDQYcdlOuoZo4bAqZWCuGvOVbc",
-    authDomain:"seacoast-rip.firebaseapp.com",
-    projectId:"seacoast-rip",
-    storageBucket:"seacoast-rip.firebasestorage.app",
-    messagingSenderId:"684535453116",
-    appId:"1:684535453116:web:922c843b5bad3b81ad47b9"
-  };
-  try{
-    if(!firebase.apps.length) firebase.initializeApp(cfg);
-    window._db = firebase.firestore();
-  }catch(e){ window._db = null; }
+  var cfg={apiKey:"AIzaSyDGel0ktZDQYcdlOuoZo4bAqZWCuGvOVbc",authDomain:"seacoast-rip.firebaseapp.com",projectId:"seacoast-rip",storageBucket:"seacoast-rip.firebasestorage.app",messagingSenderId:"684535453116",appId:"1:684535453116:web:922c843b5bad3b81ad47b9"};
+  try{if(!firebase.apps.length)firebase.initializeApp(cfg);window._db=firebase.firestore();}catch(e){window._db=null;}
 })();
+function _genCode(){var c='ABCDEFGHJKLMNPQRSTUVWXYZ',n=String(Math.floor(Math.random()*9000)+1000),r=c[Math.floor(Math.random()*c.length)]+c[Math.floor(Math.random()*c.length)]+c[Math.floor(Math.random()*c.length)];return'RVIP-'+n+'-'+r;}
+</script>
+<style>
+.material-symbols-outlined{font-variation-settings:"FILL" 0,"wght" 300,"GRAD" 0,"opsz" 24}
 
-function saveBookingToFirebase(data) {
-  if (!window._db) return;
-  var id = 'bk_' + Date.now().toString();
-  var doc = {
-    id:          id,
-    code:        data.code        || '',
-    name:        data.name        || '',
-    phone:       data.phone       || '',
-    email:       data.email       || '',
-    service:     data.service     || '',
-    date:        data.date        || '',
-    time:        data.time        || '',
-    pickup:      data.pickup      || '',
-    destination: data.destination || '',
-    vehicle:     data.vehicle     || '',
-    passengers:  String(data.passengers || '1'),
-    price:       parseFloat(data.amount) || 0,
-    notes:       data.notes       || '',
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:'Inter',sans-serif;color:#111;background:#fff}
+a{text-decoration:none;color:inherit}
+img{max-width:100%}
+
+/* ── LAYOUT ── */
+.W{max-width:900px;margin:0 auto;padding:0 1.25rem}
+.page-body{padding-top:68px}
+
+/* ── NAV ── */
+.nav{position:fixed;top:0;left:0;right:0;height:68px;background:rgba(255,255,255,.97);backdrop-filter:blur(10px);border-bottom:1px solid #eee;z-index:300}
+.nav .W{height:68px;display:flex;align-items:center;justify-content:space-between}
+.nav-logo{font-family:'Times New Roman',serif;font-size:1.25rem;font-weight:700;letter-spacing:-.01em}
+.nav-links{display:none;align-items:center;gap:1.75rem}
+.nav-links a{font-size:.78rem;font-weight:500;color:#555;text-transform:uppercase;letter-spacing:.05em;transition:color .2s}
+.nav-links a:hover,.nav-links a.act{color:#000}
+.nav-right{display:flex;align-items:center;gap:.75rem}
+.btn-book{background:#000;color:#fff;padding:.5rem 1.1rem;font-size:.73rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;border:none;cursor:pointer;border-bottom:2px solid #775a19;white-space:nowrap}
+.ham-btn{display:flex;flex-direction:column;gap:5px;cursor:pointer;background:none;border:none;padding:.375rem}
+.ham-btn span{display:block;width:22px;height:2px;background:#000;transition:all .3s}
+.mob-nav{display:none;position:fixed;inset:0;background:#0a0a0a;z-index:299;flex-direction:column;padding:80px 1.5rem 2rem;gap:0;overflow-y:auto}
+.mob-nav a{font-size:1rem;font-weight:600;color:#fff;padding:.875rem 0;border-bottom:1px solid rgba(255,255,255,.08);display:block;text-transform:uppercase;letter-spacing:.06em}
+.mob-nav a:hover{color:#775a19}
+.mob-nav .mob-actions{margin-top:1.5rem;display:flex;gap:.75rem;flex-wrap:wrap}
+
+/* ── FOOTER ── */
+.footer{background:#0a0a0a;color:#fff;padding:3.5rem 0 1.5rem;margin-top:5rem}
+.footer-g{display:grid;grid-template-columns:1fr;gap:2rem;padding-bottom:2rem;border-bottom:1px solid rgba(255,255,255,.07)}
+.footer-logo{font-family:'Times New Roman',serif;font-size:1.35rem;font-weight:700;margin-bottom:.5rem}
+.footer-tag{font-size:.78rem;color:rgba(255,255,255,.35);line-height:1.7;margin-bottom:1rem}
+.ftr-ht{font-size:.62rem;text-transform:uppercase;letter-spacing:.15em;color:#775a19;font-weight:600;margin-bottom:.875rem}
+.ftr-links a{display:block;font-size:.78rem;color:rgba(255,255,255,.45);margin-bottom:.5rem;transition:color .2s}
+.ftr-links a:hover{color:#fff}
+.footer-bot{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;padding-top:1.5rem;gap:.75rem}
+.footer-copy{font-size:.68rem;color:rgba(255,255,255,.2)}
+.footer-legal{display:flex;gap:1.25rem}
+.footer-legal a{font-size:.68rem;color:rgba(255,255,255,.25);transition:color .2s}
+.footer-legal a:hover{color:#775a19}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;font-family:'Work Sans',sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:.08em;border:none;cursor:pointer;transition:opacity .18s;white-space:nowrap}
+.btn:hover{opacity:.82}
+.btn-black{background:#000;color:#fff;padding:.875rem 1.75rem;font-size:.8rem;border-bottom:3px solid #775a19}
+.btn-ghost{background:transparent;color:#000;padding:.875rem 1.75rem;font-size:.8rem;border:1.5px solid #000;transition:all .18s}
+.btn-ghost:hover{background:#000;color:#fff;opacity:1}
+.btn-gold{background:#775a19;color:#fff;padding:.5rem 1rem;font-size:.72rem;border-bottom:2px solid #5d4201}
+.btn-sm{padding:.4rem .8rem;font-size:.68rem}
+.btn-green{background:#16a34a;color:#fff;padding:.5rem 1rem;font-size:.72rem}
+.btn-red{background:#dc2626;color:#fff;padding:.5rem 1rem;font-size:.72rem}
+.btn-outline{background:#fff;color:#000;padding:.5rem 1rem;font-size:.72rem;border:1px solid #ddd}
+.btn-blue{background:#1d4ed8;color:#fff;padding:.5rem 1rem;font-size:.72rem}
+.btn-purple{background:#7c3aed;color:#fff;padding:.5rem 1rem;font-size:.72rem}
+.btn-full{width:100%;justify-content:center}
+
+/* ── FORMS ── */
+.finp{width:100%;background:#f7f7f7;border:0;border-bottom:2px solid #ddd;padding:.7rem 0;font-family:Inter,sans-serif;font-size:.95rem;outline:none;transition:border-color .2s}
+.finp:focus{border-bottom-color:#000}
+.fsel{width:100%;background:#f7f7f7;border:0;border-bottom:2px solid #ddd;padding:.7rem 0;font-family:Inter,sans-serif;font-size:.95rem;outline:none;appearance:none}
+.flbl{font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;color:#777;display:block;margin-bottom:5px;font-family:'Work Sans',sans-serif;font-weight:600}
+.fg{display:grid;gap:1.25rem}
+.fg-2{grid-template-columns:1fr 1fr}
+.fg-span{grid-column:1/-1}
+
+/* ── CARDS ── */
+.card{background:#fff;border-left:3px solid #775a19;padding:1.25rem}
+.card-flat{background:#fff;border:1px solid #ebebeb;padding:1.25rem}
+.card-dark{background:#0a0a0a;color:#fff;padding:1.5rem;border-bottom:4px solid #775a19}
+
+/* ── BADGES ── */
+.bdg{display:inline-block;padding:2px 8px;font-size:.6rem;font-family:'Work Sans',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.05em;border-radius:2px}
+.bdg-g{background:#dcfce7;color:#15803d}
+.bdg-b{background:#dbeafe;color:#1d4ed8}
+.bdg-y{background:#fef9c3;color:#92400e}
+.bdg-r{background:#fee2e2;color:#b91c1c}
+.bdg-p{background:#ede9fe;color:#6d28d9}
+
+/* ── OVERLAY / MODAL ── */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:400;overflow-y:auto;padding:1rem}
+.overlay.vis{display:flex;align-items:flex-start;justify-content:center}
+.modal{background:#fff;width:100%;margin:2rem auto}
+.modal-hd{padding:1rem 1.25rem;border-bottom:1px solid #eee;display:flex;align-items:center;justify-content:space-between}
+.modal-hd h3{font-family:'Times New Roman',serif;font-size:1rem;font-weight:700}
+.modal-x{background:none;border:none;font-size:1.2rem;cursor:pointer;color:#888;line-height:1;padding:0}
+.modal-body{padding:1.5rem}
+
+/* ── TOAST ── */
+#toast{position:fixed;bottom:1.25rem;left:50%;transform:translateX(-50%);background:#111;color:#fff;padding:.7rem 1.4rem;font-family:'Work Sans',sans-serif;font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;border-bottom:2px solid #775a19;z-index:9999;display:none;white-space:nowrap}
+
+/* ── SECTION ── */
+.sec{padding:4rem 0}
+.sec-sm{padding:2.5rem 0}
+.sec-title{font-family:'Times New Roman',serif;font-size:2rem;font-weight:700;line-height:1.15}
+.sec-sub{font-size:.88rem;color:#555;line-height:1.75;max-width:520px;margin-top:.625rem}
+.gold{color:#775a19}
+.hr{height:1px;background:#eee;margin:2rem 0}
+
+/* ── GRID ── */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem}
+
+/* ── RESPONSIVE ── */
+@media(min-width:768px){
+  .nav-links{display:flex}
+  .ham-btn{display:none}
+  .footer-g{grid-template-columns:1.5fr 1fr 1fr}
+}
+@media(max-width:767px){
+  .grid-2,.grid-3,.fg-2{grid-template-columns:1fr!important}
+  .fg-2 .fg-span{grid-column:1}
+  .sec-title{font-size:1.6rem}
+}
+
+
+</style>
+</head>
+<body>
+
+<div id="toast"></div>
+<nav class="nav"><div class="W">
+  <a href="index.html" class="nav-logo">Seacoast RVIP</a>
+  <div id="nav-d" class="nav-links"><a href="index.html" class="">Home</a><a href="services.html" class="">Services</a><a href="about.html" class="">About</a><a href="contact.html" class="">Contact</a><a href="account.html" style="font-size:.73rem;font-weight:600;color:#555;text-transform:uppercase;letter-spacing:.05em">My Account</a></div>
+  <div class="nav-right">
+    <a href="schedule.html"><button class="btn-book">Book Now</button></a>
+    <button class="ham-btn" onclick="toggleMenu()"><span></span><span></span><span></span></button>
+  </div>
+</div></nav>
+<div id="mob-nav" class="mob-nav">
+  <a href="index.html">Home</a><a href="services.html">Services</a><a href="about.html">About</a><a href="contact.html">Contact</a><a href="account.html">My Account</a><a href="quote.html">Get a Quote</a><a href="schedule.html">Book a Ride</a>
+  <div class="mob-actions">
+    <a href="schedule.html"><button class="btn btn-gold">Book a Ride</button></a>
+    <a href="quote.html"><button class="btn btn-outline">Get Quote</button></a>
+  </div>
+  <div style="margin-top:auto;padding-top:2rem;border-top:1px solid rgba(255,255,255,.08)">
+    <a href="tel:+19874163283" style="color:#775a19;font-size:.85rem;font-weight:600">(987) 416-3283</a>
+  </div>
+</div>
+<div class="page-body">
+
+<section class="sec">
+  <div class="W" style="max-width:720px">
+    <div style="text-align:center;margin-bottom:2.5rem">
+      <div style="font-size:.68rem;text-transform:uppercase;letter-spacing:.2em;color:#775a19;font-weight:600;margin-bottom:.75rem">Pre-book your ride</div>
+      <h1 class="sec-title">Book a Ride</h1>
+      <p class="sec-sub" style="margin:auto">Fill in your details and we confirm within the hour.</p>
+    </div>
+    <div id="prefill-msg" style="display:none;background:#000;color:#775a19;padding:.75rem 1.25rem;font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;text-align:center;border-bottom:2px solid #775a19;margin-bottom:1.5rem"></div>
+    <div class="card-flat" style="border-top:3px solid #775a19;padding:2rem">
+      <form id="bf" action="https://formsubmit.co/ramonvv202618@icloud.com" method="POST" onsubmit="submitBook(event)">
+        <input type="hidden" name="_subject" value="[BOOKING REQUEST] New Reservation — Seacoast RVIP"/>
+        <input type="hidden" name="_captcha" value="false"/>
+        <input type="hidden" name="_template" value="table"/>
+        <input type="hidden" name="_autoresponse" value="Thank you for booking with Seacoast RVIP! We will confirm within the hour. — Ramon (987) 416-3283"/>
+        <input type="text" name="_honey" style="display:none"/>
+        <h3 style="font-family:'Times New Roman',serif;font-size:.95rem;font-weight:700;margin-bottom:1.25rem;padding-bottom:.875rem;border-bottom:1px solid #eee">Your Information</h3>
+        <div class="fg fg-2" style="margin-bottom:1.5rem">
+          <div><label class="flbl">Full Name *</label><input id="bn" name="Full Name" required class="finp" placeholder="John Smith"/></div>
+          <div><label class="flbl">Phone *</label><input id="bp" name="Phone" required class="finp" type="tel" placeholder="Your phone"/></div>
+          <div class="fg-span"><label class="flbl">Email</label><input id="be" name="Email" class="finp" type="email" placeholder="your@email.com"/></div>
+        </div>
+        <h3 style="font-family:'Times New Roman',serif;font-size:.95rem;font-weight:700;margin-bottom:1.25rem;padding-bottom:.875rem;border-bottom:1px solid #eee">Trip Details</h3>
+        <div class="fg fg-2" style="margin-bottom:1.5rem">
+          <div class="fg-span"><label class="flbl">Service *</label>
+            <select id="bs" name="Service" required class="fsel">
+              <option value="">Select service...</option>
+              <option>Airport Transfer — Boston Logan</option>
+              <option>Airport Transfer — Manchester MHT</option>
+              <option>Night Out</option><option>Casino Run</option>
+              <option>Special Event</option><option>Medical Appointment</option><option>Other</option>
+            </select>
+          </div>
+          <div><label class="flbl">Date *</label><input id="bd" name="Date" required class="finp" type="date"/></div>
+          <div><label class="flbl">Pickup Time *</label><input id="bt" name="Time" required class="finp" type="time"/></div>
+          <div class="fg-span"><label class="flbl">Pickup Address *</label><input id="bpu" name="Pickup Address" required class="finp" placeholder="Full pickup address"/></div>
+          <div class="fg-span"><label class="flbl">Destination *</label><input id="bde" name="Destination" required class="finp" placeholder="Airport, venue, or address"/></div>
+          <div><label class="flbl">Passengers</label><select name="Passengers" class="fsel"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6+</option></select></div>
+          <div><label class="flbl">Vehicle Preference</label><select name="Vehicle" class="fsel"><option>No preference</option><option>Black SUV Luxury</option><option>Regular Black SUV</option></select></div>
+          <div class="fg-span"><label class="flbl">Notes / Flight Number</label><input name="Notes" class="finp" placeholder="Flight number, special requests..."/></div>
+        </div>
+        <div id="book-ok" style="display:none;background:#f0fdf4;border-left:3px solid #16a34a;padding:.875rem;font-size:.83rem;color:#15803d;margin-bottom:1rem">✅ Booking sent! We will confirm within the hour via text or email.</div>
+        <button id="book-btn" type="submit" class="btn btn-black btn-full">Submit Booking →</button>
+        <p style="font-size:.72rem;color:#aaa;text-align:center;margin-top:.875rem">We confirm every booking personally within 1 hour.</p>
+      </form>
+    </div>
+  </div>
+</section>
+
+</div>
+
+<footer class="footer"><div class="W">
+  <div class="footer-g">
+    <div>
+      <div class="footer-logo">Seacoast RVIP</div>
+      <div class="footer-tag">The Ride You Can Count On.<br>Premium private car service · NH Seacoast</div>
+      <div style="display:flex;gap:1rem">
+        <a href="tel:+19874163283" style="color:#775a19;font-size:.75rem;font-weight:600">(987) 416-3283</a>
+        <a href="/cdn-cgi/l/email-protection#196b787476776f6f2b292b2f282159707a75766c7d377a7674" style="color:#775a19;font-size:.75rem;font-weight:600">Email</a>
+      </div>
+    </div>
+    <div>
+      <div class="ftr-ht">Navigate</div>
+      <div class="ftr-links">
+        <a href="index.html">Home</a><a href="services.html">Services &amp; Pricing</a>
+        <a href="about.html">About</a><a href="contact.html">Contact</a>
+        <a href="schedule.html">Book a Ride</a><a href="quote.html">Get a Quote</a>
+        <a href="account.html">My Account</a>
+      </div>
+    </div>
+    <div>
+      <div class="ftr-ht">Contact</div>
+      <div class="ftr-links">
+        <a href="tel:+19874163283">(987) 416-3283</a>
+        <a href="/cdn-cgi/l/email-protection#c6b4a7aba9a8b0b0f4f6f4f0f7fe86afa5aaa9b3a2e8a5a9ab"><span class="__cf_email__" data-cfemail="384a595557564e4e0a080a0e090078515b54574d5c165b5755">[email&#160;protected]</span></a>
+      </div>
+      <a href="schedule.html" style="display:inline-block;margin-top:1rem;background:#775a19;color:#fff;padding:.6rem 1.1rem;font-family:'Work Sans',sans-serif;font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;border-bottom:2px solid #5d4201">Book Now →</a>
+    </div>
+  </div>
+  <div class="footer-bot">
+    <span class="footer-copy">© 2025 Seacoast RVIP LLC · All rights reserved</span>
+    <div class="footer-legal"><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a></div>
+  </div>
+</div></footer>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+
+function showToast(m){var t=document.getElementById('toast');if(!t)return;t.textContent=m;t.style.display='block';setTimeout(function(){t.style.display='none';},3000);}
+function toggleMenu(){
+  var m=document.getElementById('mob-nav'),open=m.style.display==='flex';
+  m.style.display=open?'none':'flex';
+  document.body.style.overflow=open?'':'hidden';
+  var bars=document.querySelectorAll('.ham-btn span');
+  if(!open){bars[0].style.transform='translateY(7px) rotate(45deg)';bars[1].style.opacity='0';bars[2].style.transform='translateY(-7px) rotate(-45deg)';}
+  else{bars[0].style.transform='';bars[1].style.opacity='1';bars[2].style.transform='';}
+}
+function checkW(){
+  var d=document.getElementById('nav-d');
+  var h=document.querySelector('.ham-btn');
+  if(!d||!h)return;
+  if(window.innerWidth>=768){d.style.display='flex';h.style.display='none';var m=document.getElementById('mob-nav');if(m&&m.style.display==='flex'){m.style.display='none';document.body.style.overflow='';var bars=document.querySelectorAll('.ham-btn span');bars[0].style.transform='';bars[1].style.opacity='1';bars[2].style.transform='';}}
+  else{d.style.display='none';h.style.display='flex';}
+}
+window.addEventListener('resize',checkW);
+window.addEventListener('DOMContentLoaded',checkW);
+
+
+async function submitBook(e){
+  e.preventDefault();
+  var btn=document.getElementById('book-btn');
+  btn.textContent='Sending...';btn.disabled=true;
+
+  var code = _genCode();
+  var bk = {
+    id: Date.now().toString(),
+    code: code,
+    name:        document.getElementById('bn').value.trim(),
+    phone:       document.getElementById('bp').value.trim(),
+    email:       document.getElementById('be').value.trim(),
+    service:     document.getElementById('bs').value,
+    date:        document.getElementById('bd').value,
+    time:        document.getElementById('bt').value,
+    pickup:      document.getElementById('bpu').value.trim(),
+    destination: document.getElementById('bde').value.trim(),
+    vehicle:     document.querySelector('[name="Vehicle"]') ? document.querySelector('[name="Vehicle"]').value : '',
+    passengers:  document.querySelector('[name="Passengers"]') ? document.querySelector('[name="Passengers"]').value : '1',
+    notes:       document.querySelector('[name="Notes"]') ? document.querySelector('[name="Notes"]').value : '',
     status:      'Pending',
     source:      'website-form',
     createdAt:   new Date().toISOString()
   };
-  window._db.collection('bookings').doc(id).set(doc)
-    .then(function(){ console.log('✅ Booking saved to Firebase:', doc.code); })
-    .catch(function(e){ console.warn('Firebase error:', e.message); });
-  // Merge into localStorage so same-device admin sees it instantly
-  try {
-    var bks = JSON.parse(localStorage.getItem('rv-bks') || '[]');
-    bks.push(doc);
-    localStorage.setItem('rv-bks', JSON.stringify(bks));
-  } catch(le) {}
-}
-</script>
-</head>
-<body class="text-on-background antialiased">
-<div id="pwa-install-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:100;background:#000;color:white;padding:1rem 1.25rem;align-items:center;justify-content:space-between;border-top:2px solid #775a19;gap:1rem">
-  <div>
-    <div style="font-family:'Times New Roman',serif;font-weight:700;font-size:0.95rem">Seacoast RVIP</div>
-    <div style="font-size:0.7rem;color:#999;font-family:sans-serif">Add to your home screen</div>
-  </div>
-  <button onclick="installPWA()" style="background:#775a19;color:white;border:none;padding:0.625rem 1.25rem;font-family:sans-serif;font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;cursor:pointer;white-space:nowrap">Install App</button>
-  <button onclick="document.getElementById('pwa-install-banner').style.display='none'" style="background:none;border:none;color:#555;cursor:pointer;font-size:1.25rem;padding:0.25rem">✕</button>
-</div>
 
-
-<!-- NAV -->
-<nav style="position:fixed;top:0;width:100%;z-index:48;background:rgba(255,255,255,0.95);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid rgba(0,0,0,0.06);transition:all 0.3s">
-<div style="display:flex;justify-content:space-between;align-items:center;max-width:100%;padding:0 2rem;height:68px">
-
-  <!-- Logo -->
-  <a href="index.html" style="font-family:'Times New Roman',Times,serif;font-size:1.35rem;font-weight:700;color:#000;text-decoration:none;letter-spacing:-0.01em;white-space:nowrap">Seacoast RVIP</a>
-
-  <!-- Desktop links -->
-  <div id="nav-desktop" style="display:none;align-items:center;gap:2.5rem" class="desktop-nav">
-    <a href="index.html" style="font-family:Inter,sans-serif;font-size:0.8rem;letter-spacing:0.05em;text-transform:uppercase;color:#888;text-decoration:none;font-weight:500;transition:color 0.2s" onmouseover="this.style.color='#775a19'" onmouseout="this.style.color='#888'">Home</a>
-    <a href="services.html" style="font-family:Inter,sans-serif;font-size:0.8rem;letter-spacing:0.05em;text-transform:uppercase;color:#888;text-decoration:none;font-weight:500;transition:color 0.2s" onmouseover="this.style.color='#775a19'" onmouseout="this.style.color='#888'">Services</a>
-    <a href="about.html" style="font-family:Inter,sans-serif;font-size:0.8rem;letter-spacing:0.05em;text-transform:uppercase;color:#888;text-decoration:none;font-weight:500;transition:color 0.2s" onmouseover="this.style.color='#775a19'" onmouseout="this.style.color='#888'">About</a>
-    <a href="contact.html" style="font-family:Inter,sans-serif;font-size:0.8rem;letter-spacing:0.05em;text-transform:uppercase;color:#888;text-decoration:none;font-weight:500;transition:color 0.2s" onmouseover="this.style.color='#775a19'" onmouseout="this.style.color='#888'">Contact</a>
-    <a href="quote.html" style="font-family:Inter,sans-serif;font-size:0.8rem;letter-spacing:0.05em;text-transform:uppercase;color:#775a19;text-decoration:none;font-weight:600;transition:color 0.2s;border:1px solid #775a19;padding:0.4rem 0.875rem" onmouseover="this.style.background='#775a19';this.style.color='white'" onmouseout="this.style.background='transparent';this.style.color='#775a19'">Get Quote</a>
-    <a href="account.html" style="font-family:Inter,sans-serif;font-size:0.8rem;letter-spacing:0.05em;text-transform:uppercase;color:#888;text-decoration:none;font-weight:500;transition:color 0.2s;display:inline-flex;align-items:center;gap:4px" onmouseover="this.style.color='#775a19'" onmouseout="this.style.color='#888'"><span class="material-symbols-outlined" style="font-size:16px">person</span>My Account</a>
-    <a href="schedule.html" style="background:#000;color:white;padding:0.625rem 1.5rem;font-family:Inter,sans-serif;font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;text-decoration:none;border-bottom:2px solid #775a19;transition:opacity 0.2s" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">Book Now</a>
-  </div>
-
-  <!-- Mobile right side -->
-  <div style="display:flex;align-items:center;gap:0.75rem" id="nav-mobile-right">
-    <a href="schedule.html" style="background:#000;color:white;padding:0.5rem 1rem;font-family:Inter,sans-serif;font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;text-decoration:none;border-bottom:2px solid #775a19" style="background:#000;color:white;padding:0.5rem 1rem;font-family:Inter,sans-serif;font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;text-decoration:none;border-bottom:2px solid #775a19">Book</a>
-    <!-- Hamburger -->
-    <button id="hamburger-btn" onclick="toggleMenu()" aria-label="Menu" style="background:none;border:none;cursor:pointer;padding:0.375rem;display:flex;flex-direction:column;gap:5px;justify-content:center">
-      <span class="ham-line" style="display:block;width:24px;height:2px;background:#000;transition:all 0.3s"></span>
-      <span class="ham-line" style="display:block;width:24px;height:2px;background:#000;transition:all 0.3s"></span>
-      <span class="ham-line" style="display:block;width:24px;height:2px;background:#000;transition:all 0.3s"></span>
-    </button>
-  </div>
-</div>
-
-<!-- Mobile drawer -->
-<div id="mobile-menu" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:#000000;z-index:99;flex-direction:column;padding:5rem 2rem 2rem;gap:0;overflow-y:auto;-webkit-overflow-scrolling:touch">
-  <a href="index.html" onclick="toggleMenu()" style="font-family:Inter,sans-serif;font-size:1.1rem;font-weight:600;color:white;text-decoration:none;padding:0.875rem 0;border-bottom:1px solid rgba(255,255,255,0.08);display:block;text-transform:uppercase;letter-spacing:0.08em" onmouseover="this.style.color='#775a19'" onmouseout="this.style.color='white'">Home</a>
-  <a href="services.html" onclick="toggleMenu()" style="font-family:Inter,sans-serif;font-size:1.1rem;font-weight:600;color:white;text-decoration:none;padding:0.875rem 0;border-bottom:1px solid rgba(255,255,255,0.08);display:block;text-transform:uppercase;letter-spacing:0.08em" onmouseover="this.style.color='#775a19'" onmouseout="this.style.color='white'">Services</a>
-  <a href="about.html" onclick="toggleMenu()" style="font-family:Inter,sans-serif;font-size:1.1rem;font-weight:600;color:white;text-decoration:none;padding:0.875rem 0;border-bottom:1px solid rgba(255,255,255,0.08);display:block;text-transform:uppercase;letter-spacing:0.08em" onmouseover="this.style.color='#775a19'" onmouseout="this.style.color='white'">About</a>
-  <a href="contact.html" onclick="toggleMenu()" style="font-family:Inter,sans-serif;font-size:1.1rem;font-weight:600;color:white;text-decoration:none;padding:0.875rem 0;border-bottom:1px solid rgba(255,255,255,0.08);display:block;text-transform:uppercase;letter-spacing:0.08em" onmouseover="this.style.color='#775a19'" onmouseout="this.style.color='white'">Contact</a>
-  <a href="account.html" onclick="toggleMenu()" style="font-family:Inter,sans-serif;font-size:1.1rem;font-weight:600;color:white;text-decoration:none;padding:0.875rem 0;border-bottom:1px solid rgba(255,255,255,0.08);display:block;text-transform:uppercase;letter-spacing:0.08em" onmouseover="this.style.color='#775a19'" onmouseout="this.style.color='white'">My Account</a>
-  <a href="quote.html" onclick="toggleMenu()" style="font-family:Inter,sans-serif;font-size:1.1rem;font-weight:600;color:white;text-decoration:none;padding:0.875rem 0;border-bottom:1px solid rgba(255,255,255,0.08);display:block;text-transform:uppercase;letter-spacing:0.08em" onmouseover="this.style.color='#775a19'" onmouseout="this.style.color='white'">Get a Quote</a>
-  
-  <div style="margin-top:2rem">
-    <a href="schedule.html" onclick="toggleMenu()" style="background:#775a19;color:white;padding:1rem 2rem;font-family:Inter,sans-serif;font-size:0.875rem;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;text-decoration:none;display:inline-block;border-bottom:3px solid #5d4201">Book a Ride</a>
-  </div>
-  <div style="margin-top:auto;padding-top:2rem">
-    <div style="font-family:'Times New Roman',serif;color:rgba(255,255,255,0.3);font-size:0.75rem">The Ride You Can Count On</div>
-    <div style="display:flex;gap:1rem;margin-top:0.75rem">
-      <a href="tel:+19874163283" style="color:#775a19;font-family:Inter,sans-serif;font-size:0.8rem;text-decoration:none">(987) 416-3283</a>
-    </div>
-  </div>
-</div>
-</nav>
-
-<script>
-function toggleMenu() {
-  var menu = document.getElementById('mobile-menu');
-  var lines = document.querySelectorAll('.ham-line');
-  var isOpen = menu.style.display === 'flex';
-  menu.style.display = isOpen ? 'none' : 'flex';
-  document.body.style.overflow = isOpen ? '' : 'hidden';
-  if (!isOpen) {
-    lines[0].style.transform = 'translateY(7px) rotate(45deg)';
-    lines[1].style.opacity = '0';
-    lines[2].style.transform = 'translateY(-7px) rotate(-45deg)';
-  } else {
-    lines[0].style.transform = '';
-    lines[1].style.opacity = '1';
-    lines[2].style.transform = '';
+  // 1. Save to Firebase
+  if(window._db){
+    try{
+      await window._db.collection('bookings').doc(bk.id).set(bk);
+      // Also merge into localStorage so admin on same device sees it
+      try{
+        var existing=JSON.parse(localStorage.getItem('rv-bks')||'[]');
+        existing.push(bk);
+        localStorage.setItem('rv-bks',JSON.stringify(existing));
+      }catch(le){}
+    }catch(fe){console.warn('Firebase save:',fe.message);}
   }
+
+  // 2. Send email via FormSubmit
+  try{await fetch(e.target.action,{method:'POST',body:new FormData(e.target)});}catch(err){}
+
+  document.getElementById('book-ok').innerHTML = '✅ Booking request sent! Confirmation code: <strong>'+code+'</strong><br>We will confirm within the hour.';
+  document.getElementById('book-ok').style.display='block';
+  btn.textContent='Sent ✓';
+  e.target.reset();
+  window.scrollTo(0,0);
 }
-// Show desktop nav on larger screens
-function checkWidth() {
-  var desktop = document.getElementById('nav-desktop');
-  var mobileRight = document.getElementById('nav-mobile-right');
-  if (window.innerWidth >= 768) {
-    desktop.style.display = 'flex';
-    mobileRight.style.display = 'none';
-    document.getElementById('mobile-menu').style.display = 'none';
-    document.body.style.overflow = '';
-  } else {
-    desktop.style.display = 'none';
-    mobileRight.style.display = 'flex';
-  }
-}
-window.addEventListener('resize', checkWidth);
-window.addEventListener('DOMContentLoaded', checkWidth);
-</script>
-
-<main class="pt-20 flex flex-col md:flex-row min-h-screen">
-
-  <!-- ═══════════════════════════════════════ -->
-  <!-- LEFT — BOOKING FORM -->
-  <!-- ═══════════════════════════════════════ -->
-  <section class="w-full md:w-1/2 px-8 md:px-14 py-12 overflow-y-auto">
-
-    <div class="mb-10">
-      <span class="font-label text-secondary uppercase tracking-widest text-xs font-semibold mb-2 block">The Ride You Can Count On</span>
-      <h1 class="font-headline text-5xl font-bold tracking-tight mb-2 text-primary">Reservation</h1>
-      <p class="text-on-surface-variant text-sm">We confirm within minutes by text &amp; email.</p>
-      <div class="mt-3 inline-block bg-secondary/10 text-secondary text-xs font-label uppercase tracking-wider px-3 py-1">
-        ✦ First ride 10% off — mention when booking
-      </div>
-    </div>
-
-    <!-- SUCCESS -->
-    <div id="success-msg">
-      <span class="material-symbols-outlined text-5xl mb-3 block" style="color:#22c55e">check_circle</span>
-      <h2 class="font-headline text-2xl mb-2 text-primary">Booking Request Sent!</h2>
-      <p class="text-on-surface-variant text-sm mb-2">We'll confirm your ride by text and email within minutes.</p>
-      <p class="text-xs text-on-surface-variant">Questions? Call/text: <strong>(603) 000-0000</strong></p>
-      <a href="index.html" class="mt-5 inline-block bg-primary text-white px-8 py-3 text-sm font-label uppercase tracking-widest border-b-2 border-secondary">← Back to Home</a>
-    </div>
-
-    <!-- FormSubmit — emails go directly to ramonvv202618@icloud.com -->
-    <form id="book-form" action="https://formsubmit.co/ramonvv202618@icloud.com" method="POST" onsubmit="handleSubmit(event)" autocomplete="on">
-      <input type="hidden" name="_subject" value="[BOOKING REQUEST] New Reservation — Seacoast RVIP"/>
-      <input type="hidden" name="_replyto" id="reply-email"/>
-      <input type="hidden" name="_cc" value="ramonvv202618@icloud.com"/>
-      <input type="hidden" name="_captcha" value="false"/>
-      <input type="hidden" name="_template" value="table"/>
-      
-      <input type="hidden" name="_autoresponse" value="Thank you for contacting Seacoast RVIP! We received your message and will get back to you within the hour.
-
-─────────────────────────────────
-🚗 SEACOAST RVIP LLC
-The Ride You Can Count On
-
-📞 (987) 416-3283
-✉️  ramonvv202618@icloud.com
-🌐 seacoastrvip.com
-
-CONFIDENTIALITY NOTICE: This communication is intended solely for the named recipient(s) and may contain confidential and/or privileged information. If you have received this in error, please notify the sender immediately and destroy all copies. Seacoast RVIP LLC · NH, United States
-─────────────────────────────────"/>
-      <input type="text" name="_honey" style="display:none;visibility:hidden;position:absolute"/>
-      <input type="hidden" name="Route Distance" id="hid-distance"/>
-      <input type="hidden" name="Estimated Duration" id="hid-duration"/>
-      <input type="hidden" name="Passengers" id="hid-pass" value="1"/>
-      <input type="hidden" name="Luggage" id="hid-lug" value="0"/>
-
-      <!-- STEP 01 -->
-      <div class="mb-10">
-        <div class="flex items-baseline gap-3 mb-5">
-          <span class="font-label text-secondary font-bold text-xs tracking-widest uppercase">Step 01</span>
-          <h2 class="font-headline text-2xl font-bold text-primary">Personal Info</h2>
-        </div>
-        <div class="space-y-4">
-          <div>
-            <label class="f-label">Full Name *</label>
-            <input class="f-input" name="Full Name" type="text" required placeholder="Your full name"/>
-          </div>
-          <div class="grid grid-cols-2 gap-5">
-            <div>
-              <label class="f-label">Phone *</label>
-              <input class="f-input" name="Phone" type="tel" required placeholder="Your phone number"/>
-            </div>
-            <div>
-              <label class="f-label">Email *</label>
-              <input class="f-input" name="Email" type="email" required placeholder="your@email.com"
-                oninput="document.getElementById('reply-email').value=this.value"/>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- STEP 02 -->
-      <div class="mb-10">
-        <div class="flex items-baseline gap-3 mb-5">
-          <span class="font-label text-secondary font-bold text-xs tracking-widest uppercase">Step 02</span>
-          <h2 class="font-headline text-2xl font-bold text-primary">Vehicle Class</h2>
-        </div>
-        <div class="grid grid-cols-2 gap-3">
-          <div class="v-card">
-            <input type="radio" name="Vehicle Class" id="v1" value="Black SUV Luxury (7 passengers)" checked/>
-            <label for="v1">
-              <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuCVUPBh5oQxrX7I9qlzu6QDGpuuiaZdhBH0UBkLAVKxzR4in41bPEhhffL8dvdYhbmeIRRjn5BVfDNw971kuJzVCN5SglGulLfrFmLfzx6mgQx59omvwObM4z9798Z4qkSkzBxZ401j19rXBjIpqO10fBqx8D1lfWXrPcRDGkI7uYsItkG4YE4f2uVrtSoiZlQbpT3ksAza03T_Lwps90Og60b2UQa1oQepmTFJf_SXIWnooRTQcNyXYgPQupPAxCvraJgH-Sxg-35C" class="w-full h-28 object-cover mb-2" alt="Black SUV"/>
-              <p class="font-headline font-bold text-sm text-primary mb-1">Black SUV Luxury</p>
-              <p class="text-xs text-on-surface-variant">👤 7 &nbsp;|&nbsp; 🧳 5</p>
-            </label>
-          </div>
-          <div class="v-card">
-            <input type="radio" name="Vehicle Class" id="v2" value="Regular SUV (6 passengers)"/>
-            <label for="v2">
-              <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuBU2xk2TUq20eeEwO5dmeetrkexgALL6bqqA1QFc3aZipQUqCbPJRO1MnOLkEKbsRTg_d4dwwbr1F5MEg3kwHfqyaAHqOi5HWC7tTxMZ4g2Qg0dgqPA7qg_EYkLuFNFhYWSAABexk262XX2xjAcv74w7OOFl21ayeMP6zbznNiaeIIxltrNr7B7quxmSl2HHvoAXrUXcpTVpFigrTtW0EE6yp6s798MWGyG6lYhJaKsDbOQffha2q1h9LawQfsi93MNrKvGfMM0J400" class="w-full h-28 object-cover mb-2" alt="Regular SUV"/>
-              <p class="font-headline font-bold text-sm text-primary mb-1">Regular SUV</p>
-              <p class="text-xs text-on-surface-variant">👤 6 &nbsp;|&nbsp; 🧳 4</p>
-            </label>
-          </div>
-        </div>
-      </div>
-
-      <!-- STEP 03 -->
-      <div class="mb-10">
-        <div class="flex items-baseline gap-3 mb-5">
-          <span class="font-label text-secondary font-bold text-xs tracking-widest uppercase">Step 03</span>
-          <h2 class="font-headline text-2xl font-bold text-primary">Trip Details</h2>
-        </div>
-        <div class="space-y-4">
-          <div class="grid grid-cols-2 gap-5">
-            <div>
-              <label class="f-label">Service Type *</label>
-              <select class="f-input" name="Service Type" required>
-                <option value="">Select...</option>
-                <option>Airport — Boston Logan (BOS)</option>
-                <option>Airport — Manchester MHT</option>
-                <option>Night Out</option>
-                <option>Casino Run</option>
-                <option>Special Event</option>
-                <option>Medical Appointment</option>
-                <option>Other</option>
-              </select>
-            </div>
-            <div>
-              <label class="f-label">Flight Number</label>
-              <input class="f-input" name="Flight Number" type="text" placeholder="AA 1234"/>
-            </div>
-          </div>
-          <div class="grid grid-cols-2 gap-5">
-            <div>
-              <label class="f-label">Date *</label>
-              <input class="f-input" name="Date" type="date" required/>
-            </div>
-            <div>
-              <label class="f-label">Pickup Time *</label>
-              <input class="f-input" name="Pickup Time" type="time" required/>
-            </div>
-          </div>
-
-          <!-- PICKUP with Google Maps Autocomplete -->
-          <div>
-            <label class="f-label">Pickup Address *</label>
-            <div class="relative">
-              <input class="f-input pr-8" id="pickup-input" name="Pickup Address" type="text"
-                required placeholder="Start typing your address..." autocomplete="off"/>
-              <span class="material-symbols-outlined absolute right-0 bottom-3 text-on-surface-variant text-lg">my_location</span>
-            </div>
-          </div>
-
-          <!-- DESTINATION with Google Maps Autocomplete -->
-          <div>
-            <label class="f-label">Destination *</label>
-            <div class="relative">
-              <input class="f-input pr-8" id="dest-input" name="Destination" type="text"
-                required placeholder="Airport, venue, or address..." autocomplete="off"/>
-              <span class="material-symbols-outlined absolute right-0 bottom-3 text-on-surface-variant text-lg">location_on</span>
-            </div>
-          </div>
-
-          <!-- Route preview strip (shows after both addresses entered) -->
-          <div id="route-card" class="p-4 shadow-sm">
-            <div class="flex items-center gap-3 mb-3">
-              <span class="material-symbols-outlined text-secondary text-sm">route</span>
-              <span class="font-label text-xs uppercase tracking-widest text-secondary font-bold">Live Route Estimate</span>
-            </div>
-            <div class="grid grid-cols-3 gap-3 text-center">
-              <div>
-                <p class="font-headline text-xl font-bold text-primary" id="route-distance">—</p>
-                <p class="font-label text-xs text-on-surface-variant uppercase tracking-wide">Distance</p>
-              </div>
-              <div>
-                <p class="font-headline text-xl font-bold text-primary" id="route-duration">—</p>
-                <p class="font-label text-xs text-on-surface-variant uppercase tracking-wide">Drive Time</p>
-              </div>
-              <div>
-                <p class="font-headline text-xl font-bold text-secondary" id="route-price">—</p>
-                <p class="font-label text-xs text-on-surface-variant uppercase tracking-wide">Est. Starting Rate</p>
-              </div>
-            </div>
-          </div>
-
-          <!-- Passengers -->
-          <div>
-            <label class="f-label">Passengers *</label>
-            <div class="flex gap-2 flex-wrap">
-              <button type="button" onclick="selPass(this,'1')" class="p-btn sel">1</button>
-              <button type="button" onclick="selPass(this,'2')" class="p-btn">2</button>
-              <button type="button" onclick="selPass(this,'3')" class="p-btn">3</button>
-              <button type="button" onclick="selPass(this,'4')" class="p-btn">4</button>
-              <button type="button" onclick="selPass(this,'5')" class="p-btn">5</button>
-              <button type="button" onclick="selPass(this,'6+')" class="p-btn">6+</button>
-            </div>
-          </div>
-
-          <!-- Luggage -->
-          <div>
-            <label class="f-label">Luggage Bags</label>
-            <div class="flex gap-2 flex-wrap">
-              <button type="button" onclick="selLug(this,'0')" class="p-btn sel" id="lug-btns">0</button>
-              <button type="button" onclick="selLug(this,'1')" class="p-btn">1</button>
-              <button type="button" onclick="selLug(this,'2')" class="p-btn">2</button>
-              <button type="button" onclick="selLug(this,'3')" class="p-btn">3</button>
-              <button type="button" onclick="selLug(this,'4+')" class="p-btn">4+</button>
-            </div>
-          </div>
-
-          <div>
-            <label class="f-label">Special Requests</label>
-            <textarea class="f-input resize-none" name="Special Requests" rows="3"
-              placeholder="Child seat, extra stop, accessibility needs, early morning pickup..."></textarea>
-          </div>
-        </div>
-      </div>
-
-      <!-- STEP 04 — PAYMENT -->
-      <div class="mb-10">
-        <div class="flex items-baseline gap-3 mb-2">
-          <span class="font-label text-secondary font-bold text-xs tracking-widest uppercase">Step 04</span>
-          <h2 class="font-headline text-2xl font-bold text-primary">How You'll Pay</h2>
-        </div>
-        <p class="text-xs text-on-surface-variant mb-5">No charge until your ride is confirmed.</p>
-        <div class="grid grid-cols-3 gap-3">
-          <div class="pay-card">
-            <input type="radio" name="Payment Method" id="p-card" value="Credit/Debit Card" checked/>
-            <label for="p-card">
-              <span class="material-symbols-outlined text-secondary" style="font-size:1.75rem">credit_card</span>
-              <span class="font-label text-xs font-bold uppercase text-primary">Card</span>
-              <span class="font-body text-xs text-on-surface-variant">Visa · MC · Amex</span>
-            </label>
-          </div>
-          <div class="pay-card">
-            <input type="radio" name="Payment Method" id="p-venmo" value="Venmo"/>
-            <label for="p-venmo">
-              <div style="width:28px;height:28px;border-radius:6px;background:#008CFF;display:flex;align-items:center;justify-content:center">
-                <span style="color:white;font-weight:900;font-size:13px;font-family:sans-serif">V</span>
-              </div>
-              <span class="font-label text-xs font-bold uppercase text-primary">Venmo</span>
-              <span class="font-body text-xs text-on-surface-variant">@SeacoastRVIP</span>
-            </label>
-          </div>
-          <div class="pay-card">
-            <input type="radio" name="Payment Method" id="p-cash" value="Cash on Arrival"/>
-            <label for="p-cash">
-              <span class="material-symbols-outlined text-secondary" style="font-size:1.75rem">payments</span>
-              <span class="font-label text-xs font-bold uppercase text-primary">Cash</span>
-              <span class="font-body text-xs text-on-surface-variant">Pay on arrival</span>
-            </label>
-          </div>
-        </div>
-        <div id="pay-note" class="mt-4 p-4 bg-surface-container-low border-l-2 border-secondary text-xs text-on-surface-variant leading-relaxed">
-          <strong class="text-primary">Card:</strong> We'll send a secure payment link after confirming your booking.
-        </div>
-      </div>
-
-      <!-- ERROR -->
-      <div id="err-msg" class="hidden mb-4 p-4 bg-red-50 border border-red-200 text-red-700 text-sm rounded">
-        Something went wrong. Please call us at <strong>(603) 000-0000</strong>
-      </div>
-
-      <!-- SUBMIT -->
-      <button type="submit" id="sub-btn"
-        class="w-full bg-primary text-white py-5 font-headline font-black text-xl uppercase tracking-tight hover:bg-zinc-900 transition-all border-b-4 border-secondary active:scale-[0.98]">
-        Request My Ride →
-      </button>
-      <p class="text-center text-xs text-on-surface-variant mt-4">
-        Prefer to call? <a href="tel:6030000000" class="text-secondary font-semibold underline">(603) 000-0000</a> &nbsp;|&nbsp;
-        <a href="sms:6030000000" class="text-secondary font-semibold underline">Text Us</a>
-      </p>
-    </form>
-  </section>
-
-  <!-- ═══════════════════════════════════════ -->
-  <!-- RIGHT — GOOGLE MAP -->
-  <!-- ═══════════════════════════════════════ -->
-  <section class="hidden md:block md:w-1/2 relative" style="min-height:100vh">
-
-    <!-- Map fills this container -->
-    <div id="map" style="width:100%;height:100vh;position:sticky;top:0"></div>
-
-    <!-- Top overlay — service area badge -->
-    <div class="map-overlay" style="top:90px;left:20px;right:20px">
-      <div class="flex flex-wrap gap-2">
-        <div class="area-badge">📍 Portsmouth NH</div>
-        <div class="area-badge">Hampton NH</div>
-        <div class="area-badge">Exeter NH</div>
-        <div class="area-badge">Newburyport MA</div>
-        <div class="area-badge">Kittery ME</div>
-        <div class="area-badge">✈ BOS · MHT</div>
-      </div>
-    </div>
-
-    <!-- Bottom overlay — branding -->
-    <div class="map-overlay" style="bottom:24px;left:20px;right:20px">
-      <div style="background:rgba(0,0,0,0.82);backdrop-filter:blur(12px);padding:16px 20px;border-left:3px solid #775a19">
-        <div class="grid grid-cols-3 gap-4 text-center mb-3">
-          <div>
-            <p class="font-headline text-xl text-white font-bold">100%</p>
-            <p class="font-label text-xs text-zinc-400 uppercase tracking-wider">On-Time</p>
-          </div>
-          <div>
-            <p class="font-headline text-xl text-white font-bold">24/7</p>
-            <p class="font-label text-xs text-zinc-400 uppercase tracking-wider">Available</p>
-          </div>
-          <div>
-            <p class="font-headline text-xl text-white font-bold">5★</p>
-            <p class="font-label text-xs text-zinc-400 uppercase tracking-wider">Rated</p>
-          </div>
-        </div>
-        <p class="font-label text-xs text-zinc-500 uppercase tracking-widest text-center">Seacoast RVIP · The Ride You Can Count On</p>
-      </div>
-    </div>
-  </section>
-
-</main>
-
-<!-- FOOTER -->
-<footer style="background:#0a0a0a;color:white;padding:4rem 0 2rem">
-  <div style="max-width:100%;padding:0 2rem">
-
-    <!-- Top row -->
-    <div style="display:grid;grid-template-columns:1fr;gap:2.5rem;padding-bottom:2.5rem;border-bottom:1px solid rgba(255,255,255,0.08)" class="footer-grid">
-
-      <!-- Brand -->
-      <div>
-        <div style="font-family:'Times New Roman',Times,serif;font-size:1.5rem;font-weight:700;color:white;margin-bottom:0.75rem">Seacoast RVIP</div>
-        <p style="font-family:Inter,sans-serif;font-size:0.8rem;color:rgba(255,255,255,0.45);line-height:1.7;max-width:280px;margin-bottom:1.25rem">The Ride You Can Count On. Premium private car service in the NH Seacoast area.</p>
-        <div style="display:flex;gap:1.25rem;align-items:center;flex-wrap:wrap">
-          <button onclick="shareRVIP()" style="cursor:pointer;color:#775a19;font-family:Inter,sans-serif;font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;background:none;border:none;padding:0;display:inline-flex;align-items:center;gap:4px">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#775a19" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-            Share
-          </button>
-          <span style="color:rgba(255,255,255,0.15)">|</span>
-          <a href="/cdn-cgi/l/email-protection#057764686a6b737337353733343d456c66696a70612b666a68" style="color:#775a19;font-family:Inter,sans-serif;font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;text-decoration:none;display:inline-flex;align-items:center;gap:4px">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#775a19" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-            Email
-          </a>
-          <span style="color:rgba(255,255,255,0.15)">|</span>
-          <a href="tel:+19874163283" style="color:#775a19;font-family:Inter,sans-serif;font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;text-decoration:none;display:inline-flex;align-items:center;gap:4px">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#775a19" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.93 19.79 19.79 0 0 1 1.69 5.38 2 2 0 0 1 3.68 3.21h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 10.9a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 17.92z"/></svg>
-            Call
-          </a>
-        </div>
-      </div>
-
-      <!-- Nav links -->
-      <div>
-        <div style="font-family:Inter,sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.15em;color:#775a19;font-weight:600;margin-bottom:1rem">Navigate</div>
-        <div style="display:flex;flex-direction:column;gap:0.625rem">
-          <a href="index.html" style="font-family:Inter,sans-serif;font-size:0.8rem;color:rgba(255,255,255,0.55);text-decoration:none;transition:color 0.2s" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.55)'">Home</a>
-          <a href="services.html" style="font-family:Inter,sans-serif;font-size:0.8rem;color:rgba(255,255,255,0.55);text-decoration:none;transition:color 0.2s" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.55)'">Services &amp; Pricing</a>
-          <a href="about.html" style="font-family:Inter,sans-serif;font-size:0.8rem;color:rgba(255,255,255,0.55);text-decoration:none;transition:color 0.2s" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.55)'">About Us</a>
-          <a href="contact.html" style="font-family:Inter,sans-serif;font-size:0.8rem;color:rgba(255,255,255,0.55);text-decoration:none;transition:color 0.2s" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.55)'">Contact</a>
-          <a href="schedule.html" style="font-family:Inter,sans-serif;font-size:0.8rem;color:rgba(255,255,255,0.55);text-decoration:none;transition:color 0.2s" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.55)'">Book a Ride</a>
-        </div>
-      </div>
-
-      <!-- Contact -->
-      <div>
-        <div style="font-family:Inter,sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.15em;color:#775a19;font-weight:600;margin-bottom:1rem">Contact</div>
-        <div style="display:flex;flex-direction:column;gap:0.5rem">
-          <a href="tel:+19874163283" style="font-family:Inter,sans-serif;font-size:0.8rem;color:rgba(255,255,255,0.55);text-decoration:none">(987) 416-3283</a>
-          <a href="/cdn-cgi/l/email-protection#eb998a8684859d9dd9dbd9dddad3ab828887849e8fc5888486" style="font-family:Inter,sans-serif;font-size:0.8rem;color:rgba(255,255,255,0.55);text-decoration:none"><span class="__cf_email__" data-cfemail="fb899a9694958d8dc9cbc9cdcac3bb929897948e9fd5989496">[email&#160;protected]</span></a>
-          <a href="schedule.html" style="display:inline-block;margin-top:0.75rem;background:#775a19;color:white;padding:0.625rem 1.25rem;font-family:Inter,sans-serif;font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;text-decoration:none;border-bottom:2px solid #5d4201">Book Now</a>
-        </div>
-      </div>
-    </div>
-
-    <!-- Bottom bar -->
-    <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;padding-top:1.5rem;gap:0.75rem">
-      <p style="font-family:Inter,sans-serif;font-size:0.7rem;color:rgba(255,255,255,0.25);margin:0">© 2025 Seacoast RVIP LLC. All rights reserved.</p>
-      <div style="display:flex;gap:1.5rem">
-        <a href="privacy.html" target="_blank" style="font-family:Inter,sans-serif;font-size:0.7rem;color:rgba(255,255,255,0.3);text-decoration:none" onmouseover="this.style.color='#775a19'" onmouseout="this.style.color='rgba(255,255,255,0.3)'">Privacy Policy</a>
-        <a href="terms.html" target="_blank" style="font-family:Inter,sans-serif;font-size:0.7rem;color:rgba(255,255,255,0.3);text-decoration:none" onmouseover="this.style.color='#775a19'" onmouseout="this.style.color='rgba(255,255,255,0.3)'">Terms of Service</a>
-      </div>
-    </div>
-  </div>
-
-  <style>
-  @media(min-width:768px){
-    .footer-grid{grid-template-columns:1.5fr 1fr 1fr!important}
-  }
-  </style>
-</footer>
-
-<!-- ═══════════════════════════════════════════════════════════ -->
-<!-- GOOGLE MAPS SCRIPT                                          -->
-<!-- ⚠️ Replace AIzaSyAtiBZ-MmvzTnOg3hDluVDCVy7mcersqe4 below with your key   -->
-<!-- Get free key: console.cloud.google.com                      -->
-<!-- Enable: Maps JavaScript API + Places API + Directions API  -->
-<!-- ═══════════════════════════════════════════════════════════ -->
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
-// ─── CONFIG ─────────────────────────────────────────────────
-var GOOGLE_API_KEY = 'AIzaSyAtiBZ-MmvzTnOg3hDluVDCVy7mcersqe4';
-
-// Base pricing per mile (adjust to your rates)
-var BASE_FARE = 15;        // base fare $
-var RATE_PER_MILE = 2.50;  // per mile
-
-// Service area center
-var SERVICE_CENTER = { lat: 43.0718, lng: -70.7626 }; // Portsmouth NH
-
-// Service area towns with coordinates
-var SERVICE_AREA = [
-  { name: 'Hampton', lat: 42.9362, lng: -70.8400 },
-  { name: 'Portsmouth', lat: 43.0718, lng: -70.7626 },
-  { name: 'Exeter', lat: 42.9812, lng: -70.9478 },
-  { name: 'Rye', lat: 43.0140, lng: -70.7651 },
-  { name: 'Newburyport', lat: 42.8126, lng: -70.8773 },
-  { name: 'Kittery', lat: 43.0870, lng: -70.7348 },
-];
-
-// Airport locations
-var AIRPORTS = [
-  { name: 'Boston Logan (BOS)', lat: 42.3656, lng: -71.0096 },
-  { name: 'Manchester MHT', lat: 42.9326, lng: -71.4357 },
-];
-// ────────────────────────────────────────────────────────────
-
-var map, directionsService, directionsRenderer, autocompletePickup, autocompleteDest;
-var pickupPlace = null, destPlace = null;
-
-// Dark luxury map style
-var DARK_STYLE = [
-  {elementType:'geometry',stylers:[{color:'#1a1a1a'}]},
-  {elementType:'labels.text.fill',stylers:[{color:'#8a8a8a'}]},
-  {elementType:'labels.text.stroke',stylers:[{color:'#1a1a1a'}]},
-  {featureType:'administrative',elementType:'geometry',stylers:[{visibility:'off'}]},
-  {featureType:'road',elementType:'geometry',stylers:[{color:'#2c2c2c'}]},
-  {featureType:'road',elementType:'geometry.stroke',stylers:[{color:'#212121'}]},
-  {featureType:'road.highway',elementType:'geometry',stylers:[{color:'#3a3a3a'}]},
-  {featureType:'road.highway',elementType:'geometry.stroke',stylers:[{color:'#1f1f1f'}]},
-  {featureType:'road.highway',elementType:'labels.text.fill',stylers:[{color:'#f3d19c'}]},
-  {featureType:'water',elementType:'geometry',stylers:[{color:'#0d1b2a'}]},
-  {featureType:'water',elementType:'labels.text.fill',stylers:[{color:'#3d6b8a'}]},
-  {featureType:'poi',stylers:[{visibility:'off'}]},
-  {featureType:'transit',stylers:[{visibility:'off'}]},
-  {featureType:'landscape',elementType:'geometry',stylers:[{color:'#212121'}]},
-];
-
-function initMap() {
-  // Create the dark map
-  map = new google.maps.Map(document.getElementById('map'), {
-    center: SERVICE_CENTER,
-    zoom: 10,
-    styles: DARK_STYLE,
-    disableDefaultUI: false,
-    zoomControl: true,
-    mapTypeControl: false,
-    streetViewControl: false,
-    fullscreenControl: false,
-    gestureHandling: 'cooperative',
-  });
-
-  // Add service area markers with gold dots
-  SERVICE_AREA.forEach(function(town) {
-    new google.maps.Marker({
-      position: { lat: town.lat, lng: town.lng },
-      map: map,
-      title: town.name,
-      icon: {
-        path: google.maps.SymbolPath.CIRCLE,
-        scale: 6,
-        fillColor: '#775a19',
-        fillOpacity: 0.85,
-        strokeColor: '#e8c97a',
-        strokeWeight: 1.5,
-      }
-    });
-  });
-
-  // Add airport markers with white icons
-  AIRPORTS.forEach(function(airport) {
-    new google.maps.Marker({
-      position: { lat: airport.lat, lng: airport.lng },
-      map: map,
-      title: airport.name,
-      icon: {
-        path: 'M21,16v-2l-8-5V3.5C13,2.67,12.33,2,11.5,2S10,2.67,10,3.5V9l-8,5v2l8-2.5V19l-2,1.5V22l3.5-1l3.5,1v-1.5L13,19v-5.5L21,16z',
-        fillColor: '#ffffff',
-        fillOpacity: 0.9,
-        strokeColor: '#775a19',
-        strokeWeight: 1,
-        scale: 1,
-        anchor: new google.maps.Point(12, 12),
-      }
-    });
-  });
-
-  // Draw service area circle
-  new google.maps.Circle({
-    map: map,
-    center: SERVICE_CENTER,
-    radius: 50000, // ~31 miles radius
-    strokeColor: '#775a19',
-    strokeOpacity: 0.4,
-    strokeWeight: 1.5,
-    fillColor: '#775a19',
-    fillOpacity: 0.04,
-  });
-
-  // Setup directions
-  directionsService = new google.maps.DirectionsService();
-  directionsRenderer = new google.maps.DirectionsRenderer({
-    map: map,
-    suppressMarkers: false,
-    polylineOptions: {
-      strokeColor: '#C9A84C',
-      strokeWeight: 4,
-      strokeOpacity: 0.9,
-    },
-    markerOptions: {
-      icon: {
-        path: google.maps.SymbolPath.CIRCLE,
-        scale: 8,
-        fillColor: '#000000',
-        fillOpacity: 1,
-        strokeColor: '#775a19',
-        strokeWeight: 2.5,
-      }
-    }
-  });
-
-  // Setup Google Places Autocomplete on pickup
-  autocompletePickup = new google.maps.places.Autocomplete(
-    document.getElementById('pickup-input'), {
-      types: ['geocode', 'establishment'],
-      componentRestrictions: { country: 'us' },
-      fields: ['geometry', 'formatted_address', 'name'],
-    }
-  );
-  autocompletePickup.addListener('place_changed', function() {
-    pickupPlace = autocompletePickup.getPlace();
-    if (pickupPlace.geometry) tryRoute();
-  });
-
-  // Setup Google Places Autocomplete on destination
-  autocompleteDest = new google.maps.places.Autocomplete(
-    document.getElementById('dest-input'), {
-      types: ['geocode', 'establishment'],
-      componentRestrictions: { country: 'us' },
-      fields: ['geometry', 'formatted_address', 'name'],
-    }
-  );
-  autocompleteDest.addListener('place_changed', function() {
-    destPlace = autocompleteDest.getPlace();
-    if (destPlace.geometry) tryRoute();
-  });
-}
-
-function tryRoute() {
-  if (!pickupPlace || !destPlace) return;
-  if (!pickupPlace.geometry || !destPlace.geometry) return;
-
-  directionsService.route({
-    origin: pickupPlace.geometry.location,
-    destination: destPlace.geometry.location,
-    travelMode: google.maps.TravelMode.DRIVING,
-  }, function(result, status) {
-    if (status === 'OK') {
-      directionsRenderer.setDirections(result);
-
-      var leg = result.routes[0].legs[0];
-      var distMiles = (leg.distance.value / 1609.34).toFixed(1);
-      var duration = leg.duration.text;
-      var estPrice = Math.max(BASE_FARE + (distMiles * RATE_PER_MILE), 45).toFixed(0);
-
-      // Update route card
-      document.getElementById('route-distance').textContent = distMiles + ' mi';
-      document.getElementById('route-duration').textContent = duration;
-      document.getElementById('route-price').textContent = '$' + estPrice + '+';
-      document.getElementById('route-card').style.display = 'block';
-
-      // Store for form submission
-      document.getElementById('hid-distance').value = distMiles + ' miles';
-      document.getElementById('hid-duration').value = duration;
-
-      // Fit map to route
-      var bounds = new google.maps.LatLngBounds();
-      bounds.extend(pickupPlace.geometry.location);
-      bounds.extend(destPlace.geometry.location);
-      map.fitBounds(bounds, { top: 100, bottom: 100, left: 40, right: 40 });
-    }
-  });
-}
-
-// ─── FORM HELPERS ───────────────────────────────────────────
-function selPass(btn, val) {
-  btn.closest('.flex').querySelectorAll('.p-btn').forEach(function(b){ b.classList.remove('sel'); });
-  btn.classList.add('sel');
-  document.getElementById('hid-pass').value = val;
-}
-function selLug(btn, val) {
-  btn.closest('.flex').querySelectorAll('.p-btn').forEach(function(b){ b.classList.remove('sel'); });
-  btn.classList.add('sel');
-  document.getElementById('hid-lug').value = val;
-}
-
-// Payment note toggle
-var payNotes = {
-  'Credit/Debit Card': 'Card: We\'ll send you a secure payment link after confirming your booking. No card info needed now.',
-  'Venmo': 'Venmo: After confirmation, send to @SeacoastRVIP. Include your name + ride date in the note.',
-  'Cash on Arrival': 'Cash: Pay your driver on arrival. Please have the exact amount ready.',
-};
-document.querySelectorAll('input[name="Payment Method"]').forEach(function(r){
-  r.addEventListener('change', function(){
-    document.getElementById('pay-note').innerHTML = '<strong class="text-primary">' + payNotes[this.value] + '</strong>';
-  });
-});
-
-// Form submit
-function handleSubmit(e) {
-  e.preventDefault();
-
-  var form = document.getElementById('book-form');
-  var btn = document.getElementById('sub-btn');
-
-  // Validate required fields
-  var required = form.querySelectorAll('[required]');
-  var valid = true;
-  required.forEach(function(f) {
-    if (!f.value.trim()) { valid = false; f.style.borderBottomColor='#dc2626'; }
-    else { f.style.borderBottomColor='#c4c7c7'; }
-  });
-  if (!valid) {
-    btn.textContent = 'Request My Ride →';
-    btn.disabled = false;
+document.addEventListener('DOMContentLoaded',function(){
+  var params=new URLSearchParams(window.location.search);
+  var msg=document.getElementById('prefill-msg');
+  // rebook?
+  if(params.get('rebook')){
+    try{
+      var rb=JSON.parse(localStorage.getItem('rvip-rebook')||'{}');
+      if(rb.name) document.getElementById('bn').value=rb.name;
+      if(rb.phone) document.getElementById('bp').value=rb.phone;
+      if(rb.email) document.getElementById('be').value=rb.email;
+      if(rb.pickup) document.getElementById('bpu').value=rb.pickup;
+      if(rb.destination) document.getElementById('bde').value=rb.destination;
+      localStorage.removeItem('rvip-rebook');
+      msg.textContent='↩ Rebooking — info pre-filled. Update date and time then submit.';
+      msg.style.display='block';
+    }catch(e){}
     return;
   }
-
-  btn.textContent = 'Sending...';
-  btn.disabled = true;
-
-  // Generate confirmation code
-  var code = generateCode();
-
-  // Add code to form as hidden field
-  var cf = document.createElement('input');
-  cf.type = 'hidden';
-  cf.name = 'Confirmation Code';
-  cf.value = code;
-  form.appendChild(cf);
-
-  // Set reply-to
-  var emailEl = form.querySelector('input[name="Email"]');
-  if (emailEl) document.getElementById('reply-email').value = emailEl.value;
-
-  // Build FormData
-  var fd = new FormData(form);
-
-  // Submit to FormSubmit via fetch
-  fetch('https://formsubmit.co/ramonvv202618@icloud.com', {
-    method: 'POST',
-    body: fd
-  }).then(function(r) {
-    console.log('FormSubmit response:', r.status);
-    showSuccessWithCode(code, form);
-  }).catch(function(err) {
-    console.log('Fetch error, trying native submit:', err);
-    // Fallback: native form submit
-    showSuccessWithCode(code, form);
-    setTimeout(function() {
-      var f2 = document.createElement('form');
-      f2.method = 'POST';
-      f2.action = 'https://formsubmit.co/ramonvv202618@icloud.com';
-      f2.style.display = 'none';
-      var fd2 = new FormData(form);
-      fd2.forEach(function(val, key) {
-        var i = document.createElement('input');
-        i.type = 'hidden';
-        i.name = key;
-        i.value = val;
-        f2.appendChild(i);
-      });
-      document.body.appendChild(f2);
-      f2.submit();
-    }, 2000);
-  });
-}
-
-function generateCode() {
-  var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  var code = 'RVIP-';
-  for (var i = 0; i < 4; i++) code += chars[Math.floor(Math.random() * chars.length)];
-  return code;
-}
-
-function saveBookingToStorage(code) {
-  var form = document.getElementById('book-form');
-  var data = {
-    code: code,
-    name: form.querySelector('[name="Full Name"]') ? form.querySelector('[name="Full Name"]').value : '',
-    service: form.querySelector('[name="Service Type"]') ? form.querySelector('[name="Service Type"]').value : '',
-    date: form.querySelector('[name="Date"]') ? form.querySelector('[name="Date"]').value : '',
-    time: form.querySelector('[name="Pickup Time"]') ? form.querySelector('[name="Pickup Time"]').value : '',
-    pickup: (document.getElementById('pickup-input') || form.querySelector('[name="Pickup Address"]') || {value:''}).value,
-    destination: (document.getElementById('dest-input') || form.querySelector('[name="Destination"]') || {value:''}).value,
-    vehicle: document.querySelector('[name="Vehicle Class"]:checked') ? document.querySelector('[name="Vehicle Class"]:checked').value : 'Black SUV Luxury',
-    passengers: document.getElementById('hid-pass') ? document.getElementById('hid-pass').value : '1',
-    amount: getEstimatedAmount(),
-    submittedAt: new Date().toISOString()
-  };
-  localStorage.setItem('booking_' + code, JSON.stringify(data));
-  saveBookingToFirebase(data);
-  return data;
-}
-
-function getEstimatedAmount() {
-  var svc = document.querySelector('[name="Service Type"]');
-  if (!svc) return 95;
-  var val = svc.value;
-  if (val.includes('Logan')) return 95;
-  if (val.includes('Manchester') || val.includes('MHT')) return 75;
-  if (val.includes('Night Out')) return 45;
-  if (val.includes('Casino')) return 55;
-  return 95;
-}
-
-function showSuccessWithCode(code, form) {
-  var bookingData = saveBookingToStorage(code);
-  var name = bookingData.name || 'there';
-  var firstName = name.split(' ')[0];
-
-  document.getElementById('book-form').style.display = 'none';
-
-  var msg = document.getElementById('success-msg');
-  msg.innerHTML = `
-    <span class="material-symbols-outlined" style="color:#22c55e;font-size:48px;display:block;margin-bottom:12px;font-variation-settings:'FILL' 1,'wght' 400">check_circle</span>
-    <h2 class="font-headline text-2xl mb-2 text-primary">Booking Request Sent!</h2>
-    <p class="text-on-surface-variant text-sm mb-6">We will confirm your ride within minutes by text and email.</p>
-
-    <div style="background:#fdfaf4;border:1.5px solid #775a19;padding:20px;margin-bottom:20px">
-      <p style="font-family:'Work Sans',sans-serif;font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:#775a19;margin-bottom:8px">Your Confirmation Code</p>
-      <p style="font-family:'Work Sans',sans-serif;font-size:2rem;font-weight:700;color:#000;letter-spacing:0.05em">${code}</p>
-      <p style="font-size:11px;color:#444748;margin-top:8px">Save this code. You will need it to complete payment.</p>
-    </div>
-
-    <div style="background:#f3f3f3;padding:16px;margin-bottom:20px;text-align:left">
-      <p style="font-family:'Work Sans',sans-serif;font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:#444748;margin-bottom:10px">What happens next</p>
-      <div style="display:flex;flex-direction:column;gap:8px">
-        <p style="font-size:12px;color:#444748">1. We review your request and confirm within minutes</p>
-        <p style="font-size:12px;color:#444748">2. We text/email you to confirm the ride</p>
-        <p style="font-size:12px;color:#444748">3. Use your code to pay at seacoastrvip.com/payment.html</p>
-      </div>
-    </div>
-
-    <a href="payment.html?code=${code.replace('RVIP-','')}" style="display:block;background:#000;color:white;padding:14px 24px;font-family:'Work Sans',sans-serif;font-size:12px;letter-spacing:0.1em;text-transform:uppercase;text-decoration:none;margin-bottom:12px;border-bottom:2px solid #775a19">
-      Go to Payment Page →
-    </a>
-
-    <p style="font-size:11px;color:#444748">Questions? Call/text: <a href="tel:6030000000" style="color:#775a19;font-weight:600">(603) 000-0000</a></p>
-  `;
-  msg.style.display = 'block';
-  window.scrollTo(0, 0);
-}
-
-function showError() {
-  document.getElementById('err-msg').classList.remove('hidden');
-  var btn = document.getElementById('sub-btn');
-  btn.textContent = 'Request My Ride →';
-  btn.disabled = false;
-}
-</script>
-
-<!-- Load Google Maps — replace AIzaSyAtiBZ-MmvzTnOg3hDluVDCVy7mcersqe4 -->
-<script async defer
-  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAtiBZ-MmvzTnOg3hDluVDCVy7mcersqe4&libraries=places&callback=initMap">
-</script>
-
-
-<script>
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', function() {
-    navigator.serviceWorker.register('/sw.js')
-      .then(function(reg) { console.log('SW registered:', reg.scope); })
-      .catch(function(err) { console
+  // saved account profile
+  try{
+    var lastPhone=localStorage.getItem('rvip_last_phone');
+    if(!lastPhone) return;
+    var raw=localStorage.getItem('rvip_cl_'+lastPhone.replace(/\D/g,''));
+    if(!raw) return;
+    var p=JSON.parse(raw);
+    if(p.name) document.getElementById('bn').value=p.name;
+    if(p.phone||lastPhone) document.getElementById('bp').value=p.phone||lastPho

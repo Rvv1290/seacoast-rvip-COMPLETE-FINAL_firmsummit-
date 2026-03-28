@@ -310,7 +310,7 @@ function initDash() {
   }
 }
 
-async function loadFirebaseBookings() {
+async async function loadFirebaseBookings() {
   if (!db) return;
   try {
     var snap = await db.collection('bookings').orderBy('createdAt','desc').limit(200).get();
