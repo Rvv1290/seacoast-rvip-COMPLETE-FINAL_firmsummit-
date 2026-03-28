@@ -219,7 +219,7 @@ img{max-width:100%}
             Share
           </button>
           <span style="color:rgba(255,255,255,0.15)">|</span>
-          <a href="mailto:ramonvv202618@icloud.com" style="color:#775a19;font-family:Inter,sans-serif;font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;text-decoration:none;display:inline-flex;align-items:center;gap:4px">
+          <a href="/cdn-cgi/l/email-protection#e99b888486879f9fdbd9dbdfd8d1a9808a85869c8dc78a8684" style="color:#775a19;font-family:Inter,sans-serif;font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;text-decoration:none;display:inline-flex;align-items:center;gap:4px">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#775a19" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
             Email
           </a>
@@ -248,7 +248,7 @@ img{max-width:100%}
         <div style="font-family:Inter,sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.15em;color:#775a19;font-weight:600;margin-bottom:1rem">Contact</div>
         <div style="display:flex;flex-direction:column;gap:0.5rem">
           <a href="tel:+19874163283" style="font-family:Inter,sans-serif;font-size:0.8rem;color:rgba(255,255,255,0.55);text-decoration:none">(987) 416-3283</a>
-          <a href="mailto:ramonvv202618@icloud.com" style="font-family:Inter,sans-serif;font-size:0.8rem;color:rgba(255,255,255,0.55);text-decoration:none">ramonvv202618@icloud.com</a>
+          <a href="/cdn-cgi/l/email-protection#f58794989a9b8383c7c5c7c3c4cdb59c96999a8091db969a98" style="font-family:Inter,sans-serif;font-size:0.8rem;color:rgba(255,255,255,0.55);text-decoration:none"><span class="__cf_email__" data-cfemail="d0a2b1bdbfbea6a6e2e0e2e6e1e890b9b3bcbfa5b4feb3bfbd">[email&#160;protected]</span></a>
           <a href="schedule.html" style="display:inline-block;margin-top:0.75rem;background:#775a19;color:white;padding:0.625rem 1.25rem;font-family:Inter,sans-serif;font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;text-decoration:none;border-bottom:2px solid #5d4201">Book Now</a>
         </div>
       </div>
@@ -273,7 +273,7 @@ img{max-width:100%}
 
 
 
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script>
 (function(){
@@ -329,14 +329,4 @@ async function submitForm(e,fid,okid,btnid){
   e.preventDefault();
   var f=document.getElementById(fid);
   var btn=document.getElementById(btnid);
-  btn.textContent='Sending...'; btn.disabled=true;
-  saveQuoteToFirebase(f);
-  try{ await fetch(f.action,{method:'POST',body:new FormData(f)}); }catch(err){}
-  document.getElementById(okid).style.display='block';
-  btn.textContent='Sent \u2713';
-  f.reset();
-  window.scrollTo(0,0);
-}
-</script>
-</body>
-</html>
+  btn.textC
