@@ -2,461 +2,338 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Seacoast RVIP Admin</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Admin | Seacoast RVIP</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-<style>
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-body{font-family:'Inter',sans-serif;background:#f3f3f3;min-height:100vh}
-.material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 300,'GRAD' 0,'opsz' 24;font-size:16px;vertical-align:middle}
-button{cursor:pointer}
-a{text-decoration:none}
-
-/* LOGIN */
-#pg-login{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:1rem}
-.login-box{background:white;border-left:4px solid #775a19;padding:2rem;width:100%;max-width:320px}
-.login-title{text-align:center;margin-bottom:2rem}
-.login-title h1{font-size:1.5rem;font-weight:700}
-.login-title p{font-size:0.65rem;color:#999;text-transform:uppercase;letter-spacing:0.15em;margin-top:4px}
-.lbl{font-family:'Work Sans',sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:#888;display:block;margin-bottom:6px}
-.inp{width:100%;background:#f9f9f9;border:1.5px solid #e2e2e2;padding:0.75rem;font-family:'Inter',sans-serif;font-size:1rem;outline:none}
-.inp:focus{border-color:#775a19}
-#login-err{color:#dc2626;font-size:0.8rem;text-align:center;padding:0.5rem;display:none}
-.btn-login{width:100%;background:#000;color:white;font-family:'Work Sans',sans-serif;font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;padding:0.875rem;border:none;margin-top:1rem;border-bottom:3px solid #775a19}
-
-/* DASHBOARD */
-#pg-dash{display:none}
-.topbar{background:white;border-bottom:1px solid #e8e8e8;padding:0.75rem 1rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;position:sticky;top:0;z-index:10}
-.topbar-title{font-weight:700;font-size:1rem}
-.topbar-sub{font-size:0.6rem;color:#999;text-transform:uppercase;letter-spacing:0.1em}
-.stats{display:grid;grid-template-columns:repeat(5,1fr);background:white;border-bottom:1px solid #e8e8e8}
-.stat{padding:0.875rem 0.5rem;text-align:center;border-right:1px solid #f0f0f0}
-.stat:last-child{border:none}
-.stat-num{font-size:1.5rem;font-weight:700}
-.stat-lbl{font-size:0.55rem;text-transform:uppercase;letter-spacing:0.08em;color:#999;margin-top:2px}
-.tabs{display:flex;background:white;border-bottom:1px solid #e8e8e8;overflow-x:auto}
-.tab-btn{padding:0.75rem 1rem;font-family:'Work Sans',sans-serif;font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:#888;background:none;border:none;border-bottom:2px solid transparent;white-space:nowrap}
-.tab-btn.on{color:#000;border-bottom-color:#775a19}
-.content{padding:1rem;max-width:1000px;margin:0 auto}
-
-/* BUTTONS */
-.bg{background:#775a19;color:white;font-family:'Work Sans',sans-serif;font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;padding:0.5rem 0.875rem;border:none;display:inline-flex;align-items:center;gap:5px}
-.bd{background:#000;color:white;font-family:'Work Sans',sans-serif;font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;padding:0.5rem 0.875rem;border:none;display:inline-flex;align-items:center;gap:5px}
-.bo{background:white;color:#000;font-family:'Work Sans',sans-serif;font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;padding:0.5rem 0.875rem;border:1px solid #e2e2e2;display:inline-flex;align-items:center;gap:5px}
-.bgr{background:#16a34a;color:white;font-family:'Work Sans',sans-serif;font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;padding:0.5rem 0.875rem;border:none;display:inline-flex;align-items:center;gap:5px}
-.br{background:#dc2626;color:white;padding:0.4rem 0.6rem;border:none;display:inline-flex;align-items:center}
-
-/* BOOKING CARD */
-.bk-card{background:white;border-left:3px solid #775a19;padding:1rem;margin-bottom:0.75rem}
-.bk-name{font-weight:700;font-size:1rem}
-.bk-code{font-family:monospace;font-size:0.7rem;color:#775a19;background:#fdfaf4;padding:2px 6px;border:1px solid #e8c97a;margin-left:8px}
-.bk-meta{font-size:0.78rem;color:#555;margin-top:4px}
-.bk-price{font-size:1.75rem;font-weight:700;color:#775a19}
-.badge{display:inline-block;padding:2px 8px;font-size:0.65rem;font-family:'Work Sans',sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-left:6px}
-.b-pending{background:#fef9c3;color:#a16207}
-.b-confirmed{background:#dbeafe;color:#1d4ed8}
-.b-paid{background:#dcfce7;color:#15803d}
-.b-completed{background:#dcfce7;color:#15803d}
-.b-cancelled{background:#fee2e2;color:#dc2626}
-
-/* MODAL */
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:50;overflow-y:auto;padding:1rem;display:none}
-.modal{background:white;max-width:640px;margin:2rem auto}
-.modal-hd{padding:1rem 1.5rem;border-bottom:1px solid #e8e8e8;display:flex;justify-content:space-between;align-items:center}
-.modal-hd h2{font-weight:700;font-size:1rem}
-.modal-bd{padding:1.5rem}
-.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:0.875rem}
-.form-grid .full{grid-column:span 2}
-.flbl{font-family:'Work Sans',sans-serif;font-size:0.6rem;text-transform:uppercase;letter-spacing:0.08em;color:#888;display:block;margin-bottom:4px}
-.finp{width:100%;background:#f9f9f9;border:1px solid #e2e2e2;padding:0.6rem 0.75rem;font-family:'Inter',sans-serif;font-size:0.875rem;outline:none}
-.finp:focus{border-color:#775a19}
-.fsel{width:100%;background:#f9f9f9;border:1px solid #e2e2e2;padding:0.6rem 0.75rem;font-family:'Inter',sans-serif;font-size:0.875rem;outline:none;appearance:none}
-
-/* TOAST */
-#toast{position:fixed;top:1rem;right:1rem;z-index:200;background:#000;color:white;padding:0.75rem 1.25rem;font-family:'Work Sans',sans-serif;font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;border-left:3px solid #775a19;display:none}
-
-/* EMPTY */
-.empty{text-align:center;padding:3rem 0;color:#bbb}
-.empty .material-symbols-outlined{font-size:3rem;display:block;margin-bottom:0.75rem}
-</style>
-<!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <style>
-.font-headline, h1.font-headline, h2.font-headline, h3.font-headline,
-nav .font-headline, footer .font-headline {
-  font-family: "Times New Roman", Times, Georgia, serif !important;
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+.material-symbols-outlined{font-variation-settings:"FILL" 0,"wght" 300,"GRAD" 0,"opsz" 24}
+body{font-family:'Inter',sans-serif;background:#f2f2f2;min-height:100vh}
+#login-pg{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:1rem}
+.login-box{background:#fff;border-left:4px solid #775a19;padding:2.5rem;width:100%;max-width:360px}
+#dash-pg{display:none}
+.topbar{background:#fff;border-bottom:1px solid #e5e5e5;padding:.875rem 1.25rem;position:sticky;top:0;z-index:50}
+.tb-inner{max-width:1080px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:.75rem;flex-wrap:wrap}
+.stats-bar{background:#fff;border-bottom:1px solid #e5e5e5}
+.stats-inner{max-width:1080px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr)}
+.stat-cell{padding:1rem 1.25rem;text-align:center;border-right:1px solid #e5e5e5}
+.stat-cell:last-child{border-right:none}
+.stat-n{font-family:'Times New Roman',serif;font-size:1.75rem;font-weight:700;line-height:1}
+.stat-l{font-size:.58rem;text-transform:uppercase;letter-spacing:.1em;color:#999;margin-top:3px}
+.content{max-width:1080px;margin:0 auto;padding:1.25rem}
+.tabs{display:flex;border-bottom:2px solid #e5e5e5;margin-bottom:1.25rem;overflow-x:auto}
+.tab-btn{padding:.625rem 1rem;font-family:'Work Sans',sans-serif;font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.07em;cursor:pointer;border:none;background:none;color:#999;border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap}
+.tab-btn.on{color:#000;border-bottom-color:#775a19}
+.bk-card{background:#fff;border-left:3px solid #775a19;padding:1rem;margin-bottom:.75rem}
+.bk-name{font-weight:700;font-size:.95rem}
+.bk-meta{font-size:.78rem;color:#555;display:flex;align-items:center;gap:4px;margin-top:3px;flex-wrap:wrap}
+.bk-meta .material-symbols-outlined{font-size:13px;flex-shrink:0}
+.bk-code{font-family:monospace;font-size:.72rem;color:#775a19;background:#fdfaf4;padding:2px 8px;border:1px solid #e8c97a;letter-spacing:.08em}
+.badge{display:inline-block;padding:2px 7px;font-size:.58rem;font-family:'Work Sans',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+.bg{background:#dcfce7;color:#15803d}.bb{background:#dbeafe;color:#1d4ed8}.by{background:#fef9c3;color:#92400e}.br{background:#fee2e2;color:#b91c1c}.bp{background:#ede9fe;color:#6d28d9}
+.btn{display:inline-flex;align-items:center;gap:4px;font-family:'Work Sans',sans-serif;font-size:.68rem;font-weight:600;text-transform:uppercase;letter-spacing:.07em;border:none;cursor:pointer;padding:.45rem .875rem;white-space:nowrap;transition:opacity .15s}
+.btn:hover{opacity:.82}
+.bk{background:#000;color:#fff;border-bottom:2px solid #775a19}.bgd{background:#775a19;color:#fff}
+.bo{background:#fff;color:#000;border:1px solid #ddd}.br2{background:#dc2626;color:#fff}
+.bgr{background:#16a34a;color:#fff}.bbl{background:#1d4ed8;color:#fff}.bpu{background:#7c3aed;color:#fff}
+.finp{width:100%;background:#f7f7f7;border:0;border-bottom:2px solid #ddd;padding:.6rem 0;font-family:Inter,sans-serif;font-size:.875rem;outline:none;transition:border-color .2s}
+.finp:focus{border-bottom-color:#000}
+.fsel{width:100%;background:#f7f7f7;border:0;border-bottom:2px solid #ddd;padding:.6rem 0;font-family:Inter,sans-serif;font-size:.875rem;outline:none;appearance:none}
+.flbl{font-size:.58rem;text-transform:uppercase;letter-spacing:.1em;color:#999;display:block;margin-bottom:5px;font-family:'Work Sans',sans-serif;font-weight:600}
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:1rem}.fgs{grid-column:1/-1}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:300;overflow-y:auto;padding:1rem}
+.overlay.open{display:flex;align-items:flex-start;justify-content:center}
+.modal{background:#fff;width:100%;margin:2rem auto}
+.mhd{padding:1rem 1.25rem;border-bottom:1px solid #eee;display:flex;align-items:center;justify-content:space-between}
+.mhd h3{font-family:'Times New Roman',serif;font-size:1rem;font-weight:700}
+.mx{background:none;border:none;font-size:1.2rem;cursor:pointer;color:#888;padding:0;line-height:1}
+.mbdy{padding:1.5rem}
+.msg-card{background:#fff;border-left:3px solid #e2e2e2;padding:.875rem 1rem;margin-bottom:.5rem;cursor:pointer;transition:all .15s}
+.msg-card:hover{border-left-color:#775a19;background:#fafafa}
+#toast{position:fixed;top:1rem;right:1rem;z-index:9999;background:#111;color:#fff;padding:.7rem 1.25rem;font-family:'Work Sans',sans-serif;font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;border-left:3px solid #775a19;display:none}
+@media(max-width:640px){
+  .stats-inner{grid-template-columns:repeat(3,1fr)}
+  .stat-cell:nth-child(4){border-top:1px solid #e5e5e5}
+  .stat-cell:nth-child(5){border-top:1px solid #e5e5e5}
+  .fg{grid-template-columns:1fr}.fgs{grid-column:1}
 }
 </style>
 </head>
 <body>
-
 <div id="toast"></div>
 
-<!-- ═══ LOGIN ═══ -->
-<div id="pg-login">
-  <div>
-    <div class="login-title">
-      <h1>Seacoast RVIP</h1>
-      <p>Private Admin</p>
+<!-- LOGIN -->
+<div id="login-pg">
+  <div class="login-box">
+    <div style="text-align:center;margin-bottom:2rem">
+      <div style="font-family:'Times New Roman',serif;font-size:1.4rem;font-weight:700">Seacoast RVIP</div>
+      <div style="font-size:.68rem;text-transform:uppercase;letter-spacing:.12em;color:#aaa;margin-top:4px">Admin Dashboard</div>
     </div>
-    <div class="login-box">
-      <label class="lbl">Password</label>
-      <input class="inp" id="pwd" type="password" placeholder="Enter password" onkeydown="if(event.key==='Enter')doLogin()"/>
-      <div id="login-err">Wrong password. Please try again.</div>
-      <button class="btn-login" onclick="doLogin()">Enter Dashboard</button>
+    <div style="margin-bottom:1.1rem">
+      <label class="flbl">Password</label>
+      <input id="pwd-inp" type="password" class="finp" placeholder="Enter password" onkeydown="if(event.key==='Enter')doLogin()"/>
     </div>
+    <div id="login-err" style="display:none;background:#fef2f2;border-left:3px solid #dc2626;padding:.625rem;font-size:.78rem;color:#dc2626;margin-bottom:1rem">Wrong password. Try again.</div>
+    <button onclick="doLogin()" style="width:100%;background:#000;color:#fff;padding:.875rem;font-family:'Work Sans',sans-serif;font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;border:none;border-bottom:3px solid #775a19;cursor:pointer">Enter Dashboard →</button>
+    <p style="font-size:.62rem;color:#ccc;text-align:center;margin-top:1rem">seacoastrvip.com/admin.html · Private</p>
   </div>
 </div>
 
-<!-- ═══ DASHBOARD ═══ -->
-<div id="pg-dash">
-
-  <!-- Top bar -->
-  <div class="topbar">
+<!-- DASHBOARD -->
+<div id="dash-pg">
+  <div class="topbar"><div class="tb-inner">
     <div>
-      <div class="topbar-title">Seacoast RVIP</div>
-      <div class="topbar-sub">Admin Dashboard &nbsp;·&nbsp; <span id="today"></span></div>
+      <div style="font-family:'Times New Roman',serif;font-size:1.05rem;font-weight:700">Seacoast RVIP</div>
+      <div style="font-size:.6rem;text-transform:uppercase;letter-spacing:.08em;color:#aaa">Admin · <span id="today-lbl"></span></div>
     </div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="bg" onclick="openAdd()"><span class="material-symbols-outlined">add</span>New Booking</button>
-      <button class="bo" onclick="doLogout()">Logout</button>
+    <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+      <button onclick="openAdd()" class="btn bk"><span class="material-symbols-outlined" style="font-size:15px">add</span>New Booking</button>
+      <button onclick="doLogout()" class="btn bo">Logout</button>
     </div>
-  </div>
+  </div></div>
 
-  <!-- Stats -->
-  <div class="stats">
-    <div class="stat"><div id="s1" class="stat-num">0</div><div class="stat-lbl">Total</div></div>
-    <div class="stat"><div id="s2" class="stat-num" style="color:#775a19">0</div><div class="stat-lbl">Upcoming</div></div>
-    <div class="stat"><div id="s3" class="stat-num" style="color:#16a34a">$0</div><div class="stat-lbl">Collected</div></div>
-    <div class="stat"><div id="s4" class="stat-num" style="color:#d97706">0</div><div class="stat-lbl">Awaiting Pay</div></div>
-      <div class="stat"><div id="s5" class="stat-num" style="color:#7c3aed">0</div><div class="stat-lbl">Clients</div></div>
-  </div>
+  <div class="stats-bar"><div class="stats-inner">
+    <div class="stat-cell"><div id="st1" class="stat-n">0</div><div class="stat-l">Total</div></div>
+    <div class="stat-cell"><div id="st2" class="stat-n" style="color:#775a19">0</div><div class="stat-l">Upcoming</div></div>
+    <div class="stat-cell"><div id="st3" class="stat-n" style="color:#16a34a">$0</div><div class="stat-l">Revenue</div></div>
+    <div class="stat-cell"><div id="st4" class="stat-n" style="color:#d97706">0</div><div class="stat-l">Awaiting Pay</div></div>
+    <div class="stat-cell"><div id="st5" class="stat-n" style="color:#7c3aed">—</div><div class="stat-l">Clients</div></div>
+  </div></div>
 
-  <!-- Tabs -->
-  <div class="tabs">
-    <button class="tab-btn on" onclick="setTab('all',this)">All</button>
-    <button class="tab-btn" onclick="setTab('upcoming',this)">Upcoming</button>
-    <button class="tab-btn" onclick="setTab('awaiting',this)">Awaiting Payment</button>
-    <button class="tab-btn" onclick="setTab('done',this)">Completed</button>
-    <button class="tab-btn" onclick="setTab('clients',this)" style="color:#775a19;font-weight:700">Clients ●</button>
-    <button class="tab-btn" onclick="setTab('messages',this)" style="color:#1d4ed8;font-weight:700">Messages ✉</button>
-  </div>
-
-  <!-- Bookings section -->
-  <div id="section-bookings" class="content">
-    <div id="bk-list"></div>
-    <div id="bk-empty" class="empty" style="display:none">
-      <span class="material-symbols-outlined">directions_car</span>
-      <div>No bookings yet</div>
-      <button class="bg" style="margin-top:1rem" onclick="openAdd()">Add First Booking</button>
+  <div class="content">
+    <div class="tabs">
+      <button class="tab-btn on" onclick="switchTab('all',this)">All</button>
+      <button class="tab-btn" onclick="switchTab('upcoming',this)">Upcoming</button>
+      <button class="tab-btn" onclick="switchTab('awaiting',this)">Awaiting Pay</button>
+      <button class="tab-btn" onclick="switchTab('done',this)">Completed</button>
+      <button class="tab-btn" onclick="switchTab('clients',this)" style="color:#7c3aed;font-weight:700">Clients ●</button>
+      <button class="tab-btn" onclick="switchTab('messages',this)" style="color:#1d4ed8;font-weight:700">Messages ✉</button>
     </div>
-  </div>
 
-  <!-- Clients section -->
-  <div id="section-clients" class="content" style="display:none">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
-      <div>
-        <div style="font-family:'Times New Roman',serif;font-size:1.1rem;font-weight:700">Registered Clients</div>
-        <div style="font-size:0.75rem;color:#888;margin-top:2px">Clients who signed up via My Account</div>
-      </div>
-      <button onclick="loadClients()" class="bo" style="font-size:0.65rem;padding:0.375rem 0.75rem">
-        <span class="material-symbols-outlined" style="font-size:14px">refresh</span>Refresh
-      </button>
-    </div>
-    <div id="clients-list">
-      <div style="text-align:center;padding:3rem 0;color:#bbb">
-        <span class="material-symbols-outlined" style="font-size:2.5rem;display:block;margin-bottom:0.5rem">people</span>
-        <div style="font-size:0.8rem">Click Refresh to load clients</div>
+    <div id="sec-bk">
+      <div id="bk-list"></div>
+      <div id="bk-empty" style="display:none;text-align:center;padding:4rem 0;color:#ccc">
+        <span class="material-symbols-outlined" style="font-size:3rem;display:block;margin-bottom:1rem">directions_car</span>
+        <div style="font-family:'Work Sans',sans-serif;font-size:.75rem;text-transform:uppercase;letter-spacing:.1em;margin-bottom:1rem">No bookings yet</div>
+        <button onclick="openAdd()" class="btn bgd">Add First Booking</button>
       </div>
     </div>
-  </div>
 
-  <!-- ═══ MESSAGES SECTION ═══ -->
-  <div id="section-messages" class="content" style="display:none">
-    <div style="margin-bottom:1.5rem">
-      <div style="font-family:'Times New Roman',serif;font-size:1.1rem;font-weight:700;margin-bottom:4px">Message Templates</div>
-      <div style="font-size:0.75rem;color:#888">Tap any template to preview and send. Edit the message before sending.</div>
-    </div>
-    <div style="background:#fdfaf4;border:1px solid #e8c97a;padding:1rem;margin-bottom:1.5rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.75rem">
-      <div>
-        <div style="font-family:Work Sans,sans-serif;font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:#775a19;margin-bottom:2px">Broadcast to All Clients</div>
-        <div style="font-size:0.72rem;color:#888">Load Clients tab first, then use Send All on any template</div>
-      </div>
-      <div id="broadcast-count" style="font-family:Work Sans,sans-serif;font-size:0.7rem;font-weight:700;color:#775a19">Loading...</div>
-    </div>
-    <div id="msg-templates">
-      <div style="text-align:center;padding:2rem;color:#bbb;font-size:0.8rem">Loading templates...</div>
-    </div>
-  </div>
-
-</div>
-</div>
-
-<!-- ═══ ADD/EDIT MODAL ═══ -->
-<div class="overlay" id="m-add">
-  <div class="modal">
-    <div class="modal-hd">
-      <h2 id="m-add-ttl">New Booking</h2>
-      <button onclick="closeAdd()" style="background:none;border:none;font-size:1.25rem;color:#888">✕</button>
-    </div>
-    <div class="modal-bd">
-      <input type="hidden" id="e-id"/>
-      <div class="form-grid">
-        <div><label class="flbl">Client Name *</label><input id="e-name" class="finp" placeholder="John Smith"/></div>
-        <div><label class="flbl">Phone *</label><input id="e-phone" class="finp" placeholder="Your phone number" type="tel"/></div>
-        <div><label class="flbl">Email</label><input id="e-email" class="finp" placeholder="client@email.com" type="email"/></div>
-        <div><label class="flbl">Service *</label>
-          <select id="e-service" class="fsel">
-            <option>Airport Transfer — Boston Logan</option>
-            <option>Airport Transfer — Manchester MHT</option>
-            <option>Night Out</option>
-            <option>Casino Run</option>
-            <option>Special Event</option>
-            <option>Medical Appointment</option>
-            <option>Other</option>
-          </select>
-        </div>
-        <div><label class="flbl">Date *</label><input id="e-date" class="finp" type="date"/></div>
-        <div><label class="flbl">Pickup Time *</label><input id="e-time" class="finp" type="time"/></div>
-        <div class="full"><label class="flbl">Pickup Address</label><input id="e-pickup" class="finp" placeholder="Full pickup address"/></div>
-        <div class="full"><label class="flbl">Destination</label><input id="e-dest" class="finp" placeholder="Airport, venue, or address"/></div>
-        <div><label class="flbl">Vehicle</label>
-          <select id="e-vehicle" class="fsel">
-            <option>Black SUV Luxury</option>
-            <option>Regular SUV</option>
-          </select>
-        </div>
-        <div><label class="flbl">Passengers</label>
-          <select id="e-pass" class="fsel">
-            <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6+</option>
-          </select>
-        </div>
-        <div><label class="flbl">💰 Price ($) *</label><input id="e-price" class="finp" placeholder="95" type="number" min="0" step="5"/></div>
-        <div><label class="flbl">Payment Method</label>
-          <select id="e-paymeth" class="fsel">
-            <option>Card / Apple Pay</option>
-            <option>Venmo</option>
-            <option>Cash on Arrival</option>
-          </select>
-        </div>
-        <div><label class="flbl">Status</label>
-          <select id="e-status" class="fsel">
-            <option>Pending</option>
-            <option>Confirmed</option>
-            <option>Paid</option>
-            <option>Completed</option>
-            <option>Cancelled</option>
-          </select>
-        </div>
+    <div id="sec-cl" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;flex-wrap:wrap;gap:.75rem">
         <div>
-          <label class="flbl">Confirmation Code</label>
-          <div style="display:flex;gap:6px">
-            <input id="e-code" class="finp" placeholder="RVIP-0000-XXX" style="font-family:monospace;letter-spacing:0.08em"/>
-            <button onclick="makeCode()" class="bo" style="padding:0.5rem 0.75rem;flex-shrink:0"><span class="material-symbols-outlined">refresh</span></button>
+          <div style="font-family:'Times New Roman',serif;font-size:1.1rem;font-weight:700">Registered Clients</div>
+          <div style="font-size:.75rem;color:#888;margin-top:3px">Clients who signed up at account.html</div>
+        </div>
+        <button onclick="loadClients()" class="btn bo"><span class="material-symbols-outlined" style="font-size:14px">refresh</span>Refresh</button>
+      </div>
+      <div id="cl-list"><div style="text-align:center;padding:3rem;color:#ccc"><span class="material-symbols-outlined" style="font-size:2.5rem;display:block;margin-bottom:.75rem">people</span><div style="font-size:.8rem">Click Refresh to load clients</div></div></div>
+    </div>
+
+    <div id="sec-msg" style="display:none">
+      <div style="margin-bottom:1.5rem">
+        <div style="font-family:'Times New Roman',serif;font-size:1.1rem;font-weight:700;margin-bottom:3px">Message Templates</div>
+        <div style="font-size:.75rem;color:#888">Tap a template → customize → send to a client or all clients.</div>
+      </div>
+      <div style="background:#fdfaf4;border:1px solid #e8c97a;padding:1rem;margin-bottom:1.5rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.75rem">
+        <div><div style="font-family:'Work Sans',sans-serif;font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#775a19;margin-bottom:2px">Broadcast to All Clients</div><div style="font-size:.72rem;color:#999">Open any template → use "Send All"</div></div>
+        <div id="bc-cnt" style="font-family:'Work Sans',sans-serif;font-size:.8rem;font-weight:700;color:#775a19">— clients</div>
+      </div>
+      <div id="msg-tpl-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ADD/EDIT MODAL -->
+<div class="overlay" id="m-add">
+  <div class="modal" style="max-width:580px">
+    <div class="mhd"><h3 id="add-ttl">New Booking</h3><button class="mx" onclick="closeM('m-add')">✕</button></div>
+    <div class="mbdy">
+      <input type="hidden" id="eid"/>
+      <div class="fg" style="margin-bottom:1.25rem">
+        <div><label class="flbl">Client Name *</label><input id="fn" class="finp" placeholder="John Smith"/></div>
+        <div><label class="flbl">Phone *</label><input id="fp" class="finp" type="tel" placeholder="Phone number"/></div>
+        <div><label class="flbl">Email</label><input id="fe" class="finp" type="email" placeholder="client@email.com"/></div>
+        <div><label class="flbl">Service *</label>
+          <select id="fsv" class="fsel">
+            <option>Airport Transfer — Boston Logan</option><option>Airport Transfer — Manchester MHT</option>
+            <option>Night Out</option><option>Casino Run</option><option>Special Event</option>
+            <option>Medical Appointment</option><option>Other</option>
+          </select>
+        </div>
+        <div><label class="flbl">Date *</label><input id="fd" class="finp" type="date"/></div>
+        <div><label class="flbl">Pickup Time</label><input id="ft" class="finp" type="time"/></div>
+        <div class="fgs"><label class="flbl">Pickup Address</label><input id="fpu" class="finp" placeholder="Full pickup address"/></div>
+        <div class="fgs"><label class="flbl">Destination</label><input id="fde" class="finp" placeholder="Airport, venue, or address"/></div>
+        <div><label class="flbl">Price ($) *</label><input id="fpr" class="finp" type="number" min="0" step="5" placeholder="145"/></div>
+        <div><label class="flbl">Status</label>
+          <select id="fst" class="fsel"><option>Confirmed</option><option>Pending</option><option>Paid</option><option>Completed</option><option>Cancelled</option></select>
+        </div>
+        <div><label class="flbl">Confirmation Code</label>
+          <div style="display:flex;gap:.5rem"><input id="fco" class="finp" style="font-family:monospace;letter-spacing:.1em" placeholder="RVIP-0000-XXX"/>
+            <button onclick="genCode()" class="btn bo" style="flex-shrink:0;padding:.5rem .75rem"><span class="material-symbols-outlined" style="font-size:15px">refresh</span></button>
           </div>
         </div>
-        <div class="full"><label class="flbl">Notes / Flight Number</label><input id="e-notes" class="finp" placeholder="Flight number, special requests..."/></div>
+        <div><label class="flbl">Vehicle</label><select id="fv" class="fsel"><option>Black SUV Luxury</option><option>Regular Black SUV</option></select></div>
+        <div class="fgs"><label class="flbl">Notes</label><input id="fno" class="finp" placeholder="Flight number, special requests..."/></div>
       </div>
-      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:1.25rem">
-        <button onclick="closeAdd()" class="bo">Cancel</button>
-        <button onclick="saveBk()" class="bd" style="padding:0.75rem 2rem">Save Booking</button>
+      <div style="display:flex;gap:.75rem;justify-content:flex-end">
+        <button onclick="closeM('m-add')" class="btn bo">Cancel</button>
+        <button onclick="saveBk()" class="btn bk" style="padding:.625rem 2rem">Save Booking</button>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ═══ SEND PAYMENT MODAL ═══ -->
+<!-- SEND PAYMENT MODAL -->
 <div class="overlay" id="m-pay">
-  <div class="modal" style="max-width:460px">
-    <div class="modal-hd">
-      <h2>Send Payment Link</h2>
-      <button onclick="closePay()" style="background:none;border:none;font-size:1.25rem;color:#888">✕</button>
+  <div class="modal" style="max-width:480px">
+    <div class="mhd"><h3>Send Payment Link</h3><button class="mx" onclick="closeM('m-pay')">✕</button></div>
+    <div class="mbdy" id="pay-body"></div>
+  </div>
+</div>
+
+<!-- CLIENT MODAL -->
+<div class="overlay" id="m-cl">
+  <div class="modal" style="max-width:420px">
+    <div class="mhd"><h3>Add Trip to Client Account</h3><button class="mx" onclick="closeM('m-cl')">✕</button></div>
+    <div class="mbdy">
+      <div id="cl-bk-info" style="background:#f7f7f7;border-left:3px solid #775a19;padding:.875rem;margin-bottom:1.25rem;font-size:.83rem"></div>
+      <div style="margin-bottom:1rem"><label class="flbl">Client Phone Number</label><input id="cl-ph" type="tel" class="finp" placeholder="Client's phone number"/></div>
+      <div style="margin-bottom:1.25rem"><label class="flbl">Trip Status</label>
+        <select id="cl-st" class="fsel"><option value="completed">Completed — counts toward loyalty</option><option value="upcoming">Upcoming</option><option value="paid">Paid</option></select>
+      </div>
+      <div id="cl-err" style="display:none;background:#fef2f2;border-left:3px solid #dc2626;padding:.625rem;font-size:.78rem;color:#dc2626;margin-bottom:.875rem;white-space:pre-wrap"></div>
+      <div id="cl-ok" style="display:none;background:#f0fdf4;border-left:3px solid #16a34a;padding:.75rem;font-size:.78rem;color:#15803d;margin-bottom:.875rem">✅ Trip added to client account!</div>
+      <button onclick="saveToClient()" class="btn bpu" style="width:100%;justify-content:center;padding:.875rem">Add to Client Account</button>
+      <p style="font-size:.65rem;color:#bbb;text-align:center;margin-top:.75rem">Client must have signed up at account.html</p>
     </div>
-    <div class="modal-bd" id="m-pay-body"></div>
+  </div>
+</div>
+
+<!-- MESSAGE MODAL -->
+<div class="overlay" id="m-msg">
+  <div class="modal" style="max-width:520px">
+    <div class="mhd"><h3 id="msg-ttl">Send Message</h3><button class="mx" onclick="closeM('m-msg')">✕</button></div>
+    <div class="mbdy">
+      <label class="flbl">Message (edit before sending)</label>
+      <textarea id="msg-txt" rows="7" style="width:100%;background:#f7f7f7;border:0;border-bottom:2px solid #ddd;padding:.75rem 0;font-family:Inter,sans-serif;font-size:.85rem;outline:none;resize:vertical;margin-bottom:1.25rem;box-sizing:border-box;line-height:1.65"></textarea>
+      <label class="flbl">Send to client</label>
+      <div style="display:flex;gap:.5rem;margin-bottom:.625rem">
+        <select id="msg-sel" onchange="if(this.value)document.getElementById('msg-ph').value=this.value" style="flex:1;background:#f7f7f7;border:0;border-bottom:2px solid #ddd;padding:.6rem 0;font-family:Inter,sans-serif;font-size:.83rem;outline:none;appearance:none">
+          <option value="">— Select client —</option>
+        </select>
+        <button onclick="loadMsgCl()" class="btn bo" style="flex-shrink:0"><span class="material-symbols-outlined" style="font-size:14px">refresh</span></button>
+      </div>
+      <input id="msg-ph" type="tel" class="finp" placeholder="Or type phone number" style="margin-bottom:1.25rem"/>
+      <div id="msg-res" style="display:none;padding:.75rem;font-size:.78rem;margin-bottom:1rem"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.625rem;margin-bottom:.625rem">
+        <button onclick="msgOne()" class="btn bk" style="justify-content:center;flex-direction:column;gap:2px;padding:.75rem;font-size:.62rem"><span class="material-symbols-outlined" style="font-size:16px">sms</span>Text</button>
+        <a id="msg-wa" href="#" target="_blank" class="btn bgr" style="justify-content:center;flex-direction:column;gap:2px;padding:.75rem;font-size:.62rem;text-decoration:none"><span class="material-symbols-outlined" style="font-size:16px">chat</span>WhatsApp</a>
+        <button onclick="msgAll()" class="btn bgd" style="justify-content:center;flex-direction:column;gap:2px;padding:.75rem;font-size:.62rem"><span class="material-symbols-outlined" style="font-size:16px">group</span>Send All</button>
+      </div>
+      <button onclick="msgCopy()" class="btn bo" style="width:100%;justify-content:center;padding:.75rem"><span class="material-symbols-outlined" style="font-size:14px">content_copy</span>Copy</button>
+      <p style="font-size:.62rem;color:#bbb;text-align:center;margin-top:.875rem">"Send All" opens text app for each client one at a time.</p>
+    </div>
   </div>
 </div>
 
 <script>
-// ═══════════════════════════════════════════════════
-// CONFIG — CHANGE THESE
-var PWD  = 'seacoast2025';
-var SITE = 'https://seacoast-rvip-complete-final-firmsu.vercel.app';
+// ══════════════ CONFIG ══════════════
+var PWD      = 'seacoast2025';
+var SITE_URL = 'https://seacoast-rvip-complete-final-firmsu.vercel.app';
+var G_URL    = 'https://g.page/r/YOUR_GOOGLE_REVIEW_LINK';
+var FB_CFG   = {apiKey:"AIzaSyDGel0ktZDQYcdlOuoZo4bAqZWCuGvOVbc",authDomain:"seacoast-rip.firebaseapp.com",projectId:"seacoast-rip",storageBucket:"seacoast-rip.firebasestorage.app",messagingSenderId:"684535453116",appId:"1:684535453116:web:922c843b5bad3b81ad47b9"};
 
-// FIREBASE CONFIG
-// ⚠️ Replace with YOUR Firebase config after setup
-// Get it from: console.firebase.google.com
-// Project Settings → Your Apps → Web App → Config
-var FB_CONFIG = {
-  apiKey:            "AIzaSyDGel0ktZDQYcdlOuoZo4bAqZWCuGvOVbc",
-  authDomain:        "seacoast-rip.firebaseapp.com",
-  projectId:         "seacoast-rip",
-  storageBucket:     "seacoast-rip.firebasestorage.app",
-  messagingSenderId: "684535453116",
-  appId:             "1:684535453116:web:922c843b5bad3b81ad47b9"
-};
-
-// Firebase init for admin
-var db_fb = null;
-try {
-  if (!firebase.apps.length) firebase.initializeApp(FB_CONFIG);
-  else firebase.app();
-  db_fb = firebase.firestore();
-  console.log('✅ Firebase ready in admin');
-} catch(e) { console.log('Firebase:', e); }
-
-// ═══════════════════════════════════════════════════
-
-// Firebase state
+// ══════════════ FIREBASE (safe init) ══════════════
 var db = null;
-var fbReady = false;
+try {
+  if (!firebase.apps.length) firebase.initializeApp(FB_CFG);
+  db = firebase.firestore();
+  console.log('✅ Firebase ready');
+} catch(e) { console.warn('Firebase:', e.message); }
 
-function initFirebase() {
-  try {
-    firebase.initializeApp(FB_CONFIG);
-    db = firebase.firestore();
-    fbReady = true;
-    console.log('✅ Firebase connected');
-  } catch(e) {
-    console.log('Firebase not configured yet — using localStorage');
-    fbReady = false;
-  }
-}
-
+// ══════════════ STATE ══════════════
 var activeTab = 'all';
+var clientBk  = null;
 
-// ── LOGIN ──
+// ══════════════ STORAGE ══════════════
+function getBks()    { try{return JSON.parse(localStorage.getItem('rv-bks')||'[]');}catch(e){return[];} }
+function setBks(b)   { localStorage.setItem('rv-bks', JSON.stringify(b)); }
+
+// ══════════════ LOGIN ══════════════
 function doLogin() {
-  var v = document.getElementById('pwd').value;
+  var v = document.getElementById('pwd-inp').value;
   if (v === PWD) {
     localStorage.setItem('rv-auth','1');
-    goToDash();
+    document.getElementById('login-pg').style.display = 'none';
+    document.getElementById('dash-pg').style.display  = 'block';
+    initDash();
   } else {
     document.getElementById('login-err').style.display = 'block';
-    document.getElementById('pwd').value = '';
-    document.getElementById('pwd').focus();
+    document.getElementById('pwd-inp').value = '';
+    document.getElementById('pwd-inp').focus();
   }
 }
+function doLogout() { localStorage.removeItem('rv-auth'); location.reload(); }
 
-async function goToDash() {
-  document.getElementById('pg-login').style.display = 'none';
-  document.getElementById('pg-dash').style.display = 'block';
-  document.getElementById('today').textContent = new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
-  // Load from Firebase if connected
-  if (fbReady) {
-    toast('Loading bookings...');
-    await fbLoad();
-  }
-  render();
+// ══════════════ INIT ══════════════
+function initDash() {
+  document.getElementById('today-lbl').textContent = new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+  renderDash();
+  if (db) getBks().forEach(function(b){ fbSync(b); });
 }
 
-function doLogout() {
-  localStorage.removeItem('rv-auth');
-  document.getElementById('pg-dash').style.display = 'none';
-  document.getElementById('pg-login').style.display = 'flex';
-  document.getElementById('pwd').value = '';
-}
-
-// ── DATA — Firebase + localStorage fallback ──
-function getBks() {
-  try { return JSON.parse(localStorage.getItem('rv-bks') || '[]'); }
-  catch(e) { return []; }
-}
-function setBks(b) {
-  localStorage.setItem('rv-bks', JSON.stringify(b));
-}
-
-// Save single booking to Firebase
-async function fbSave(bk) {
-  if (!fbReady) return;
-  try {
-    await db.collection('bookings').doc(bk.id).set(bk);
-    console.log('✅ Saved to Firebase:', bk.code);
-  } catch(e) {
-    console.error('Firebase save error:', e);
-  }
-}
-
-// Delete from Firebase
-async function fbDelete(id) {
-  if (!fbReady) return;
-  try {
-    await db.collection('bookings').doc(id).delete();
-  } catch(e) {
-    console.error('Firebase delete error:', e);
-  }
-}
-
-// Load all bookings from Firebase
-async function fbLoad() {
-  if (!fbReady) return false;
-  try {
-    var snap = await db.collection('bookings').get();
-    var bks = [];
-    snap.forEach(function(doc) { bks.push(doc.data()); });
-    localStorage.setItem('rv-bks', JSON.stringify(bks));
-    console.log('✅ Loaded '+bks.length+' bookings from Firebase');
-    return true;
-  } catch(e) {
-    console.error('Firebase load error:', e);
-    return false;
-  }
-}
-
-// ── RENDER ──
-function render() {
+// ══════════════ RENDER ══════════════
+function renderDash() {
   var bks = getBks();
-  var up = bks.filter(function(b){ return b.status==='Pending'||b.status==='Confirmed'; }).length;
-  var rev = bks.filter(function(b){ return b.status==='Paid'||b.status==='Completed'; }).reduce(function(s,b){ return s+(parseFloat(b.price)||0); },0);
-  var aw = bks.filter(function(b){ return b.status==='Confirmed'; }).length;
-  document.getElementById('s1').textContent = bks.length;
-  document.getElementById('s2').textContent = up;
-  document.getElementById('s3').textContent = '$'+rev.toFixed(0);
-  document.getElementById('s4').textContent = aw;
+  var up  = bks.filter(function(b){return b.status==='Confirmed'||b.status==='Pending';}).length;
+  var rev = bks.filter(function(b){return b.status==='Paid'||b.status==='Completed';}).reduce(function(s,b){return s+(parseFloat(b.price)||0);},0);
+  var aw  = bks.filter(function(b){return b.status==='Confirmed';}).length;
+  document.getElementById('st1').textContent = bks.length;
+  document.getElementById('st2').textContent = up;
+  document.getElementById('st3').textContent = '$'+rev.toFixed(0);
+  document.getElementById('st4').textContent = aw;
+  if(db) db.collection('clients').get().then(function(s){document.getElementById('st5').textContent=s.size;}).catch(function(){});
 
-  var f = bks.filter(function(b){
-    if(activeTab==='all') return true;
-    if(activeTab==='upcoming') return b.status==='Pending'||b.status==='Confirmed';
+  var list = bks.filter(function(b){
+    if(activeTab==='all')      return true;
+    if(activeTab==='upcoming') return b.status==='Confirmed'||b.status==='Pending';
     if(activeTab==='awaiting') return b.status==='Confirmed';
-    if(activeTab==='done') return b.status==='Paid'||b.status==='Completed';
+    if(activeTab==='done')     return b.status==='Paid'||b.status==='Completed';
     return true;
-  }).sort(function(a,b){ return new Date(a.date)-new Date(b.date); });
+  }).sort(function(a,b){return new Date(a.date)-new Date(b.date);});
 
-  var el = document.getElementById('bk-list');
-  var em = document.getElementById('bk-empty');
+  var lel = document.getElementById('bk-list');
+  var eel = document.getElementById('bk-empty');
+  if(!list.length){lel.innerHTML='';eel.style.display='block';return;}
+  eel.style.display='none';
 
-  if (!f.length) { el.innerHTML=''; em.style.display='block'; return; }
-  em.style.display='none';
-
-  var bc = {Pending:'b-pending',Confirmed:'b-confirmed',Paid:'b-paid',Completed:'b-completed',Cancelled:'b-cancelled'};
-
-  el.innerHTML = f.map(function(b){
+  var sc = {Pending:'by',Confirmed:'bb',Paid:'bg',Completed:'bg',Cancelled:'br'};
+  lel.innerHTML = list.map(function(b){
     return '<div class="bk-card">'+
-      '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap">'+
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:.75rem">'+
         '<div style="flex:1;min-width:200px">'+
-          '<div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;margin-bottom:6px">'+
-            '<span class="bk-name">'+b.name+'</span>'+
-            '<span class="badge '+(bc[b.status]||'b-pending')+'">'+b.status+'</span>'+
-            '<span class="bk-code">'+b.code+'</span>'+
+          '<div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;margin-bottom:.5rem">'+
+            '<span class="bk-name">'+x(b.name)+'</span>'+
+            '<span class="badge '+(sc[b.status]||'by')+'">'+b.status+'</span>'+
+            '<span class="bk-code">'+x(b.code)+'</span>'+
           '</div>'+
-          '<div class="bk-meta"><span class="material-symbols-outlined">calendar_today</span> '+b.date+' at '+ft(b.time)+'</div>'+
-          '<div class="bk-meta"><span class="material-symbols-outlined">directions_car</span> '+b.service+'</div>'+
-          (b.pickup?'<div class="bk-meta"><span class="material-symbols-outlined">location_on</span> '+b.pickup+' → '+b.destination+'</div>':'')+
-          '<div class="bk-meta"><span class="material-symbols-outlined">phone</span> '+b.phone+(b.email?' · '+b.email:'')+'</div>'+
-          (b.notes?'<div class="bk-meta" style="color:#888">📝 '+b.notes+'</div>':'')+
+          '<div class="bk-meta"><span class="material-symbols-outlined">calendar_today</span>'+x(b.date)+' at '+ft(b.time)+'</div>'+
+          '<div class="bk-meta"><span class="material-symbols-outlined">directions_car</span>'+x(b.service)+'</div>'+
+          (b.pickup?'<div class="bk-meta"><span class="material-symbols-outlined">location_on</span>'+x(b.pickup)+' → '+x(b.destination)+'</div>':'')+
+          '<div class="bk-meta"><span class="material-symbols-outlined">phone</span>'+x(b.phone)+(b.email?' · '+x(b.email):'')+'</div>'+
         '</div>'+
-        '<div style="text-align:right;flex-shrink:0">'+
-          '<div class="bk-price">$'+b.price+'</div>'+
-          '<div style="font-size:0.7rem;color:#888;margin-bottom:10px">'+b.paymentMethod+'</div>'+
-          '<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">'+
-            '<button class="bg" onclick="openPay(\''+b.id+'\')"><span class="material-symbols-outlined">send</span>Send Link</button>'+
-            '<button style="background:#1d4ed8;color:white;font-family:Work Sans,sans-serif;font-size:0.7rem;font-weight:600;text-transform:uppercase;padding:0.5rem 0.875rem;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:4px" onclick="openReminder(\''+b.id+'\')">' +
-            '<span class="material-symbols-outlined" style="font-size:14px">notifications</span>Reminder</button>'+
-            '<button style="background:#7c3aed;color:white;font-family:Work Sans,sans-serif;font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;padding:0.5rem 0.625rem;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:3px" onclick=\"openAddToHistory(\'"+b.id+"\')\">'+'<span class=\"material-symbols-outlined\" style=\"font-size:13px\">person_add</span>Client</button>'+
-            '<button class="bo" onclick="editBk(\''+b.id+'\')"><span class="material-symbols-outlined">edit</span></button>'+
-            '<button class="br" onclick="delBk(\''+b.id+'\')"><span class="material-symbols-outlined">delete</span></button>'+
+        '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:.5rem">'+
+          '<div style="font-family:\'Times New Roman\',serif;font-size:1.6rem;font-weight:700;color:#775a19">$'+(b.price||'—')+'</div>'+
+          '<div style="display:flex;gap:.375rem;flex-wrap:wrap;justify-content:flex-end">'+
+            '<button onclick="openPay(\''+b.id+'\')" class="btn bk"><span class="material-symbols-outlined" style="font-size:13px">send</span>Send</button>'+
+            '<button onclick="openCl(\''+b.id+'\')" class="btn bpu"><span class="material-symbols-outlined" style="font-size:12px">person_add</span>Client</button>'+
+            '<button onclick="openEdit(\''+b.id+'\')" class="btn bo"><span class="material-symbols-outlined" style="font-size:13px">edit</span></button>'+
+            '<button onclick="delBk(\''+b.id+'\')" class="btn br2"><span class="material-symbols-outlined" style="font-size:13px">delete</span></button>'+
           '</div>'+
         '</div>'+
       '</div>'+
@@ -464,500 +341,235 @@ function render() {
   }).join('');
 }
 
-function ft(t) {
-  if(!t) return '';
-  try { var p=t.split(':'),h=parseInt(p[0]),m=p[1],a=h>=12?'PM':'AM'; h=h%12||12; return h+':'+m+' '+a; }
-  catch(e){ return t; }
-}
+function x(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function ft(t){if(!t)return'—';try{var p=t.split(':'),h=parseInt(p[0]),m=p[1],ap=h>=12?'PM':'AM';h=h%12||12;return h+':'+m+' '+ap;}catch(e){return t;}}
 
-function setTab(tab,btn) {
-  activeTab=tab;
-  document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.remove('on'); });
+// ══════════════ TABS ══════════════
+function switchTab(tab, btn) {
+  activeTab = tab;
+  document.querySelectorAll('.tab-btn').forEach(function(b){b.classList.remove('on');});
   btn.classList.add('on');
-  render();
+  ['sec-bk','sec-cl','sec-msg'].forEach(function(id){document.getElementById(id).style.display='none';});
+  if(tab==='clients')  {document.getElementById('sec-cl').style.display='block';loadClients();}
+  else if(tab==='messages'){document.getElementById('sec-msg').style.display='block';buildMsgTpl();loadBcCount();}
+  else {document.getElementById('sec-bk').style.display='block';renderDash();}
 }
 
-// ── ADD/EDIT ──
+// ══════════════ ADD/EDIT ══════════════
 function openAdd() {
-  document.getElementById('m-add-ttl').textContent = 'New Booking';
-  document.getElementById('e-id').value = '';
-  ['e-name','e-phone','e-email','e-date','e-time','e-pickup','e-dest','e-price','e-code','e-notes'].forEach(function(id){ document.getElementById(id).value=''; });
-  document.getElementById('e-status').value = 'Confirmed';
-  makeCode();
-  document.getElementById('m-add').style.display = 'block';
+  document.getElementById('add-ttl').textContent='New Booking';
+  document.getElementById('eid').value='';
+  ['fn','fp','fe','fd','ft','fpu','fde','fpr','fco','fno'].forEach(function(id){document.getElementById(id).value='';});
+  document.getElementById('fst').value='Confirmed';
+  genCode();
+  openM('m-add');
 }
-
-function editBk(id) {
-  var b = getBks().find(function(x){ return x.id===id; });
-  if (!b) return;
-  document.getElementById('m-add-ttl').textContent = 'Edit Booking';
-  document.getElementById('e-id').value = id;
-  document.getElementById('e-name').value = b.name||'';
-  document.getElementById('e-phone').value = b.phone||'';
-  document.getElementById('e-email').value = b.email||'';
-  document.getElementById('e-service').value = b.service||'';
-  document.getElementById('e-date').value = b.date||'';
-  document.getElementById('e-time').value = b.time||'';
-  document.getElementById('e-pickup').value = b.pickup||'';
-  document.getElementById('e-dest').value = b.destination||'';
-  document.getElementById('e-vehicle').value = b.vehicle||'Black SUV Luxury';
-  document.getElementById('e-pass').value = b.passengers||'1';
-  document.getElementById('e-price').value = b.price||'';
-  document.getElementById('e-paymeth').value = b.paymentMethod||'Card / Apple Pay';
-  document.getElementById('e-status').value = b.status||'Confirmed';
-  document.getElementById('e-code').value = b.code||'';
-  document.getElementById('e-notes').value = b.notes||'';
-  document.getElementById('m-add').style.display = 'block';
+function openEdit(id) {
+  var b=getBks().find(function(x){return x.id===id;});if(!b)return;
+  document.getElementById('add-ttl').textContent='Edit Booking';
+  document.getElementById('eid').value=id;
+  document.getElementById('fn').value=b.name||'';document.getElementById('fp').value=b.phone||'';
+  document.getElementById('fe').value=b.email||'';document.getElementById('fsv').value=b.service||'';
+  document.getElementById('fd').value=b.date||'';document.getElementById('ft').value=b.time||'';
+  document.getElementById('fpu').value=b.pickup||'';document.getElementById('fde').value=b.destination||'';
+  document.getElementById('fpr').value=b.price||'';document.getElementById('fst').value=b.status||'Confirmed';
+  document.getElementById('fco').value=b.code||'';document.getElementById('fv').value=b.vehicle||'';
+  document.getElementById('fno').value=b.notes||'';
+  openM('m-add');
 }
-
-function closeAdd() { document.getElementById('m-add').style.display = 'none'; }
-
-function makeCode() {
-  var c='ABCDEFGHJKLMNPQRSTUVWXYZ';
-  var n=String(Math.floor(Math.random()*9000)+1000);
+function genCode() {
+  var c='ABCDEFGHJKLMNPQRSTUVWXYZ',n=String(Math.floor(Math.random()*9000)+1000);
   var r=c[Math.floor(Math.random()*c.length)]+c[Math.floor(Math.random()*c.length)]+c[Math.floor(Math.random()*c.length)];
-  document.getElementById('e-code').value='RVIP-'+n+'-'+r;
+  document.getElementById('fco').value='RVIP-'+n+'-'+r;
 }
-
 function saveBk() {
-  var nm=document.getElementById('e-name').value.trim();
-  var ph=document.getElementById('e-phone').value.trim();
-  var pr=document.getElementById('e-price').value.trim();
-  var dt=document.getElementById('e-date').value.trim();
-  if(!nm||!ph||!pr||!dt){ toast('Fill in Name, Phone, Price and Date'); return; }
-
-  var bks=getBks(), eid=document.getElementById('e-id').value;
-  var bk={
-    id:eid||Date.now().toString(),
-    name:nm, phone:ph,
-    email:document.getElementById('e-email').value.trim(),
-    service:document.getElementById('e-service').value,
-    date:dt, time:document.getElementById('e-time').value,
-    pickup:document.getElementById('e-pickup').value.trim(),
-    destination:document.getElementById('e-dest').value.trim(),
-    vehicle:document.getElementById('e-vehicle').value,
-    passengers:document.getElementById('e-pass').value,
-    price:parseFloat(pr),
-    paymentMethod:document.getElementById('e-paymeth').value,
-    status:document.getElementById('e-status').value,
-    code:document.getElementById('e-code').value.trim(),
-    notes:document.getElementById('e-notes').value.trim(),
-  };
-
-  if(eid){ var i=bks.findIndex(function(b){ return b.id===eid; }); if(i>-1) bks[i]=bk; }
-  else bks.push(bk);
-
-  setBks(bks);
-  fbSave(bk); // save to Firebase cloud
-  closeAdd();
-  render();
-  toast(eid ? 'Updated!' : 'Booking saved!' + (fbReady ? ' ☁️' : ' (local)'));
+  var name=document.getElementById('fn').value.trim();
+  var phone=document.getElementById('fp').value.trim();
+  var price=document.getElementById('fpr').value.trim();
+  var date=document.getElementById('fd').value.trim();
+  if(!name||!phone||!price||!date){toast('Fill in Name, Phone, Price and Date');return;}
+  var bks=getBks(),eid=document.getElementById('eid').value;
+  var orig=eid?bks.find(function(b){return b.id===eid;}):null;
+  var bk={id:eid||Date.now().toString(),name:name,phone:phone,email:document.getElementById('fe').value.trim(),
+    service:document.getElementById('fsv').value,date:date,time:document.getElementById('ft').value,
+    pickup:document.getElementById('fpu').value.trim(),destination:document.getElementById('fde').value.trim(),
+    vehicle:document.getElementById('fv').value,price:parseFloat(price),status:document.getElementById('fst').value,
+    code:(document.getElementById('fco').value.trim()||'').toUpperCase(),
+    notes:document.getElementById('fno').value.trim(),
+    createdAt:orig?orig.createdAt:new Date().toISOString()};
+  if(eid){var i=bks.findIndex(function(b){return b.id===eid;});if(i>-1)bks[i]=bk;}else bks.push(bk);
+  setBks(bks);fbSync(bk);closeM('m-add');renderDash();toast(eid?'Updated!':'Booking saved! ☁️');
 }
-
 function delBk(id) {
-  if(!confirm('Delete this booking?')) return;
-  setBks(getBks().filter(function(b){ return b.id!==id; }));
-  fbDelete(id);
-  render();
-  toast('Deleted');
+  if(!confirm('Delete this booking?'))return;
+  setBks(getBks().filter(function(b){return b.id!==id;}));
+  if(db)db.collection('bookings').doc(id).delete().catch(function(){});
+  renderDash();toast('Deleted');
 }
 
-// ── SEND PAYMENT ──
+// ══════════════ FIREBASE SYNC ══════════════
+async function fbSync(bk) {
+  if(!db)return;
+  try{await db.collection('bookings').doc(bk.id).set({
+    id:bk.id,code:(bk.code||'').toUpperCase(),name:bk.name||'',phone:bk.phone||'',email:bk.email||'',
+    service:bk.service||'',date:bk.date||'',time:bk.time||'',pickup:bk.pickup||'',
+    destination:bk.destination||'',vehicle:bk.vehicle||'',price:parseFloat(bk.price)||0,
+    status:bk.status||'Confirmed',notes:bk.notes||'',updatedAt:new Date().toISOString()
+  },{merge:true});}catch(e){console.warn('fbSync:',e.message);}
+}
+
+// ══════════════ SEND PAYMENT ══════════════
 function openPay(id) {
-  var b=getBks().find(function(x){ return x.id===id; });
-  if(!b) return;
-
-  // Clean short URL — booking data stored in Firebase cloud
-  var link = SITE+'/payment.html?code='+encodeURIComponent(b.code);
-  var fn = b.name.split(' ')[0];
-  var msg = 'Hi '+fn+'! Your Seacoast RVIP ride is confirmed for '+b.date+' at '+ft(b.time)+'.\n\n'+
-    'Total: $'+b.price+'\n\n'+
-    'Tap the link below to complete your payment:\n'+
-    link+'\n\n'+
-    'Questions? Call or text (603) 000-0000\n'+
-    'See you soon! — Seacoast RVIP';
-
-  document.getElementById('m-pay-body').innerHTML =
-    '<div style="background:#f9f9f9;border:1px solid #e2e2e2;padding:0.875rem;margin-bottom:1rem">'+
-      '<div style="font-weight:700">'+b.name+'</div>'+
-      '<div style="font-size:0.8rem;color:#555">'+b.phone+'</div>'+
-      '<div style="font-size:0.8rem;color:#555">'+(b.email||'No email')+'</div>'+
+  var b=getBks().find(function(x){return x.id===id;});if(!b)return;
+  var link=SITE_URL+'/payment.html?code='+encodeURIComponent(b.code);
+  var sms='Hi '+b.name.split(' ')[0]+'! Your Seacoast RVIP ride is confirmed for '+b.date+' at '+ft(b.time)+'.\n\nFare: $'+b.price+'\nPay here: '+link+'\n\nCode: '+b.code+'\n— Ramon (987) 416-3283';
+  document.getElementById('pay-body').innerHTML=
+    '<div style="background:#f7f7f7;border-left:3px solid #775a19;padding:1rem;margin-bottom:1.25rem;font-size:.83rem"><div style="font-weight:700;margin-bottom:3px">'+x(b.name)+'</div><div style="color:#666">'+x(b.phone)+' · '+x(b.date)+' · $'+b.price+'</div></div>'+
+    '<div style="background:#fdfaf4;border:1px solid #e8c97a;padding:1rem;margin-bottom:1.25rem;text-align:center"><div style="font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;color:#775a19;margin-bottom:4px">Payment Link</div><div style="font-size:.72rem;word-break:break-all;margin-bottom:.5rem;color:#555">'+link+'</div><div style="font-family:\'Times New Roman\',serif;font-size:2rem;font-weight:700">$'+b.price+'</div></div>'+
+    '<div style="margin-bottom:1.25rem"><label style="font-family:\'Work Sans\',sans-serif;font-size:.58rem;text-transform:uppercase;letter-spacing:.1em;color:#999;display:block;margin-bottom:6px">Message preview</label><textarea id="pay-sms" style="width:100%;background:#f7f7f7;border:0;border-bottom:2px solid #ddd;padding:.75rem 0;font-family:Inter,sans-serif;font-size:.8rem;resize:none;outline:none;height:130px;box-sizing:border-box;line-height:1.6">'+sms+'</textarea></div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:.75rem">'+
+      '<a href="sms:'+b.phone+'&body='+encodeURIComponent(sms)+'" class="btn bk" style="text-decoration:none;justify-content:center;padding:.875rem"><span class="material-symbols-outlined" style="font-size:15px">sms</span>Text</a>'+
+      '<a href="mailto:'+(b.email||'')+'?subject='+encodeURIComponent('Seacoast RVIP — Ride Confirmed')+'&body='+encodeURIComponent(sms)+'" class="btn bo" style="text-decoration:none;justify-content:center;padding:.875rem"><span class="material-symbols-outlined" style="font-size:15px">mail</span>Email</a>'+
     '</div>'+
-    '<div style="background:#fdfaf4;border:1px solid #e8c97a;padding:1rem;margin-bottom:1rem;text-align:center">'+
-      '<div style="font-size:0.6rem;text-transform:uppercase;letter-spacing:0.1em;color:#775a19;margin-bottom:4px">Payment Link</div>'+
-      '<div style="font-size:0.7rem;color:#555;word-break:break-all;margin-bottom:6px">'+link+'</div>'+
-      '<div style="font-size:2rem;font-weight:700">$'+b.price+'</div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:.75rem">'+
+      '<a href="https://wa.me/'+b.phone.replace(/\\D/g,'')+'?text='+encodeURIComponent(sms)+'" target="_blank" class="btn bgr" style="text-decoration:none;justify-content:center;padding:.875rem"><span class="material-symbols-outlined" style="font-size:15px">chat</span>WhatsApp</a>'+
+      '<button onclick="navigator.clipboard.writeText(\''+link+'\').then(function(){toast(\'Copied!\');})" class="btn bo" style="justify-content:center;padding:.875rem"><span class="material-symbols-outlined" style="font-size:15px">content_copy</span>Copy Link</button>'+
     '</div>'+
-    '<textarea id="msg-txt" style="width:100%;background:#f9f9f9;border:1px solid #e2e2e2;padding:0.75rem;font-size:0.8rem;font-family:Inter,sans-serif;height:130px;resize:none;outline:none;margin-bottom:0.875rem;box-sizing:border-box">'+msg+'</textarea>'+
-    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">'+
-      '<a href="sms:'+b.phone+'&body='+encodeURIComponent(msg)+'" class="bd" style="justify-content:center;padding:0.875rem"><span class="material-symbols-outlined">sms</span>Text</a>'+
-      '<a href="mailto:'+(b.email||'')+'?subject='+encodeURIComponent('Seacoast RVIP Confirmed')+'&body='+encodeURIComponent(msg)+'" class="bo" style="justify-content:center;padding:0.875rem"><span class="material-symbols-outlined">mail</span>Email</a>'+
-    '</div>'+
-    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">'+
-      '<a href="https://wa.me/'+b.phone.replace(/\D/g,'')+'?text='+encodeURIComponent(msg)+'" target="_blank" class="bgr" style="justify-content:center;padding:0.875rem"><span class="material-symbols-outlined">chat</span>WhatsApp</a>'+
-      '<button onclick="cpTxt(\''+link+'\')" class="bo" style="padding:0.875rem;justify-content:center"><span class="material-symbols-outlined">content_copy</span>Copy Link</button>'+
-    '</div>'+
-    '<button onclick="mkPaid(\''+id+'\')" class="bg" style="width:100%;justify-content:center;padding:0.875rem;margin-top:4px"><span class="material-symbols-outlined">check_circle</span>Mark as Paid</button>';
+    '<button onclick="markPaid(\''+id+'\')" class="btn bgr" style="width:100%;justify-content:center;padding:.875rem"><span class="material-symbols-outlined" style="font-size:15px">check_circle</span>Mark as Paid</button>';
+  openM('m-pay');
+}
+function markPaid(id){var bks=getBks(),b=bks.find(function(x){return x.id===id;});if(b){b.status='Paid';setBks(bks);fbSync(b);}closeM('m-pay');renderDash();toast('✅ Marked as Paid!');}
 
-  document.getElementById('m-pay').style.display = 'block';
+// ══════════════ CLIENT MODAL ══════════════
+function openCl(id) {
+  clientBk=getBks().find(function(x){return x.id===id;});if(!clientBk)return;
+  document.getElementById('cl-bk-info').innerHTML='<strong>'+x(clientBk.name)+'</strong> — '+x(clientBk.service)+'<br><span style="color:#888;font-size:.78rem">'+x(clientBk.date)+' · $'+clientBk.price+'</span>';
+  document.getElementById('cl-ph').value=clientBk.phone||'';
+  document.getElementById('cl-err').style.display='none';
+  document.getElementById('cl-ok').style.display='none';
+  openM('m-cl');
+}
+async function saveToClient() {
+  if(!clientBk)return;
+  if(!db){document.getElementById('cl-err').textContent='Firebase not connected.\n\nFix: Firebase Console → Firestore → Rules → allow read/write → Publish';document.getElementById('cl-err').style.display='block';return;}
+  var raw=document.getElementById('cl-ph').value.replace(/\D/g,'');
+  if(raw.length<7){document.getElementById('cl-err').textContent='Enter a valid phone number';document.getElementById('cl-err').style.display='block';return;}
+  var phone=raw.length===10?'+1'+raw:(raw.length===11&&raw[0]==='1'?'+'+raw:'+'+raw);
+  var status=document.getElementById('cl-st').value;
+  var b=clientBk;
+  try{
+    var clientId=null;
+    var fmts=[phone,raw,'+1'+raw.slice(-10)];
+    for(var i=0;i<fmts.length&&!clientId;i++){var s=await db.collection('clients').where('phone','==',fmts[i]).limit(1).get();if(!s.empty)s.forEach(function(d){clientId=d.id;});}
+    if(!clientId){var ref=db.collection('clients').doc();clientId=ref.id;await ref.set({phone:phone,name:b.name||'',email:b.email||'',address:b.pickup||'',createdAt:new Date().toISOString(),createdByAdmin:true});}
+    await db.collection('clients').doc(clientId).collection('trips').add({service:b.service||'',date:b.date||'',time:b.time||'',pickup:b.pickup||'',destination:b.destination||'',vehicle:b.vehicle||'',price:b.price||0,code:b.code||'',status:status,addedAt:new Date().toISOString()});
+    document.getElementById('cl-ok').style.display='block';document.getElementById('cl-err').style.display='none';
+    toast('Trip added!');setTimeout(function(){closeM('m-cl');},2000);
+  }catch(e){document.getElementById('cl-err').textContent='Error: '+e.message+'\n\nCheck Firebase Rules — allow read/write on clients collection';document.getElementById('cl-err').style.display='block';}
 }
 
-function closePay() { document.getElementById('m-pay').style.display = 'none'; }
-
-function mkPaid(id) {
-  var bks=getBks(), b=bks.find(function(x){ return x.id===id; });
-  if(b){ b.status='Paid'; setBks(bks); }
-  closePay(); render(); toast('Marked as Paid!');
+// ══════════════ LOAD CLIENTS ══════════════
+async function loadClients() {
+  var el=document.getElementById('cl-list');
+  if(!db){el.innerHTML='<div style="background:#fef2f2;border-left:3px solid #dc2626;padding:1.25rem;font-size:.83rem;color:#b91c1c"><strong>Firebase not connected</strong><br><br>Go to Firebase Console → seacoast-rip → Firestore → Rules and publish:<br><br><code style="background:#fff;padding:.25rem .5rem;display:inline-block;margin-top:.5rem;font-size:.75rem">match /{doc=**} { allow read, write: if true; }</code></div>';return;}
+  el.innerHTML='<div style="text-align:center;padding:2rem;color:#aaa;font-size:.8rem">Loading...</div>';
+  try{
+    var snap=await db.collection('clients').orderBy('createdAt','desc').limit(100).get();
+    var clients=[];snap.forEach(function(d){clients.push(Object.assign({id:d.id},d.data()));});
+    document.getElementById('st5').textContent=clients.length;
+    if(!clients.length){el.innerHTML='<div style="text-align:center;padding:3rem;color:#ccc"><span class="material-symbols-outlined" style="font-size:2.5rem;display:block;margin-bottom:.75rem">people</span><div style="font-size:.8rem">No clients yet. They appear once they sign up at account.html</div></div>';return;}
+    el.innerHTML=clients.map(function(cl){
+      var since=cl.createdAt?new Date(cl.createdAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'—';
+      var tag=cl.createdByAdmin?'<span class="badge by" style="margin-left:6px">Added by admin</span>':'<span class="badge bg" style="margin-left:6px">Self signup</span>';
+      return '<div class="bk-card" style="margin-bottom:.625rem"><div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:.75rem"><div><div style="font-weight:700;margin-bottom:4px">'+x(cl.name||cl.phone||'Unknown')+tag+'</div><div class="bk-meta"><span class="material-symbols-outlined">phone</span>'+x(cl.phone||'—')+'</div>'+(cl.email?'<div class="bk-meta"><span class="material-symbols-outlined">mail</span>'+x(cl.email)+'</div>':'')+(cl.address?'<div class="bk-meta"><span class="material-symbols-outlined">home</span>'+x(cl.address)+'</div>':'')+'</div><div style="text-align:right"><div style="font-size:.68rem;color:#aaa;margin-bottom:.5rem">Since '+since+'</div><a href="sms:'+(cl.phone||'')+'" class="btn bk" style="text-decoration:none;font-size:.62rem"><span class="material-symbols-outlined" style="font-size:12px">sms</span>Text</a></div></div></div>';
+    }).join('');
+  }catch(e){el.innerHTML='<div style="background:#fef2f2;border-left:3px solid #dc2626;padding:1.25rem;font-size:.83rem;color:#b91c1c"><strong>Error:</strong> '+e.message+'<br><br>Fix: Firebase Console → Firestore → Rules → allow read/write on clients → Publish</div>';}
 }
 
-function cpTxt(txt) {
-  navigator.clipboard.writeText(txt).then(function(){ toast('Copied!'); }).catch(function(){ alert(txt); });
-}
-
-
-function openReminder(id) {
-  var b = getBks().find(function(x){ return x.id===id; });
-  if (!b) return;
-  var fn = b.name.split(' ')[0];
-  var msgClient = 'Hi '+fn+'! Just a reminder your Seacoast RVIP ride is tomorrow '+b.date+' at '+ft(b.time)+'.\n\nI will be in the black SUV at '+b.pickup+'.\n\nQuestions? Call or text (987) 416-3283\nSee you then! — Seacoast RVIP';
-  var msgYou = 'REMINDER — Ride tomorrow '+b.date+' at '+ft(b.time)+'\nClient: '+b.name+' — '+b.phone+'\nPickup: '+b.pickup+'\nDest: '+b.destination+'\nPrice: $'+b.price;
-
-  var html = '<div style="background:#f9f9f9;border:1px solid #e2e2e2;padding:1rem;margin-bottom:1rem">'+
-    '<div style="font-weight:700">'+b.name+'</div>'+
-    '<div style="font-size:0.8rem;color:#555">'+b.phone+'</div>'+
-    '<div style="font-size:0.8rem;color:#555">'+b.date+' at '+ft(b.time)+'</div>'+
-  '</div>'+
-  '<p style="font-family:Work Sans,sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:#888;margin-bottom:8px">Reminder to client:</p>'+
-  '<textarea style="width:100%;background:#f9f9f9;border:1px solid #e2e2e2;padding:0.75rem;font-size:0.8rem;font-family:Inter,sans-serif;height:110px;resize:none;outline:none;margin-bottom:1rem;box-sizing:border-box">'+msgClient+'</textarea>'+
-  '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">'+
-    '<a href="sms:'+b.phone+'&body='+encodeURIComponent(msgClient)+'" class="bd" style="justify-content:center;padding:0.875rem;text-decoration:none"><span class="material-symbols-outlined" style="font-size:15px">sms</span>Text Client</a>'+
-    '<a href="https://wa.me/'+b.phone.replace(/\D/g,'')+'?text='+encodeURIComponent(msgClient)+'" target="_blank" class="bgr" style="justify-content:center;padding:0.875rem;text-decoration:none"><span class="material-symbols-outlined" style="font-size:15px">chat</span>WhatsApp</a>'+
-  '</div>'+
-  '<p style="font-family:Work Sans,sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:#888;margin-bottom:8px;margin-top:1rem">Reminder to yourself:</p>'+
-  '<a href="sms:+19874163283&body='+encodeURIComponent(msgYou)+'" class="bg" style="width:100%;justify-content:center;padding:0.875rem;display:flex;align-items:center;gap:6px;text-decoration:none"><span class="material-symbols-outlined" style="font-size:15px">person</span>Text Yourself</a>';
-
-  document.getElementById('m-pay-body').innerHTML = html;
-  document.getElementById('m-pay').querySelector('.modal-hd h2').textContent = 'Send Reminder';
-  document.getElementById('m-pay').style.display = 'block';
-}
-
-function toast(msg) {
-  var t=document.getElementById('toast');
-  t.textContent=msg; t.style.display='block';
-  setTimeout(function(){ t.style.display='none'; },3000);
-}
-
-// Close overlays on bg click
-document.getElementById('m-add').addEventListener('click',function(e){ if(e.target===this) closeAdd(); });
-document.getElementById('m-pay').addEventListener('click',function(e){ if(e.target===this) closePay(); });
-
-// Init
-document.addEventListener('DOMContentLoaded', function(){
-  initFirebase();
-  if(localStorage.getItem('rv-auth')==='1') goToDash();
-  else document.getElementById('pwd').focus();
-});
-
-
-// ═══════════════════════════════════════════════════════════
-// MESSAGE TEMPLATES SYSTEM
-// ═══════════════════════════════════════════════════════════
-
-var GOOGLE_REVIEW_LINK = 'https://g.page/r/YOUR_GOOGLE_REVIEW_LINK';
-
-var MSG_TEMPLATES = [
-  {
-    category: 'After the Ride',
-    color: '#16a34a',
-    icon: 'directions_car',
-    messages: [
-      { title: 'Thank You', desc: 'Send right after dropping off', text: 'Hi [Name]! Thank you so much for choosing Seacoast RVIP today. It was a pleasure!\n\nWhenever you need a ride again, I\'m just one text away.\n\nSee you next time! — Ramon\n(987) 416-3283' },
-      { title: 'Thank You + Google Review', desc: 'BEST for building your reviews — send after every ride', text: 'Hi [Name]! Thank you for riding with Seacoast RVIP today — really appreciate your support!\n\nIf you enjoyed the experience, a quick Google review would mean the world to me. It only takes 30 seconds:\n\nGOOGLE_REVIEW_LINK_PLACEHOLDER\n\nThank you! — Ramon\n(987) 416-3283' },
-      { title: 'Airport — Safe Flight', desc: 'After dropping at airport', text: 'Hi [Name]! Hope you made it through security smoothly! ✈️\n\nHave a safe and wonderful trip. When you\'re back, Seacoast RVIP will be ready to pick you up.\n\nSafe travels! — Ramon\n(987) 416-3283' }
-    ]
-  },
-  {
-    category: 'Ride Reminders',
-    color: '#1d4ed8',
-    icon: 'notifications',
-    messages: [
-      { title: 'Day Before Reminder', desc: 'Send the night before the ride', text: 'Hi [Name]! Quick reminder — your Seacoast RVIP ride is tomorrow [Date] at [Time].\n\nI will be at [Pickup Address] 5 minutes early in the black SUV.\n\nQuestions? Call or text anytime.\n(987) 416-3283\n\nSee you tomorrow! — Ramon' },
-      { title: 'Morning of Ride', desc: 'Send 1-2 hours before pickup', text: 'Good morning [Name]! Your Seacoast RVIP ride is today at [Time].\n\nI will be at [Pickup Address] a few minutes early. Black SUV, you can\'t miss me!\n\nSee you soon! — Ramon\n(987) 416-3283' },
-      { title: 'On My Way', desc: 'Send when leaving to pick up', text: 'Hi [Name]! I\'m on my way — arriving at [Pickup Address] in about [X] minutes.\n\nSee you shortly! — Ramon' },
-      { title: 'I Have Arrived', desc: 'Send when waiting outside', text: 'Hi [Name]! I\'m outside at [Pickup Address] — black SUV, ready when you are!\n\n— Ramon' }
-    ]
-  },
-  {
-    category: 'Holidays & Special Events',
-    color: '#775a19',
-    icon: 'celebration',
-    messages: [
-      { title: 'New Years Eve', desc: 'Send Dec 28-30 to all clients', text: 'Hi [Name]! Happy almost New Year!\n\nPlanning to celebrate New Year\'s Eve? Do not risk driving — let Seacoast RVIP get you there and back safely.\n\nSpots fill fast. Text me to reserve yours:\n(987) 416-3283\n\nHave a wonderful New Year! — Ramon' },
-      { title: '4th of July', desc: 'Send July 1-3 to all clients', text: 'Hi [Name]! Happy 4th of July weekend!\n\nHeading to a cookout, fireworks, or celebration? I\'ve got you covered with a safe ride!\n\nJust text me and let\'s get you there.\n(987) 416-3283\n\nEnjoy the holiday! — Ramon, Seacoast RVIP' },
-      { title: 'Thanksgiving', desc: 'Send Nov 20-25', text: 'Hi [Name]! Wishing you and your family a wonderful Thanksgiving!\n\nIf you need a ride to family dinner or the airport this holiday weekend, Seacoast RVIP is here for you.\n\nStay safe and enjoy the holiday!\n— Ramon\n(987) 416-3283' },
-      { title: "St. Patrick's Day", desc: 'Send March 15-16', text: "Hi [Name]! St. Patrick's Day is this weekend!\n\nHeading out to celebrate? Let Seacoast RVIP be your safe ride so you can enjoy the night worry-free!\n\nBook your spot now — busy night!\n(987) 416-3283\n\n— Ramon, Seacoast RVIP" },
-      { title: 'Casino Night Run', desc: 'Send for Foxwoods/Mohegan weekends', text: 'Hi [Name]! Feeling lucky this weekend?\n\nSeacoast RVIP offers casino runs to Foxwoods and Mohegan Sun — comfortable ride, no parking hassle!\n\nInterested? Text me to reserve your seat.\n(987) 416-3283\n\n— Ramon, Seacoast RVIP' },
-      { title: 'Summer Kickoff', desc: 'Send Memorial Day weekend', text: 'Hi [Name]! Summer is here!\n\nWhether you\'re heading to Hampton Beach, a boat party, or a summer event, Seacoast RVIP will get you there in style.\n\nText me to plan your summer rides!\n(987) 416-3283\n\nHave an amazing summer! — Ramon' },
-      { title: 'Christmas & Holidays', desc: 'Send Dec 15-20', text: 'Hi [Name]! Wishing you and your loved ones a wonderful holiday season!\n\nIf you need airport rides, holiday party transportation, or a safe way home this season — Seacoast RVIP has you covered.\n\nThank you for your support this year. It means everything.\n\nHappy Holidays! — Ramon\n(987) 416-3283' }
-    ]
-  },
-  {
-    category: 'Business Growth',
-    color: '#7c3aed',
-    icon: 'trending_up',
-    messages: [
-      { title: 'Referral Program', desc: 'Ask loyal clients to refer friends', text: 'Hi [Name]! Quick favor to ask.\n\nIf you know anyone who needs reliable transportation in the Seacoast area, I would love a referral!\n\nRefer a friend who books a ride and I will give you $10 off your next trip as a thank you!\n\nThank you for your continued support!\n— Ramon, Seacoast RVIP\n(987) 416-3283' },
-      { title: "Haven't Heard From You", desc: 'Send to clients quiet for 60+ days', text: 'Hi [Name]! It has been a little while — just checking in!\n\nSeacoast RVIP is here whenever you need a ride. Airport transfers, nights out, casino runs, or anything in between.\n\nReady when you are!\n— Ramon\n(987) 416-3283' },
-      { title: 'Check In After Ride', desc: 'Send 2-3 days after a ride', text: 'Hi [Name]! Just checking in — hope everything went smoothly the other day!\n\nYour feedback means a lot. If there is anything I can do better, let me know. And if you were happy, a Google review is always appreciated!\n\nGOOGLE_REVIEW_LINK_PLACEHOLDER\n\nTalk soon! — Ramon\n(987) 416-3283' },
-      { title: 'Winter Storm Advisory', desc: 'Send before major NH storms', text: 'Hi [Name]! Big winter storm coming to the Seacoast area.\n\nIf you have airport travel or any trips planned, Seacoast RVIP is experienced in all NH weather. I will get you there safely — no matter what.\n\nStay safe!\n— Ramon\n(987) 416-3283' },
-      { title: 'Corporate Account Offer', desc: 'Send to clients with businesses', text: 'Hi [Name]! Quick question — does your company ever need professional transportation for clients, employees, or airport runs?\n\nSeacoast RVIP offers reliable corporate transportation in the NH Seacoast area. I would love to be your go-to transportation partner with priority booking and simplified billing.\n\nLet me know if you would like to talk!\n— Ramon\n(987) 416-3283' }
-    ]
-  }
+// ══════════════ MESSAGES ══════════════
+var MSGS=[
+  {cat:'After the Ride',color:'#16a34a',items:[
+    {title:'Thank You',desc:'Right after the ride',text:'Hi [Name]! Thank you for choosing Seacoast RVIP today!\n\nWhenever you need a ride, just text me.\n\n— Ramon\n(987) 416-3283'},
+    {title:'Thank You + Google Review',desc:'Best for building reviews',text:'Hi [Name]! Thank you for riding with Seacoast RVIP!\n\nIf you enjoyed the experience, a quick Google review means the world:\n\n'+G_URL+'\n\nThank you! — Ramon (987) 416-3283'},
+    {title:'Safe Flight',desc:'After airport drop-off',text:'Hi [Name]! Hope you made it through security smoothly! ✈️\n\nHave a safe trip. Seacoast RVIP will be ready when you return.\n\n— Ramon (987) 416-3283'}
+  ]},
+  {cat:'Ride Reminders',color:'#1d4ed8',items:[
+    {title:'Day Before Reminder',desc:'Night before the ride',text:'Hi [Name]! Quick reminder — your Seacoast RVIP ride is tomorrow [Date] at [Time].\n\nI will be at [Pickup] 5 minutes early in the black SUV.\n\n— Ramon (987) 416-3283'},
+    {title:'Morning of Ride',desc:'1–2 hours before pickup',text:'Good morning [Name]! Your ride is today at [Time].\n\nI will be at [Pickup] a few minutes early!\n\n— Ramon (987) 416-3283'},
+    {title:'On My Way',desc:'When leaving to pick up',text:'Hi [Name]! On my way — arriving at [Pickup] in about [X] minutes. 🚗\n\n— Ramon'},
+    {title:'I Have Arrived',desc:'Waiting outside',text:'Hi [Name]! I\'m outside at [Pickup] — black SUV, ready when you are!\n\n— Ramon'}
+  ]},
+  {cat:'Holidays & Events',color:'#775a19',items:[
+    {title:'New Year\'s Eve',desc:'Dec 28–30',text:'Hi [Name]! Happy almost New Year! 🥂\n\nPlanning to celebrate? Let Seacoast RVIP get you there safely.\n\nText me: (987) 416-3283 — Ramon'},
+    {title:'4th of July',desc:'July 1–3',text:'Hi [Name]! Happy 4th of July weekend! 🇺🇸\n\nHeading to fireworks? I have a safe ride for you!\n\n— Ramon (987) 416-3283'},
+    {title:'Casino Night',desc:'Casino weekends',text:'Hi [Name]! Feeling lucky this weekend? 🎰\n\nSeacoast RVIP runs to Foxwoods and Mohegan Sun — no parking hassle!\n\nText me: (987) 416-3283 — Ramon'},
+    {title:'Christmas Holidays',desc:'Dec 15–20',text:'Hi [Name]! Wishing you a wonderful holiday season! 🎄\n\nNeed airport rides or party transportation? Seacoast RVIP is here.\n\n— Ramon (987) 416-3283'}
+  ]},
+  {cat:'Business Growth',color:'#7c3aed',items:[
+    {title:'Referral Program',desc:'Ask loyal clients for referrals',text:'Hi [Name]! Quick favor — know anyone who needs reliable transportation in the Seacoast area?\n\nRefer a friend who books and I\'ll give you $10 off your next trip!\n\n— Ramon (987) 416-3283'},
+    {title:'Re-engagement',desc:'Quiet clients 60+ days',text:'Hi [Name]! It\'s been a while — just checking in! 👋\n\nSeacoast RVIP is here whenever you need a ride.\n\n— Ramon (987) 416-3283'},
+    {title:'Corporate Offer',desc:'For clients with businesses',text:'Hi [Name]! Does your company need professional transportation for clients or airport runs?\n\nSeacoast RVIP offers reliable corporate service with priority booking.\n\n— Ramon (987) 416-3283'}
+  ]}
 ];
 
-// Replace placeholder with real link
-MSG_TEMPLATES.forEach(function(cat) {
-  cat.messages.forEach(function(m) {
-    m.text = m.text.replace(/GOOGLE_REVIEW_LINK_PLACEHOLDER/g, GOOGLE_REVIEW_LINK);
-  });
-});
-
-function renderMessageTemplates() {
-  var container = document.getElementById('msg-templates');
-  if (!container) return;
-  loadBroadcastCount();
-
-  container.innerHTML = MSG_TEMPLATES.map(function(cat) {
-    return '<div style="margin-bottom:2rem">' +
-      '<div style="display:flex;align-items:center;gap:0.625rem;margin-bottom:0.875rem;padding-bottom:0.5rem;border-bottom:2px solid ' + cat.color + '">' +
-        '<span class="material-symbols-outlined" style="color:' + cat.color + ';font-size:18px">' + cat.icon + '</span>' +
-        '<div style="font-family:Work Sans,sans-serif;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:' + cat.color + '">' + cat.category + '</div>' +
-        '<div style="font-size:0.65rem;color:#bbb;margin-left:auto">' + cat.messages.length + ' templates</div>' +
-      '</div>' +
-      cat.messages.map(function(m) {
-        var safeText = JSON.stringify(m.text);
-        var safeTitle = JSON.stringify(m.title);
-        return '<div style="background:white;border:1px solid #f0f0f0;border-left:3px solid ' + cat.color + ';padding:0.875rem 1rem;margin-bottom:0.5rem;cursor:pointer;transition:all 0.15s" onclick="openMsgModal(' + safeText + ',' + safeTitle + ')" onmouseover="this.style.background=\'#fafafa\';this.style.boxShadow=\'0 2px 8px rgba(0,0,0,0.06)\'" onmouseout="this.style.background=\'white\';this.style.boxShadow=\'none\'">' +
-          '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem">' +
-            '<div style="flex:1">' +
-              '<div style="font-family:Work Sans,sans-serif;font-size:0.8rem;font-weight:600;color:#000;margin-bottom:3px">' + m.title + '</div>' +
-              '<div style="font-size:0.7rem;color:#999">' + m.desc + '</div>' +
-            '</div>' +
-            '<span class="material-symbols-outlined" style="font-size:18px;color:#ddd;flex-shrink:0">chevron_right</span>' +
-          '</div>' +
-          '<div style="margin-top:0.5rem;font-size:0.72rem;color:#bbb;line-height:1.5;max-height:36px;overflow:hidden">' + m.text.replace(/\n/g, ' · ').substring(0, 100) + '...</div>' +
+function buildMsgTpl() {
+  document.getElementById('msg-tpl-list').innerHTML=MSGS.map(function(cat){
+    return '<div style="margin-bottom:2rem">'+
+      '<div style="font-family:\'Work Sans\',sans-serif;font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:'+cat.color+';padding-bottom:.5rem;border-bottom:2px solid '+cat.color+';margin-bottom:.875rem">'+cat.cat+'</div>'+
+      cat.items.map(function(m){
+        return '<div class="msg-card" style="border-left-color:'+cat.color+'" onclick="openMsgM('+JSON.stringify(m.text)+','+JSON.stringify(m.title)+')">'+
+          '<div style="display:flex;justify-content:space-between;gap:1rem">'+
+            '<div><div style="font-family:\'Work Sans\',sans-serif;font-size:.78rem;font-weight:600;margin-bottom:2px">'+m.title+'</div><div style="font-size:.68rem;color:#aaa">'+m.desc+'</div></div>'+
+            '<span class="material-symbols-outlined" style="font-size:16px;color:#ddd;flex-shrink:0">chevron_right</span>'+
+          '</div>'+
+          '<div style="margin-top:.4rem;font-size:.68rem;color:#ccc;max-height:30px;overflow:hidden;line-height:1.4">'+m.text.replace(/\n/g,' · ').substring(0,90)+'...</div>'+
         '</div>';
-      }).join('') +
+      }).join('')+
     '</div>';
   }).join('');
 }
 
-function openMsgModal(text, title) {
-  document.getElementById('m-msg-title').textContent = title;
-  document.getElementById('m-msg-text').value = text;
-  document.getElementById('m-msg-phone').value = '';
-  var el = document.getElementById('m-msg-result');
-  if (el) el.style.display = 'none';
-  updateWALink(text, '');
-  document.getElementById('m-msg').style.display = 'block';
+function openMsgM(text,title){
+  document.getElementById('msg-ttl').textContent=title;
+  document.getElementById('msg-txt').value=text;
+  document.getElementById('msg-ph').value='';
+  document.getElementById('msg-res').style.display='none';
+  updWA(text,'');
+  openM('m-msg');
 }
-
-function updateWALink(text, phone) {
-  var num = phone.replace(/\D/g, '');
-  var link = num.length >= 8
-    ? 'https://wa.me/' + num + '?text=' + encodeURIComponent(text)
-    : 'https://wa.me/?text=' + encodeURIComponent(text);
-  var btn = document.getElementById('msg-whatsapp-btn');
-  if (btn) btn.href = link;
+function updWA(text,phone){
+  var n=phone.replace(/\D/g,'');
+  document.getElementById('msg-wa').href=(n.length>=7?'https://wa.me/'+n:'https://wa.me')+'?text='+encodeURIComponent(text);
 }
-
-function msgSendOne() {
-  var phone = document.getElementById('m-msg-phone').value.replace(/\D/g, '');
-  var text = document.getElementById('m-msg-text').value;
-  if (!phone || phone.length < 7) { showMsgResult('Enter a client phone number first', false); return; }
-  window.open('sms:' + phone + '&body=' + encodeURIComponent(text));
-  showMsgResult('Text app opened! Review and hit Send.', true);
+async function loadMsgCl(){
+  var sel=document.getElementById('msg-sel');
+  if(!db){sel.innerHTML='<option value="">Firebase not connected</option>';return;}
+  sel.innerHTML='<option value="">Loading...</option>';
+  try{var snap=await db.collection('clients').get();var opts=['<option value="">— Select client —</option>'];snap.forEach(function(d){var c=d.data();if(c.phone)opts.push('<option value="'+c.phone+'">'+x(c.name||c.phone)+' · '+c.phone+'</option>');});sel.innerHTML=opts.join('');}
+  catch(e){sel.innerHTML='<option value="">Error — check Firebase Rules</option>';}
 }
+function msgOne(){var p=document.getElementById('msg-ph').value.replace(/\D/g,'');var t=document.getElementById('msg-txt').value;if(p.length<7){showMR('Enter a phone number',false);return;}window.open('sms:+'+p+'&body='+encodeURIComponent(t));showMR('Text app opened!',true);}
+async function msgAll(){var t=document.getElementById('msg-txt').value;if(!t.trim()){showMR('Message is empty',false);return;}if(!db){showMR('Firebase not connected',false);return;}if(!confirm('Open text app for each client one by one?'))return;try{var snap=await db.collection('clients').get();var phones=[];snap.forEach(function(d){var p=d.data().phone;if(p)phones.push(p);});if(!phones.length){showMR('No clients found',false);return;}showMR('Opening for '+phones.length+' clients...',true);phones.forEach(function(ph,i){setTimeout(function(){window.open('sms:'+ph+'&body='+encodeURIComponent(t));},i*900);});}catch(e){showMR('Error: '+e.message,false);}}
+function msgCopy(){navigator.clipboard.writeText(document.getElementById('msg-txt').value).then(function(){showMR('Copied!',true);}).catch(function(){showMR('Copy manually',false);});}
+function showMR(msg,ok){var el=document.getElementById('msg-res');el.textContent=msg;el.style.background=ok?'#f0fdf4':'#fef2f2';el.style.color=ok?'#15803d':'#b91c1c';el.style.borderLeft=ok?'3px solid #16a34a':'3px solid #dc2626';el.style.padding='.75rem';el.style.display='block';}
+async function loadBcCount(){if(!db)return;try{var s=await db.collection('clients').get();document.getElementById('bc-cnt').textContent=s.size+' clients';}catch(e){}}
 
-async function msgSendAll() {
-  var text = document.getElementById('m-msg-text').value;
-  if (!text.trim()) { showMsgResult('Message is empty', false); return; }
-  if (!db_fb) { showMsgResult('Firebase not connected', false); return; }
-  if (!confirm('This will open your text app for each client one by one. Continue?')) return;
-  try {
-    var snap = await db_fb.collection('clients').get();
-    var phones = [];
-    snap.forEach(function(d) { var p = d.data().phone; if (p) phones.push(p); });
-    if (!phones.length) { showMsgResult('No clients found. Load Clients tab first.', false); return; }
-    showMsgResult('Opening for ' + phones.length + ' clients...', true);
-    phones.forEach(function(phone, i) {
-      setTimeout(function() {
-        window.open('sms:' + phone + '&body=' + encodeURIComponent(text));
-      }, i * 900);
-    });
-  } catch(e) { showMsgResult('Error: ' + e.message, false); }
-}
+// ══════════════ MODAL HELPERS ══════════════
+function openM(id){document.getElementById(id).classList.add('open');document.body.style.overflow='hidden';}
+function closeM(id){document.getElementById(id).classList.remove('open');document.body.style.overflow='';}
 
-function msgCopy() {
-  var text = document.getElementById('m-msg-text').value;
-  navigator.clipboard.writeText(text).then(function() {
-    showMsgResult('Copied to clipboard!', true);
-  }).catch(function() { showMsgResult('Select and copy the text above manually', false); });
-}
+// ══════════════ TOAST ══════════════
+function toast(msg){var t=document.getElementById('toast');t.textContent=msg;t.style.display='block';setTimeout(function(){t.style.display='none';},3000);}
 
-function showMsgResult(msg, ok) {
-  var el = document.getElementById('m-msg-result');
-  if (!el) return;
-  el.textContent = msg;
-  el.style.background = ok ? '#f0fdf4' : '#fef2f2';
-  el.style.color = ok ? '#15803d' : '#dc2626';
-  el.style.borderLeft = ok ? '3px solid #16a34a' : '3px solid #dc2626';
-  el.style.padding = '0.75rem';
-  el.style.display = 'block';
-}
-
-async function loadBroadcastCount() {
-  var el = document.getElementById('broadcast-count');
-  if (!el || !db_fb) { if(el) el.textContent = 'Firebase not ready'; return; }
-  try {
-    var snap = await db_fb.collection('clients').get();
-    el.textContent = snap.size + ' clients';
-  } catch(e) { el.textContent = '—'; }
-}
-
-// ── OVERRIDE setTab TO HANDLE ALL 3 SECTIONS ─────────────
-var _baseSetTab = setTab;
-setTab = function(tab, btn) {
-  // Update button styles
-  document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('on'); });
-  if (btn) btn.classList.add('on');
-
-  // Hide all sections
-  ['section-bookings','section-clients','section-messages'].forEach(function(id) {
-    var el = document.getElementById(id);
-    if (el) el.style.display = 'none';
-  });
-
-  if (tab === 'clients') {
-    var sc = document.getElementById('section-clients');
-    if (sc) sc.style.display = 'block';
-    loadClients();
-  } else if (tab === 'messages') {
-    var sm = document.getElementById('section-messages');
-    if (sm) sm.style.display = 'block';
-    renderMessageTemplates();
-  } else {
-    var sb = document.getElementById('section-bookings');
-    if (sb) sb.style.display = 'block';
-    activeTab = tab;
-    render();
-  }
-};
-
-// Close msg modal on bg click
-document.addEventListener('DOMContentLoaded', function() {
-  var mm = document.getElementById('m-msg');
-  if (mm) {
-    mm.addEventListener('click', function(e) { if (e.target === this) this.style.display = 'none'; });
-  }
-  // Live update whatsapp link
-  var ta = document.getElementById('m-msg-text');
-  var ph = document.getElementById('m-msg-phone');
-  if (ta) ta.addEventListener('input', function() { if(ph) updateWALink(this.value, ph.value); });
-  if (ph) ph.addEventListener('input', function() { if(ta) updateWALink(ta.value, this.value); });
+// ══════════════ BOOT ══════════════
+window.addEventListener('DOMContentLoaded',function(){
+  document.querySelectorAll('.overlay').forEach(function(el){el.addEventListener('click',function(e){if(e.target===this)closeM(this.id);});});
+  var ta=document.getElementById('msg-txt'),ph=document.getElementById('msg-ph');
+  if(ta)ta.addEventListener('input',function(){updWA(this.value,ph?ph.value:'');});
+  if(ph)ph.addEventListener('input',function(){updWA(ta?ta.value:'',this.value);});
+  if(localStorage.getItem('rv-auth')==='1'){document.getElementById('login-pg').style.display='none';document.getElementById('dash-pg').style.display='block';initDash();}
+  else{setTimeout(function(){document.getElementById('pwd-inp').focus();},100);}
 });
-
 </script>
-
-<!-- ADD TO CLIENT HISTORY MODAL -->
-<div class="overlay" id="m-history" style="display:none">
-  <div class="modal" style="max-width:420px">
-    <div class="modal-hd">
-      <h2 style="font-family:'Times New Roman',serif">Add Trip to Client Account</h2>
-      <button onclick="document.getElementById('m-history').style.display='none'" style="background:none;border:none;font-size:1.25rem;color:#888;cursor:pointer">✕</button>
-    </div>
-    <div style="padding:1.5rem">
-      <div id="history-booking-info" style="background:#f9f9f9;border-left:3px solid #775a19;padding:1rem;margin-bottom:1.25rem;font-size:0.85rem"></div>
-      <label style="font-family:Work Sans,sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:#888;display:block;margin-bottom:6px">Client Phone Number</label>
-      <div style="display:flex;gap:6px;margin-bottom:0.75rem">
-        <div style="background:#f9f9f9;border:1px solid #e2e2e2;border-bottom:2px solid #c4c7c7;padding:0.6rem 0.75rem;font-size:0.875rem;color:#444;white-space:nowrap">+1</div>
-        <input id="history-phone" type="tel" placeholder="(987) 416-3283"
-          style="flex:1;background:#f9f9f9;border:1px solid #e2e2e2;border-bottom:2px solid #c4c7c7;padding:0.6rem 0.75rem;font-family:Inter,sans-serif;font-size:0.875rem;outline:none"/>
-      </div>
-      <label style="font-family:Work Sans,sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:#888;display:block;margin-bottom:6px">Trip Status</label>
-      <select id="history-status" style="width:100%;background:#f9f9f9;border:1px solid #e2e2e2;border-bottom:2px solid #c4c7c7;padding:0.6rem 0.75rem;font-family:Inter,sans-serif;font-size:0.875rem;outline:none;appearance:none;margin-bottom:1.25rem">
-        <option value="completed">Completed — counts toward loyalty</option>
-        <option value="upcoming">Upcoming — not yet completed</option>
-        <option value="paid">Paid — waiting for ride</option>
-      </select>
-      <div id="history-error" style="display:none;color:#dc2626;font-size:0.8rem;margin-bottom:0.75rem;padding:0.5rem;background:#fef2f2;border-left:2px solid #dc2626"></div>
-      <div id="history-success" style="display:none;color:#15803d;font-size:0.8rem;margin-bottom:0.75rem;padding:0.75rem;background:#f0fdf4;border-left:2px solid #16a34a">
-        ✅ Trip added to client account!
-      </div>
-      <button onclick="saveToClientHistory()" class="bd" style="width:100%;padding:0.875rem;justify-content:center;font-size:0.8rem">
-        <span class="material-symbols-outlined" style="font-size:16px">person_add</span>
-        Add to Client Account
-      </button>
-      <p style="font-family:Inter,sans-serif;font-size:0.7rem;color:#aaa;text-align:center;margin-top:0.75rem">Client must have an account at seacoastrvip.com/account.html</p>
-    </div>
-  </div>
-</div>
-
-<!-- CLIENT DETAIL MODAL -->
-<div class="overlay" id="m-client" style="display:none">
-  <div class="modal" style="max-width:460px">
-    <div class="modal-hd">
-      <h2 id="m-client-title" style="font-family:'Times New Roman',serif">Client Details</h2>
-      <button onclick="document.getElementById('m-client').style.display='none'" style="background:none;border:none;font-size:1.25rem;color:#888;cursor:pointer">✕</button>
-    </div>
-    <div style="padding:1.5rem" id="m-client-body"></div>
-  </div>
-</div>
-
-
-<!-- MESSAGE MODAL -->
-<div class="overlay" id="m-msg" style="display:none">
-  <div class="modal" style="max-width:500px">
-    <div class="modal-hd">
-      <h2 id="m-msg-title" style="font-family:'Times New Roman',serif">Send Message</h2>
-      <button onclick="document.getElementById('m-msg').style.display='none'" style="background:none;border:none;font-size:1.25rem;color:#888;cursor:pointer">✕</button>
-    </div>
-    <div style="padding:1.5rem">
-
-      <!-- Message preview / edit -->
-      <label style="font-family:Work Sans,sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:#888;display:block;margin-bottom:6px">Message (edit before sending)</label>
-      <textarea id="m-msg-text" rows="7" style="width:100%;background:#f9f9f9;border:1px solid #e2e2e2;border-bottom:2px solid #c4c7c7;padding:0.75rem;font-family:Inter,sans-serif;font-size:0.85rem;outline:none;resize:vertical;margin-bottom:1.25rem;box-sizing:border-box;line-height:1.6"></textarea>
-
-      <!-- Send options -->
-      <div style="margin-bottom:1rem">
-        <label style="font-family:Work Sans,sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:#888;display:block;margin-bottom:6px">Send to specific client (optional)</label>
-        <input id="m-msg-phone" type="tel" placeholder="(987) 416-3283 — leave blank to send to all"
-          style="width:100%;background:#f9f9f9;border:1px solid #e2e2e2;border-bottom:2px solid #c4c7c7;padding:0.625rem;font-family:Inter,sans-serif;font-size:0.875rem;outline:none;box-sizing:border-box"/>
-      </div>
-
-      <div id="m-msg-result" style="display:none;font-size:0.8rem;padding:0.75rem;margin-bottom:1rem;border-radius:2px"></div>
-
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.625rem">
-        <button onclick="msgSendOne()" class="bd" style="padding:0.875rem;justify-content:center;flex-direction:column;gap:3px;font-size:0.65rem">
-          <span class="material-symbols-outlined" style="font-size:18px">sms</span>Text Client
-        </button>
-        <a id="msg-whatsapp-btn" href="#" target="_blank" class="bgr" style="padding:0.875rem;justify-content:center;flex-direction:column;gap:3px;font-size:0.65rem;text-decoration:none">
-          <span class="material-symbols-outlined" style="font-size:18px">chat</span>WhatsApp
-        </a>
-        <button onclick="msgSendAll()" class="bg" style="padding:0.875rem;justify-content:center;flex-direction:column;gap:3px;font-size:0.65rem">
-          <span class="material-symbols-outlined" style="font-size:18px">group</span>Send All
-        </button>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.625rem;margin-top:0.625rem">
-        <button onclick="msgCopy()" class="bo" style="padding:0.75rem;justify-content:center;font-size:0.65rem">
-          <span class="material-symbols-outlined" style="font-size:15px">content_copy</span>Copy Text
-        </button>
-        <button onclick="document.getElementById('m-msg').style.display='none'" class="bo" style="padding:0.75rem;justify-content:center;font-size:0.65rem;color:#888">Cancel</button>
-      </div>
-      <p style="font-family:Inter,sans-serif;font-size:0.65rem;color:#bbb;text-align:center;margin-top:0.875rem">"Send All" opens your text app for each client — approve each one individually.</p>
-    </div>
-  </div>
-</div>
-
 </body>
 </html>
