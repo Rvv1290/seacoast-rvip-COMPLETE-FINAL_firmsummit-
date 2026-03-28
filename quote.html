@@ -6,6 +6,7 @@
 <title>Get a Quote | Seacoast RVIP</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<style>
 .material-symbols-outlined{font-variation-settings:"FILL" 0,"wght" 300,"GRAD" 0,"opsz" 24}
 
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -240,69 +241,5 @@ img{max-width:100%}
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-<script>
-(function(){
-  var cfg={apiKey:"AIzaSyDGel0ktZDQYcdlOuoZo4bAqZWCuGvOVbc",authDomain:"seacoast-rip.firebaseapp.com",projectId:"seacoast-rip",storageBucket:"seacoast-rip.firebasestorage.app",messagingSenderId:"684535453116",appId:"1:684535453116:web:922c843b5bad3b81ad47b9"};
-  try{if(!firebase.apps.length)firebase.initializeApp(cfg);window._db=firebase.firestore();}catch(e){window._db=null;}
-})();
-
-function showToast(m){var t=document.getElementById('toast');if(!t)return;t.textContent=m;t.style.display='block';setTimeout(function(){t.style.display='none';},3000);}
-function toggleMenu(){
-  var m=document.getElementById('mob-nav'),open=m.style.display==='flex';
-  m.style.display=open?'none':'flex';
-  document.body.style.overflow=open?'':'hidden';
-  var bars=document.querySelectorAll('.ham-btn span');
-  if(!open){bars[0].style.transform='translateY(7px) rotate(45deg)';bars[1].style.opacity='0';bars[2].style.transform='translateY(-7px) rotate(-45deg)';}
-  else{bars[0].style.transform='';bars[1].style.opacity='1';bars[2].style.transform='';}
-}
-function checkW(){
-  var d=document.getElementById('nav-d');
-  var h=document.querySelector('.ham-btn');
-  if(!d||!h)return;
-  if(window.innerWidth>=768){d.style.display='flex';h.style.display='none';var m=document.getElementById('mob-nav');if(m&&m.style.display==='flex'){m.style.display='none';document.body.style.overflow='';var bars=document.querySelectorAll('.ham-btn span');bars[0].style.transform='';bars[1].style.opacity='1';bars[2].style.transform='';}}
-  else{d.style.display='none';h.style.display='flex';}
-}
-window.addEventListener('resize',checkW);
-window.addEventListener('DOMContentLoaded',checkW);
-
-async function submitForm(e,fid,okid,btnid){
-  e.preventDefault();
-  var f=document.getElementById(fid);
-  var btn=document.getElementById(btnid);
-  btn.textContent='Sending...';btn.disabled=true;
-
-  // Collect form data
-  var qdata = {
-    id:          'q_'+Date.now().toString(),
-    name:        (f.querySelector('[name="Name"]')||{}).value||'',
-    phone:       (f.querySelector('[name="Phone"]')||{}).value||'',
-    email:       (f.querySelector('[name="Email"]')||{}).value||'',
-    service:     (f.querySelector('[name="Service"]')||{}).value||'',
-    date:        (f.querySelector('[name="Date"]')||{}).value||'',
-    time:        (f.querySelector('[name="Time"]')||{}).value||'',
-    pickup:      (f.querySelector('[name="Pickup"]')||{}).value||'',
-    destination: (f.querySelector('[name="Destination"]')||{}).value||'',
-    passengers:  (f.querySelector('[name="Passengers"]')||{}).value||'1',
-    notes:       (f.querySelector('[name="Notes"]')||{}).value||'',
-    status:      'new',
-    source:      'website-quote',
-    createdAt:   new Date().toISOString()
-  };
-
-  // 1. Save to Firebase quotes collection
-  if(window._db){
-    try{ await window._db.collection('quotes').doc(qdata.id).set(qdata); }
-    catch(fe){ console.warn('Firebase quote save:',fe.message); }
-  }
-
-  // 2. Send email via FormSubmit
-  try{ await fetch(f.action,{method:'POST',body:new FormData(f)}); }catch(err){}
-
-  document.getElementById(okid).style.display='block';
-  btn.textContent='Sent ✓';
-  f.reset();
-  window.scrollTo(0,0);
-}
-</script>
 </body>
 </html>
