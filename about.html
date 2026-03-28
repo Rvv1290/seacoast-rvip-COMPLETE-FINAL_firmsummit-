@@ -1,240 +1,461 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
+
+<html class="light" lang="en"><head>
 <meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>About Us | Seacoast RVIP</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries">
+function shareRVIP() {
+  if (navigator.share) {
+    navigator.share({
+      title: 'Seacoast RVIP — The Ride You Can Count On',
+      text: 'Premium private car service in the NH Seacoast area.',
+      url: 'https://seacoast-rvip-complete-final-firmsu.vercel.app'
+    }).catch(function(){});
+  } else {
+    var url = 'https://seacoast-rvip-complete-final-firmsu.vercel.app';
+    navigator.clipboard && navigator.clipboard.writeText(url).then(function(){
+      alert('Link copied! Share it with your friends.');
+    }).catch(function(){
+      prompt('Copy this link:', url);
+    });
+  }
+}
+
+</script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif:wght@400;700&amp;family=Inter:wght@400;500;600&amp;family=Work+Sans:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "background": "#f9f9f9",
+                        "surface-bright": "#f9f9f9",
+                        "primary-container": "#1c1b1b",
+                        "inverse-surface": "#2f3131",
+                        "surface": "#f9f9f9",
+                        "surface-container-highest": "#e2e2e2",
+                        "outline-variant": "#c4c7c7",
+                        "inverse-primary": "#c8c6c5",
+                        "inverse-on-surface": "#f1f1f1",
+                        "on-background": "#1a1c1c",
+                        "secondary": "#775a19",
+                        "on-primary-fixed": "#1c1b1b",
+                        "on-secondary": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "surface-variant": "#e2e2e2",
+                        "surface-tint": "#5f5e5e",
+                        "outline": "#747878",
+                        "on-surface": "#1a1c1c",
+                        "error": "#ba1a1a",
+                        "surface-dim": "#dadada",
+                        "on-primary-fixed-variant": "#474646",
+                        "tertiary-container": "#1b1c1c",
+                        "on-secondary-container": "#785a1a",
+                        "on-secondary-fixed-variant": "#5d4201",
+                        "secondary-fixed-dim": "#e9c176",
+                        "primary-fixed": "#e5e2e1",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container-high": "#e8e8e8",
+                        "primary-fixed-dim": "#c8c6c5",
+                        "primary": "#000000",
+                        "secondary-fixed": "#ffdea5",
+                        "on-primary-container": "#858383",
+                        "on-tertiary-container": "#858383",
+                        "on-tertiary": "#ffffff",
+                        "tertiary-fixed-dim": "#c8c6c5",
+                        "secondary-container": "#fed488",
+                        "on-surface-variant": "#444748",
+                        "on-secondary-fixed": "#261900",
+                        "on-error": "#ffffff",
+                        "tertiary-fixed": "#e4e2e1",
+                        "on-tertiary-fixed": "#1b1c1c",
+                        "surface-container": "#eeeeee",
+                        "surface-container-low": "#f3f3f3",
+                        "on-tertiary-fixed-variant": "#474747",
+                        "on-primary": "#ffffff",
+                        "tertiary": "#000000",
+                        "error-container": "#ffdad6"
+                    },
+                    fontFamily: {
+                        "headline": ["Noto Serif"],
+                        "body": ["Inter"],
+                        "label": ["Work Sans"]
+                    },
+                    borderRadius: { "DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem" },
+                },
+            },
+        }
+    </script>
 <style>
-.material-symbols-outlined{font-variation-settings:"FILL" 0,"wght" 300,"GRAD" 0,"opsz" 24}
-
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-body{font-family:'Inter',sans-serif;color:#111;background:#fff}
-a{text-decoration:none;color:inherit}
-img{max-width:100%}
-
-/* ── LAYOUT ── */
-.W{max-width:900px;margin:0 auto;padding:0 1.25rem}
-.page-body{padding-top:68px}
-
-/* ── NAV ── */
-.nav{position:fixed;top:0;left:0;right:0;height:68px;background:rgba(255,255,255,.97);backdrop-filter:blur(10px);border-bottom:1px solid #eee;z-index:300}
-.nav .W{height:68px;display:flex;align-items:center;justify-content:space-between}
-.nav-logo{font-family:'Times New Roman',serif;font-size:1.25rem;font-weight:700;letter-spacing:-.01em}
-.nav-links{display:none;align-items:center;gap:1.75rem}
-.nav-links a{font-size:.78rem;font-weight:500;color:#555;text-transform:uppercase;letter-spacing:.05em;transition:color .2s}
-.nav-links a:hover,.nav-links a.act{color:#000}
-.nav-right{display:flex;align-items:center;gap:.75rem}
-.btn-book{background:#000;color:#fff;padding:.5rem 1.1rem;font-size:.73rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;border:none;cursor:pointer;border-bottom:2px solid #775a19;white-space:nowrap}
-.ham-btn{display:flex;flex-direction:column;gap:5px;cursor:pointer;background:none;border:none;padding:.375rem}
-.ham-btn span{display:block;width:22px;height:2px;background:#000;transition:all .3s}
-.mob-nav{display:none;position:fixed;inset:0;background:#0a0a0a;z-index:299;flex-direction:column;padding:80px 1.5rem 2rem;gap:0;overflow-y:auto}
-.mob-nav a{font-size:1rem;font-weight:600;color:#fff;padding:.875rem 0;border-bottom:1px solid rgba(255,255,255,.08);display:block;text-transform:uppercase;letter-spacing:.06em}
-.mob-nav a:hover{color:#775a19}
-.mob-nav .mob-actions{margin-top:1.5rem;display:flex;gap:.75rem;flex-wrap:wrap}
-
-/* ── FOOTER ── */
-.footer{background:#0a0a0a;color:#fff;padding:3.5rem 0 1.5rem;margin-top:5rem}
-.footer-g{display:grid;grid-template-columns:1fr;gap:2rem;padding-bottom:2rem;border-bottom:1px solid rgba(255,255,255,.07)}
-.footer-logo{font-family:'Times New Roman',serif;font-size:1.35rem;font-weight:700;margin-bottom:.5rem}
-.footer-tag{font-size:.78rem;color:rgba(255,255,255,.35);line-height:1.7;margin-bottom:1rem}
-.ftr-ht{font-size:.62rem;text-transform:uppercase;letter-spacing:.15em;color:#775a19;font-weight:600;margin-bottom:.875rem}
-.ftr-links a{display:block;font-size:.78rem;color:rgba(255,255,255,.45);margin-bottom:.5rem;transition:color .2s}
-.ftr-links a:hover{color:#fff}
-.footer-bot{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;padding-top:1.5rem;gap:.75rem}
-.footer-copy{font-size:.68rem;color:rgba(255,255,255,.2)}
-.footer-legal{display:flex;gap:1.25rem}
-.footer-legal a{font-size:.68rem;color:rgba(255,255,255,.25);transition:color .2s}
-.footer-legal a:hover{color:#775a19}
-
-/* ── BUTTONS ── */
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;font-family:'Work Sans',sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:.08em;border:none;cursor:pointer;transition:opacity .18s;white-space:nowrap}
-.btn:hover{opacity:.82}
-.btn-black{background:#000;color:#fff;padding:.875rem 1.75rem;font-size:.8rem;border-bottom:3px solid #775a19}
-.btn-ghost{background:transparent;color:#000;padding:.875rem 1.75rem;font-size:.8rem;border:1.5px solid #000;transition:all .18s}
-.btn-ghost:hover{background:#000;color:#fff;opacity:1}
-.btn-gold{background:#775a19;color:#fff;padding:.5rem 1rem;font-size:.72rem;border-bottom:2px solid #5d4201}
-.btn-sm{padding:.4rem .8rem;font-size:.68rem}
-.btn-green{background:#16a34a;color:#fff;padding:.5rem 1rem;font-size:.72rem}
-.btn-red{background:#dc2626;color:#fff;padding:.5rem 1rem;font-size:.72rem}
-.btn-outline{background:#fff;color:#000;padding:.5rem 1rem;font-size:.72rem;border:1px solid #ddd}
-.btn-blue{background:#1d4ed8;color:#fff;padding:.5rem 1rem;font-size:.72rem}
-.btn-purple{background:#7c3aed;color:#fff;padding:.5rem 1rem;font-size:.72rem}
-.btn-full{width:100%;justify-content:center}
-
-/* ── FORMS ── */
-.finp{width:100%;background:#f7f7f7;border:0;border-bottom:2px solid #ddd;padding:.7rem 0;font-family:Inter,sans-serif;font-size:.95rem;outline:none;transition:border-color .2s}
-.finp:focus{border-bottom-color:#000}
-.fsel{width:100%;background:#f7f7f7;border:0;border-bottom:2px solid #ddd;padding:.7rem 0;font-family:Inter,sans-serif;font-size:.95rem;outline:none;appearance:none}
-.flbl{font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;color:#777;display:block;margin-bottom:5px;font-family:'Work Sans',sans-serif;font-weight:600}
-.fg{display:grid;gap:1.25rem}
-.fg-2{grid-template-columns:1fr 1fr}
-.fg-span{grid-column:1/-1}
-
-/* ── CARDS ── */
-.card{background:#fff;border-left:3px solid #775a19;padding:1.25rem}
-.card-flat{background:#fff;border:1px solid #ebebeb;padding:1.25rem}
-.card-dark{background:#0a0a0a;color:#fff;padding:1.5rem;border-bottom:4px solid #775a19}
-
-/* ── BADGES ── */
-.bdg{display:inline-block;padding:2px 8px;font-size:.6rem;font-family:'Work Sans',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.05em;border-radius:2px}
-.bdg-g{background:#dcfce7;color:#15803d}
-.bdg-b{background:#dbeafe;color:#1d4ed8}
-.bdg-y{background:#fef9c3;color:#92400e}
-.bdg-r{background:#fee2e2;color:#b91c1c}
-.bdg-p{background:#ede9fe;color:#6d28d9}
-
-/* ── OVERLAY / MODAL ── */
-.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:400;overflow-y:auto;padding:1rem}
-.overlay.vis{display:flex;align-items:flex-start;justify-content:center}
-.modal{background:#fff;width:100%;margin:2rem auto}
-.modal-hd{padding:1rem 1.25rem;border-bottom:1px solid #eee;display:flex;align-items:center;justify-content:space-between}
-.modal-hd h3{font-family:'Times New Roman',serif;font-size:1rem;font-weight:700}
-.modal-x{background:none;border:none;font-size:1.2rem;cursor:pointer;color:#888;line-height:1;padding:0}
-.modal-body{padding:1.5rem}
-
-/* ── TOAST ── */
-#toast{position:fixed;bottom:1.25rem;left:50%;transform:translateX(-50%);background:#111;color:#fff;padding:.7rem 1.4rem;font-family:'Work Sans',sans-serif;font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;border-bottom:2px solid #775a19;z-index:9999;display:none;white-space:nowrap}
-
-/* ── SECTION ── */
-.sec{padding:4rem 0}
-.sec-sm{padding:2.5rem 0}
-.sec-title{font-family:'Times New Roman',serif;font-size:2rem;font-weight:700;line-height:1.15}
-.sec-sub{font-size:.88rem;color:#555;line-height:1.75;max-width:520px;margin-top:.625rem}
-.gold{color:#775a19}
-.hr{height:1px;background:#eee;margin:2rem 0}
-
-/* ── GRID ── */
-.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem}
-.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem}
-
-/* ── RESPONSIVE ── */
-@media(min-width:768px){
-  .nav-links{display:flex}
-  .ham-btn{display:none}
-  .footer-g{grid-template-columns:1.5fr 1fr 1fr}
-}
-@media(max-width:767px){
-  .grid-2,.grid-3,.fg-2{grid-template-columns:1fr!important}
-  .fg-2 .fg-span{grid-column:1}
-  .sec-title{font-size:1.6rem}
-}
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-nav {
+            background-color: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+        }
+        .asymmetric-grid {
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+        }
+    </style>
 
 
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.json"/>
+  <meta name="theme-color" content="#775a19"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="Seacoast RVIP"/>
+  <link rel="apple-touch-icon" href="/seacoast_rvip_favicon_180.png"/>
+  <link rel="icon" type="image/png" sizes="32x32" href="/seacoast_rvip_favicon_32.png"/>
+<style>
+.font-headline,h1,h2,h3,h4{font-family:"Times New Roman",Times,Georgia,serif!important}
+/* Expand content to full width */
+.max-w-7xl{max-width:100%!important}
+.max-w-3xl{max-width:900px!important}
+.max-w-5xl{max-width:100%!important}
 </style>
 </head>
-<body>
-
-<div id="toast"></div>
-<nav class="nav"><div class="W">
-  <a href="index.html" class="nav-logo">Seacoast RVIP</a>
-  <div id="nav-d" class="nav-links"><a href="index.html" class="">Home</a><a href="services.html" class="">Services</a><a href="about.html" class="act">About</a><a href="contact.html" class="">Contact</a><a href="account.html" style="font-size:.73rem;font-weight:600;color:#555;text-transform:uppercase;letter-spacing:.05em">My Account</a></div>
-  <div class="nav-right">
-    <a href="schedule.html"><button class="btn-book">Book Now</button></a>
-    <button class="ham-btn" onclick="toggleMenu()"><span></span><span></span><span></span></button>
+<body class="bg-background text-on-background font-body selection:bg-secondary-container selection:text-on-secondary-container">
+<div id="pwa-install-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:100;background:#000;color:white;padding:1rem 1.25rem;align-items:center;justify-content:space-between;border-top:2px solid #775a19;gap:1rem">
+  <div>
+    <div style="font-family:'Times New Roman',serif;font-weight:700;font-size:0.95rem">Seacoast RVIP</div>
+    <div style="font-size:0.7rem;color:#999;font-family:sans-serif">Add to your home screen</div>
   </div>
-</div></nav>
-<div id="mob-nav" class="mob-nav">
-  <a href="index.html">Home</a><a href="services.html">Services</a><a href="about.html">About</a><a href="contact.html">Contact</a><a href="account.html">My Account</a><a href="quote.html">Get a Quote</a><a href="schedule.html">Book a Ride</a>
-  <div class="mob-actions">
-    <a href="schedule.html"><button class="btn btn-gold">Book a Ride</button></a>
-    <a href="quote.html"><button class="btn btn-outline">Get Quote</button></a>
-  </div>
-  <div style="margin-top:auto;padding-top:2rem;border-top:1px solid rgba(255,255,255,.08)">
-    <a href="tel:+19874163283" style="color:#775a19;font-size:.85rem;font-weight:600">(987) 416-3283</a>
-  </div>
-</div>
-<div class="page-body">
-
-<section class="sec">
-  <div class="W">
-    <div class="grid-2" style="align-items:start;gap:3.5rem">
-      <div>
-        <div style="font-size:.68rem;text-transform:uppercase;letter-spacing:.2em;color:#775a19;font-weight:600;margin-bottom:.75rem">About Us</div>
-        <h1 class="sec-title">Your Trusted Driver<br>for 2+ Years</h1>
-        <div style="margin-top:1.5rem;display:flex;flex-direction:column;gap:1.1rem">
-          <p style="font-size:.88rem;color:#444;line-height:1.8">Seacoast RVIP is a private pre-booked car service operating in the NH Seacoast area. Founded on the belief that personal service and reliability matter more than anything else.</p>
-          <p style="font-size:.88rem;color:#444;line-height:1.8">We built a loyal client base not through advertising — but by showing up on time, knowing our clients by name, and making every ride feel like a premium experience.</p>
-          <p style="font-size:.88rem;color:#444;line-height:1.8">What Uber and Lyft can never offer: a driver who remembers your name, your preferences, and treats you like a VIP every single time.</p>
-        </div>
-      </div>
-      <div>
-        <div style="background:#000;color:#fff;padding:2rem;margin-bottom:1.25rem">
-          <div style="font-family:'Times New Roman',serif;font-size:3rem;font-weight:700;color:#775a19">2+</div>
-          <div style="font-size:.75rem;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.5)">Years of Service</div>
-        </div>
-        <div class="card" style="margin-bottom:0">
-          <h3 style="font-family:'Times New Roman',serif;font-size:1rem;font-weight:700;margin-bottom:1rem">Our Promise</h3>
-          <div style="display:flex;flex-direction:column;gap:.625rem;font-size:.83rem;color:#444">
-            <div>✓ Always 5–10 minutes early</div>
-            <div>✓ Clean professional black SUV</div>
-            <div>✓ Flat-rate transparent pricing</div>
-            <div>✓ No surge pricing, ever</div>
-            <div>✓ Flight tracking for airport runs</div>
-            <div>✓ Discreet and professional</div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="hr" style="margin:3rem 0"></div>
-    <div style="text-align:center">
-      <h2 style="font-family:'Times New Roman',serif;font-size:1.5rem;font-weight:700;margin-bottom:1.5rem">Service Area</h2>
-      <div style="display:flex;flex-wrap:wrap;gap:.625rem;justify-content:center">
-        <span style="background:#f0f0f0;padding:.375rem .875rem;font-size:.83rem">Hampton, NH</span><span style="background:#f0f0f0;padding:.375rem .875rem;font-size:.83rem">Portsmouth, NH</span><span style="background:#f0f0f0;padding:.375rem .875rem;font-size:.83rem">Exeter, NH</span><span style="background:#f0f0f0;padding:.375rem .875rem;font-size:.83rem">Rye, NH</span><span style="background:#f0f0f0;padding:.375rem .875rem;font-size:.83rem">North Hampton, NH</span><span style="background:#f0f0f0;padding:.375rem .875rem;font-size:.83rem">New Castle, NH</span><span style="background:#f0f0f0;padding:.375rem .875rem;font-size:.83rem">Salisbury, MA</span><span style="background:#f0f0f0;padding:.375rem .875rem;font-size:.83rem">Newburyport, MA</span><span style="background:#f0f0f0;padding:.375rem .875rem;font-size:.83rem">Seabrook Beach, NH</span>
-      </div>
-    </div>
-  </div>
-</section>
-
+  <button onclick="installPWA()" style="background:#775a19;color:white;border:none;padding:0.625rem 1.25rem;font-family:sans-serif;font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;cursor:pointer;white-space:nowrap">Install App</button>
+  <button onclick="document.getElementById('pwa-install-banner').style.display='none'" style="background:none;border:none;color:#555;cursor:pointer;font-size:1.25rem;padding:0.25rem">✕</button>
 </div>
 
-<footer class="footer"><div class="W">
-  <div class="footer-g">
-    <div>
-      <div class="footer-logo">Seacoast RVIP</div>
-      <div class="footer-tag">The Ride You Can Count On.<br>Premium private car service · NH Seacoast</div>
-      <div style="display:flex;gap:1rem">
-        <a href="tel:+19874163283" style="color:#775a19;font-size:.75rem;font-weight:600">(987) 416-3283</a>
-        <a href="/cdn-cgi/l/email-protection#295b484446475f5f1b191b1f181169404a45465c4d074a4644" style="color:#775a19;font-size:.75rem;font-weight:600">Email</a>
-      </div>
-    </div>
-    <div>
-      <div class="ftr-ht">Navigate</div>
-      <div class="ftr-links">
-        <a href="index.html">Home</a><a href="services.html">Services &amp; Pricing</a>
-        <a href="about.html">About</a><a href="contact.html">Contact</a>
-        <a href="schedule.html">Book a Ride</a><a href="quote.html">Get a Quote</a>
-        <a href="account.html">My Account</a>
-      </div>
-    </div>
-    <div>
-      <div class="ftr-ht">Contact</div>
-      <div class="ftr-links">
-        <a href="tel:+19874163283">(987) 416-3283</a>
-        <a href="/cdn-cgi/l/email-protection#dba9bab6b4b5adade9ebe9edeae39bb2b8b7b4aebff5b8b4b6"><span class="__cf_email__" data-cfemail="bdcfdcd0d2d3cbcb8f8d8f8b8c85fdd4ded1d2c8d993ded2d0">[email&#160;protected]</span></a>
-      </div>
-      <a href="schedule.html" style="display:inline-block;margin-top:1rem;background:#775a19;color:#fff;padding:.6rem 1.1rem;font-family:'Work Sans',sans-serif;font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;border-bottom:2px solid #5d4201">Book Now →</a>
-    </div>
-  </div>
-  <div class="footer-bot">
-    <span class="footer-copy">© 2025 Seacoast RVIP LLC · All rights reserved</span>
-    <div class="footer-legal"><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a></div>
-  </div>
-</div></footer>
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+<!-- TopAppBar -->
+<nav style="position:fixed;top:0;width:100%;z-index:48;background:rgba(255,255,255,0.95);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid rgba(0,0,0,0.06);transition:all 0.3s">
+<div style="display:flex;justify-content:space-between;align-items:center;max-width:100%;padding:0 2rem;height:68px">
 
-function showToast(m){var t=document.getElementById('toast');if(!t)return;t.textContent=m;t.style.display='block';setTimeout(function(){t.style.display='none';},3000);}
-function toggleMenu(){
-  var m=document.getElementById('mob-nav'),open=m.style.display==='flex';
-  m.style.display=open?'none':'flex';
-  document.body.style.overflow=open?'':'hidden';
-  var bars=document.querySelectorAll('.ham-btn span');
-  if(!open){bars[0].style.transform='translateY(7px) rotate(45deg)';bars[1].style.opacity='0';bars[2].style.transform='translateY(-7px) rotate(-45deg)';}
-  else{bars[0].style.transform='';bars[1].style.opacity='1';bars[2].style.transform='';}
+  <!-- Logo -->
+  <a href="index.html" style="font-family:'Times New Roman',Times,serif;font-size:1.35rem;font-weight:700;color:#000;text-decoration:none;letter-spacing:-0.01em;white-space:nowrap">Seacoast RVIP</a>
+
+  <!-- Desktop links -->
+  <div id="nav-desktop" style="display:none;align-items:center;gap:2.5rem" class="desktop-nav">
+    <a href="index.html" style="font-family:Inter,sans-serif;font-size:0.8rem;letter-spacing:0.05em;text-transform:uppercase;color:#888;text-decoration:none;font-weight:500;transition:color 0.2s" onmouseover="this.style.color='#775a19'" onmouseout="this.style.color='#888'">Home</a>
+    <a href="services.html" style="font-family:Inter,sans-serif;font-size:0.8rem;letter-spacing:0.05em;text-transform:uppercase;color:#888;text-decoration:none;font-weight:500;transition:color 0.2s" onmouseover="this.style.color='#775a19'" onmouseout="this.style.color='#888'">Services</a>
+    <a href="about.html" style="font-family:Inter,sans-serif;font-size:0.8rem;letter-spacing:0.05em;text-transform:uppercase;color:#000;border-bottom:2px solid #775a19;padding-bottom:2px;text-decoration:none;font-weight:500;transition:color 0.2s" onmouseover="this.style.color='#775a19'" onmouseout="this.style.color='#888'">About</a>
+    <a href="contact.html" style="font-family:Inter,sans-serif;font-size:0.8rem;letter-spacing:0.05em;text-transform:uppercase;color:#888;text-decoration:none;font-weight:500;transition:color 0.2s" onmouseover="this.style.color='#775a19'" onmouseout="this.style.color='#888'">Contact</a>
+    <a href="quote.html" style="font-family:Inter,sans-serif;font-size:0.8rem;letter-spacing:0.05em;text-transform:uppercase;color:#775a19;text-decoration:none;font-weight:600;transition:color 0.2s;border:1px solid #775a19;padding:0.4rem 0.875rem" onmouseover="this.style.background='#775a19';this.style.color='white'" onmouseout="this.style.background='transparent';this.style.color='#775a19'">Get Quote</a>
+    <a href="account.html" style="font-family:Inter,sans-serif;font-size:0.8rem;letter-spacing:0.05em;text-transform:uppercase;color:#888;text-decoration:none;font-weight:500;transition:color 0.2s;display:inline-flex;align-items:center;gap:4px" onmouseover="this.style.color='#775a19'" onmouseout="this.style.color='#888'"><span class="material-symbols-outlined" style="font-size:16px">person</span>My Account</a>
+    <a href="schedule.html" style="background:#000;color:white;padding:0.625rem 1.5rem;font-family:Inter,sans-serif;font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;text-decoration:none;border-bottom:2px solid #775a19;transition:opacity 0.2s" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">Book Now</a>
+  </div>
+
+  <!-- Mobile right side -->
+  <div style="display:flex;align-items:center;gap:0.75rem" id="nav-mobile-right">
+    <a href="schedule.html" style="background:#000;color:white;padding:0.5rem 1rem;font-family:Inter,sans-serif;font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;text-decoration:none;border-bottom:2px solid #775a19" style="background:#000;color:white;padding:0.5rem 1rem;font-family:Inter,sans-serif;font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;text-decoration:none;border-bottom:2px solid #775a19">Book</a>
+    <!-- Hamburger -->
+    <button id="hamburger-btn" onclick="toggleMenu()" aria-label="Menu" style="background:none;border:none;cursor:pointer;padding:0.375rem;display:flex;flex-direction:column;gap:5px;justify-content:center">
+      <span class="ham-line" style="display:block;width:24px;height:2px;background:#000;transition:all 0.3s"></span>
+      <span class="ham-line" style="display:block;width:24px;height:2px;background:#000;transition:all 0.3s"></span>
+      <span class="ham-line" style="display:block;width:24px;height:2px;background:#000;transition:all 0.3s"></span>
+    </button>
+  </div>
+</div>
+
+<!-- Mobile drawer -->
+<div id="mobile-menu" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:#000000;z-index:99;flex-direction:column;padding:5rem 2rem 2rem;gap:0;overflow-y:auto;-webkit-overflow-scrolling:touch">
+  <a href="index.html" onclick="toggleMenu()" style="font-family:Inter,sans-serif;font-size:1.1rem;font-weight:600;color:white;text-decoration:none;padding:0.875rem 0;border-bottom:1px solid rgba(255,255,255,0.08);display:block;text-transform:uppercase;letter-spacing:0.08em" onmouseover="this.style.color='#775a19'" onmouseout="this.style.color='white'">Home</a>
+  <a href="services.html" onclick="toggleMenu()" style="font-family:Inter,sans-serif;font-size:1.1rem;font-weight:600;color:white;text-decoration:none;padding:0.875rem 0;border-bottom:1px solid rgba(255,255,255,0.08);display:block;text-transform:uppercase;letter-spacing:0.08em" onmouseover="this.style.color='#775a19'" onmouseout="this.style.color='white'">Services</a>
+  <a href="about.html" onclick="toggleMenu()" style="font-family:Inter,sans-serif;font-size:1.1rem;font-weight:600;color:white;text-decoration:none;padding:0.875rem 0;border-bottom:1px solid rgba(255,255,255,0.08);display:block;text-transform:uppercase;letter-spacing:0.08em" onmouseover="this.style.color='#775a19'" onmouseout="this.style.color='white'">About</a>
+  <a href="contact.html" onclick="toggleMenu()" style="font-family:Inter,sans-serif;font-size:1.1rem;font-weight:600;color:white;text-decoration:none;padding:0.875rem 0;border-bottom:1px solid rgba(255,255,255,0.08);display:block;text-transform:uppercase;letter-spacing:0.08em" onmouseover="this.style.color='#775a19'" onmouseout="this.style.color='white'">Contact</a>
+  <a href="account.html" onclick="toggleMenu()" style="font-family:Inter,sans-serif;font-size:1.1rem;font-weight:600;color:white;text-decoration:none;padding:0.875rem 0;border-bottom:1px solid rgba(255,255,255,0.08);display:block;text-transform:uppercase;letter-spacing:0.08em" onmouseover="this.style.color='#775a19'" onmouseout="this.style.color='white'">My Account</a>
+  <a href="quote.html" onclick="toggleMenu()" style="font-family:Inter,sans-serif;font-size:1.1rem;font-weight:600;color:white;text-decoration:none;padding:0.875rem 0;border-bottom:1px solid rgba(255,255,255,0.08);display:block;text-transform:uppercase;letter-spacing:0.08em" onmouseover="this.style.color='#775a19'" onmouseout="this.style.color='white'">Get a Quote</a>
+  
+  <div style="margin-top:2rem">
+    <a href="schedule.html" onclick="toggleMenu()" style="background:#775a19;color:white;padding:1rem 2rem;font-family:Inter,sans-serif;font-size:0.875rem;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;text-decoration:none;display:inline-block;border-bottom:3px solid #5d4201">Book a Ride</a>
+  </div>
+  <div style="margin-top:auto;padding-top:2rem">
+    <div style="font-family:'Times New Roman',serif;color:rgba(255,255,255,0.3);font-size:0.75rem">The Ride You Can Count On</div>
+    <div style="display:flex;gap:1rem;margin-top:0.75rem">
+      <a href="tel:+19874163283" style="color:#775a19;font-family:Inter,sans-serif;font-size:0.8rem;text-decoration:none">(987) 416-3283</a>
+    </div>
+  </div>
+</div>
+</nav>
+
+<script>
+function toggleMenu() {
+  var menu = document.getElementById('mobile-menu');
+  var lines = document.querySelectorAll('.ham-line');
+  var isOpen = menu.style.display === 'flex';
+  menu.style.display = isOpen ? 'none' : 'flex';
+  document.body.style.overflow = isOpen ? '' : 'hidden';
+  if (!isOpen) {
+    lines[0].style.transform = 'translateY(7px) rotate(45deg)';
+    lines[1].style.opacity = '0';
+    lines[2].style.transform = 'translateY(-7px) rotate(-45deg)';
+  } else {
+    lines[0].style.transform = '';
+    lines[1].style.opacity = '1';
+    lines[2].style.transform = '';
+  }
 }
-function checkW(){
-  var d=document.getElementById('nav-d');
-  var h=document.querySelector('.ham-btn');
-  if(!d||!h)return;
-  if(window.innerWidth>=768){d.style.display='flex';h.style.display='none';var m=document.getElementById('mob-nav');if(m&&m.style.display==='flex'){m.style.display='none';document.body.style.overflow='';var bars=docu
+// Show desktop nav on larger screens
+function checkWidth() {
+  var desktop = document.getElementById('nav-desktop');
+  var mobileRight = document.getElementById('nav-mobile-right');
+  if (window.innerWidth >= 768) {
+    desktop.style.display = 'flex';
+    mobileRight.style.display = 'none';
+    document.getElementById('mobile-menu').style.display = 'none';
+    document.body.style.overflow = '';
+  } else {
+    desktop.style.display = 'none';
+    mobileRight.style.display = 'flex';
+  }
+}
+window.addEventListener('resize', checkWidth);
+window.addEventListener('DOMContentLoaded', checkWidth);
+</script>
+<main class="pt-24">
+<!-- Hero Section -->
+<section class="relative min-h-[870px] flex items-center px-12 mb-32">
+<div class="absolute inset-0 z-0 overflow-hidden">
+<img class="w-full h-full object-cover filter brightness-[0.85]" data-alt="Aerial view of Hampton Beach New Hampshire coastline at sunset" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCEYnPBmvz836HJeamfpqgwrJcGnlIbUJj0hyRwF_6uVIxL_3NqX_tHXdpZNOmhkNK6lK9gyJXf5krcBWDsI_gKKxAogOkygunrg_N6_lJvSZMH-B_EV7RkVfoI13jFktookaQ3x5kXMTAVki-vkilxQMzoOsst_U2D0vHJoxC4Gj192nY_uaF5nabv2TqDfx15cZEF_V9OqkowXfuezTiUirpSKuIiBCPcwRXvBrxBPIjQnLTHdUUUCs57LsLxpL6SjcIjCtMc0uc6" style=""/>
+<div class="absolute inset-0 bg-gradient-to-r from-black/60 via-transparent to-transparent"></div>
+</div>
+<div class="relative z-10 max-w-4xl text-white">
+<span class="font-label text-secondary-fixed-dim uppercase tracking-widest text-xs mb-6 block" style="">Established on the Seacoast</span>
+<h1 class="font-headline text-6xl md:text-7xl mb-8 leading-[1.1] tracking-tight" style="">The Ride,<div>You Can Always</div><div>Count...</div></h1>
+<p class="font-body text-xl md:text-2xl text-white/90 max-w-2xl leading-relaxed font-light" style="">
+                    Born from a simple idea on the NH Seacoast: That transportation should be an extension of your destination, not just a way to reach it.
+                </p>
+</div>
+</section>
+<!-- Our Philosophy / Asymmetric Intro -->
+<section class="px-12 mb-40">
+<div class="asymmetric-grid gap-24 items-start">
+<div>
+<h2 class="font-headline text-4xl mb-12" style="">Redefining the standard of local travel.</h2>
+<p class="text-lg text-on-surface-variant leading-loose mb-8" style="">
+                        At Seacoast RVIP, we believe luxury isn't about excess—it's about the absence of friction. We operate with a "no-line" philosophy, where every transition is seamless and every detail is anticipated. 
+                    </p>
+<p class="text-lg text-on-surface-variant leading-loose" style="">
+                        Whether it’s a quiet early morning transfer to Logan or a celebratory evening in Portsmouth, our mission is to remain invisible yet indispensable and a ride you can count on.</p>
+</div>
+<div class="pt-24">
+<div class="bg-surface-container-low p-12 rounded-lg">
+<blockquote class="font-headline text-2xl italic text-primary leading-snug" style="">
+                            "True hospitality is found in the moments you don't have to ask."
+                        </blockquote>
+<div class="mt-8 flex items-center gap-4">
+<div class="w-12 h-[1px] bg-secondary"></div>
+<span class="font-label text-xs uppercase tracking-widest text-secondary" style="">The RVIP Ethos</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- The Four Promises (Bento Style) -->
+<section class="px-12 mb-40">
+<div class="flex flex-col md:flex-row justify-between items-end mb-16 gap-4">
+<h2 class="font-headline text-4xl" style="">Our Four Promises</h2>
+<p class="font-label text-sm text-on-surface-variant tracking-wider uppercase" style="">Commitment to Excellence</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-4 gap-1">
+<div class="bg-surface-container-lowest p-10 flex flex-col min-h-[320px] group transition-all duration-500 hover:bg-surface-container-low">
+<span class="material-symbols-outlined text-secondary text-4xl mb-auto" data-icon="verified_user" style="">verified_user</span>
+<h3 class="font-headline text-xl mb-4" style="">Dependable</h3>
+<p class="text-sm text-on-surface-variant leading-relaxed" style="">Your schedule is our priority. We are there when you need us — five minutes early, every single time. No excuses, no delays.</p>
+</div>
+<div class="bg-surface-container-lowest p-10 flex flex-col min-h-[320px] group transition-all duration-500 hover:bg-surface-container-low">
+<span class="material-symbols-outlined text-secondary text-4xl mb-auto" data-icon="visibility_off" style="">visibility_off</span>
+<h3 class="font-headline text-xl mb-4" style="">Discreet</h3>
+<p class="text-sm text-on-surface-variant leading-relaxed" style="">Your privacy matters. We operate with quiet professionalism — focused on your comfort and never on your conversation.</p>
+</div>
+<div class="bg-surface-container-lowest p-10 flex flex-col min-h-[320px] group transition-all duration-500 hover:bg-surface-container-low">
+<span class="material-symbols-outlined text-secondary text-4xl mb-auto" data-icon="star" style="">star</span>
+<h3 class="font-headline text-xl mb-4" style="">Comfortable</h3>
+<p class="text-sm text-on-surface-variant leading-relaxed" style="">A clean, well-maintained vehicle and a smooth, stress-free ride every time. Comfort is not a luxury — it is our standard.</p>
+</div>
+<div class="bg-surface-container-lowest p-10 flex flex-col min-h-[320px] group transition-all duration-500 hover:bg-surface-container-low">
+<span class="material-symbols-outlined text-secondary text-4xl mb-auto" data-icon="distance" style="">distance</span>
+<h3 class="font-headline text-xl mb-4" style="">Local</h3>
+<p class="text-sm text-on-surface-variant leading-relaxed" style="">We know the Seacoast inside and out. From back roads to shortcuts, our local expertise means you always arrive on time.</p>
+</div>
+</div>
+</section>
+<!-- Locally Owned & Neighborhood Focused -->
+<section class="mb-40 bg-primary-container text-white py-32 px-12 overflow-hidden relative">
+<div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-24 items-center">
+<div class="relative z-10">
+<h2 class="font-headline text-4xl mb-8" style="">Locally Owned.<br/>Neighborhood Focused.</h2>
+<p class="text-on-primary-container text-lg leading-relaxed mb-12" style="">
+                        Seacoast RVIP is rooted in the communities we serve. We aren't a national franchise; we are your neighbors, providing a global standard of service right here in the Granite State.
+                    </p>
+<div class="grid grid-cols-2 gap-y-4 gap-x-12">
+<div class="flex items-center gap-3">
+<div class="w-1.5 h-1.5 rounded-full bg-secondary"></div>
+<span class="font-body text-sm" style="">Hampton</span>
+</div>
+<div class="flex items-center gap-3">
+<div class="w-1.5 h-1.5 rounded-full bg-secondary"></div>
+<span class="font-body text-sm" style="">Portsmouth</span>
+</div>
+<div class="flex items-center gap-3">
+<div class="w-1.5 h-1.5 rounded-full bg-secondary"></div>
+<span class="font-body text-sm" style="">Exeter</span>
+</div>
+<div class="flex items-center gap-3">
+<div class="w-1.5 h-1.5 rounded-full bg-secondary"></div>
+<span class="font-body text-sm" style="">Rye</span>
+</div>
+<div class="flex items-center gap-3">
+<div class="w-1.5 h-1.5 rounded-full bg-secondary"></div>
+<span class="font-body text-sm" style="">North Hampton</span>
+</div>
+<div class="flex items-center gap-3">
+<div class="w-1.5 h-1.5 rounded-full bg-secondary"></div>
+<span class="font-body text-sm" style="">New Castle</span>
+</div>
+<div class="flex items-center gap-3">
+<div class="w-1.5 h-1.5 rounded-full bg-secondary"></div>
+<span class="font-body text-sm" style="">Salisbury, MA</span>
+</div>
+<div class="flex items-center gap-3">
+<div class="w-1.5 h-1.5 rounded-full bg-secondary"></div>
+<span class="font-body text-sm" style="">Newburyport, MA</span>
+</div>
+<div class="flex items-center gap-3">
+<div class="w-1.5 h-1.5 rounded-full bg-secondary"></div>
+<span class="font-body text-sm" style="">Seabrook Beach, NH</span>
+</div>
+</div>
+</div>
+<div class="relative h-[500px] w-full bg-surface-container-high rounded-xl overflow-hidden group">
+<img class="w-full h-full object-cover grayscale opacity-60 group-hover:grayscale-0 transition-all duration-700" data-alt="Professional wide-angle photograph of Hampton Beach, New Hampshire at sunrise." src="https://lh3.googleusercontent.com/aida-public/AB6AXuACIwx2qI8S6PkwFLbKIPPZvRabvyXrthogHUkqIE8Z1AQDMS2KFBjVh_RkvJmla-3xbYPlCEtc52OirnFhLQRSgc8cyBzsAAwsWO7tnUHwSkBqQZ3VANiYjW4lbPgcBEYn2DDOexNjpv-WsmycG561pVfzN8JtvyfwiDZNHZie40vfy1wtB4FstwGUcGa9tBJai7s1ep8Tm2uTFQY0qpgD2BfBnAz1wUelTDKOB1cLl7rGcEAArohpXGh8w0cGgVkz2NP7si94CVkt" style=""/>
+<div class="absolute inset-0 flex items-center justify-center">
+<div class="p-8 glass-nav rounded-lg shadow-2xl text-black flex items-center gap-4">
+<span class="material-symbols-outlined text-secondary" data-icon="location_on" style="">location_on</span>
+<div>
+<p class="font-label font-bold text-xs uppercase tracking-tighter" style="">Serving the Seacoast</p>
+<p class="font-body text-sm" style="">Hampton, NH &amp; Beyond</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Final CTA Section -->
+<section class="px-12 mb-40 text-center max-w-4xl mx-auto">
+<h2 class="font-headline text-5xl mb-8" style="">Experience the Difference.</h2>
+<p class="text-on-surface-variant text-xl mb-12 font-light" style="">
+                Discover why New Hampshire’s elite choose Seacoast RVIP for their most important journeys. Your chauffeur is ready.
+            </p>
+<div class="flex flex-col md:flex-row gap-6 justify-center items-center">
+<button class="bg-primary text-on-primary px-12 py-5 rounded-md font-medium text-lg border-b-2 border-secondary hover:opacity-90 transition-all active:scale-[0.98]" style="">
+                    Book Your Journey
+                </button>
+
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer style="background:#0a0a0a;color:white;padding:4rem 0 2rem">
+  <div style="max-width:100%;padding:0 2rem">
+
+    <!-- Top row -->
+    <div style="display:grid;grid-template-columns:1fr;gap:2.5rem;padding-bottom:2.5rem;border-bottom:1px solid rgba(255,255,255,0.08)" class="footer-grid">
+
+      <!-- Brand -->
+      <div>
+        <div style="font-family:'Times New Roman',Times,serif;font-size:1.5rem;font-weight:700;color:white;margin-bottom:0.75rem">Seacoast RVIP</div>
+        <p style="font-family:Inter,sans-serif;font-size:0.8rem;color:rgba(255,255,255,0.45);line-height:1.7;max-width:280px;margin-bottom:1.25rem">The Ride You Can Count On. Premium private car service in the NH Seacoast area.</p>
+        <div style="display:flex;gap:1.25rem;align-items:center;flex-wrap:wrap">
+          <button onclick="shareRVIP()" style="cursor:pointer;color:#775a19;font-family:Inter,sans-serif;font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;background:none;border:none;padding:0;display:inline-flex;align-items:center;gap:4px">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#775a19" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+            Share
+          </button>
+          <span style="color:rgba(255,255,255,0.15)">|</span>
+          <a href="/cdn-cgi/l/email-protection#a7d5c6cac8c9d1d195979591969fe7cec4cbc8d2c389c4c8ca" style="color:#775a19;font-family:Inter,sans-serif;font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;text-decoration:none;display:inline-flex;align-items:center;gap:4px">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#775a19" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            Email
+          </a>
+          <span style="color:rgba(255,255,255,0.15)">|</span>
+          <a href="tel:+19874163283" style="color:#775a19;font-family:Inter,sans-serif;font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;text-decoration:none;display:inline-flex;align-items:center;gap:4px">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#775a19" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.93 19.79 19.79 0 0 1 1.69 5.38 2 2 0 0 1 3.68 3.21h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 10.9a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 17.92z"/></svg>
+            Call
+          </a>
+        </div>
+      </div>
+
+      <!-- Nav links -->
+      <div>
+        <div style="font-family:Inter,sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.15em;color:#775a19;font-weight:600;margin-bottom:1rem">Navigate</div>
+        <div style="display:flex;flex-direction:column;gap:0.625rem">
+          <a href="index.html" style="font-family:Inter,sans-serif;font-size:0.8rem;color:rgba(255,255,255,0.55);text-decoration:none;transition:color 0.2s" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.55)'">Home</a>
+          <a href="services.html" style="font-family:Inter,sans-serif;font-size:0.8rem;color:rgba(255,255,255,0.55);text-decoration:none;transition:color 0.2s" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.55)'">Services &amp; Pricing</a>
+          <a href="about.html" style="font-family:Inter,sans-serif;font-size:0.8rem;color:rgba(255,255,255,0.55);text-decoration:none;transition:color 0.2s" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.55)'">About Us</a>
+          <a href="contact.html" style="font-family:Inter,sans-serif;font-size:0.8rem;color:rgba(255,255,255,0.55);text-decoration:none;transition:color 0.2s" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.55)'">Contact</a>
+          <a href="schedule.html" style="font-family:Inter,sans-serif;font-size:0.8rem;color:rgba(255,255,255,0.55);text-decoration:none;transition:color 0.2s" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.55)'">Book a Ride</a>
+        </div>
+      </div>
+
+      <!-- Contact -->
+      <div>
+        <div style="font-family:Inter,sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.15em;color:#775a19;font-weight:600;margin-bottom:1rem">Contact</div>
+        <div style="display:flex;flex-direction:column;gap:0.5rem">
+          <a href="tel:+19874163283" style="font-family:Inter,sans-serif;font-size:0.8rem;color:rgba(255,255,255,0.55);text-decoration:none">(987) 416-3283</a>
+          <a href="/cdn-cgi/l/email-protection#9ceefdf1f3f2eaeaaeacaeaaada4dcf5fff0f3e9f8b2fff3f1" style="font-family:Inter,sans-serif;font-size:0.8rem;color:rgba(255,255,255,0.55);text-decoration:none"><span class="__cf_email__" data-cfemail="fb899a9694958d8dc9cbc9cdcac3bb929897948e9fd5989496">[email&#160;protected]</span></a>
+          <a href="schedule.html" style="display:inline-block;margin-top:0.75rem;background:#775a19;color:white;padding:0.625rem 1.25rem;font-family:Inter,sans-serif;font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;text-decoration:none;border-bottom:2px solid #5d4201">Book Now</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom bar -->
+    <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;padding-top:1.5rem;gap:0.75rem">
+      <p style="font-family:Inter,sans-serif;font-size:0.7rem;color:rgba(255,255,255,0.25);margin:0">© 2025 Seacoast RVIP LLC. All rights reserved.</p>
+      <div style="display:flex;gap:1.5rem">
+        <a href="privacy.html" target="_blank" style="font-family:Inter,sans-serif;font-size:0.7rem;color:rgba(255,255,255,0.3);text-decoration:none" onmouseover="this.style.color='#775a19'" onmouseout="this.style.color='rgba(255,255,255,0.3)'">Privacy Policy</a>
+        <a href="terms.html" target="_blank" style="font-family:Inter,sans-serif;font-size:0.7rem;color:rgba(255,255,255,0.3);text-decoration:none" onmouseover="this.style.color='#775a19'" onmouseout="this.style.color='rgba(255,255,255,0.3)'">Terms of Service</a>
+      </div>
+    </div>
+  </div>
+
+  <style>
+  @media(min-width:768px){
+    .footer-grid{grid-template-columns:1.5fr 1fr 1fr!important}
+  }
+  </style>
+</footer>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+document.addEventListener("DOMContentLoaded", function() {
+  var bookingKeywords = ["Book Now", "Reserve Your Ride", "Book Your Trip", "Book Your Journey", "Book a Ride", "BOOK NOW", "Reserve Now", "Book Now"];
+  document.querySelectorAll("button").forEach(function(btn) {
+    var txt = btn.textContent.trim();
+    bookingKeywords.forEach(function(kw) {
+      if (txt === kw || txt.includes(kw)) {
+        if (!btn.closest("a") && !btn.closest("form[action]")) {
+          btn.style.cursor = "pointer";
+          btn.addEventListener("click", function(e) {
+            e.preventDefault();
+            window.location.href = "schedule.html";
+          });
+        }
+      }
+    });
+  });
+  document.querySelectorAll("a[href='#']").forEach(function(a) {
+    var txt = a.textContent.trim();
+    if (txt.includes("Fleet") || txt.includes("Our Fleet")) a.href = "services.html";
+    if (txt.includes("View Fleet")) a.href = "services.html";
+  });
+});
+</script>
+
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('/sw.js')
+      .then(function(reg) { console.log('SW registered:', reg.scope); })
+      .catch(function(err) { conso
