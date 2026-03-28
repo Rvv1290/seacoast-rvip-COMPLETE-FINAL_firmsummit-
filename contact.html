@@ -1,247 +1,495 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>Contact | Seacoast RVIP</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&amp;family=Noto+Serif:ital,wght@0,400;0,700;1,400&amp;family=Work+Sans:wght@400;500&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries">
+function shareRVIP() {
+  if (navigator.share) {
+    navigator.share({
+      title: 'Seacoast RVIP — The Ride You Can Count On',
+      text: 'Premium private car service in the NH Seacoast area.',
+      url: 'https://seacoast-rvip-complete-final-firmsu.vercel.app'
+    }).catch(function(){});
+  } else {
+    var url = 'https://seacoast-rvip-complete-final-firmsu.vercel.app';
+    navigator.clipboard && navigator.clipboard.writeText(url).then(function(){
+      alert('Link copied! Share it with your friends.');
+    }).catch(function(){
+      prompt('Copy this link:', url);
+    });
+  }
+}
+
+</script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-secondary-container": "#785a1a",
+              "outline": "#747878",
+              "on-error-container": "#93000a",
+              "on-error": "#ffffff",
+              "surface-bright": "#f9f9f9",
+              "on-primary": "#ffffff",
+              "surface-container-highest": "#e2e2e2",
+              "inverse-on-surface": "#f1f1f1",
+              "surface-tint": "#5f5e5e",
+              "on-tertiary-fixed": "#1b1c1c",
+              "tertiary": "#000000",
+              "on-secondary-fixed": "#261900",
+              "background": "#f9f9f9",
+              "inverse-surface": "#2f3131",
+              "secondary-fixed": "#ffdea5",
+              "primary-fixed": "#e5e2e1",
+              "tertiary-fixed": "#e4e2e1",
+              "tertiary-container": "#1b1c1c",
+              "on-secondary-fixed-variant": "#5d4201",
+              "surface": "#f9f9f9",
+              "primary": "#000000",
+              "error": "#ba1a1a",
+              "on-secondary": "#ffffff",
+              "secondary-fixed-dim": "#e9c176",
+              "surface-container-high": "#e8e8e8",
+              "on-primary-fixed-variant": "#474646",
+              "surface-variant": "#e2e2e2",
+              "primary-fixed-dim": "#c8c6c5",
+              "on-primary-container": "#858383",
+              "inverse-primary": "#c8c6c5",
+              "error-container": "#ffdad6",
+              "tertiary-fixed-dim": "#c8c6c5",
+              "on-tertiary": "#ffffff",
+              "on-surface-variant": "#444748",
+              "surface-container": "#eeeeee",
+              "on-surface": "#1a1c1c",
+              "secondary": "#775a19",
+              "secondary-container": "#fed488",
+              "on-tertiary-fixed-variant": "#474747",
+              "primary-container": "#1c1b1b",
+              "on-background": "#1a1c1c",
+              "outline-variant": "#c4c7c7",
+              "surface-container-lowest": "#ffffff",
+              "surface-container-low": "#f3f3f3",
+              "on-primary-fixed": "#1c1b1b",
+              "surface-dim": "#dadada",
+              "on-tertiary-container": "#858383"
+            },
+            fontFamily: {
+              "headline": ["Noto Serif"],
+              "body": ["Inter"],
+              "label": ["Work Sans"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
 <style>
-.material-symbols-outlined{font-variation-settings:"FILL" 0,"wght" 300,"GRAD" 0,"opsz" 24}
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-nav {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+        }
+        .hero-gradient {
+            background: radial-gradient(circle at top right, #1c1b1b 0%, #000000 100%);
+        }
+    </style>
 
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-body{font-family:'Inter',sans-serif;color:#111;background:#fff}
-a{text-decoration:none;color:inherit}
-img{max-width:100%}
-
-/* ── LAYOUT ── */
-.W{max-width:900px;margin:0 auto;padding:0 1.25rem}
-.page-body{padding-top:68px}
-
-/* ── NAV ── */
-.nav{position:fixed;top:0;left:0;right:0;height:68px;background:rgba(255,255,255,.97);backdrop-filter:blur(10px);border-bottom:1px solid #eee;z-index:300}
-.nav .W{height:68px;display:flex;align-items:center;justify-content:space-between}
-.nav-logo{font-family:'Times New Roman',serif;font-size:1.25rem;font-weight:700;letter-spacing:-.01em}
-.nav-links{display:none;align-items:center;gap:1.75rem}
-.nav-links a{font-size:.78rem;font-weight:500;color:#555;text-transform:uppercase;letter-spacing:.05em;transition:color .2s}
-.nav-links a:hover,.nav-links a.act{color:#000}
-.nav-right{display:flex;align-items:center;gap:.75rem}
-.btn-book{background:#000;color:#fff;padding:.5rem 1.1rem;font-size:.73rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;border:none;cursor:pointer;border-bottom:2px solid #775a19;white-space:nowrap}
-.ham-btn{display:flex;flex-direction:column;gap:5px;cursor:pointer;background:none;border:none;padding:.375rem}
-.ham-btn span{display:block;width:22px;height:2px;background:#000;transition:all .3s}
-.mob-nav{display:none;position:fixed;inset:0;background:#0a0a0a;z-index:299;flex-direction:column;padding:80px 1.5rem 2rem;gap:0;overflow-y:auto}
-.mob-nav a{font-size:1rem;font-weight:600;color:#fff;padding:.875rem 0;border-bottom:1px solid rgba(255,255,255,.08);display:block;text-transform:uppercase;letter-spacing:.06em}
-.mob-nav a:hover{color:#775a19}
-.mob-nav .mob-actions{margin-top:1.5rem;display:flex;gap:.75rem;flex-wrap:wrap}
-
-/* ── FOOTER ── */
-.footer{background:#0a0a0a;color:#fff;padding:3.5rem 0 1.5rem;margin-top:5rem}
-.footer-g{display:grid;grid-template-columns:1fr;gap:2rem;padding-bottom:2rem;border-bottom:1px solid rgba(255,255,255,.07)}
-.footer-logo{font-family:'Times New Roman',serif;font-size:1.35rem;font-weight:700;margin-bottom:.5rem}
-.footer-tag{font-size:.78rem;color:rgba(255,255,255,.35);line-height:1.7;margin-bottom:1rem}
-.ftr-ht{font-size:.62rem;text-transform:uppercase;letter-spacing:.15em;color:#775a19;font-weight:600;margin-bottom:.875rem}
-.ftr-links a{display:block;font-size:.78rem;color:rgba(255,255,255,.45);margin-bottom:.5rem;transition:color .2s}
-.ftr-links a:hover{color:#fff}
-.footer-bot{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;padding-top:1.5rem;gap:.75rem}
-.footer-copy{font-size:.68rem;color:rgba(255,255,255,.2)}
-.footer-legal{display:flex;gap:1.25rem}
-.footer-legal a{font-size:.68rem;color:rgba(255,255,255,.25);transition:color .2s}
-.footer-legal a:hover{color:#775a19}
-
-/* ── BUTTONS ── */
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;font-family:'Work Sans',sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:.08em;border:none;cursor:pointer;transition:opacity .18s;white-space:nowrap}
-.btn:hover{opacity:.82}
-.btn-black{background:#000;color:#fff;padding:.875rem 1.75rem;font-size:.8rem;border-bottom:3px solid #775a19}
-.btn-ghost{background:transparent;color:#000;padding:.875rem 1.75rem;font-size:.8rem;border:1.5px solid #000;transition:all .18s}
-.btn-ghost:hover{background:#000;color:#fff;opacity:1}
-.btn-gold{background:#775a19;color:#fff;padding:.5rem 1rem;font-size:.72rem;border-bottom:2px solid #5d4201}
-.btn-sm{padding:.4rem .8rem;font-size:.68rem}
-.btn-green{background:#16a34a;color:#fff;padding:.5rem 1rem;font-size:.72rem}
-.btn-red{background:#dc2626;color:#fff;padding:.5rem 1rem;font-size:.72rem}
-.btn-outline{background:#fff;color:#000;padding:.5rem 1rem;font-size:.72rem;border:1px solid #ddd}
-.btn-blue{background:#1d4ed8;color:#fff;padding:.5rem 1rem;font-size:.72rem}
-.btn-purple{background:#7c3aed;color:#fff;padding:.5rem 1rem;font-size:.72rem}
-.btn-full{width:100%;justify-content:center}
-
-/* ── FORMS ── */
-.finp{width:100%;background:#f7f7f7;border:0;border-bottom:2px solid #ddd;padding:.7rem 0;font-family:Inter,sans-serif;font-size:.95rem;outline:none;transition:border-color .2s}
-.finp:focus{border-bottom-color:#000}
-.fsel{width:100%;background:#f7f7f7;border:0;border-bottom:2px solid #ddd;padding:.7rem 0;font-family:Inter,sans-serif;font-size:.95rem;outline:none;appearance:none}
-.flbl{font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;color:#777;display:block;margin-bottom:5px;font-family:'Work Sans',sans-serif;font-weight:600}
-.fg{display:grid;gap:1.25rem}
-.fg-2{grid-template-columns:1fr 1fr}
-.fg-span{grid-column:1/-1}
-
-/* ── CARDS ── */
-.card{background:#fff;border-left:3px solid #775a19;padding:1.25rem}
-.card-flat{background:#fff;border:1px solid #ebebeb;padding:1.25rem}
-.card-dark{background:#0a0a0a;color:#fff;padding:1.5rem;border-bottom:4px solid #775a19}
-
-/* ── BADGES ── */
-.bdg{display:inline-block;padding:2px 8px;font-size:.6rem;font-family:'Work Sans',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.05em;border-radius:2px}
-.bdg-g{background:#dcfce7;color:#15803d}
-.bdg-b{background:#dbeafe;color:#1d4ed8}
-.bdg-y{background:#fef9c3;color:#92400e}
-.bdg-r{background:#fee2e2;color:#b91c1c}
-.bdg-p{background:#ede9fe;color:#6d28d9}
-
-/* ── OVERLAY / MODAL ── */
-.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:400;overflow-y:auto;padding:1rem}
-.overlay.vis{display:flex;align-items:flex-start;justify-content:center}
-.modal{background:#fff;width:100%;margin:2rem auto}
-.modal-hd{padding:1rem 1.25rem;border-bottom:1px solid #eee;display:flex;align-items:center;justify-content:space-between}
-.modal-hd h3{font-family:'Times New Roman',serif;font-size:1rem;font-weight:700}
-.modal-x{background:none;border:none;font-size:1.2rem;cursor:pointer;color:#888;line-height:1;padding:0}
-.modal-body{padding:1.5rem}
-
-/* ── TOAST ── */
-#toast{position:fixed;bottom:1.25rem;left:50%;transform:translateX(-50%);background:#111;color:#fff;padding:.7rem 1.4rem;font-family:'Work Sans',sans-serif;font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;border-bottom:2px solid #775a19;z-index:9999;display:none;white-space:nowrap}
-
-/* ── SECTION ── */
-.sec{padding:4rem 0}
-.sec-sm{padding:2.5rem 0}
-.sec-title{font-family:'Times New Roman',serif;font-size:2rem;font-weight:700;line-height:1.15}
-.sec-sub{font-size:.88rem;color:#555;line-height:1.75;max-width:520px;margin-top:.625rem}
-.gold{color:#775a19}
-.hr{height:1px;background:#eee;margin:2rem 0}
-
-/* ── GRID ── */
-.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem}
-.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem}
-
-/* ── RESPONSIVE ── */
-@media(min-width:768px){
-  .nav-links{display:flex}
-  .ham-btn{display:none}
-  .footer-g{grid-template-columns:1.5fr 1fr 1fr}
-}
-@media(max-width:767px){
-  .grid-2,.grid-3,.fg-2{grid-template-columns:1fr!important}
-  .fg-2 .fg-span{grid-column:1}
-  .sec-title{font-size:1.6rem}
-}
-
-
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.json"/>
+  <meta name="theme-color" content="#775a19"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="Seacoast RVIP"/>
+  <link rel="apple-touch-icon" href="/seacoast_rvip_favicon_180.png"/>
+  <link rel="icon" type="image/png" sizes="32x32" href="/seacoast_rvip_favicon_32.png"/>
+<style>
+.font-headline,h1,h2,h3,h4{font-family:"Times New Roman",Times,Georgia,serif!important}
+/* Expand content to full width */
+.max-w-7xl{max-width:100%!important}
+.max-w-3xl{max-width:900px!important}
+.max-w-5xl{max-width:100%!important}
 </style>
 </head>
-<body>
+<body class="bg-surface font-body text-on-surface antialiased">
+<div id="pwa-install-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:100;background:#000;color:white;padding:1rem 1.25rem;align-items:center;justify-content:space-between;border-top:2px solid #775a19;gap:1rem">
+  <div>
+    <div style="font-family:'Times New Roman',serif;font-weight:700;font-size:0.95rem">Seacoast RVIP</div>
+    <div style="font-size:0.7rem;color:#999;font-family:sans-serif">Add to your home screen</div>
+  </div>
+  <button onclick="installPWA()" style="background:#775a19;color:white;border:none;padding:0.625rem 1.25rem;font-family:sans-serif;font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;cursor:pointer;white-space:nowrap">Install App</button>
+  <button onclick="document.getElementById('pwa-install-banner').style.display='none'" style="background:none;border:none;color:#555;cursor:pointer;font-size:1.25rem;padding:0.25rem">✕</button>
+</div>
 
-<div id="toast"></div>
-<nav class="nav"><div class="W">
-  <a href="index.html" class="nav-logo">Seacoast RVIP</a>
-  <div id="nav-d" class="nav-links"><a href="index.html" class="">Home</a><a href="services.html" class="">Services</a><a href="about.html" class="">About</a><a href="contact.html" class="act">Contact</a><a href="account.html" style="font-size:.73rem;font-weight:600;color:#555;text-transform:uppercase;letter-spacing:.05em">My Account</a></div>
-  <div class="nav-right">
-    <a href="schedule.html"><button class="btn-book">Book Now</button></a>
-    <button class="ham-btn" onclick="toggleMenu()"><span></span><span></span><span></span></button>
+<!-- TopNavBar -->
+<nav style="position:fixed;top:0;width:100%;z-index:48;background:rgba(255,255,255,0.95);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid rgba(0,0,0,0.06);transition:all 0.3s">
+<div style="display:flex;justify-content:space-between;align-items:center;max-width:100%;padding:0 2rem;height:68px">
+
+  <!-- Logo -->
+  <a href="index.html" style="font-family:'Times New Roman',Times,serif;font-size:1.35rem;font-weight:700;color:#000;text-decoration:none;letter-spacing:-0.01em;white-space:nowrap">Seacoast RVIP</a>
+
+  <!-- Desktop links -->
+  <div id="nav-desktop" style="display:none;align-items:center;gap:2.5rem" class="desktop-nav">
+    <a href="index.html" style="font-family:Inter,sans-serif;font-size:0.8rem;letter-spacing:0.05em;text-transform:uppercase;color:#888;text-decoration:none;font-weight:500;transition:color 0.2s" onmouseover="this.style.color='#775a19'" onmouseout="this.style.color='#888'">Home</a>
+    <a href="services.html" style="font-family:Inter,sans-serif;font-size:0.8rem;letter-spacing:0.05em;text-transform:uppercase;color:#888;text-decoration:none;font-weight:500;transition:color 0.2s" onmouseover="this.style.color='#775a19'" onmouseout="this.style.color='#888'">Services</a>
+    <a href="about.html" style="font-family:Inter,sans-serif;font-size:0.8rem;letter-spacing:0.05em;text-transform:uppercase;color:#888;text-decoration:none;font-weight:500;transition:color 0.2s" onmouseover="this.style.color='#775a19'" onmouseout="this.style.color='#888'">About</a>
+    <a href="contact.html" style="font-family:Inter,sans-serif;font-size:0.8rem;letter-spacing:0.05em;text-transform:uppercase;color:#000;border-bottom:2px solid #775a19;padding-bottom:2px;text-decoration:none;font-weight:500;transition:color 0.2s" onmouseover="this.style.color='#775a19'" onmouseout="this.style.color='#888'">Contact</a>
+    <a href="quote.html" style="font-family:Inter,sans-serif;font-size:0.8rem;letter-spacing:0.05em;text-transform:uppercase;color:#775a19;text-decoration:none;font-weight:600;transition:color 0.2s;border:1px solid #775a19;padding:0.4rem 0.875rem" onmouseover="this.style.background='#775a19';this.style.color='white'" onmouseout="this.style.background='transparent';this.style.color='#775a19'">Get Quote</a>
+    <a href="account.html" style="font-family:Inter,sans-serif;font-size:0.8rem;letter-spacing:0.05em;text-transform:uppercase;color:#888;text-decoration:none;font-weight:500;transition:color 0.2s;display:inline-flex;align-items:center;gap:4px" onmouseover="this.style.color='#775a19'" onmouseout="this.style.color='#888'"><span class="material-symbols-outlined" style="font-size:16px">person</span>My Account</a>
+    <a href="schedule.html" style="background:#000;color:white;padding:0.625rem 1.5rem;font-family:Inter,sans-serif;font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;text-decoration:none;border-bottom:2px solid #775a19;transition:opacity 0.2s" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">Book Now</a>
   </div>
-</div></nav>
-<div id="mob-nav" class="mob-nav">
-  <a href="index.html">Home</a><a href="services.html">Services</a><a href="about.html">About</a><a href="contact.html">Contact</a><a href="account.html">My Account</a><a href="quote.html">Get a Quote</a><a href="schedule.html">Book a Ride</a>
-  <div class="mob-actions">
-    <a href="schedule.html"><button class="btn btn-gold">Book a Ride</button></a>
-    <a href="quote.html"><button class="btn btn-outline">Get Quote</button></a>
-  </div>
-  <div style="margin-top:auto;padding-top:2rem;border-top:1px solid rgba(255,255,255,.08)">
-    <a href="tel:+19874163283" style="color:#775a19;font-size:.85rem;font-weight:600">(987) 416-3283</a>
+
+  <!-- Mobile right side -->
+  <div style="display:flex;align-items:center;gap:0.75rem" id="nav-mobile-right">
+    <a href="schedule.html" style="background:#000;color:white;padding:0.5rem 1rem;font-family:Inter,sans-serif;font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;text-decoration:none;border-bottom:2px solid #775a19" style="background:#000;color:white;padding:0.5rem 1rem;font-family:Inter,sans-serif;font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;text-decoration:none;border-bottom:2px solid #775a19">Book</a>
+    <!-- Hamburger -->
+    <button id="hamburger-btn" onclick="toggleMenu()" aria-label="Menu" style="background:none;border:none;cursor:pointer;padding:0.375rem;display:flex;flex-direction:column;gap:5px;justify-content:center">
+      <span class="ham-line" style="display:block;width:24px;height:2px;background:#000;transition:all 0.3s"></span>
+      <span class="ham-line" style="display:block;width:24px;height:2px;background:#000;transition:all 0.3s"></span>
+      <span class="ham-line" style="display:block;width:24px;height:2px;background:#000;transition:all 0.3s"></span>
+    </button>
   </div>
 </div>
-<div class="page-body">
 
-<section class="sec">
-  <div class="W" style="max-width:820px">
-    <h1 class="sec-title">Contact Us</h1>
-    <p class="sec-sub">Questions or bookings? We respond within the hour.</p>
-    <div class="hr"></div>
-    <div class="grid-2" style="gap:3rem">
+<!-- Mobile drawer -->
+<div id="mobile-menu" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:#000000;z-index:99;flex-direction:column;padding:5rem 2rem 2rem;gap:0;overflow-y:auto;-webkit-overflow-scrolling:touch">
+  <a href="index.html" onclick="toggleMenu()" style="font-family:Inter,sans-serif;font-size:1.1rem;font-weight:600;color:white;text-decoration:none;padding:0.875rem 0;border-bottom:1px solid rgba(255,255,255,0.08);display:block;text-transform:uppercase;letter-spacing:0.08em" onmouseover="this.style.color='#775a19'" onmouseout="this.style.color='white'">Home</a>
+  <a href="services.html" onclick="toggleMenu()" style="font-family:Inter,sans-serif;font-size:1.1rem;font-weight:600;color:white;text-decoration:none;padding:0.875rem 0;border-bottom:1px solid rgba(255,255,255,0.08);display:block;text-transform:uppercase;letter-spacing:0.08em" onmouseover="this.style.color='#775a19'" onmouseout="this.style.color='white'">Services</a>
+  <a href="about.html" onclick="toggleMenu()" style="font-family:Inter,sans-serif;font-size:1.1rem;font-weight:600;color:white;text-decoration:none;padding:0.875rem 0;border-bottom:1px solid rgba(255,255,255,0.08);display:block;text-transform:uppercase;letter-spacing:0.08em" onmouseover="this.style.color='#775a19'" onmouseout="this.style.color='white'">About</a>
+  <a href="contact.html" onclick="toggleMenu()" style="font-family:Inter,sans-serif;font-size:1.1rem;font-weight:600;color:white;text-decoration:none;padding:0.875rem 0;border-bottom:1px solid rgba(255,255,255,0.08);display:block;text-transform:uppercase;letter-spacing:0.08em" onmouseover="this.style.color='#775a19'" onmouseout="this.style.color='white'">Contact</a>
+  <a href="account.html" onclick="toggleMenu()" style="font-family:Inter,sans-serif;font-size:1.1rem;font-weight:600;color:white;text-decoration:none;padding:0.875rem 0;border-bottom:1px solid rgba(255,255,255,0.08);display:block;text-transform:uppercase;letter-spacing:0.08em" onmouseover="this.style.color='#775a19'" onmouseout="this.style.color='white'">My Account</a>
+  <a href="quote.html" onclick="toggleMenu()" style="font-family:Inter,sans-serif;font-size:1.1rem;font-weight:600;color:white;text-decoration:none;padding:0.875rem 0;border-bottom:1px solid rgba(255,255,255,0.08);display:block;text-transform:uppercase;letter-spacing:0.08em" onmouseover="this.style.color='#775a19'" onmouseout="this.style.color='white'">Get a Quote</a>
+  
+  <div style="margin-top:2rem">
+    <a href="schedule.html" onclick="toggleMenu()" style="background:#775a19;color:white;padding:1rem 2rem;font-family:Inter,sans-serif;font-size:0.875rem;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;text-decoration:none;display:inline-block;border-bottom:3px solid #5d4201">Book a Ride</a>
+  </div>
+  <div style="margin-top:auto;padding-top:2rem">
+    <div style="font-family:'Times New Roman',serif;color:rgba(255,255,255,0.3);font-size:0.75rem">The Ride You Can Count On</div>
+    <div style="display:flex;gap:1rem;margin-top:0.75rem">
+      <a href="tel:+19874163283" style="color:#775a19;font-family:Inter,sans-serif;font-size:0.8rem;text-decoration:none">(987) 416-3283</a>
+    </div>
+  </div>
+</div>
+</nav>
+
+<script>
+function toggleMenu() {
+  var menu = document.getElementById('mobile-menu');
+  var lines = document.querySelectorAll('.ham-line');
+  var isOpen = menu.style.display === 'flex';
+  menu.style.display = isOpen ? 'none' : 'flex';
+  document.body.style.overflow = isOpen ? '' : 'hidden';
+  if (!isOpen) {
+    lines[0].style.transform = 'translateY(7px) rotate(45deg)';
+    lines[1].style.opacity = '0';
+    lines[2].style.transform = 'translateY(-7px) rotate(-45deg)';
+  } else {
+    lines[0].style.transform = '';
+    lines[1].style.opacity = '1';
+    lines[2].style.transform = '';
+  }
+}
+// Show desktop nav on larger screens
+function checkWidth() {
+  var desktop = document.getElementById('nav-desktop');
+  var mobileRight = document.getElementById('nav-mobile-right');
+  if (window.innerWidth >= 768) {
+    desktop.style.display = 'flex';
+    mobileRight.style.display = 'none';
+    document.getElementById('mobile-menu').style.display = 'none';
+    document.body.style.overflow = '';
+  } else {
+    desktop.style.display = 'none';
+    mobileRight.style.display = 'flex';
+  }
+}
+window.addEventListener('resize', checkWidth);
+window.addEventListener('DOMContentLoaded', checkWidth);
+</script>
+<main class="pt-24">
+<!-- Hero Section -->
+<section class="hero-gradient text-on-primary py-24 px-12 overflow-hidden relative">
+<div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+<div class="z-10">
+<span class="font-label text-secondary tracking-widest uppercase text-xs mb-4 block" style="">Concierge Support</span>
+<h1 class="font-headline text-5xl md:text-6xl font-bold mb-6 leading-tight" style="">Always at Your <br>Service.</h1>
+<p class="text-on-primary-container text-lg max-w-md leading-relaxed font-light" style="">Whether you require a bespoke itinerary or have questions about our fleet, our distinguished team is ready to assist you 24/7.</p>
+</div>
+<div class="hidden md:block relative h-64">
+<div class="absolute inset-0 bg-secondary/10 rounded-full blur-3xl"></div>
+</div>
+</div>
+</section>
+<!-- Contact Options Grid -->
+<section class="py-16 px-12 bg-surface">
+<div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
+<div class="bg-surface-container-lowest p-8 flex flex-col items-center text-center group hover:bg-surface-container-high transition-colors duration-300">
+<span class="material-symbols-outlined text-secondary text-4xl mb-4" data-icon="phone_iphone" style="">phone_iphone</span>
+<h3 class="font-headline text-xl mb-2" style="">Call Us</h3>
+<p class="text-on-surface-variant font-label" style="">(987) 416-3283</p>
+<p class="text-on-surface-variant font-label text-xs mt-2 uppercase tracking-tighter opacity-60" style="">Priority Desk</p>
+</div>
+<div class="bg-surface-container-lowest p-8 flex flex-col items-center text-center group hover:bg-surface-container-high transition-colors duration-300">
+<span class="material-symbols-outlined text-secondary text-4xl mb-4" data-icon="mail" style="">mail</span>
+<h3 class="font-headline text-xl mb-2" style="">Email</h3>
+<p class="text-on-surface-variant font-label" style=""><a ramonvv202618@icloud.com</p>
+<p class="text-on-surface-variant font-label text-xs mt-2 uppercase tracking-tighter opacity-60" style="">24hr Response Goal</p>
+</div>
+<div class="bg-surface-container-lowest p-8 flex flex-col items-center text-center group hover:bg-surface-container-high transition-colors duration-300">
+<span class="material-symbols-outlined text-secondary text-4xl mb-4" data-icon="chat" style="">chat</span>
+<h3 class="font-headline text-xl mb-2" style="">Message</h3>
+<p class="text-on-surface-variant font-label" style="">(987) 416-3283</p>
+<p class="text-on-surface-variant font-label text-xs mt-2 uppercase tracking-tighter opacity-60" style="">Instant Messaging</p>
+</div>
+</div>
+</section>
+<!-- Professional Inquiry Form & Visual -->
+<section class="py-24 px-12 bg-surface-container-low">
+<div class="max-w-7xl mx-auto flex flex-col md:flex-row gap-24">
+<div class="w-full md:w-1/2">
+<h2 class="font-headline text-4xl mb-8" style="">Direct Inquiry</h2>
+<form action="https://formsubmit.co/ramonvv202618@icloud.com" method="POST" class="space-y-8" onsubmit="contactSubmit(event)">
+<input type="hidden" name="_subject" value="[CONTACT] New Message via Seacoast RVIP Website"/>
+<input type="hidden" name="_captcha" value="false"/>
+<input type="hidden" name="_template" value="table"/>
+<input type="hidden" name="_autoresponse" value="Thank you for contacting Seacoast RVIP! We received your message and will get back to you within the hour.
+
+─────────────────────────────────
+🚗 SEACOAST RVIP LLC
+The Ride You Can Count On
+
+📞 (987) 416-3283
+✉️  ramonvv202618@icloud.com
+🌐 seacoastrvip.com
+
+CONFIDENTIALITY NOTICE: This communication is intended solely for the named recipient(s) and may contain confidential and/or privileged information. If you have received this in error, please notify the sender immediately and destroy all copies. Seacoast RVIP LLC · NH, United States
+─────────────────────────────────"/>
+      <input type="text" name="_honey" style="display:none"/>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+<div class="relative group">
+<label class="font-label text-xs uppercase text-on-surface-variant mb-2 block">Full Name</label>
+<input name="Full Name" required class="w-full bg-surface-container-low border-b-2 border-outline-variant focus:border-primary focus:ring-0 transition-colors py-2 outline-none" placeholder="Your full name" type="text">
+</div>
+<div class="relative group">
+<label class="font-label text-xs uppercase text-on-surface-variant mb-2 block">Email Address</label>
+<input name="Email" required class="w-full bg-surface-container-low border-b-2 border-outline-variant focus:border-primary focus:ring-0 transition-colors py-2 outline-none" placeholder="your@email.com" type="email">
+</div>
+</div>
+<div class="relative group">
+<label class="font-label text-xs uppercase text-on-surface-variant mb-2 block">Phone Number</label>
+<input name="Phone" class="w-full bg-surface-container-low border-b-2 border-outline-variant focus:border-primary focus:ring-0 transition-colors py-2 outline-none" placeholder="Your phone number" type="tel">
+</div>
+<div class="relative group">
+<label class="font-label text-xs uppercase text-on-surface-variant mb-2 block">Service Interest</label>
+<select name="Service Interest" class="w-full bg-surface-container-low border-b-2 border-outline-variant focus:border-primary focus:ring-0 transition-colors py-2 outline-none appearance-none cursor-pointer">
+<option>Airport Transfer</option>
+<option>Night Out</option>
+<option>Casino Run</option>
+<option>Special Event</option>
+<option>Medical Appointment</option>
+<option>Quote Request</option>
+<option>Other</option>
+</select>
+</div>
+<div class="relative group">
+<label class="font-label text-xs uppercase text-on-surface-variant mb-2 block">Message</label>
+<textarea name="Message" required class="w-full bg-surface-container-low border-b-2 border-outline-variant focus:border-primary focus:ring-0 transition-colors py-2 outline-none resize-none" placeholder="Tell us about your trip or ask for a quote..." rows="4"></textarea>
+</div>
+<div id="contact-success" style="display:none;background:#f0fdf4;border:1px solid #bbf7d0;padding:1rem;color:#166534;font-family:Inter,sans-serif;font-size:0.875rem;margin-bottom:1rem">
+  ✅ Message sent! We will get back to you within 24 hours.
+</div>
+<button id="contact-btn" class="bg-primary text-on-primary px-12 py-4 font-label uppercase tracking-widest text-sm hover:scale-[0.98] transition-transform flex items-center gap-4" type="submit">
+  Send Message
+  <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+</form>
+<script>
+async function contactSubmit(e) {
+  e.preventDefault();
+  var btn = document.getElementById('contact-btn');
+  btn.textContent = 'Sending...';
+  btn.disabled = true;
+  var form = e.target;
+  try {
+    await fetch(form.action, {method:'POST', body: new FormData(form)});
+  } catch(err) {}
+  document.getElementById('contact-success').style.display = 'block';
+  btn.textContent = 'Sent!';
+  form.reset();
+}
+</script>
+</div>
+<div class="w-full md:w-1/2 hidden md:block">
+<div class="aspect-[4/5] bg-surface-container shadow-2xl relative overflow-hidden group">
+<img alt="Luxury car interior" class="w-full h-full object-cover opacity-90 transition-transform duration-700 group-hover:scale-105" data-alt="Interior of a luxury sedan with leather seats and soft lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCXoHVJ_NGSVuvSlj9xaO_vHqKyNLq-s_TfMN_FA4ZOHsCSSkqwgcxwljDOT_GKIk4RJCOp2HEadC-3v6G_rV50tdpOrfhAw_ptEkNO6kd4P-32CjMb8l261WONCyOF7z5l6rDOmwssI-g-ATQlD2JIALYtQJRRcmCeqQDpI9FQOa_P4-DIMkV2u90wHVTlKYHwGWZr7kFCK7z9noy5qCY2i43vOGa61iiguO5ZLSI4xqI2m0XYsKJ_6HkUrllMAzmOBN-OpFcQgkk6" style="">
+<div class="absolute bottom-12 left-12 right-12 text-on-primary p-8 glass-nav bg-primary/20">
+<h4 class="font-headline text-2xl mb-2" style="">Our Promise</h4>
+<p class="text-sm font-light italic leading-relaxed" style="">"Every detail is curated to ensure your journey is as distinguished as your destination."</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- FAQ Section -->
+<section class="py-24 px-12 bg-surface">
+<div class="max-w-4xl mx-auto">
+<div class="text-center mb-16">
+<h2 class="font-headline text-4xl mb-4" style="">Frequently Asked Questions</h2>
+<p class="text-on-surface-variant font-label uppercase tracking-widest text-xs" style="">Essentials &amp; Policies</p>
+</div>
+<div class="space-y-0">
+<!-- FAQ Item 1 -->
+<div class="py-8 border-b border-outline-variant group">
+<button class="w-full flex justify-between items-center text-left" style="">
+<span class="font-headline text-xl" style="">What is the booking process?</span>
+<span class="material-symbols-outlined text-secondary transition-transform group-hover:rotate-45" data-icon="add" style="">add</span>
+</button>
+<div class="mt-4 text-on-surface-variant leading-relaxed max-w-2xl text-sm" style="">
+                            Reservations can be made through our digital portal or via our concierge desk. We recommend booking at least 24 hours in advance to guarantee your preferred vehicle selection.
+                        </div>
+</div>
+<!-- FAQ Item 2 -->
+<div class="py-8 border-b border-outline-variant group">
+<button class="w-full flex justify-between items-center text-left" style="">
+<span class="font-headline text-xl" style="">How do you handle flight tracking?</span>
+<span class="material-symbols-outlined text-secondary transition-transform group-hover:rotate-45" data-icon="add" style="">add</span>
+</button>
+<div class="mt-4 text-on-surface-variant leading-relaxed max-w-2xl text-sm" style="">
+                            We utilize real-time flight telemetry. Your chauffeur will automatically adjust their arrival time based on actual landing schedules, ensuring a seamless exit from the terminal.
+                        </div>
+</div>
+<!-- FAQ Item 3 -->
+<div class="py-8 border-b border-outline-variant group">
+<button class="w-full flex justify-between items-center text-left" style="">
+<span class="font-headline text-xl" style="">What is the cancellation policy?</span>
+<span class="material-symbols-outlined text-secondary transition-transform group-hover:rotate-45" data-icon="add" style="">add</span>
+</button>
+<div class="mt-4 text-on-surface-variant leading-relaxed max-w-2xl text-sm" style="">
+                            Cancellations made more than 12 hours prior to the scheduled pick-up are eligible for a full refund. Late cancellations may incur a service fee.
+                        </div>
+</div>
+<!-- FAQ Item 4 -->
+<div class="py-8 border-b border-outline-variant group">
+<button class="w-full flex justify-between items-center text-left" style="">
+<span class="font-headline text-xl" style="">Accepted payment methods?</span>
+<span class="material-symbols-outlined text-secondary transition-transform group-hover:rotate-45" data-icon="add" style="">add</span>
+</button>
+<div class="mt-4 text-on-surface-variant leading-relaxed max-w-2xl text-sm" style="">
+                            We accept all major credit cards, corporate account billing, and secure digital payments. We accept Cash, Venmo, Cash App, Apple Pay, and all major debit and credit cards.
+                        </div>
+</div>
+<!-- FAQ Item 5 -->
+<div class="py-8 border-b border-outline-variant group">
+<button class="w-full flex justify-between items-center text-left" style="">
+<span class="font-headline text-xl" style="">Vehicle availability and passenger capacity?</span>
+<span class="material-symbols-outlined text-secondary transition-transform group-hover:rotate-45" data-icon="add" style="">add</span>
+</button>
+<div class="mt-4 text-on-surface-variant leading-relaxed max-w-2xl text-sm" style="">
+                            Our fleet includes SUVs (6 passengers), Black SUVs (up to 7 passengers). All vehicles are late-model and impeccably maintained.
+                        </div>
+</div>
+<!-- FAQ Item 6 -->
+<div class="py-8 border-b border-outline-variant group">
+<button class="w-full flex justify-between items-center text-left" style="">
+<span class="font-headline text-xl" style="">Which service areas do you cover?</span>
+<span class="material-symbols-outlined text-secondary transition-transform group-hover:rotate-45" data-icon="add" style="">add</span>
+</button>
+<div class="mt-4 text-on-surface-variant leading-relaxed max-w-2xl text-sm" style="">
+                            While we primarily serve the Seacoast and major metropolitan hubs, we offer long-distance interstate transfers upon request.
+                        </div>
+</div>
+</div>
+</div>
+</section>
+<!-- Signature Component: Itinerary Thread (Brief) -->
+<section class="py-16 px-12 bg-surface-container-low overflow-hidden">
+<div class="max-w-7xl mx-auto flex flex-col items-center">
+<div class="h-24 w-px bg-secondary opacity-30 mb-8"></div>
+<div class="w-3 h-3 rounded-full bg-primary mb-8 outline outline-4 outline-secondary/20"></div>
+<p class="font-headline text-2xl text-center italic max-w-xl" style="">"We are there when nobody is available to pick you up wheather is early morning or late night."</p>
+<div class="h-24 w-px bg-secondary opacity-30 mt-8"></div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer style="background:#0a0a0a;color:white;padding:4rem 0 2rem">
+  <div style="max-width:100%;padding:0 2rem">
+
+    <!-- Top row -->
+    <div style="display:grid;grid-template-columns:1fr;gap:2.5rem;padding-bottom:2.5rem;border-bottom:1px solid rgba(255,255,255,0.08)" class="footer-grid">
+
+      <!-- Brand -->
       <div>
-        <div style="display:flex;flex-direction:column;gap:1rem">
-          <a href="tel:+19874163283" style="display:flex;align-items:center;gap:.875rem;padding:1.1rem;border:1px solid #eee;border-left:3px solid #775a19;transition:background .18s" onmouseover="this.style.background='#f7f7f7'" onmouseout="this.style.background='#fff'">
-            <span class="material-symbols-outlined" style="color:#775a19">call</span>
-            <div><div style="font-weight:600;font-size:.88rem">Call or Text</div><div style="font-size:.8rem;color:#666">(987) 416-3283</div></div>
+        <div style="font-family:'Times New Roman',Times,serif;font-size:1.5rem;font-weight:700;color:white;margin-bottom:0.75rem">Seacoast RVIP</div>
+        <p style="font-family:Inter,sans-serif;font-size:0.8rem;color:rgba(255,255,255,0.45);line-height:1.7;max-width:280px;margin-bottom:1.25rem">The Ride You Can Count On. Premium private car service in the NH Seacoast area.</p>
+        <div style="display:flex;gap:1.25rem;align-items:center;flex-wrap:wrap">
+          <button onclick="shareRVIP()" style="cursor:pointer;color:#775a19;font-family:Inter,sans-serif;font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;background:none;border:none;padding:0;display:inline-flex;align-items:center;gap:4px">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#775a19" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+            Share
+          </button>
+          <span style="color:rgba(255,255,255,0.15)">|</span>
+          <a href="/cdn-cgi/l/email-protection#750714181a1b030347454743444d351c16191a00115b161a18" style="color:#775a19;font-family:Inter,sans-serif;font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;text-decoration:none;display:inline-flex;align-items:center;gap:4px">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#775a19" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            Email
           </a>
-          <a href="/cdn-cgi/l/email-protection#c0b2a1adafaeb6b6f2f0f2f6f1f880a9a3acafb5a4eea3afad" style="display:flex;align-items:center;gap:.875rem;padding:1.1rem;border:1px solid #eee;border-left:3px solid #775a19;transition:background .18s" onmouseover="this.style.background='#f7f7f7'" onmouseout="this.style.background='#fff'">
-            <span class="material-symbols-outlined" style="color:#775a19">mail</span>
-            <div><div style="font-weight:600;font-size:.88rem">Email</div><div style="font-size:.8rem;color:#666"><span class="__cf_email__" data-cfemail="86f4e7ebe9e8f0f0b4b6b4b0b7bec6efe5eae9f3e2a8e5e9eb">[email&#160;protected]</span></div></div>
+          <span style="color:rgba(255,255,255,0.15)">|</span>
+          <a href="tel:+19874163283" style="color:#775a19;font-family:Inter,sans-serif;font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;text-decoration:none;display:inline-flex;align-items:center;gap:4px">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#775a19" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.93 19.79 19.79 0 0 1 1.69 5.38 2 2 0 0 1 3.68 3.21h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 10.9a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 17.92z"/></svg>
+            Call
           </a>
-          <div style="display:flex;align-items:center;gap:.875rem;padding:1.1rem;border:1px solid #eee;border-left:3px solid #775a19">
-            <span class="material-symbols-outlined" style="color:#775a19">location_on</span>
-            <div><div style="font-weight:600;font-size:.88rem">Service Area</div><div style="font-size:.8rem;color:#666">NH Seacoast · Portsmouth · Hampton · Exeter</div></div>
-          </div>
         </div>
       </div>
+
+      <!-- Nav links -->
       <div>
-        <form id="cf" action="https://formsubmit.co/ramonvv202618@icloud.com" method="POST" onsubmit="submitForm(event,'cf','csent','cbtn')">
-          <input type="hidden" name="_subject" value="[CONTACT] New Message via Seacoast RVIP Website"/>
-          <input type="hidden" name="_captcha" value="false"/>
-          <input type="hidden" name="_template" value="table"/>
-          <input type="hidden" name="_autoresponse" value="Thank you for contacting Seacoast RVIP! We will reply within the hour. — Ramon (987) 416-3283"/>
-          <input type="text" name="_honey" style="display:none"/>
-          <div class="fg" style="margin-bottom:1.25rem">
-            <div><label class="flbl">Your Name *</label><input name="Name" required class="finp" placeholder="John Smith"/></div>
-            <div><label class="flbl">Phone</label><input name="Phone" class="finp" type="tel" placeholder="Your phone"/></div>
-            <div><label class="flbl">Email *</label><input name="Email" required class="finp" type="email" placeholder="your@email.com"/></div>
-            <div><label class="flbl">Message *</label><textarea name="Message" required class="finp" rows="4" style="resize:vertical"></textarea></div>
-          </div>
-          <div id="csent" style="display:none;background:#f0fdf4;border-left:3px solid #16a34a;padding:.875rem;font-size:.83rem;color:#15803d;margin-bottom:1rem">✅ Sent! We will reply within the hour.</div>
-          <button id="cbtn" type="submit" class="btn btn-black btn-full">Send Message →</button>
-        </form>
+        <div style="font-family:Inter,sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.15em;color:#775a19;font-weight:600;margin-bottom:1rem">Navigate</div>
+        <div style="display:flex;flex-direction:column;gap:0.625rem">
+          <a href="index.html" style="font-family:Inter,sans-serif;font-size:0.8rem;color:rgba(255,255,255,0.55);text-decoration:none;transition:color 0.2s" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.55)'">Home</a>
+          <a href="services.html" style="font-family:Inter,sans-serif;font-size:0.8rem;color:rgba(255,255,255,0.55);text-decoration:none;transition:color 0.2s" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.55)'">Services &amp; Pricing</a>
+          <a href="about.html" style="font-family:Inter,sans-serif;font-size:0.8rem;color:rgba(255,255,255,0.55);text-decoration:none;transition:color 0.2s" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.55)'">About Us</a>
+          <a href="contact.html" style="font-family:Inter,sans-serif;font-size:0.8rem;color:rgba(255,255,255,0.55);text-decoration:none;transition:color 0.2s" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.55)'">Contact</a>
+          <a href="schedule.html" style="font-family:Inter,sans-serif;font-size:0.8rem;color:rgba(255,255,255,0.55);text-decoration:none;transition:color 0.2s" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.55)'">Book a Ride</a>
+        </div>
+      </div>
+
+      <!-- Contact -->
+      <div>
+        <div style="font-family:Inter,sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.15em;color:#775a19;font-weight:600;margin-bottom:1rem">Contact</div>
+        <div style="display:flex;flex-direction:column;gap:0.5rem">
+          <a href="tel:+19874163283" style="font-family:Inter,sans-serif;font-size:0.8rem;color:rgba(255,255,255,0.55);text-decoration:none">(987) 416-3283</a>
+          <a href="/cdn-cgi/l/email-protection#94e6f5f9fbfae2e2a6a4a6a2a5acd4fdf7f8fbe1f0baf7fbf9" style="font-family:Inter,sans-serif;font-size:0.8rem;color:rgba(255,255,255,0.55);text-decoration:none"><span class="__cf_email__" data-cfemail="394b585456574f4f0b090b0f080179505a55564c5d175a5654">[email&#160;protected]</span></a>
+          <a href="schedule.html" style="display:inline-block;margin-top:0.75rem;background:#775a19;color:white;padding:0.625rem 1.25rem;font-family:Inter,sans-serif;font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;text-decoration:none;border-bottom:2px solid #5d4201">Book Now</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom bar -->
+    <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;padding-top:1.5rem;gap:0.75rem">
+      <p style="font-family:Inter,sans-serif;font-size:0.7rem;color:rgba(255,255,255,0.25);margin:0">© 2025 Seacoast RVIP LLC. All rights reserved.</p>
+      <div style="display:flex;gap:1.5rem">
+        <a href="privacy.html" target="_blank" style="font-family:Inter,sans-serif;font-size:0.7rem;color:rgba(255,255,255,0.3);text-decoration:none" onmouseover="this.style.color='#775a19'" onmouseout="this.style.color='rgba(255,255,255,0.3)'">Privacy Policy</a>
+        <a href="terms.html" target="_blank" style="font-family:Inter,sans-serif;font-size:0.7rem;color:rgba(255,255,255,0.3);text-decoration:none" onmouseover="this.style.color='#775a19'" onmouseout="this.style.color='rgba(255,255,255,0.3)'">Terms of Service</a>
       </div>
     </div>
   </div>
-</section>
 
-</div>
-
-<footer class="footer"><div class="W">
-  <div class="footer-g">
-    <div>
-      <div class="footer-logo">Seacoast RVIP</div>
-      <div class="footer-tag">The Ride You Can Count On.<br>Premium private car service · NH Seacoast</div>
-      <div style="display:flex;gap:1rem">
-        <a href="tel:+19874163283" style="color:#775a19;font-size:.75rem;font-weight:600">(987) 416-3283</a>
-        <a href="/cdn-cgi/l/email-protection#e59784888a8b9393d7d5d7d3d4dda58c86898a9081cb868a88" style="color:#775a19;font-size:.75rem;font-weight:600">Email</a>
-      </div>
-    </div>
-    <div>
-      <div class="ftr-ht">Navigate</div>
-      <div class="ftr-links">
-        <a href="index.html">Home</a><a href="services.html">Services &amp; Pricing</a>
-        <a href="about.html">About</a><a href="contact.html">Contact</a>
-        <a href="schedule.html">Book a Ride</a><a href="quote.html">Get a Quote</a>
-        <a href="account.html">My Account</a>
-      </div>
-    </div>
-    <div>
-      <div class="ftr-ht">Contact</div>
-      <div class="ftr-links">
-        <a href="tel:+19874163283">(987) 416-3283</a>
-        <a href="/cdn-cgi/l/email-protection#96e4f7fbf9f8e0e0a4a6a4a0a7aed6fff5faf9e3f2b8f5f9fb"><span class="__cf_email__" data-cfemail="750714181a1b030347454743444d351c16191a00115b161a18">[email&#160;protected]</span></a>
-      </div>
-      <a href="schedule.html" style="display:inline-block;margin-top:1rem;background:#775a19;color:#fff;padding:.6rem 1.1rem;font-family:'Work Sans',sans-serif;font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;border-bottom:2px solid #5d4201">Book Now →</a>
-    </div>
-  </div>
-  <div class="footer-bot">
-    <span class="footer-copy">© 2025 Seacoast RVIP LLC · All rights reserved</span>
-    <div class="footer-legal"><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a></div>
-  </div>
-</div></footer>
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
-
-function showToast(m){var t=document.getElementById('toast');if(!t)return;t.textContent=m;t.style.display='block';setTimeout(function(){t.style.display='none';},3000);}
-function toggleMenu(){
-  var m=document.getElementById('mob-nav'),open=m.style.display==='flex';
-  m.style.display=open?'none':'flex';
-  document.body.style.overflow=open?'':'hidden';
-  var bars=document.querySelectorAll('.ham-btn span');
-  if(!open){bars[0].style.transform='translateY(7px) rotate(45deg)';bars[1].style.opacity='0';bars[2].style.transform='translateY(-7px) rotate(-45deg)';}
-  else{bars[0].style.transform='';bars[1].style.opacity='1';bars[2].style.transform='';}
-}
-function checkW(){
-  var d=document.getElementById('nav-d');
-  var h=document.querySelector('.ham-btn');
-  if(!d||!h)return;
-  if(window.innerWidth>=768){d.style.display='flex';h.style.display='none';var m=document.getElementById('mob-nav');if(m&&m.style.display==='flex'){m.style.display='none';document.body.style.overflow='';var bars=document.querySelectorAll('.ham-btn span');bars[0].style.transform='';bars[1].style.opacity='1';bars[2].style.transform='';}}
-  else{d.style.display='none';h.style.display='flex';}
-}
-window.addEventListener('resize',checkW);
-window.add
+  <style>
+  @media(min-width:768px){
+    .footer-grid{grid-template-columns:1.5fr 1fr 1fr!important}
+  }
+  </style>
+</footer>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('/sw.js')
+      .then(function(reg) { console.log('SW registered'); })
+      .

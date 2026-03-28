@@ -2,307 +2,305 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>Get a Quote | Seacoast RVIP</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Request a Quote | Seacoast RVIP</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-.material-symbols-outlined{font-variation-settings:"FILL" 0,"wght" 300,"GRAD" 0,"opsz" 24}
-
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-body{font-family:'Inter',sans-serif;color:#111;background:#fff}
-a{text-decoration:none;color:inherit}
-img{max-width:100%}
-
-/* ── LAYOUT ── */
-.W{max-width:900px;margin:0 auto;padding:0 1.25rem}
-.page-body{padding-top:68px}
-
-/* ── NAV ── */
-.nav{position:fixed;top:0;left:0;right:0;height:68px;background:rgba(255,255,255,.97);backdrop-filter:blur(10px);border-bottom:1px solid #eee;z-index:300}
-.nav .W{height:68px;display:flex;align-items:center;justify-content:space-between}
-.nav-logo{font-family:'Times New Roman',serif;font-size:1.25rem;font-weight:700;letter-spacing:-.01em}
-.nav-links{display:none;align-items:center;gap:1.75rem}
-.nav-links a{font-size:.78rem;font-weight:500;color:#555;text-transform:uppercase;letter-spacing:.05em;transition:color .2s}
-.nav-links a:hover,.nav-links a.act{color:#000}
-.nav-right{display:flex;align-items:center;gap:.75rem}
-.btn-book{background:#000;color:#fff;padding:.5rem 1.1rem;font-size:.73rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;border:none;cursor:pointer;border-bottom:2px solid #775a19;white-space:nowrap}
-.ham-btn{display:flex;flex-direction:column;gap:5px;cursor:pointer;background:none;border:none;padding:.375rem}
-.ham-btn span{display:block;width:22px;height:2px;background:#000;transition:all .3s}
-.mob-nav{display:none;position:fixed;inset:0;background:#0a0a0a;z-index:299;flex-direction:column;padding:80px 1.5rem 2rem;gap:0;overflow-y:auto}
-.mob-nav a{font-size:1rem;font-weight:600;color:#fff;padding:.875rem 0;border-bottom:1px solid rgba(255,255,255,.08);display:block;text-transform:uppercase;letter-spacing:.06em}
-.mob-nav a:hover{color:#775a19}
-.mob-nav .mob-actions{margin-top:1.5rem;display:flex;gap:.75rem;flex-wrap:wrap}
-
-/* ── FOOTER ── */
-.footer{background:#0a0a0a;color:#fff;padding:3.5rem 0 1.5rem;margin-top:5rem}
-.footer-g{display:grid;grid-template-columns:1fr;gap:2rem;padding-bottom:2rem;border-bottom:1px solid rgba(255,255,255,.07)}
-.footer-logo{font-family:'Times New Roman',serif;font-size:1.35rem;font-weight:700;margin-bottom:.5rem}
-.footer-tag{font-size:.78rem;color:rgba(255,255,255,.35);line-height:1.7;margin-bottom:1rem}
-.ftr-ht{font-size:.62rem;text-transform:uppercase;letter-spacing:.15em;color:#775a19;font-weight:600;margin-bottom:.875rem}
-.ftr-links a{display:block;font-size:.78rem;color:rgba(255,255,255,.45);margin-bottom:.5rem;transition:color .2s}
-.ftr-links a:hover{color:#fff}
-.footer-bot{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;padding-top:1.5rem;gap:.75rem}
-.footer-copy{font-size:.68rem;color:rgba(255,255,255,.2)}
-.footer-legal{display:flex;gap:1.25rem}
-.footer-legal a{font-size:.68rem;color:rgba(255,255,255,.25);transition:color .2s}
-.footer-legal a:hover{color:#775a19}
-
-/* ── BUTTONS ── */
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;font-family:'Work Sans',sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:.08em;border:none;cursor:pointer;transition:opacity .18s;white-space:nowrap}
-.btn:hover{opacity:.82}
-.btn-black{background:#000;color:#fff;padding:.875rem 1.75rem;font-size:.8rem;border-bottom:3px solid #775a19}
-.btn-ghost{background:transparent;color:#000;padding:.875rem 1.75rem;font-size:.8rem;border:1.5px solid #000;transition:all .18s}
-.btn-ghost:hover{background:#000;color:#fff;opacity:1}
-.btn-gold{background:#775a19;color:#fff;padding:.5rem 1rem;font-size:.72rem;border-bottom:2px solid #5d4201}
-.btn-sm{padding:.4rem .8rem;font-size:.68rem}
-.btn-green{background:#16a34a;color:#fff;padding:.5rem 1rem;font-size:.72rem}
-.btn-red{background:#dc2626;color:#fff;padding:.5rem 1rem;font-size:.72rem}
-.btn-outline{background:#fff;color:#000;padding:.5rem 1rem;font-size:.72rem;border:1px solid #ddd}
-.btn-blue{background:#1d4ed8;color:#fff;padding:.5rem 1rem;font-size:.72rem}
-.btn-purple{background:#7c3aed;color:#fff;padding:.5rem 1rem;font-size:.72rem}
-.btn-full{width:100%;justify-content:center}
-
-/* ── FORMS ── */
-.finp{width:100%;background:#f7f7f7;border:0;border-bottom:2px solid #ddd;padding:.7rem 0;font-family:Inter,sans-serif;font-size:.95rem;outline:none;transition:border-color .2s}
-.finp:focus{border-bottom-color:#000}
-.fsel{width:100%;background:#f7f7f7;border:0;border-bottom:2px solid #ddd;padding:.7rem 0;font-family:Inter,sans-serif;font-size:.95rem;outline:none;appearance:none}
-.flbl{font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;color:#777;display:block;margin-bottom:5px;font-family:'Work Sans',sans-serif;font-weight:600}
-.fg{display:grid;gap:1.25rem}
-.fg-2{grid-template-columns:1fr 1fr}
-.fg-span{grid-column:1/-1}
-
-/* ── CARDS ── */
-.card{background:#fff;border-left:3px solid #775a19;padding:1.25rem}
-.card-flat{background:#fff;border:1px solid #ebebeb;padding:1.25rem}
-.card-dark{background:#0a0a0a;color:#fff;padding:1.5rem;border-bottom:4px solid #775a19}
-
-/* ── BADGES ── */
-.bdg{display:inline-block;padding:2px 8px;font-size:.6rem;font-family:'Work Sans',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.05em;border-radius:2px}
-.bdg-g{background:#dcfce7;color:#15803d}
-.bdg-b{background:#dbeafe;color:#1d4ed8}
-.bdg-y{background:#fef9c3;color:#92400e}
-.bdg-r{background:#fee2e2;color:#b91c1c}
-.bdg-p{background:#ede9fe;color:#6d28d9}
-
-/* ── OVERLAY / MODAL ── */
-.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:400;overflow-y:auto;padding:1rem}
-.overlay.vis{display:flex;align-items:flex-start;justify-content:center}
-.modal{background:#fff;width:100%;margin:2rem auto}
-.modal-hd{padding:1rem 1.25rem;border-bottom:1px solid #eee;display:flex;align-items:center;justify-content:space-between}
-.modal-hd h3{font-family:'Times New Roman',serif;font-size:1rem;font-weight:700}
-.modal-x{background:none;border:none;font-size:1.2rem;cursor:pointer;color:#888;line-height:1;padding:0}
-.modal-body{padding:1.5rem}
-
-/* ── TOAST ── */
-#toast{position:fixed;bottom:1.25rem;left:50%;transform:translateX(-50%);background:#111;color:#fff;padding:.7rem 1.4rem;font-family:'Work Sans',sans-serif;font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;border-bottom:2px solid #775a19;z-index:9999;display:none;white-space:nowrap}
-
-/* ── SECTION ── */
-.sec{padding:4rem 0}
-.sec-sm{padding:2.5rem 0}
-.sec-title{font-family:'Times New Roman',serif;font-size:2rem;font-weight:700;line-height:1.15}
-.sec-sub{font-size:.88rem;color:#555;line-height:1.75;max-width:520px;margin-top:.625rem}
-.gold{color:#775a19}
-.hr{height:1px;background:#eee;margin:2rem 0}
-
-/* ── GRID ── */
-.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem}
-.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem}
-
-/* ── RESPONSIVE ── */
-@media(min-width:768px){
-  .nav-links{display:flex}
-  .ham-btn{display:none}
-  .footer-g{grid-template-columns:1.5fr 1fr 1fr}
-}
-@media(max-width:767px){
-  .grid-2,.grid-3,.fg-2{grid-template-columns:1fr!important}
-  .fg-2 .fg-span{grid-column:1}
-  .sec-title{font-size:1.6rem}
-}
-
-
+<link rel="manifest" href="/manifest.json"/>
+<meta name="theme-color" content="#775a19"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-title" content="Seacoast RVIP"/>
+<link rel="apple-touch-icon" href="/seacoast_rvip_favicon_180.png"/>
+<style>
+*{box-sizing:border-box}
+.font-headline,h1,h2,h3{font-family:"Times New Roman",Times,serif!important}
+body{font-family:Inter,sans-serif;background:#f9f9f9}
+.inp{width:100%;background:white;border:1px solid #e2e2e2;border-bottom:2px solid #c4c7c7;padding:0.75rem;font-family:Inter,sans-serif;font-size:0.875rem;outline:none;transition:border-color 0.2s}
+.inp:focus{border-bottom-color:#775a19}
+.lbl{font-family:"Work Sans",sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:#666;display:block;margin-bottom:6px}
+.sel{width:100%;background:white;border:1px solid #e2e2e2;border-bottom:2px solid #c4c7c7;padding:0.75rem;font-family:Inter,sans-serif;font-size:0.875rem;outline:none;appearance:none}
 </style>
-</head>
-<body>
-
-<div id="toast"></div>
-<nav class="nav"><div class="W">
-  <a href="index.html" class="nav-logo">Seacoast RVIP</a>
-  <div id="nav-d" class="nav-links"><a href="index.html" class="">Home</a><a href="services.html" class="">Services</a><a href="about.html" class="">About</a><a href="contact.html" class="">Contact</a><a href="account.html" style="font-size:.73rem;font-weight:600;color:#555;text-transform:uppercase;letter-spacing:.05em">My Account</a></div>
-  <div class="nav-right">
-    <a href="schedule.html"><button class="btn-book">Book Now</button></a>
-    <button class="ham-btn" onclick="toggleMenu()"><span></span><span></span><span></span></button>
-  </div>
-</div></nav>
-<div id="mob-nav" class="mob-nav">
-  <a href="index.html">Home</a><a href="services.html">Services</a><a href="about.html">About</a><a href="contact.html">Contact</a><a href="account.html">My Account</a><a href="quote.html">Get a Quote</a><a href="schedule.html">Book a Ride</a>
-  <div class="mob-actions">
-    <a href="schedule.html"><button class="btn btn-gold">Book a Ride</button></a>
-    <a href="quote.html"><button class="btn btn-outline">Get Quote</button></a>
-  </div>
-  <div style="margin-top:auto;padding-top:2rem;border-top:1px solid rgba(255,255,255,.08)">
-    <a href="tel:+19874163283" style="color:#775a19;font-size:.85rem;font-weight:600">(987) 416-3283</a>
-  </div>
-</div>
-<div class="page-body">
-
-<section class="sec">
-  <div class="W" style="max-width:720px">
-    <div style="text-align:center;margin-bottom:2.5rem">
-      <div style="font-size:.68rem;text-transform:uppercase;letter-spacing:.2em;color:#775a19;font-weight:600;margin-bottom:.75rem">Free · No commitment</div>
-      <h1 class="sec-title">Request a Quote</h1>
-      <p class="sec-sub" style="margin:auto">Tell us your trip details — we reply with a price within the hour.</p>
-    </div>
-    <div class="grid-3" style="margin-bottom:2.5rem">
-      <div style="text-align:center;padding:1.25rem;background:#f7f7f7"><div style="font-size:1.5rem;margin-bottom:.5rem">⚡</div><div style="font-weight:600;font-size:.83rem">Fast Reply</div><div style="font-size:.72rem;color:#888">Within the hour</div></div>
-      <div style="text-align:center;padding:1.25rem;background:#f7f7f7"><div style="font-size:1.5rem;margin-bottom:.5rem">💰</div><div style="font-weight:600;font-size:.83rem">Flat Pricing</div><div style="font-size:.72rem;color:#888">No hidden fees</div></div>
-      <div style="text-align:center;padding:1.25rem;background:#f7f7f7"><div style="font-size:1.5rem;margin-bottom:.5rem">🚗</div><div style="font-weight:600;font-size:.83rem">No Obligation</div><div style="font-size:.72rem;color:#888">Just an inquiry</div></div>
-    </div>
-    <div class="card-flat" style="border-top:3px solid #775a19;padding:2rem">
-      <form id="qf" action="https://formsubmit.co/ramonvv202618@icloud.com" method="POST" onsubmit="submitForm(event,'qf','qsent','qbtn')">
-        <input type="hidden" name="_subject" value="[QUOTE REQUEST] Price Inquiry — Seacoast RVIP"/>
-        <input type="hidden" name="_captcha" value="false"/>
-        <input type="hidden" name="_template" value="table"/>
-        <input type="hidden" name="_autoresponse" value="Thank you for your quote request! We will reply with pricing within the hour. — Ramon (987) 416-3283"/>
-        <input type="text" name="_honey" style="display:none"/>
-        <div class="fg fg-2" style="margin-bottom:1.25rem">
-          <div><label class="flbl">Name *</label><input name="Name" required class="finp" placeholder="John Smith"/></div>
-          <div><label class="flbl">Phone *</label><input name="Phone" required class="finp" type="tel"/></div>
-          <div><label class="flbl">Email</label><input name="Email" class="finp" type="email"/></div>
-          <div><label class="flbl">Service *</label>
-            <select name="Service" required class="fsel">
-              <option value="">Select...</option>
-              <option>Airport Transfer — Boston Logan</option>
-              <option>Airport Transfer — Manchester MHT</option>
-              <option>Night Out</option><option>Casino Run</option>
-              <option>Special Event</option><option>Medical Appointment</option><option>Other</option>
-            </select>
-          </div>
-          <div><label class="flbl">Date</label><input name="Date" class="finp" type="date"/></div>
-          <div><label class="flbl">Pickup Time</label><input name="Time" class="finp" type="time"/></div>
-          <div class="fg-span"><label class="flbl">Pickup Address *</label><input name="Pickup" required class="finp" placeholder="Full pickup address"/></div>
-          <div class="fg-span"><label class="flbl">Destination *</label><input name="Destination" required class="finp" placeholder="Airport, venue, or address"/></div>
-          <div><label class="flbl">Passengers</label><select name="Passengers" class="fsel"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6+</option></select></div>
-          <div><label class="flbl">Notes</label><input name="Notes" class="finp" placeholder="Flight number, special requests"/></div>
-        </div>
-        <div id="qsent" style="display:none;background:#f0fdf4;border-left:3px solid #16a34a;padding:.875rem;font-size:.83rem;color:#15803d;margin-bottom:1rem">✅ Quote request sent! We will reply within the hour.</div>
-        <button id="qbtn" type="submit" class="btn btn-black btn-full">Send Quote Request →</button>
-      </form>
-    </div>
-    <div style="margin-top:2.5rem">
-      <h3 style="font-family:'Times New Roman',serif;font-size:1.1rem;font-weight:700;text-align:center;margin-bottom:1rem">Starting Rates</h3>
-      <div class="grid-2">
-        <div style="background:#f7f7f7;padding:1rem 1.25rem;display:flex;justify-content:space-between"><span style="font-size:.83rem;color:#444">Boston Logan Airport</span><span style="font-family:'Times New Roman',serif;font-size:1.1rem;font-weight:700">$145+</span></div>
-        <div style="background:#f7f7f7;padding:1rem 1.25rem;display:flex;justify-content:space-between"><span style="font-size:.83rem;color:#444">Manchester Airport</span><span style="font-family:'Times New Roman',serif;font-size:1.1rem;font-weight:700">$125+</span></div>
-        <div style="background:#f7f7f7;padding:1rem 1.25rem;display:flex;justify-content:space-between"><span style="font-size:.83rem;color:#444">Night Out</span><span style="font-family:'Times New Roman',serif;font-size:1.1rem;font-weight:700">$55+</span></div>
-        <div style="background:#f7f7f7;padding:1rem 1.25rem;display:flex;justify-content:space-between"><span style="font-size:.83rem;color:#444">Casino Run</span><span style="font-family:'Times New Roman',serif;font-size:1.1rem;font-weight:700">$45+</span></div>
-      </div>
-    </div>
-  </div>
-</section>
-
-</div>
-
-<footer class="footer"><div class="W">
-  <div class="footer-g">
-    <div>
-      <div class="footer-logo">Seacoast RVIP</div>
-      <div class="footer-tag">The Ride You Can Count On.<br>Premium private car service · NH Seacoast</div>
-      <div style="display:flex;gap:1rem">
-        <a href="tel:+19874163283" style="color:#775a19;font-size:.75rem;font-weight:600">(987) 416-3283</a>
-        <a href="/cdn-cgi/l/email-protection#3341525e5c5d454501030105020b735a505f5c46571d505c5e" style="color:#775a19;font-size:.75rem;font-weight:600">Email</a>
-      </div>
-    </div>
-    <div>
-      <div class="ftr-ht">Navigate</div>
-      <div class="ftr-links">
-        <a href="index.html">Home</a><a href="services.html">Services &amp; Pricing</a>
-        <a href="about.html">About</a><a href="contact.html">Contact</a>
-        <a href="schedule.html">Book a Ride</a><a href="quote.html">Get a Quote</a>
-        <a href="account.html">My Account</a>
-      </div>
-    </div>
-    <div>
-      <div class="ftr-ht">Contact</div>
-      <div class="ftr-links">
-        <a href="tel:+19874163283">(987) 416-3283</a>
-        <a href="/cdn-cgi/l/email-protection#86f4e7ebe9e8f0f0b4b6b4b0b7bec6efe5eae9f3e2a8e5e9eb"><span class="__cf_email__" data-cfemail="4f3d2e22202139397d7f7d797e770f262c23203a2b612c2022">[email&#160;protected]</span></a>
-      </div>
-      <a href="schedule.html" style="display:inline-block;margin-top:1rem;background:#775a19;color:#fff;padding:.6rem 1.1rem;font-family:'Work Sans',sans-serif;font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;border-bottom:2px solid #5d4201">Book Now →</a>
-    </div>
-  </div>
-  <div class="footer-bot">
-    <span class="footer-copy">© 2025 Seacoast RVIP LLC · All rights reserved</span>
-    <div class="footer-legal"><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a></div>
-  </div>
-</div></footer>
-
-
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script>
 (function(){
-  var cfg={apiKey:"AIzaSyDGel0ktZDQYcdlOuoZo4bAqZWCuGvOVbc",authDomain:"seacoast-rip.firebaseapp.com",projectId:"seacoast-rip",storageBucket:"seacoast-rip.firebasestorage.app",messagingSenderId:"684535453116",appId:"1:684535453116:web:922c843b5bad3b81ad47b9"};
-  try{if(!firebase.apps.length)firebase.initializeApp(cfg);window._db=firebase.firestore();}catch(e){window._db=null;}
+  var cfg={
+    apiKey:"AIzaSyDGel0ktZDQYcdlOuoZo4bAqZWCuGvOVbc",
+    authDomain:"seacoast-rip.firebaseapp.com",
+    projectId:"seacoast-rip",
+    storageBucket:"seacoast-rip.firebasestorage.app",
+    messagingSenderId:"684535453116",
+    appId:"1:684535453116:web:922c843b5bad3b81ad47b9"
+  };
+  try{
+    if(!firebase.apps.length) firebase.initializeApp(cfg);
+    window._db = firebase.firestore();
+  }catch(e){ window._db = null; }
 })();
 
-function showToast(m){var t=document.getElementById('toast');if(!t)return;t.textContent=m;t.style.display='block';setTimeout(function(){t.style.display='none';},3000);}
-function toggleMenu(){
-  var m=document.getElementById('mob-nav'),open=m.style.display==='flex';
-  m.style.display=open?'none':'flex';
-  document.body.style.overflow=open?'':'hidden';
-  var bars=document.querySelectorAll('.ham-btn span');
-  if(!open){bars[0].style.transform='translateY(7px) rotate(45deg)';bars[1].style.opacity='0';bars[2].style.transform='translateY(-7px) rotate(-45deg)';}
-  else{bars[0].style.transform='';bars[1].style.opacity='1';bars[2].style.transform='';}
-}
-function checkW(){
-  var d=document.getElementById('nav-d');
-  var h=document.querySelector('.ham-btn');
-  if(!d||!h)return;
-  if(window.innerWidth>=768){d.style.display='flex';h.style.display='none';var m=document.getElementById('mob-nav');if(m&&m.style.display==='flex'){m.style.display='none';document.body.style.overflow='';var bars=document.querySelectorAll('.ham-btn span');bars[0].style.transform='';bars[1].style.opacity='1';bars[2].style.transform='';}}
-  else{d.style.display='none';h.style.display='flex';}
-}
-window.addEventListener('resize',checkW);
-window.addEventListener('DOMContentLoaded',checkW);
-
-async function submitForm(e,fid,okid,btnid){
-  e.preventDefault();
-  var f=document.getElementById(fid);
-  var btn=document.getElementById(btnid);
-  btn.textContent='Sending...';btn.disabled=true;
-
-  // Collect form data
-  var qdata = {
-    id:          'q_'+Date.now().toString(),
-    name:        (f.querySelector('[name="Name"]')||{}).value||'',
-    phone:       (f.querySelector('[name="Phone"]')||{}).value||'',
-    email:       (f.querySelector('[name="Email"]')||{}).value||'',
-    service:     (f.querySelector('[name="Service"]')||{}).value||'',
-    date:        (f.querySelector('[name="Date"]')||{}).value||'',
-    time:        (f.querySelector('[name="Time"]')||{}).value||'',
-    pickup:      (f.querySelector('[name="Pickup"]')||{}).value||'',
-    destination: (f.querySelector('[name="Destination"]')||{}).value||'',
-    passengers:  (f.querySelector('[name="Passengers"]')||{}).value||'1',
-    notes:       (f.querySelector('[name="Notes"]')||{}).value||'',
+function saveQuoteToFirebase(f) {
+  if (!window._db) return;
+  var get = function(n){ var el=f.querySelector('[name="'+n+'"]'); return el?el.value.trim():''; };
+  var doc = {
+    id:          'q_' + Date.now().toString(),
+    name:        get('Full Name'),
+    phone:       get('Phone'),
+    email:       get('Email'),
+    service:     get('Service Type'),
+    date:        get('Trip Date'),
+    time:        get('Pickup Time'),
+    pickup:      get('Pickup Address'),
+    destination: get('Destination'),
+    passengers:  get('Passengers'),
+    vehicle:     get('Vehicle'),
+    notes:       get('Notes'),
     status:      'new',
     source:      'website-quote',
     createdAt:   new Date().toISOString()
   };
+  window._db.collection('quotes').doc(doc.id).set(doc)
+    .then(function(){ console.log('✅ Quote saved to Firebase'); })
+    .catch(function(e){ console.warn('Firebase quote error:', e.message); });
+}
+</script>
+</head>
+<body class="min-h-screen">
 
-  // 1. Save to Firebase quotes collection
-  if(window._db){
-    try{ await window._db.collection('quotes').doc(qdata.id).set(qdata); }
-    catch(fe){ console.warn('Firebase quote save:',fe.message); }
-  }
+<!-- NAV (same master nav) -->
+<nav style="position:fixed;top:0;width:100%;z-index:50;background:rgba(255,255,255,0.95);backdrop-filter:blur(12px);border-bottom:1px solid rgba(0,0,0,0.06)">
+<div style="display:flex;justify-content:space-between;align-items:center;max-width:100%;padding:0 2rem;height:68px">
+  <a href="index.html" style="font-family:'Times New Roman',Times,serif;font-size:1.35rem;font-weight:700;color:#000;text-decoration:none">Seacoast RVIP</a>
+  <div style="display:flex;align-items:center;gap:2rem">
+    <div id="nav-desktop" style="display:none;align-items:center;gap:2rem">
+      <a href="index.html" style="font-family:Inter,sans-serif;font-size:0.8rem;letter-spacing:0.05em;text-transform:uppercase;color:#888;text-decoration:none">Home</a>
+      <a href="services.html" style="font-family:Inter,sans-serif;font-size:0.8rem;letter-spacing:0.05em;text-transform:uppercase;color:#888;text-decoration:none">Services</a>
+      <a href="about.html" style="font-family:Inter,sans-serif;font-size:0.8rem;letter-spacing:0.05em;text-transform:uppercase;color:#888;text-decoration:none">About</a>
+      <a href="contact.html" style="font-family:Inter,sans-serif;font-size:0.8rem;letter-spacing:0.05em;text-transform:uppercase;color:#888;text-decoration:none">Contact</a>
+    </div>
+    <a href="schedule.html" style="background:#000;color:white;padding:0.5rem 1.25rem;font-family:Inter,sans-serif;font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;text-decoration:none;border-bottom:2px solid #775a19">Book Now</a>
+    <button id="ham" onclick="toggleMenu()" style="background:none;border:none;cursor:pointer;padding:0.375rem;flex-direction:column;gap:5px;display:flex" id="nav-mobile-right">
+      <span class="hl" style="display:block;width:24px;height:2px;background:#000;transition:all 0.3s"></span>
+      <span class="hl" style="display:block;width:24px;height:2px;background:#000;transition:all 0.3s"></span>
+      <span class="hl" style="display:block;width:24px;height:2px;background:#000;transition:all 0.3s"></span>
+    </button>
+  </div>
+</div>
+<div id="mobile-menu" style="display:none;position:fixed;top:68px;left:0;right:0;bottom:0;background:#000000;z-index:49;flex-direction:column;padding:2rem;">
+  <a href="index.html" style="font-family:Inter,sans-serif;font-size:1.1rem;font-weight:600;color:white;text-decoration:none;padding:0.875rem 0;border-bottom:1px solid rgba(255,255,255,0.08);display:block;text-transform:uppercase;letter-spacing:0.08em">Home</a>
+  <a href="services.html" style="font-family:Inter,sans-serif;font-size:1.1rem;font-weight:600;color:white;text-decoration:none;padding:0.875rem 0;border-bottom:1px solid rgba(255,255,255,0.08);display:block;text-transform:uppercase;letter-spacing:0.08em">Services</a>
+  <a href="about.html" style="font-family:Inter,sans-serif;font-size:1.1rem;font-weight:600;color:white;text-decoration:none;padding:0.875rem 0;border-bottom:1px solid rgba(255,255,255,0.08);display:block;text-transform:uppercase;letter-spacing:0.08em">About</a>
+  <a href="contact.html" style="font-family:Inter,sans-serif;font-size:1.1rem;font-weight:600;color:white;text-decoration:none;padding:0.875rem 0;border-bottom:1px solid rgba(255,255,255,0.08);display:block;text-transform:uppercase;letter-spacing:0.08em">Contact</a>
+  <div style="margin-top:1.5rem"><a href="schedule.html" style="background:#775a19;color:white;padding:1rem 2rem;font-family:Inter,sans-serif;font-size:0.875rem;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;text-decoration:none;display:inline-block">Book a Ride</a></div>
+</div>
+</nav>
 
-  // 2. Send email via FormSubmit
-  try{ await fetch(f.action,{method:'POST',body:new FormData(f)}); }catch(err){}
+<main style="padding-top:100px;padding-bottom:4rem;max-width:800px;margin:0 auto;padding-left:1.5rem;padding-right:1.5rem">
 
-  document.getElementById(okid).style.display='block';
-  btn.textContent='Sent ✓';
-  f.reset();
+  <!-- Hero -->
+  <div style="text-align:center;margin-bottom:3rem">
+    <span style="font-family:Inter,sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.2em;color:#775a19;font-weight:600;display:block;margin-bottom:0.75rem">No commitment required</span>
+    <h1 style="font-family:'Times New Roman',serif;font-size:2.5rem;font-weight:700;color:#000;margin-bottom:1rem;line-height:1.2">Request a Quote</h1>
+    <p style="font-family:Inter,sans-serif;font-size:1rem;color:#666;max-width:500px;margin:0 auto;line-height:1.7">Tell us about your trip and we will get back to you with a price within the hour. No booking required — just ask.</p>
+  </div>
+
+  <!-- Info cards -->
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin-bottom:2.5rem">
+    <div style="background:white;padding:1.25rem;border-left:3px solid #775a19;text-align:center">
+      <div style="font-size:1.5rem;margin-bottom:0.5rem">⚡</div>
+      <div style="font-family:'Times New Roman',serif;font-weight:700;font-size:0.9rem;color:#000;margin-bottom:0.25rem">Fast Reply</div>
+      <div style="font-family:Inter,sans-serif;font-size:0.7rem;color:#888">Within the hour</div>
+    </div>
+    <div style="background:white;padding:1.25rem;border-left:3px solid #775a19;text-align:center">
+      <div style="font-size:1.5rem;margin-bottom:0.5rem">💰</div>
+      <div style="font-family:'Times New Roman',serif;font-weight:700;font-size:0.9rem;color:#000;margin-bottom:0.25rem">Flat Pricing</div>
+      <div style="font-family:Inter,sans-serif;font-size:0.7rem;color:#888">No hidden fees</div>
+    </div>
+    <div style="background:white;padding:1.25rem;border-left:3px solid #775a19;text-align:center">
+      <div style="font-size:1.5rem;margin-bottom:0.5rem">🚗</div>
+      <div style="font-family:'Times New Roman',serif;font-weight:700;font-size:0.9rem;color:#000;margin-bottom:0.25rem">No Obligation</div>
+      <div style="font-family:Inter,sans-serif;font-size:0.7rem;color:#888">Just an inquiry</div>
+    </div>
+  </div>
+
+  <!-- Quote Form -->
+  <div style="background:white;padding:2rem;border-top:3px solid #775a19;box-shadow:0 1px 8px rgba(0,0,0,0.05)">
+    <form action="https://formsubmit.co/ramonvv202618@icloud.com" method="POST" onsubmit="quoteSubmit(event)">
+      <input type="hidden" name="_subject" value="[QUOTE REQUEST] Price Inquiry — Seacoast RVIP"/>
+      <input type="hidden" name="_captcha" value="false"/>
+      <input type="hidden" name="_template" value="table"/>
+      <input type="hidden" name="_autoresponse" value="Thank you for contacting Seacoast RVIP! We received your message and will get back to you within the hour.
+
+─────────────────────────────────
+🚗 SEACOAST RVIP LLC
+The Ride You Can Count On
+
+📞 (987) 416-3283
+✉️  ramonvv202618@icloud.com
+🌐 seacoastrvip.com
+
+CONFIDENTIALITY NOTICE: This communication is intended solely for the named recipient(s) and may contain confidential and/or privileged information. If you have received this in error, please notify the sender immediately and destroy all copies. Seacoast RVIP LLC · NH, United States
+─────────────────────────────────"/>
+      <input type="text" name="_honey" style="display:none"/>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
+        <div>
+          <label class="lbl">Your Name *</label>
+          <input class="inp" name="Full Name" type="text" placeholder="John Smith" required/>
+        </div>
+        <div>
+          <label class="lbl">Phone Number *</label>
+          <input class="inp" name="Phone" type="tel" placeholder="Your phone number" required/>
+        </div>
+        <div>
+          <label class="lbl">Email</label>
+          <input class="inp" name="Email" type="email" placeholder="your@email.com"/>
+        </div>
+        <div>
+          <label class="lbl">Service Type *</label>
+          <select class="sel" name="Service Type" required>
+            <option value="">Select a service...</option>
+            <option>Airport Transfer — Boston Logan</option>
+            <option>Airport Transfer — Manchester MHT</option>
+            <option>Night Out</option>
+            <option>Casino Run</option>
+            <option>Special Event</option>
+            <option>Medical Appointment</option>
+            <option>Corporate / Business</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div>
+          <label class="lbl">Trip Date</label>
+          <input class="inp" name="Trip Date" type="date"/>
+        </div>
+        <div>
+          <label class="lbl">Pickup Time</label>
+          <input class="inp" name="Pickup Time" type="time"/>
+        </div>
+      </div>
+
+      <div style="margin-bottom:1rem">
+        <label class="lbl">Pickup Address *</label>
+        <input class="inp" name="Pickup Address" type="text" placeholder="Full pickup address" required/>
+      </div>
+      <div style="margin-bottom:1rem">
+        <label class="lbl">Destination *</label>
+        <input class="inp" name="Destination" type="text" placeholder="Airport, venue, or address" required/>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
+        <div>
+          <label class="lbl">Passengers</label>
+          <select class="sel" name="Passengers">
+            <option>1</option><option>2</option><option>3</option>
+            <option>4</option><option>5</option><option>6+</option>
+          </select>
+        </div>
+        <div>
+          <label class="lbl">Vehicle Preference</label>
+          <select class="sel" name="Vehicle">
+            <option>No preference</option>
+            <option>Black SUV Luxury</option>
+            <option>Regular Black SUV</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="margin-bottom:1.5rem">
+        <label class="lbl">Additional Notes</label>
+        <textarea class="inp" name="Notes" rows="3" placeholder="Flight number, special requests, round trip, hourly rate inquiry..."></textarea>
+      </div>
+
+      <div id="quote-success" style="display:none;background:#f0fdf4;border:1px solid #bbf7d0;padding:1rem;color:#166534;font-family:Inter,sans-serif;font-size:0.875rem;margin-bottom:1rem;border-radius:2px">
+        ✅ Quote request sent! Ramon will reply within the hour with your price.
+      </div>
+
+      <button id="quote-btn" type="submit" style="width:100%;background:#000;color:white;padding:1rem;font-family:Inter,sans-serif;font-size:0.8rem;font-weight:600;text-transform:uppercase;letter-spacing:0.12em;border:none;border-bottom:3px solid #775a19;cursor:pointer">
+        Send Quote Request →
+      </button>
+
+      <p style="font-family:Inter,sans-serif;font-size:0.7rem;color:#aaa;text-align:center;margin-top:0.75rem">Ready to book instead? <a href="schedule.html" style="color:#775a19;text-decoration:none;font-weight:600">Go to Booking Form →</a></p>
+    </form>
+  </div>
+
+  <!-- Pricing hints -->
+  <div style="margin-top:2.5rem">
+    <h2 style="font-family:'Times New Roman',serif;font-size:1.25rem;font-weight:700;color:#000;margin-bottom:1.5rem;text-align:center">Starting Rates</h2>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">
+      <div style="background:white;padding:1rem 1.25rem;display:flex;justify-content:space-between;align-items:center;border-left:3px solid #775a19">
+        <span style="font-family:Inter,sans-serif;font-size:0.85rem;color:#444">Airport → Boston Logan</span>
+        <span style="font-family:'Times New Roman',serif;font-size:1.1rem;font-weight:700;color:#000">$145+</span>
+      </div>
+      <div style="background:white;padding:1rem 1.25rem;display:flex;justify-content:space-between;align-items:center;border-left:3px solid #775a19">
+        <span style="font-family:Inter,sans-serif;font-size:0.85rem;color:#444">Airport → Manchester MHT</span>
+        <span style="font-family:'Times New Roman',serif;font-size:1.1rem;font-weight:700;color:#000">$145+</span>
+      </div>
+      <div style="background:white;padding:1rem 1.25rem;display:flex;justify-content:space-between;align-items:center;border-left:3px solid #775a19">
+        <span style="font-family:Inter,sans-serif;font-size:0.85rem;color:#444">Night Out (Local)</span>
+        <span style="font-family:'Times New Roman',serif;font-size:1.1rem;font-weight:700;color:#000">$55+</span>
+      </div>
+      <div style="background:white;padding:1rem 1.25rem;display:flex;justify-content:space-between;align-items:center;border-left:3px solid #775a19">
+        <span style="font-family:Inter,sans-serif;font-size:0.85rem;color:#444">Casino Run</span>
+        <span style="font-family:'Times New Roman',serif;font-size:1.1rem;font-weight:700;color:#000">$45+</span>
+      </div>
+      <div style="background:white;padding:1rem 1.25rem;display:flex;justify-content:space-between;align-items:center;border-left:3px solid #775a19;grid-column:span 2">
+        <span style="font-family:Inter,sans-serif;font-size:0.85rem;color:#444">Custom Route — Contact for price</span>
+        <span style="font-family:'Times New Roman',serif;font-size:1.1rem;font-weight:700;color:#775a19">Quote ↑</span>
+      </div>
+    </div>
+    <p style="font-family:Inter,sans-serif;font-size:0.75rem;color:#999;text-align:center;margin-top:1rem">Final price depends on distance, passengers, and time. Submit the form above for an exact quote.</p>
+  </div>
+</main>
+
+<script>
+async async function quoteSubmit(e) {
+  e.preventDefault();
+  var btn = document.getElementById('quote-btn');
+  btn.textContent = 'Sending...';
+  btn.disabled = true;
+  // Save to Firebase first
+  saveQuoteToFirebase(e.target);
+  // Send email via FormSubmit
+  try {
+    await fetch(e.target.action, {method:'POST', body: new FormData(e.target)});
+  } catch(err) {}
+  document.getElementById('quote-success').style.display = 'block';
+  btn.textContent = 'Sent!';
+  e.target.reset();
   window.scrollTo(0,0);
 }
+function toggleMenu() {
+  var menu = document.getElementById('mobile-menu');
+  var lines = document.querySelectorAll('.hl');
+  var isOpen = menu.style.display === 'flex';
+  menu.style.display = isOpen ? 'none' : 'flex';
+  document.body.style.overflow = isOpen ? '' : 'hidden';
+  if (!isOpen) {
+    lines[0].style.transform = 'translateY(7px) rotate(45deg)';
+    lines[1].style.opacity = '0';
+    lines[2].style.transform = 'translateY(-7px) rotate(-45deg)';
+  } else {
+    lines[0].style.transform = '';
+    lines[1].style.opacity = '1';
+    lines[2].style.transform = '';
+  }
+}
+function checkWidth() {
+  var d = document.getElementById('nav-desktop');
+  var h = document.getElementById('ham');
+  if (window.innerWidth >= 768) {
+    d.style.display='flex';
+    h.style.display='none';
+    document.getElementById('mobile-menu').style.display='none';
+    document.body.style.overflow='';
+  } else {
+    d.style.display='none';
+    h.style.display='flex';
+  }
+}
+window.addEventListener('resize', checkWidth);
+window.addEventListener('DOMContentLoaded', checkWidth);
 </script>
 </body>
 </html>
