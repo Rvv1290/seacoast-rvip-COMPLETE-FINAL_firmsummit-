@@ -170,7 +170,7 @@ function saveBookingToFirebase(data) {
 
 
 <!-- NAV -->
-<nav style="position:fixed;top:0;width:100%;z-index:48;background:rgba(255,255,255,0.95);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid rgba(0,0,0,0.06);transition:all 0.3s">
+<nav style="position:fixed;top:0;width:100%;z-index:48;background:rgba(255,255,255,0.95);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid rgba(0,0,0,0.06);transition:all 0.3s;overflow:visible">
 <div style="display:flex;justify-content:space-between;align-items:center;max-width:100%;padding:0 2rem;height:68px">
 
   <!-- Logo -->
@@ -200,6 +200,7 @@ function saveBookingToFirebase(data) {
 </div>
 
 <!-- Mobile drawer -->
+</nav>
 <div id="mobile-menu" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:#000000;z-index:99;flex-direction:column;padding:5rem 2rem 2rem;gap:0;overflow-y:auto;-webkit-overflow-scrolling:touch">
   <a href="index.html" onclick="toggleMenu()" style="font-family:Inter,sans-serif;font-size:1.1rem;font-weight:600;color:white;text-decoration:none;padding:0.875rem 0;border-bottom:1px solid rgba(255,255,255,0.08);display:block;text-transform:uppercase;letter-spacing:0.08em" onmouseover="this.style.color='#775a19'" onmouseout="this.style.color='white'">Home</a>
   <a href="services.html" onclick="toggleMenu()" style="font-family:Inter,sans-serif;font-size:1.1rem;font-weight:600;color:white;text-decoration:none;padding:0.875rem 0;border-bottom:1px solid rgba(255,255,255,0.08);display:block;text-transform:uppercase;letter-spacing:0.08em" onmouseover="this.style.color='#775a19'" onmouseout="this.style.color='white'">Services</a>
@@ -218,7 +219,7 @@ function saveBookingToFirebase(data) {
     </div>
   </div>
 </div>
-</nav>
+
 
 <script>
 function toggleMenu() {
@@ -587,7 +588,7 @@ CONFIDENTIALITY NOTICE: This communication is intended solely for the named reci
             Share
           </button>
           <span style="color:rgba(255,255,255,0.15)">|</span>
-          <a href="/cdn-cgi/l/email-protection#ff8d9e9290918989cdcfcdc9cec7bf969c93908a9bd19c9092" style="color:#775a19;font-family:Inter,sans-serif;font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;text-decoration:none;display:inline-flex;align-items:center;gap:4px">
+          <a href="mailto:ramonvv202618@icloud.com" style="color:#775a19;font-family:Inter,sans-serif;font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;text-decoration:none;display:inline-flex;align-items:center;gap:4px">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#775a19" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
             Email
           </a>
@@ -616,7 +617,7 @@ CONFIDENTIALITY NOTICE: This communication is intended solely for the named reci
         <div style="font-family:Inter,sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.15em;color:#775a19;font-weight:600;margin-bottom:1rem">Contact</div>
         <div style="display:flex;flex-direction:column;gap:0.5rem">
           <a href="tel:+19874163283" style="font-family:Inter,sans-serif;font-size:0.8rem;color:rgba(255,255,255,0.55);text-decoration:none">(987) 416-3283</a>
-          <a href="/cdn-cgi/l/email-protection#ff8d9e9290918989cdcfcdc9cec7bf969c93908a9bd19c9092" style="font-family:Inter,sans-serif;font-size:0.8rem;color:rgba(255,255,255,0.55);text-decoration:none"><span class="__cf_email__" data-cfemail="2351424e4c4d555511131115121b634a404f4c56470d404c4e">[email&#160;protected]</span></a>
+          <a href="mailto:ramonvv202618@icloud.com" style="font-family:Inter,sans-serif;font-size:0.8rem;color:rgba(255,255,255,0.55);text-decoration:none">ramonvv202618@icloud.com</a>
           <a href="schedule.html" style="display:inline-block;margin-top:0.75rem;background:#775a19;color:white;padding:0.625rem 1.25rem;font-family:Inter,sans-serif;font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;text-decoration:none;border-bottom:2px solid #5d4201">Book Now</a>
         </div>
       </div>
@@ -645,7 +646,7 @@ CONFIDENTIALITY NOTICE: This communication is intended solely for the named reci
 <!-- Get free key: console.cloud.google.com                      -->
 <!-- Enable: Maps JavaScript API + Places API + Directions API  -->
 <!-- ═══════════════════════════════════════════════════════════ -->
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+<script>
 // ─── CONFIG ─────────────────────────────────────────────────
 var GOOGLE_API_KEY = 'AIzaSyAtiBZ-MmvzTnOg3hDluVDCVy7mcersqe4';
 
@@ -1022,6 +1023,5 @@ function showError() {
 <script async defer
   src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAtiBZ-MmvzTnOg3hDluVDCVy7mcersqe4&libraries=places&callback=initMap">
 </script>
-
-<script>
-i
+</body>
+</html>
