@@ -12,10 +12,10 @@ function shareRVIP() {
     navigator.share({
       title: 'Seacoast RVIP — The Ride You Can Count On',
       text: 'Premium private car service in the NH Seacoast area.',
-      url: 'https://seacoast-rvip-complete-final-firmsu.vercel.app'
+      url: 'https://www.seacoastrvip.com'
     }).catch(function(){});
   } else {
-    var url = 'https://seacoast-rvip-complete-final-firmsu.vercel.app';
+    var url = 'https://www.seacoastrvip.com';
     navigator.clipboard && navigator.clipboard.writeText(url).then(function(){
       alert('Link copied! Share it with your friends.');
     }).catch(function(){
@@ -410,7 +410,7 @@ window.addEventListener('DOMContentLoaded', checkWidth);
             <span id="r-price" style="font-family:'Times New Roman',serif;font-size:1.4rem;font-weight:700;color:#000">$0</span>
           </div>
         </div>
-        <div style="text-align:center;margin-top:1rem;font-size:0.65rem;color:#aaa">Thank you for choosing Seacoast RVIP LLC<br/>(987) 416-3283 · <a href="/cdn-cgi/l/email-protection#5b293a3634352d2d696b696d6a631b323837342e3f75383436" class="__cf_email__">[email&#160;protected]</a></div>
+        <div style="text-align:center;margin-top:1rem;font-size:0.65rem;color:#aaa">Thank you for choosing Seacoast RVIP LLC<br/>(987) 416-3283 · <a href="/cdn-cgi/l/email-protection#ef9d8e8280819999dddfddd9ded7af868c83809a8bc18c8082" class="__cf_email__">[email&#160;protected]</a></div>
       </div>
 
       <!-- Send options -->
@@ -452,7 +452,7 @@ window.addEventListener('DOMContentLoaded', checkWidth);
             Share
           </button>
           <span style="color:rgba(255,255,255,0.15)">|</span>
-          <a href="/cdn-cgi/l/email-protection#c6b4a7aba9a8b0b0f4f6f4f0f7fe86afa5aaa9b3a2e8a5a9ab" style="color:#775a19;font-family:Inter,sans-serif;font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;text-decoration:none;display:inline-flex;align-items:center;gap:4px">
+          <a href="/cdn-cgi/l/email-protection#eb998a8684859d9dd9dbd9dddad3ab828887849e8fc5888486" style="color:#775a19;font-family:Inter,sans-serif;font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;text-decoration:none;display:inline-flex;align-items:center;gap:4px">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#775a19" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
             Email
           </a>
@@ -481,7 +481,7 @@ window.addEventListener('DOMContentLoaded', checkWidth);
         <div style="font-family:Inter,sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.15em;color:#775a19;font-weight:600;margin-bottom:1rem">Contact</div>
         <div style="display:flex;flex-direction:column;gap:0.5rem">
           <a href="tel:+19874163283" style="font-family:Inter,sans-serif;font-size:0.8rem;color:rgba(255,255,255,0.55);text-decoration:none">(987) 416-3283</a>
-          <a href="/cdn-cgi/l/email-protection#8af8ebe7e5e4fcfcb8bab8bcbbb2cae3e9e6e5ffeea4e9e5e7" style="font-family:Inter,sans-serif;font-size:0.8rem;color:rgba(255,255,255,0.55);text-decoration:none"><span class="__cf_email__" data-cfemail="5a283b3735342c2c686a686c6b621a333936352f3e74393537">[email&#160;protected]</span></a>
+          <a href="/cdn-cgi/l/email-protection#0b796a6664657d7d393b393d3a334b626867647e6f25686466" style="font-family:Inter,sans-serif;font-size:0.8rem;color:rgba(255,255,255,0.55);text-decoration:none"><span class="__cf_email__" data-cfemail="a7d5c6cac8c9d1d195979591969fe7cec4cbc8d2c389c4c8ca">[email&#160;protected]</span></a>
           <a href="schedule.html" style="display:inline-block;margin-top:0.75rem;background:#775a19;color:white;padding:0.625rem 1.25rem;font-family:Inter,sans-serif;font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;text-decoration:none;border-bottom:2px solid #5d4201">Book Now</a>
         </div>
       </div>
@@ -673,10 +673,10 @@ async function fetchBookings(code) {
 }
 
 // On load — support ?b= encoded booking OR ?code= lookup
-window.addEventListener('load', async function() {
+window.addEventListener('load', function() {
   var params = new URLSearchParams(window.location.search);
-  
-  // METHOD 1: Full booking encoded in URL (?b=...) — works on any device
+
+  // METHOD 1: Full booking encoded in URL (?b=...)
   var encoded = params.get('b');
   if (encoded) {
     try {
@@ -703,65 +703,80 @@ window.addEventListener('load', async function() {
     }
   }
 
-  // METHOD 2: Code lookup with timeout protection
+  // METHOD 2: Code in URL — check localStorage instantly, no hanging
   var code = (params.get('code') || '').toUpperCase().trim();
   if (code) {
-    // Set a 5-second timeout so it never hangs forever
-    var done = false;
-    var timer = setTimeout(function() {
-      if (!done) {
-        done = true;
-        // Check localStorage as last resort
-        var raw = localStorage.getItem('rv-bks');
-        if (raw) {
-          try {
-            var arr = JSON.parse(raw);
-            var found = arr.find(function(b){ return b.code && b.code.toUpperCase()===code; });
-            if (found) {
-              currentCode = code;
-              currentBooking = {
-                name: found.name||'', service: found.service||'',
-                date: found.date||'', time: found.time||'',
-                pickup: found.pickup||'', destination: found.destination||'',
-                vehicle: found.vehicle||'', passengers: found.passengers||'1',
-                price: parseFloat(found.price)||0
-              };
-              showState('payment');
-              renderPayment(code, currentBooking);
-              return;
-            }
-          } catch(e){}
-        }
-        showState('notfound');
-      }
-    }, 5000);
-    
-    try {
-      var ok = await fetchBookings(code);
-      if (!done) {
-        done = true;
-        clearTimeout(timer);
-        var booking = allBookings[code];
-        if (booking) {
-          currentCode = code;
-          currentBooking = booking;
-          showState('payment');
-          renderPayment(code, booking);
+    // Check localStorage immediately (works when admin sent link from same device)
+    var found = findBookingInStorage(code);
+    if (found) {
+      currentCode = code;
+      currentBooking = found;
+      showState('payment');
+      renderPayment(code, found);
+      // Also try Firebase in background to update price if needed
+      tryFirebaseBackground(code);
+      return;
+    }
+    // Not in localStorage — try Firebase with a hard 4-second timeout
+    var fbDone = false;
+    var fbTimer = setTimeout(function() {
+      if (!fbDone) { fbDone = true; showState('notfound'); }
+    }, 4000);
+    fetchBookings(code).then(function() {
+      if (!fbDone) {
+        fbDone = true;
+        clearTimeout(fbTimer);
+        var bk = allBookings[code];
+        if (bk) {
+          currentCode = code; currentBooking = bk;
+          showState('payment'); renderPayment(code, bk);
         } else {
           showState('notfound');
         }
       }
-    } catch(e) {
-      if (!done) {
-        done = true;
-        clearTimeout(timer);
-        showState('notfound');
-      }
-    }
+    }).catch(function() {
+      if (!fbDone) { fbDone = true; clearTimeout(fbTimer); showState('notfound'); }
+    });
   } else {
+    // No code in URL — show manual entry immediately
     showState('manual');
   }
 });
+
+// Find booking in localStorage by code
+function findBookingInStorage(code) {
+  try {
+    var raw = localStorage.getItem('rv-bks');
+    if (!raw) return null;
+    var arr = JSON.parse(raw);
+    var b = arr.find(function(x){ return x.code && x.code.toUpperCase() === code.toUpperCase(); });
+    if (!b) return null;
+    return {
+      name: b.name||'', service: b.service||'',
+      date: b.date||'', time: b.time||'',
+      pickup: b.pickup||'', destination: b.destination||'',
+      vehicle: b.vehicle||'', passengers: b.passengers||'1',
+      price: parseFloat(b.price)||0, phone: b.phone||'', email: b.email||''
+    };
+  } catch(e) { return null; }
+}
+
+// Try Firebase silently in background after localStorage hit
+function tryFirebaseBackground(code) {
+  if (!db) return;
+  db.collection('bookings').where('code','==',code).limit(1).get()
+    .then(function(snap){
+      if (!snap.empty) {
+        snap.forEach(function(doc){
+          var b = doc.data();
+          // Update price display if different
+          if (b.price && currentBooking) {
+            currentBooking.price = parseFloat(b.price)||currentBooking.price;
+          }
+        });
+      }
+    }).catch(function(){});
+}
 
 // Manual lookup
 async function manualLookup() {
@@ -933,4 +948,18 @@ var origSelectPay = selectPay;
 selectPay = function(method) {
   origSelectPay(method);
   var trigger = document.getElementById('receipt-trigger');
-  if (trigger) trigger.s
+  if (trigger) trigger.style.display = 'block';
+};
+
+// Close receipt on overlay click
+document.addEventListener('DOMContentLoaded', function() {
+  var overlay = document.getElementById('receipt-overlay');
+  if (overlay) {
+    overlay.addEventListener('click', function(e) {
+      if (e.target === overlay) closeReceipt();
+    });
+  }
+});
+</script>
+</body>
+</html>
