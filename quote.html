@@ -211,7 +211,7 @@ img{max-width:100%}
       <div class="footer-tag">The Ride You Can Count On.<br>Premium private car service · NH Seacoast</div>
       <div style="display:flex;gap:1rem">
         <a href="tel:+19874163283" style="color:#775a19;font-size:.75rem;font-weight:600">(987) 416-3283</a>
-        <a href="/cdn-cgi/l/email-protection#7301121e1c1d050541434145424b331a101f1c06175d101c1e" style="color:#775a19;font-size:.75rem;font-weight:600">Email</a>
+        <a href="/cdn-cgi/l/email-protection#2654474b4948505014161410171e664f454a4953420845494b" style="color:#775a19;font-size:.75rem;font-weight:600">Email</a>
       </div>
     </div>
     <div>
@@ -227,7 +227,7 @@ img{max-width:100%}
       <div class="ftr-ht">Contact</div>
       <div class="ftr-links">
         <a href="tel:+19874163283">(987) 416-3283</a>
-        <a href="/cdn-cgi/l/email-protection#7d0f1c1012130b0b4f4d4f4b4c453d141e11120819531e1210"><span class="__cf_email__" data-cfemail="5e2c3f33313028286c6e6c686f661e373d32312b3a703d3133">[email&#160;protected]</span></a>
+        <a href="/cdn-cgi/l/email-protection#3e4c5f53515048480c0e0c080f067e575d52514b5a105d5153"><span class="__cf_email__" data-cfemail="cab8aba7a5a4bcbcf8faf8fcfbf28aa3a9a6a5bfaee4a9a5a7">[email&#160;protected]</span></a>
       </div>
       <a href="schedule.html" style="display:inline-block;margin-top:1rem;background:#775a19;color:#fff;padding:.6rem 1.1rem;font-family:'Work Sans',sans-serif;font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;border-bottom:2px solid #5d4201">Book Now →</a>
     </div>
@@ -239,4 +239,71 @@ img{max-width:100%}
 </div></footer>
 
 
-<script
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+(function(){
+  try {
+    if(!firebase.apps.length) firebase.initializeApp({
+      apiKey:'AIzaSyDGel0ktZDQYcdlOuoZo4bAqZWCuGvOVbc',
+      authDomain:'seacoast-rip.firebaseapp.com',
+      projectId:'seacoast-rip',
+      storageBucket:'seacoast-rip.firebasestorage.app',
+      messagingSenderId:'684535453116',
+      appId:'1:684535453116:web:922c843b5bad3b81ad47b9'
+    });
+    window._db = firebase.firestore();
+  } catch(e) { window._db = null; }
+})();
+
+function saveQuoteToFirebase(f) {
+  if (!window._db) return;
+  function g(n){ var el=f.querySelector('[name="'+n+'"]'); return el?el.value.trim():''; }
+  var doc = {
+    id: 'q_'+Date.now().toString(),
+    name: g('Name'), phone: g('Phone'), email: g('Email'),
+    service: g('Service'), date: g('Date'), time: g('Time'),
+    pickup: g('Pickup'), destination: g('Destination'),
+    passengers: g('Passengers'), notes: g('Notes'),
+    status: 'new', source: 'website-quote',
+    createdAt: new Date().toISOString()
+  };
+  window._db.collection('quotes').doc(doc.id).set(doc)
+    .then(function(){ console.log('Quote saved'); })
+    .catch(function(e){ console.warn('Firebase:', e.message); });
+}
+
+function showToast(m){var t=document.getElementById('toast');if(!t)return;t.textContent=m;t.style.display='block';setTimeout(function(){t.style.display='none';},3000);}
+function toggleMenu(){
+  var m=document.getElementById('mob-nav'),open=m.style.display==='flex';
+  m.style.display=open?'none':'flex';
+  document.body.style.overflow=open?'':'hidden';
+  var bars=document.querySelectorAll('.ham-btn span');
+  if(!open){bars[0].style.transform='translateY(7px) rotate(45deg)';bars[1].style.opacity='0';bars[2].style.transform='translateY(-7px) rotate(-45deg)';}
+  else{bars[0].style.transform='';bars[1].style.opacity='1';bars[2].style.transform='';}
+}
+function checkW(){
+  var d=document.getElementById('nav-d'),hh=document.querySelector('.ham-btn');
+  if(!d||!hh)return;
+  if(window.innerWidth>=768){d.style.display='flex';hh.style.display='none';}
+  else{d.style.display='none';hh.style.display='flex';}
+}
+window.addEventListener('resize',checkW);
+window.addEventListener('DOMContentLoaded',checkW);
+
+async function submitForm(e,fid,okid,btnid){
+  e.preventDefault();
+  var f=document.getElementById(fid);
+  var btn=document.getElementById(btnid);
+  btn.textContent='Sending...'; btn.disabled=true;
+  saveQuoteToFirebase(f);
+  try{ await fetch(f.action,{method:'POST',body:new FormData(f)}); }catch(err){}
+  document.getElementById(okid).style.display='block';
+  btn.textContent='Sent \u2713';
+  f.reset();
+  window.scrollTo(0,0);
+}
+</script>
+</body>
+</html>
