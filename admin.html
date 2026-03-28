@@ -4,112 +4,95 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>Admin | Seacoast RVIP</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Work+Sans:wght@400;600&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 .material-symbols-outlined{font-variation-settings:"FILL" 0,"wght" 300,"GRAD" 0,"opsz" 24}
-body{font-family:'Inter',sans-serif;background:#f0f0f0;min-height:100vh;-webkit-tap-highlight-color:transparent}
+body{font-family:'Inter',sans-serif;background:#f0f0f0;min-height:100vh}
 
-/* LOGIN */
 #pg-login{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:1rem}
-.login-box{background:#fff;border-left:4px solid #775a19;padding:2.5rem;width:100%;max-width:360px}
-.login-logo{font-family:'Times New Roman',serif;font-size:1.5rem;font-weight:700;text-align:center;margin-bottom:4px}
-.login-sub{font-size:.65rem;text-transform:uppercase;letter-spacing:.12em;color:#aaa;text-align:center;margin-bottom:2rem}
+.lbox{background:#fff;border-left:4px solid #775a19;padding:2.5rem;width:100%;max-width:360px}
+.llogo{font-family:'Times New Roman',serif;font-size:1.5rem;font-weight:700;text-align:center;margin-bottom:4px}
+.lsub{font-size:.65rem;text-transform:uppercase;letter-spacing:.12em;color:#aaa;text-align:center;margin-bottom:2rem}
 
-/* DASHBOARD */
 #pg-dash{display:none}
-.topbar{background:#fff;border-bottom:1px solid #e0e0e0;position:sticky;top:0;z-index:50;padding:.875rem 1.5rem}
-.tb-in{max-width:1080px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:.75rem;flex-wrap:wrap}
+.topbar{background:#fff;border-bottom:1px solid #e0e0e0;position:sticky;top:0;z-index:50}
+.topbar-in{max-width:1080px;margin:0 auto;padding:.875rem 1.5rem;display:flex;align-items:center;justify-content:space-between;gap:.75rem;flex-wrap:wrap}
 
-/* STATS */
-.stats-bar{background:#fff;border-bottom:1px solid #e0e0e0}
+.stats{background:#fff;border-bottom:1px solid #e0e0e0}
 .stats-in{max-width:1080px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr)}
-.stat{padding:1rem 1.25rem;text-align:center;border-right:1px solid #e0e0e0}
-.stat:last-child{border-right:none}
-.stat-n{font-family:'Times New Roman',serif;font-size:1.75rem;font-weight:700;line-height:1}
-.stat-l{font-size:.58rem;text-transform:uppercase;letter-spacing:.1em;color:#999;margin-top:3px}
+.sbox{padding:1rem 1.25rem;text-align:center;border-right:1px solid #e0e0e0}
+.sbox:last-child{border-right:none}
+.snum{font-family:'Times New Roman',serif;font-size:1.75rem;font-weight:700;line-height:1}
+.slbl{font-size:.58rem;text-transform:uppercase;letter-spacing:.1em;color:#999;margin-top:3px}
 
-/* CONTENT */
-.content{max-width:1080px;margin:0 auto;padding:1.25rem}
-
-/* TABS */
-.tabs{display:flex;border-bottom:2px solid #e0e0e0;margin-bottom:1.25rem;overflow-x:auto;gap:0}
+.wrap{max-width:1080px;margin:0 auto;padding:1.25rem}
+.tabs{display:flex;border-bottom:2px solid #e0e0e0;margin-bottom:1.25rem;overflow-x:auto}
 .tab{padding:.625rem 1rem;font-family:'Work Sans',sans-serif;font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.07em;cursor:pointer;border:none;background:none;color:#aaa;border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap}
 .tab.on{color:#000;border-bottom-color:#775a19}
 
-/* BOOKING CARDS */
-.bk{background:#fff;border-left:3px solid #775a19;padding:1rem;margin-bottom:.75rem}
-.bk-name{font-weight:700;font-size:.95rem}
-.meta{font-size:.78rem;color:#555;display:flex;align-items:center;gap:4px;margin-top:3px;flex-wrap:wrap}
-.meta .material-symbols-outlined{font-size:13px;flex-shrink:0}
-.code-tag{font-family:monospace;font-size:.7rem;color:#775a19;background:#fdfaf4;padding:2px 8px;border:1px solid #e8c97a}
+.card{background:#fff;border-left:3px solid #775a19;padding:1rem;margin-bottom:.75rem}
+.card.green{border-left-color:#16a34a}
+.cname{font-weight:700;font-size:.95rem}
+.crow{font-size:.78rem;color:#555;display:flex;align-items:center;gap:4px;margin-top:3px;flex-wrap:wrap}
+.crow .material-symbols-outlined{font-size:13px;flex-shrink:0}
+.ctag{font-family:monospace;font-size:.7rem;color:#775a19;background:#fdfaf4;padding:2px 8px;border:1px solid #e8c97a}
 
-/* BADGES */
 .bdg{display:inline-block;padding:2px 8px;font-size:.58rem;font-family:'Work Sans',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
-.b-gr{background:#dcfce7;color:#15803d}
-.b-bl{background:#dbeafe;color:#1d4ed8}
-.b-yw{background:#fef9c3;color:#92400e}
-.b-rd{background:#fee2e2;color:#b91c1c}
-.b-pu{background:#ede9fe;color:#6d28d9}
+.bgr{background:#dcfce7;color:#15803d}.bbl{background:#dbeafe;color:#1d4ed8}
+.byw{background:#fef9c3;color:#92400e}.brd{background:#fee2e2;color:#b91c1c}.bpu{background:#ede9fe;color:#6d28d9}
 
-/* BUTTONS */
 .btn{display:inline-flex;align-items:center;gap:4px;font-family:'Work Sans',sans-serif;font-size:.68rem;font-weight:600;text-transform:uppercase;letter-spacing:.07em;border:none;cursor:pointer;padding:.45rem .875rem;white-space:nowrap;transition:opacity .15s;text-decoration:none}
 .btn:hover{opacity:.82}
-.bk-btn{background:#000;color:#fff;border-bottom:2px solid #775a19}
-.bg-btn{background:#775a19;color:#fff}
-.bo-btn{background:#fff;color:#000;border:1px solid #ddd}
-.br-btn{background:#dc2626;color:#fff}
-.bgr-btn{background:#16a34a;color:#fff}
-.bbl-btn{background:#1d4ed8;color:#fff}
-.bpu-btn{background:#7c3aed;color:#fff}
+.bk{background:#000;color:#fff;border-bottom:2px solid #775a19}
+.bg{background:#775a19;color:#fff}
+.bo{background:#fff;color:#000;border:1px solid #ddd}
+.br{background:#dc2626;color:#fff}
+.bgn{background:#16a34a;color:#fff}
+.bdb{background:#1d4ed8;color:#fff}
+.bpp{background:#7c3aed;color:#fff}
 
-/* FORMS */
 .finp{width:100%;background:#f7f7f7;border:0;border-bottom:2px solid #ddd;padding:.6rem 0;font-family:Inter,sans-serif;font-size:.875rem;outline:none;transition:border-color .2s}
 .finp:focus{border-bottom-color:#000}
 .fsel{width:100%;background:#f7f7f7;border:0;border-bottom:2px solid #ddd;padding:.6rem 0;font-family:Inter,sans-serif;font-size:.875rem;outline:none;appearance:none}
 .flbl{font-size:.58rem;text-transform:uppercase;letter-spacing:.1em;color:#999;display:block;margin-bottom:5px;font-family:'Work Sans',sans-serif;font-weight:600}
-.fg2{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
-.fspan{grid-column:1/-1}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.g2a{grid-column:1/-1}
 
-/* MODALS */
-.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:300;overflow-y:auto;padding:1rem}
-.overlay.open{display:flex;align-items:flex-start;justify-content:center}
+.ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:300;overflow-y:auto;padding:1rem}
+.ov.open{display:flex;align-items:flex-start;justify-content:center}
 .modal{background:#fff;width:100%;margin:2rem auto}
 .mhd{padding:1rem 1.25rem;border-bottom:1px solid #eee;display:flex;align-items:center;justify-content:space-between}
 .mhd h3{font-family:'Times New Roman',serif;font-size:1rem;font-weight:700}
 .mx{background:none;border:none;font-size:1.2rem;cursor:pointer;color:#888;padding:0;line-height:1}
 .mbdy{padding:1.5rem}
 
-/* MSG CARDS */
-.msg-card{background:#fff;border-left:3px solid #ddd;padding:.875rem 1rem;margin-bottom:.5rem;cursor:pointer;transition:all .15s}
-.msg-card:hover{border-left-color:#775a19;background:#fafafa}
+.msgcard{background:#fff;border-left:3px solid #ddd;padding:.875rem 1rem;margin-bottom:.5rem;cursor:pointer;transition:all .15s}
+.msgcard:hover{border-left-color:#775a19;background:#fafafa}
 
-/* TOAST */
 #toast{position:fixed;top:1rem;right:1rem;z-index:9999;background:#111;color:#fff;padding:.7rem 1.25rem;font-family:'Work Sans',sans-serif;font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;border-left:3px solid #775a19;display:none;max-width:320px}
-
-/* EMPTY */
-.empty-state{text-align:center;padding:4rem 0;color:#ccc}
-.empty-state .material-symbols-outlined{font-size:2.5rem;display:block;margin-bottom:.75rem}
+.empty{text-align:center;padding:4rem 0;color:#ccc}
+.empty .material-symbols-outlined{font-size:2.5rem;display:block;margin-bottom:.75rem}
 
 @media(max-width:640px){
   .stats-in{grid-template-columns:repeat(3,1fr)}
-  .stat:nth-child(4),.stat:nth-child(5){border-top:1px solid #e0e0e0}
-  .fg2{grid-template-columns:1fr}.fspan{grid-column:1}
+  .sbox:nth-child(4),.sbox:nth-child(5){border-top:1px solid #e0e0e0}
+  .g2{grid-template-columns:1fr}.g2a{grid-column:1}
 }
 </style>
 </head>
 <body>
 <div id="toast"></div>
 
-<!-- ═══════════ LOGIN ═══════════ -->
+<!-- LOGIN -->
 <div id="pg-login">
-  <div class="login-box">
-    <div class="login-logo">Seacoast RVIP</div>
-    <div class="login-sub">Admin Dashboard</div>
-    <div style="margin-bottom:1.1rem">
+  <div class="lbox">
+    <div class="llogo">Seacoast RVIP</div>
+    <div class="lsub">Admin Dashboard</div>
+    <div style="margin-bottom:1rem">
       <label class="flbl">Password</label>
       <input id="pwd" type="password" class="finp" placeholder="Enter password"
         onkeydown="if(event.key==='Enter')doLogin()"/>
@@ -121,40 +104,39 @@ body{font-family:'Inter',sans-serif;background:#f0f0f0;min-height:100vh;-webkit-
       style="width:100%;background:#000;color:#fff;padding:.875rem;font-family:'Work Sans',sans-serif;font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;border:none;border-bottom:3px solid #775a19;cursor:pointer">
       Enter Dashboard →
     </button>
-    <p style="font-size:.62rem;color:#ccc;text-align:center;margin-top:1rem">seacoastrvip.com/admin.html · Private</p>
+    <p style="font-size:.62rem;color:#ccc;text-align:center;margin-top:1rem">seacoastrvip.com/admin.html</p>
   </div>
 </div>
 
-<!-- ═══════════ DASHBOARD ═══════════ -->
+<!-- DASHBOARD -->
 <div id="pg-dash">
 
   <div class="topbar">
-    <div class="tb-in">
+    <div class="topbar-in">
       <div>
         <div style="font-family:'Times New Roman',serif;font-size:1.05rem;font-weight:700">Seacoast RVIP</div>
         <div style="font-size:.6rem;text-transform:uppercase;letter-spacing:.08em;color:#aaa">Admin · <span id="today-lbl"></span></div>
       </div>
       <div style="display:flex;gap:.5rem;flex-wrap:wrap">
-        <button onclick="openAdd()" class="btn bk-btn">
+        <button onclick="openAdd()" class="btn bk">
           <span class="material-symbols-outlined" style="font-size:15px">add</span>New Booking
         </button>
-        <button onclick="doLogout()" class="btn bo-btn">Logout</button>
+        <button onclick="doLogout()" class="btn bo">Logout</button>
       </div>
     </div>
   </div>
 
-  <div class="stats-bar">
+  <div class="stats">
     <div class="stats-in">
-      <div class="stat"><div id="st1" class="stat-n">0</div><div class="stat-l">Total</div></div>
-      <div class="stat"><div id="st2" class="stat-n" style="color:#775a19">0</div><div class="stat-l">Upcoming</div></div>
-      <div class="stat"><div id="st3" class="stat-n" style="color:#16a34a">$0</div><div class="stat-l">Revenue</div></div>
-      <div class="stat"><div id="st4" class="stat-n" style="color:#d97706">0</div><div class="stat-l">Awaiting Pay</div></div>
-      <div class="stat"><div id="st5" class="stat-n" style="color:#7c3aed">—</div><div class="stat-l">Clients</div></div>
+      <div class="sbox"><div id="s1" class="snum">0</div><div class="slbl">Total</div></div>
+      <div class="sbox"><div id="s2" class="snum" style="color:#775a19">0</div><div class="slbl">Upcoming</div></div>
+      <div class="sbox"><div id="s3" class="snum" style="color:#16a34a">$0</div><div class="slbl">Revenue</div></div>
+      <div class="sbox"><div id="s4" class="snum" style="color:#d97706">0</div><div class="slbl">Awaiting Pay</div></div>
+      <div class="sbox"><div id="s5" class="snum" style="color:#7c3aed">—</div><div class="slbl">Clients</div></div>
     </div>
   </div>
 
-  <div class="content">
-
+  <div class="wrap">
     <div class="tabs">
       <button class="tab on" onclick="goTab('all',this)">All</button>
       <button class="tab" onclick="goTab('upcoming',this)">Upcoming</button>
@@ -167,10 +149,10 @@ body{font-family:'Inter',sans-serif;background:#f0f0f0;min-height:100vh;-webkit-
 
     <div id="sec-all">
       <div id="bk-list"></div>
-      <div id="bk-empty" class="empty-state" style="display:none">
+      <div id="bk-empty" class="empty" style="display:none">
         <span class="material-symbols-outlined">directions_car</span>
         <div style="font-size:.8rem;margin-bottom:1rem">No bookings yet</div>
-        <button onclick="openAdd()" class="btn bg-btn">Add First Booking</button>
+        <button onclick="openAdd()" class="btn bg">Add First Booking</button>
       </div>
     </div>
 
@@ -180,53 +162,48 @@ body{font-family:'Inter',sans-serif;background:#f0f0f0;min-height:100vh;-webkit-
           <div style="font-family:'Times New Roman',serif;font-size:1.1rem;font-weight:700">Registered Clients</div>
           <div style="font-size:.75rem;color:#888;margin-top:3px">Clients who signed up at account.html</div>
         </div>
-        <button onclick="loadClients()" class="btn bo-btn"><span class="material-symbols-outlined" style="font-size:14px">refresh</span>Refresh</button>
+        <button onclick="loadClients()" class="btn bo"><span class="material-symbols-outlined" style="font-size:14px">refresh</span>Refresh</button>
       </div>
-      <div id="cl-list">
-        <div class="empty-state"><span class="material-symbols-outlined">people</span><div style="font-size:.8rem">Click Refresh to load clients</div></div>
-      </div>
+      <div id="cl-list"><div class="empty"><span class="material-symbols-outlined">people</span><div style="font-size:.8rem">Click Refresh to load clients</div></div></div>
     </div>
 
     <div id="sec-quotes" style="display:none">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;flex-wrap:wrap;gap:.75rem">
         <div>
           <div style="font-family:'Times New Roman',serif;font-size:1.1rem;font-weight:700">Quote Requests</div>
-          <div style="font-size:.75rem;color:#888;margin-top:3px">Submitted from the Get a Quote page · Convert to create a booking</div>
+          <div style="font-size:.75rem;color:#888;margin-top:3px">From the Get a Quote page · Convert to create a booking</div>
         </div>
-        <button onclick="loadQuotes()" class="btn bo-btn"><span class="material-symbols-outlined" style="font-size:14px">refresh</span>Refresh</button>
+        <button onclick="loadQuotes()" class="btn bo"><span class="material-symbols-outlined" style="font-size:14px">refresh</span>Refresh</button>
       </div>
-      <div id="qt-list">
-        <div class="empty-state"><span class="material-symbols-outlined">request_quote</span><div style="font-size:.8rem">Click Refresh to load quotes</div></div>
-      </div>
+      <div id="qt-list"><div class="empty"><span class="material-symbols-outlined">request_quote</span><div style="font-size:.8rem">Click Refresh to load quotes</div></div></div>
     </div>
 
     <div id="sec-messages" style="display:none">
       <div style="margin-bottom:1.5rem">
         <div style="font-family:'Times New Roman',serif;font-size:1.1rem;font-weight:700;margin-bottom:3px">Message Templates</div>
-        <div style="font-size:.75rem;color:#888">Tap a template → customize → send to a client or all clients.</div>
+        <div style="font-size:.75rem;color:#888">Tap a template → edit → send to a client or all clients.</div>
       </div>
       <div style="background:#fdfaf4;border:1px solid #e8c97a;padding:1rem;margin-bottom:1.5rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.75rem">
         <div>
           <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#775a19;margin-bottom:2px">Broadcast to All Clients</div>
-          <div style="font-size:.72rem;color:#999">Open any template → use "Send All"</div>
+          <div style="font-size:.72rem;color:#999">Open any template → use Send All</div>
         </div>
         <div id="bc-count" style="font-size:.8rem;font-weight:700;color:#775a19">— clients</div>
       </div>
       <div id="msg-tpl"></div>
     </div>
-
   </div>
 </div>
 
 <!-- ADD/EDIT BOOKING MODAL -->
-<div class="overlay" id="m-add">
+<div class="ov" id="m-add">
   <div class="modal" style="max-width:580px">
     <div class="mhd"><h3 id="add-title">New Booking</h3><button class="mx" onclick="closeM('m-add')">✕</button></div>
     <div class="mbdy">
       <input type="hidden" id="eid"/>
-      <div class="fg2" style="margin-bottom:1.25rem">
+      <div class="g2" style="margin-bottom:1.25rem">
         <div><label class="flbl">Name *</label><input id="fn" class="finp" placeholder="John Smith"/></div>
-        <div><label class="flbl">Phone *</label><input id="fp" class="finp" type="tel" placeholder="Phone number"/></div>
+        <div><label class="flbl">Phone *</label><input id="fp" class="finp" type="tel" placeholder="Phone"/></div>
         <div><label class="flbl">Email</label><input id="fe" class="finp" type="email" placeholder="client@email.com"/></div>
         <div><label class="flbl">Service *</label>
           <select id="fsv" class="fsel">
@@ -238,8 +215,8 @@ body{font-family:'Inter',sans-serif;background:#f0f0f0;min-height:100vh;-webkit-
         </div>
         <div><label class="flbl">Date *</label><input id="fd" class="finp" type="date"/></div>
         <div><label class="flbl">Pickup Time</label><input id="ft" class="finp" type="time"/></div>
-        <div class="fspan"><label class="flbl">Pickup Address</label><input id="fpu" class="finp" placeholder="Full pickup address"/></div>
-        <div class="fspan"><label class="flbl">Destination</label><input id="fde" class="finp" placeholder="Airport, venue, or address"/></div>
+        <div class="g2a"><label class="flbl">Pickup Address</label><input id="fpu" class="finp" placeholder="Full pickup address"/></div>
+        <div class="g2a"><label class="flbl">Destination</label><input id="fde" class="finp" placeholder="Airport, venue, or address"/></div>
         <div><label class="flbl">Price ($) *</label><input id="fpr" class="finp" type="number" min="0" step="5" placeholder="145"/></div>
         <div><label class="flbl">Status</label>
           <select id="fst" class="fsel">
@@ -248,8 +225,8 @@ body{font-family:'Inter',sans-serif;background:#f0f0f0;min-height:100vh;-webkit-
         </div>
         <div><label class="flbl">Confirmation Code</label>
           <div style="display:flex;gap:.5rem">
-            <input id="fco" class="finp" style="font-family:monospace;letter-spacing:.1em" placeholder="RVIP-0000-XXX"/>
-            <button onclick="genCode()" class="btn bo-btn" style="flex-shrink:0;padding:.5rem .75rem">
+            <input id="fco" class="finp" style="font-family:monospace;letter-spacing:.08em" placeholder="RVIP-0000-XXX"/>
+            <button onclick="genCode()" class="btn bo" style="flex-shrink:0;padding:.5rem .75rem">
               <span class="material-symbols-outlined" style="font-size:15px">refresh</span>
             </button>
           </div>
@@ -257,101 +234,109 @@ body{font-family:'Inter',sans-serif;background:#f0f0f0;min-height:100vh;-webkit-
         <div><label class="flbl">Vehicle</label>
           <select id="fve" class="fsel"><option>Black SUV Luxury</option><option>Regular Black SUV</option></select>
         </div>
-        <div class="fspan"><label class="flbl">Notes</label><input id="fno" class="finp" placeholder="Flight number, special requests..."/></div>
+        <div class="g2a"><label class="flbl">Notes</label><input id="fno" class="finp" placeholder="Flight number, special requests..."/></div>
       </div>
       <div style="display:flex;gap:.75rem;justify-content:flex-end">
-        <button onclick="closeM('m-add')" class="btn bo-btn">Cancel</button>
-        <button id="save-btn" onclick="saveBk()" class="btn bk-btn" style="padding:.625rem 2rem">Save Booking</button>
+        <button onclick="closeM('m-add')" class="btn bo">Cancel</button>
+        <button onclick="saveBk()" class="btn bk" style="padding:.625rem 2rem">Save Booking</button>
       </div>
     </div>
   </div>
 </div>
 
 <!-- SEND PAYMENT MODAL -->
-<div class="overlay" id="m-pay">
+<div class="ov" id="m-pay">
   <div class="modal" style="max-width:480px">
     <div class="mhd"><h3>Send Payment Link</h3><button class="mx" onclick="closeM('m-pay')">✕</button></div>
-    <div class="mbdy" id="pay-body"></div>
+    <div class="mbdy">
+      <div id="pay-info" style="background:#f7f7f7;border-left:3px solid #775a19;padding:1rem;margin-bottom:1rem;font-size:.83rem"></div>
+      <div style="background:#fdfaf4;border:1px solid #e8c97a;padding:1rem;text-align:center;margin-bottom:1rem">
+        <div style="font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;color:#775a19;margin-bottom:4px">Payment Link</div>
+        <div id="pay-link-txt" style="font-size:.72rem;word-break:break-all;color:#555;margin-bottom:.5rem"></div>
+        <div id="pay-amount" style="font-family:'Times New Roman',serif;font-size:2rem;font-weight:700"></div>
+      </div>
+      <div style="margin-bottom:1rem">
+        <label class="flbl">Message (edit before sending)</label>
+        <textarea id="pay-msg" rows="6" style="width:100%;background:#f7f7f7;border:0;border-bottom:2px solid #ddd;padding:.75rem 0;font-family:Inter,sans-serif;font-size:.8rem;resize:none;outline:none;box-sizing:border-box;line-height:1.6"></textarea>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.625rem;margin-bottom:.625rem">
+        <button onclick="paySMS()"   class="btn bk"  style="justify-content:center;padding:.875rem"><span class="material-symbols-outlined" style="font-size:15px">sms</span>Text</button>
+        <button onclick="payEmail()" class="btn bo"  style="justify-content:center;padding:.875rem"><span class="material-symbols-outlined" style="font-size:15px">mail</span>Email</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.625rem;margin-bottom:.625rem">
+        <button onclick="payWA()"    class="btn bgn" style="justify-content:center;padding:.875rem"><span class="material-symbols-outlined" style="font-size:15px">chat</span>WhatsApp</button>
+        <button onclick="payCopy()"  class="btn bo"  style="justify-content:center;padding:.875rem"><span class="material-symbols-outlined" style="font-size:15px">content_copy</span>Copy Link</button>
+      </div>
+      <button onclick="payMarkPaid()" class="btn bgn" style="width:100%;justify-content:center;padding:.875rem;margin-top:.25rem">
+        <span class="material-symbols-outlined" style="font-size:15px">check_circle</span>Mark as Paid
+      </button>
+    </div>
   </div>
 </div>
 
 <!-- ADD TO CLIENT MODAL -->
-<div class="overlay" id="m-cl">
+<div class="ov" id="m-cl">
   <div class="modal" style="max-width:420px">
     <div class="mhd"><h3>Add Trip to Client Account</h3><button class="mx" onclick="closeM('m-cl')">✕</button></div>
     <div class="mbdy">
-      <div id="cl-bk-info" style="background:#f7f7f7;border-left:3px solid #775a19;padding:.875rem;margin-bottom:1.25rem;font-size:.83rem"></div>
-      <div style="margin-bottom:1rem">
-        <label class="flbl">Client Phone</label>
-        <input id="cl-phone" type="tel" class="finp" placeholder="Client phone number"/>
-      </div>
-      <div style="margin-bottom:1.25rem">
-        <label class="flbl">Trip Status</label>
+      <div id="cl-info" style="background:#f7f7f7;border-left:3px solid #775a19;padding:.875rem;margin-bottom:1.25rem;font-size:.83rem"></div>
+      <div style="margin-bottom:1rem"><label class="flbl">Client Phone</label><input id="cl-phone" type="tel" class="finp" placeholder="Client phone number"/></div>
+      <div style="margin-bottom:1.25rem"><label class="flbl">Trip Status</label>
         <select id="cl-status" class="fsel">
           <option value="completed">Completed — counts toward loyalty</option>
           <option value="upcoming">Upcoming</option>
           <option value="paid">Paid</option>
         </select>
       </div>
-      <div id="cl-err" style="display:none;background:#fef2f2;border-left:3px solid #dc2626;padding:.625rem;font-size:.78rem;color:#dc2626;margin-bottom:.875rem;white-space:pre-wrap"></div>
+      <div id="cl-err" style="display:none;background:#fef2f2;border-left:3px solid #dc2626;padding:.625rem;font-size:.78rem;color:#dc2626;margin-bottom:.875rem"></div>
       <div id="cl-ok"  style="display:none;background:#f0fdf4;border-left:3px solid #16a34a;padding:.75rem;font-size:.78rem;color:#15803d;margin-bottom:.875rem">✅ Trip added to client account!</div>
-      <button onclick="saveToClient()" class="btn bpu-btn" style="width:100%;justify-content:center;padding:.875rem">Add to Client Account</button>
+      <button onclick="saveToClient()" class="btn bpp" style="width:100%;justify-content:center;padding:.875rem">Add to Client Account</button>
       <p style="font-size:.65rem;color:#bbb;text-align:center;margin-top:.75rem">Client must have signed up at account.html</p>
     </div>
   </div>
 </div>
 
 <!-- MESSAGE MODAL -->
-<div class="overlay" id="m-msg">
+<div class="ov" id="m-msg">
   <div class="modal" style="max-width:520px">
-    <div class="mhd"><h3 id="msg-modal-title">Send Message</h3><button class="mx" onclick="closeM('m-msg')">✕</button></div>
+    <div class="mhd"><h3 id="msg-title">Send Message</h3><button class="mx" onclick="closeM('m-msg')">✕</button></div>
     <div class="mbdy">
-      <label class="flbl">Message (edit before sending)</label>
-      <textarea id="msg-txt" rows="7"
-        style="width:100%;background:#f7f7f7;border:0;border-bottom:2px solid #ddd;padding:.75rem 0;font-family:Inter,sans-serif;font-size:.85rem;outline:none;resize:vertical;margin-bottom:1.25rem;box-sizing:border-box;line-height:1.65"></textarea>
+      <label class="flbl">Message</label>
+      <textarea id="msg-txt" rows="7" style="width:100%;background:#f7f7f7;border:0;border-bottom:2px solid #ddd;padding:.75rem 0;font-family:Inter,sans-serif;font-size:.85rem;outline:none;resize:vertical;margin-bottom:1.25rem;box-sizing:border-box;line-height:1.65"></textarea>
       <label class="flbl">Send to client</label>
       <div style="display:flex;gap:.5rem;margin-bottom:.625rem">
-        <select id="msg-sel"
-          style="flex:1;background:#f7f7f7;border:0;border-bottom:2px solid #ddd;padding:.6rem 0;font-family:Inter,sans-serif;font-size:.83rem;outline:none;appearance:none"
+        <select id="msg-sel" style="flex:1;background:#f7f7f7;border:0;border-bottom:2px solid #ddd;padding:.6rem 0;font-family:Inter,sans-serif;font-size:.83rem;outline:none;appearance:none"
           onchange="if(this.value)document.getElementById('msg-phone').value=this.value">
           <option value="">— Select client —</option>
         </select>
-        <button onclick="loadMsgClients()" class="btn bo-btn" style="flex-shrink:0">
-          <span class="material-symbols-outlined" style="font-size:14px">refresh</span>
-        </button>
+        <button onclick="loadMsgClients()" class="btn bo" style="flex-shrink:0"><span class="material-symbols-outlined" style="font-size:14px">refresh</span></button>
       </div>
-      <input id="msg-phone" type="tel" class="finp" placeholder="Or type phone number directly" style="margin-bottom:1.25rem"/>
-      <div id="msg-result" style="display:none;padding:.75rem;font-size:.78rem;margin-bottom:1rem"></div>
+      <input id="msg-phone" type="tel" class="finp" placeholder="Or type phone number" style="margin-bottom:1.25rem"/>
+      <div id="msg-res" style="display:none;padding:.75rem;font-size:.78rem;margin-bottom:1rem"></div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.625rem;margin-bottom:.625rem">
-        <button onclick="msgOne()" class="btn bk-btn" style="justify-content:center;flex-direction:column;gap:2px;padding:.75rem;font-size:.62rem">
-          <span class="material-symbols-outlined" style="font-size:16px">sms</span>Text
-        </button>
-        <a id="msg-wa" href="#" target="_blank" class="btn bgr-btn" style="justify-content:center;flex-direction:column;gap:2px;padding:.75rem;font-size:.62rem">
-          <span class="material-symbols-outlined" style="font-size:16px">chat</span>WhatsApp
-        </a>
-        <button onclick="msgAll()" class="btn bg-btn" style="justify-content:center;flex-direction:column;gap:2px;padding:.75rem;font-size:.62rem">
-          <span class="material-symbols-outlined" style="font-size:16px">group</span>Send All
-        </button>
+        <button onclick="msgOne()"  class="btn bk"  style="justify-content:center;flex-direction:column;gap:2px;padding:.75rem;font-size:.62rem"><span class="material-symbols-outlined" style="font-size:16px">sms</span>Text</button>
+        <button onclick="msgWA()"   class="btn bgn" style="justify-content:center;flex-direction:column;gap:2px;padding:.75rem;font-size:.62rem"><span class="material-symbols-outlined" style="font-size:16px">chat</span>WhatsApp</button>
+        <button onclick="msgAll()"  class="btn bg"  style="justify-content:center;flex-direction:column;gap:2px;padding:.75rem;font-size:.62rem"><span class="material-symbols-outlined" style="font-size:16px">group</span>Send All</button>
       </div>
-      <button onclick="msgCopy()" class="btn bo-btn" style="width:100%;justify-content:center;padding:.75rem">
+      <button onclick="msgCopy()" class="btn bo" style="width:100%;justify-content:center;padding:.75rem">
         <span class="material-symbols-outlined" style="font-size:14px">content_copy</span>Copy
       </button>
-      <p style="font-size:.62rem;color:#bbb;text-align:center;margin-top:.875rem">"Send All" opens text app for each client one at a time.</p>
+      <p style="font-size:.62rem;color:#bbb;text-align:center;margin-top:.875rem">Send All opens text app for each client one at a time.</p>
     </div>
   </div>
 </div>
 
 <script>
-// ═══════════════════════════════════
-// CONFIG
-// ═══════════════════════════════════
-var ADMIN_PWD = 'seacoast2025';
-var SITE_URL  = 'https://seacoast-rvip-complete-final-firmsu.vercel.app';
-var REVIEW_URL = 'https://g.page/r/YOUR_GOOGLE_REVIEW_LINK';
+// ─────────────────────────────────────────────
+//  CONFIG
+// ─────────────────────────────────────────────
+var PWD      = 'seacoast2025';
+var SITE     = 'https://seacoast-rvip-complete-final-firmsu.vercel.app';
+var GREVIEW  = 'https://g.page/r/YOUR_GOOGLE_REVIEW_LINK';
 
-// ═══════════════════════════════════
-// FIREBASE — single safe init
-// ═══════════════════════════════════
+// ─────────────────────────────────────────────
+//  FIREBASE
+// ─────────────────────────────────────────────
 var db = null;
 try {
   if (!firebase.apps.length) {
@@ -365,28 +350,30 @@ try {
     });
   }
   db = firebase.firestore();
+  console.log('Firebase ready');
 } catch(e) { console.warn('Firebase:', e.message); }
 
-// ═══════════════════════════════════
-// STATE
-// ═══════════════════════════════════
-var activeTab   = 'all';
-var pendingBk   = null;   // booking being linked to client account
-var pendingQid  = null;   // quote doc ID to mark converted after save
+// ─────────────────────────────────────────────
+//  STATE — plain variables, no JSON-in-onclick
+// ─────────────────────────────────────────────
+var curTab    = 'all';
+var curPayBk  = null;   // booking open in pay modal
+var curClBk   = null;   // booking open in client modal
+var curQid    = null;   // quote docId being converted
+var QMAP      = {};     // docId -> quote object
+var MMAP      = {};     // key -> {title,text}
 
-// ═══════════════════════════════════
-// STORAGE HELPERS
-// ═══════════════════════════════════
-function getBks() {
-  try { return JSON.parse(localStorage.getItem('rv-bks') || '[]'); } catch(e) { return []; }
-}
-function setBks(arr) { localStorage.setItem('rv-bks', JSON.stringify(arr)); }
+// ─────────────────────────────────────────────
+//  STORAGE
+// ─────────────────────────────────────────────
+function getBks()    { try{return JSON.parse(localStorage.getItem('rv-bks')||'[]');}catch(e){return[];} }
+function setBks(a)   { localStorage.setItem('rv-bks', JSON.stringify(a)); }
 
-// ═══════════════════════════════════
-// LOGIN / LOGOUT
-// ═══════════════════════════════════
+// ─────────────────────────────────────────────
+//  LOGIN
+// ─────────────────────────────────────────────
 function doLogin() {
-  if (document.getElementById('pwd').value === ADMIN_PWD) {
+  if (document.getElementById('pwd').value === PWD) {
     localStorage.setItem('rv-auth','1');
     document.getElementById('pg-login').style.display = 'none';
     document.getElementById('pg-dash').style.display  = 'block';
@@ -399,24 +386,24 @@ function doLogin() {
 }
 function doLogout() { localStorage.removeItem('rv-auth'); location.reload(); }
 
-// ═══════════════════════════════════
-// INIT
-// ═══════════════════════════════════
+// ─────────────────────────────────────────────
+//  INIT
+// ─────────────────────────────────────────────
 function initDash() {
   document.getElementById('today-lbl').textContent =
     new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
   renderBks();
   if (db) {
     getBks().forEach(function(b){ fbSync(b); });
-    pullWebBookings();
+    pullFromFirebase();
     db.collection('clients').get()
-      .then(function(s){ document.getElementById('st5').textContent = s.size; })
+      .then(function(s){ document.getElementById('s5').textContent = s.size; })
       .catch(function(){});
   }
 }
 
-// Pull bookings submitted via the website form
-async function pullWebBookings() {
+// Pull website-submitted bookings not yet in localStorage
+async function pullFromFirebase() {
   if (!db) return;
   try {
     var snap = await db.collection('bookings').orderBy('createdAt','desc').limit(200).get();
@@ -428,80 +415,75 @@ async function pullWebBookings() {
       var b = d.data();
       if (b.id && !ids[b.id]) { local.push(b); added++; }
     });
-    if (added > 0) {
-      setBks(local);
-      renderBks();
-      toast(added + ' new booking' + (added > 1 ? 's' : '') + ' from website!');
-    }
-  } catch(e) { console.warn('pullWebBookings:', e.message); }
+    if (added > 0) { setBks(local); renderBks(); toast(added+' new booking'+(added>1?'s':'')+' from website!'); }
+  } catch(e) { console.warn('pull:', e.message); }
 }
 
-// ═══════════════════════════════════
-// RENDER BOOKINGS
-// ═══════════════════════════════════
+// ─────────────────────────────────────────────
+//  RENDER
+// ─────────────────────────────────────────────
 function renderBks() {
   var bks = getBks();
-  var up  = bks.filter(function(b){ return b.status==='Confirmed'||b.status==='Pending'; }).length;
-  var rev = bks.filter(function(b){ return b.status==='Paid'||b.status==='Completed'; })
-               .reduce(function(s,b){ return s+(parseFloat(b.price)||0); },0);
-  var aw  = bks.filter(function(b){ return b.status==='Confirmed'; }).length;
-  document.getElementById('st1').textContent = bks.length;
-  document.getElementById('st2').textContent = up;
-  document.getElementById('st3').textContent = '$'+rev.toFixed(0);
-  document.getElementById('st4').textContent = aw;
+  var up  = bks.filter(function(b){return b.status==='Confirmed'||b.status==='Pending';}).length;
+  var rev = bks.filter(function(b){return b.status==='Paid'||b.status==='Completed';})
+               .reduce(function(s,b){return s+(parseFloat(b.price)||0);},0);
+  var aw  = bks.filter(function(b){return b.status==='Confirmed';}).length;
+  document.getElementById('s1').textContent = bks.length;
+  document.getElementById('s2').textContent = up;
+  document.getElementById('s3').textContent = '$'+rev.toFixed(0);
+  document.getElementById('s4').textContent = aw;
 
   var list = bks.filter(function(b){
-    if (activeTab==='upcoming') return b.status==='Confirmed'||b.status==='Pending';
-    if (activeTab==='awaiting') return b.status==='Confirmed';
-    if (activeTab==='done')     return b.status==='Paid'||b.status==='Completed';
+    if (curTab==='upcoming') return b.status==='Confirmed'||b.status==='Pending';
+    if (curTab==='awaiting') return b.status==='Confirmed';
+    if (curTab==='done')     return b.status==='Paid'||b.status==='Completed';
     return true;
   }).sort(function(a,b){ return new Date(a.date)-new Date(b.date); });
 
-  var lEl = document.getElementById('bk-list');
-  var eEl = document.getElementById('bk-empty');
+  var lEl=document.getElementById('bk-list'), eEl=document.getElementById('bk-empty');
   if (!list.length) { lEl.innerHTML=''; eEl.style.display='block'; return; }
-  eEl.style.display = 'none';
+  eEl.style.display='none';
 
-  var SC = {Pending:'b-yw',Confirmed:'b-bl',Paid:'b-gr',Completed:'b-gr',Cancelled:'b-rd'};
-  lEl.innerHTML = list.map(function(b){
-    var bd = SC[b.status]||'b-yw';
-    return '<div class="bk">'+
-      '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:.75rem">'+
-        '<div style="flex:1;min-width:180px">'+
-          '<div style="display:flex;align-items:center;gap:.625rem;flex-wrap:wrap;margin-bottom:.5rem">'+
-            '<span class="bk-name">'+x(b.name)+'</span>'+
-            '<span class="bdg '+bd+'">'+x(b.status)+'</span>'+
-            (b.code?'<span class="code-tag">'+x(b.code)+'</span>':'')+
-            (b.source==='website-form'?'<span class="bdg b-pu">From Website</span>':'')+
-          '</div>'+
-          '<div class="meta"><span class="material-symbols-outlined">calendar_today</span>'+x(b.date||'—')+' at '+fT(b.time)+'</div>'+
-          '<div class="meta"><span class="material-symbols-outlined">directions_car</span>'+x(b.service||'—')+'</div>'+
-          (b.pickup?'<div class="meta"><span class="material-symbols-outlined">location_on</span>'+x(b.pickup)+' → '+x(b.destination||'')+'</div>':'')+
-          '<div class="meta"><span class="material-symbols-outlined">phone</span>'+x(b.phone||'—')+(b.email?' · '+x(b.email):'')+'</div>'+
-        '</div>'+
-        '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:.5rem">'+
-          '<div style="font-family:\'Times New Roman\',serif;font-size:1.6rem;font-weight:700;color:#775a19">$'+(b.price||'—')+'</div>'+
-          '<div style="display:flex;gap:.375rem;flex-wrap:wrap;justify-content:flex-end">'+
-            '<button onclick="openPay(\''+b.id+'\')" class="btn bk-btn"><span class="material-symbols-outlined" style="font-size:13px">send</span>Send</button>'+
-            '<button onclick="openCl(\''+b.id+'\')"  class="btn bpu-btn"><span class="material-symbols-outlined" style="font-size:12px">person_add</span>Client</button>'+
-            '<button onclick="openEdit(\''+b.id+'\')" class="btn bo-btn"><span class="material-symbols-outlined" style="font-size:13px">edit</span></button>'+
-            '<button onclick="delBk(\''+b.id+'\')"   class="btn br-btn"><span class="material-symbols-outlined" style="font-size:13px">delete</span></button>'+
-          '</div>'+
-        '</div>'+
-      '</div>'+
+  var SC={Pending:'byw',Confirmed:'bbl',Paid:'bgr',Completed:'bgr',Cancelled:'brd'};
+  lEl.innerHTML = list.map(function(b,i){
+    // Store booking in a data attribute index — no JSON in onclick
+    return '<div class="card" data-bk-idx="'+i+'" id="bkcard'+b.id+'">' +
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:.75rem">' +
+        '<div style="flex:1;min-width:180px">' +
+          '<div style="display:flex;align-items:center;gap:.625rem;flex-wrap:wrap;margin-bottom:.5rem">' +
+            '<span class="cname">'+e(b.name)+'</span>' +
+            '<span class="bdg '+(SC[b.status]||'byw')+'">'+e(b.status)+'</span>' +
+            (b.code?'<span class="ctag">'+e(b.code)+'</span>':'') +
+            (b.source==='website-form'?'<span class="bdg bpu">Web</span>':'') +
+          '</div>' +
+          '<div class="crow"><span class="material-symbols-outlined">calendar_today</span>'+e(b.date||'—')+' at '+fT(b.time)+'</div>' +
+          '<div class="crow"><span class="material-symbols-outlined">directions_car</span>'+e(b.service||'—')+'</div>' +
+          (b.pickup?'<div class="crow"><span class="material-symbols-outlined">location_on</span>'+e(b.pickup)+' → '+e(b.destination||'')+'</div>':'') +
+          '<div class="crow"><span class="material-symbols-outlined">phone</span>'+e(b.phone||'—')+(b.email?' · '+e(b.email):'')+'</div>' +
+        '</div>' +
+        '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:.5rem">' +
+          '<div style="font-family:\'Times New Roman\',serif;font-size:1.6rem;font-weight:700;color:#775a19">$'+(b.price||'—')+'</div>' +
+          '<div style="display:flex;gap:.375rem;flex-wrap:wrap;justify-content:flex-end">' +
+            '<button onclick="openPay(\''+b.id+'\')" class="btn bk"><span class="material-symbols-outlined" style="font-size:13px">send</span>Send</button>' +
+            '<button onclick="openCl(\''+b.id+'\')"  class="btn bpp"><span class="material-symbols-outlined" style="font-size:12px">person_add</span></button>' +
+            '<button onclick="openEdit(\''+b.id+'\')" class="btn bo"><span class="material-symbols-outlined" style="font-size:13px">edit</span></button>' +
+            '<button onclick="delBk(\''+b.id+'\')"   class="btn br"><span class="material-symbols-outlined" style="font-size:13px">delete</span></button>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
     '</div>';
   }).join('');
 }
 
-function x(s){ if(!s)return''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-function fT(t){ if(!t)return'—'; try{var p=t.split(':'),h=parseInt(p[0]),m=p[1],ap=h>=12?'PM':'AM';h=h%12||12;return h+':'+m+' '+ap;}catch(e){return t;} }
+function e(s){ if(!s)return''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function fT(t){ if(!t)return'—'; try{var p=t.split(':'),h=parseInt(p[0]),m=p[1],a=h>=12?'PM':'AM';h=h%12||12;return h+':'+m+' '+a;}catch(x){return t;} }
 
-// ═══════════════════════════════════
-// TABS
-// ═══════════════════════════════════
+// ─────────────────────────────────────────────
+//  TABS
+// ─────────────────────────────────────────────
 function goTab(tab, btn) {
-  activeTab = tab;
-  document.querySelectorAll('.tab').forEach(function(b){ b.classList.remove('on'); });
+  curTab = tab;
+  document.querySelectorAll('.tab').forEach(function(b){b.classList.remove('on');});
   btn.classList.add('on');
   ['sec-all','sec-clients','sec-quotes','sec-messages'].forEach(function(id){
     document.getElementById(id).style.display='none';
@@ -512,21 +494,21 @@ function goTab(tab, btn) {
   else                       { document.getElementById('sec-all').style.display='block';      renderBks(); }
 }
 
-// ═══════════════════════════════════
-// ADD / EDIT BOOKING
-// ═══════════════════════════════════
+// ─────────────────────────────────────────────
+//  ADD / EDIT BOOKING
+// ─────────────────────────────────────────────
 function openAdd() {
   document.getElementById('add-title').textContent = 'New Booking';
   document.getElementById('eid').value = '';
-  ['fn','fp','fe','fd','ft','fpu','fde','fpr','fco','fno'].forEach(function(id){ document.getElementById(id).value=''; });
+  ['fn','fp','fe','fd','ft','fpu','fde','fpr','fco','fno'].forEach(function(id){document.getElementById(id).value='';});
   document.getElementById('fst').value = 'Confirmed';
-  pendingQid = null;
+  curQid = null;
   genCode();
   openM('m-add');
 }
 
 function openEdit(id) {
-  var b = getBks().find(function(b){ return b.id===id; });
+  var b = getBks().find(function(b){return b.id===id;});
   if (!b) return;
   document.getElementById('add-title').textContent = 'Edit Booking';
   document.getElementById('eid').value = id;
@@ -543,7 +525,7 @@ function openEdit(id) {
   document.getElementById('fco').value = b.code||'';
   document.getElementById('fve').value = b.vehicle||'';
   document.getElementById('fno').value = b.notes||'';
-  pendingQid = null;
+  curQid = null;
   openM('m-add');
 }
 
@@ -554,146 +536,131 @@ function genCode() {
 }
 
 function saveBk() {
-  var name  = document.getElementById('fn').value.trim();
-  var phone = document.getElementById('fp').value.trim();
-  var price = document.getElementById('fpr').value.trim();
-  var date  = document.getElementById('fd').value.trim();
-  if (!name||!phone||!price||!date) { toast('Fill in Name, Phone, Price and Date'); return; }
-
-  var bks  = getBks();
-  var eid  = document.getElementById('eid').value;
-  var orig = eid ? bks.find(function(b){ return b.id===eid; }) : null;
-
-  var bk = {
-    id:          eid||Date.now().toString(),
-    name:        name,
-    phone:       phone,
-    email:       document.getElementById('fe').value.trim(),
-    service:     document.getElementById('fsv').value,
-    date:        date,
-    time:        document.getElementById('ft').value,
-    pickup:      document.getElementById('fpu').value.trim(),
-    destination: document.getElementById('fde').value.trim(),
-    vehicle:     document.getElementById('fve').value,
-    price:       parseFloat(price),
-    status:      document.getElementById('fst').value,
-    code:        (document.getElementById('fco').value.trim()||'').toUpperCase(),
-    notes:       document.getElementById('fno').value.trim(),
-    source:      'admin',
-    createdAt:   orig ? orig.createdAt : new Date().toISOString()
+  var name=document.getElementById('fn').value.trim(), phone=document.getElementById('fp').value.trim();
+  var price=document.getElementById('fpr').value.trim(), date=document.getElementById('fd').value.trim();
+  if (!name||!phone||!price||!date){toast('Fill in Name, Phone, Price and Date');return;}
+  var bks=getBks(), eid=document.getElementById('eid').value;
+  var orig=eid?bks.find(function(b){return b.id===eid;}):null;
+  var bk={
+    id:eid||Date.now().toString(), name:name, phone:phone,
+    email:document.getElementById('fe').value.trim(),
+    service:document.getElementById('fsv').value, date:date,
+    time:document.getElementById('ft').value,
+    pickup:document.getElementById('fpu').value.trim(),
+    destination:document.getElementById('fde').value.trim(),
+    vehicle:document.getElementById('fve').value,
+    price:parseFloat(price),
+    status:document.getElementById('fst').value,
+    code:(document.getElementById('fco').value.trim()||'').toUpperCase(),
+    notes:document.getElementById('fno').value.trim(),
+    source:'admin', createdAt:orig?orig.createdAt:new Date().toISOString()
   };
-
-  if (eid) { var i=bks.findIndex(function(b){return b.id===eid;}); if(i>-1)bks[i]=bk; }
+  if (eid){var i=bks.findIndex(function(b){return b.id===eid;});if(i>-1)bks[i]=bk;}
   else bks.push(bk);
-
-  setBks(bks);
-  fbSync(bk);
-
-  // If came from a quote conversion, mark it converted
-  if (pendingQid && db) {
-    db.collection('quotes').doc(pendingQid).update({status:'converted'}).catch(function(){});
-    pendingQid = null;
-  }
-
-  closeM('m-add');
-  renderBks();
-  toast(eid ? 'Booking updated!' : 'Booking saved!');
+  setBks(bks); fbSync(bk);
+  if (curQid&&db){db.collection('quotes').doc(curQid).update({status:'converted'}).catch(function(){});curQid=null;}
+  closeM('m-add'); renderBks(); toast(eid?'Booking updated!':'Booking saved!');
 }
 
 function delBk(id) {
-  if (!confirm('Delete this booking? Cannot be undone.')) return;
-  setBks(getBks().filter(function(b){ return b.id!==id; }));
-  if (db) db.collection('bookings').doc(id).delete().catch(function(){});
-  renderBks();
-  toast('Deleted');
+  if(!confirm('Delete this booking?')) return;
+  setBks(getBks().filter(function(b){return b.id!==id;}));
+  if(db) db.collection('bookings').doc(id).delete().catch(function(){});
+  renderBks(); toast('Deleted');
 }
 
-// ═══════════════════════════════════
-// FIREBASE SYNC
-// ═══════════════════════════════════
+// ─────────────────────────────────────────────
+//  FIREBASE SYNC
+// ─────────────────────────────────────────────
 async function fbSync(bk) {
-  if (!db) return;
+  if(!db) return;
   try {
     await db.collection('bookings').doc(bk.id).set({
-      id:          bk.id,
-      code:        (bk.code||'').toUpperCase(),
-      name:        bk.name||'',        phone:    bk.phone||'',
-      email:       bk.email||'',       service:  bk.service||'',
-      date:        bk.date||'',        time:     bk.time||'',
-      pickup:      bk.pickup||'',      destination: bk.destination||'',
-      vehicle:     bk.vehicle||'',     price:    parseFloat(bk.price)||0,
-      status:      bk.status||'Confirmed', notes: bk.notes||'',
-      source:      bk.source||'admin', updatedAt: new Date().toISOString()
+      id:bk.id, code:(bk.code||'').toUpperCase(),
+      name:bk.name||'', phone:bk.phone||'', email:bk.email||'',
+      service:bk.service||'', date:bk.date||'', time:bk.time||'',
+      pickup:bk.pickup||'', destination:bk.destination||'',
+      vehicle:bk.vehicle||'', price:parseFloat(bk.price)||0,
+      status:bk.status||'Confirmed', notes:bk.notes||'',
+      source:bk.source||'admin', updatedAt:new Date().toISOString()
     },{merge:true});
-  } catch(e){ console.warn('fbSync:',e.message); }
+  } catch(ex){console.warn('fbSync:',ex.message);}
 }
 
-// ═══════════════════════════════════
-// SEND PAYMENT
-// ═══════════════════════════════════
+// ─────────────────────────────────────────────
+//  SEND PAYMENT
+//  Uses curPayBk variable — NO JSON in onclick
+// ─────────────────────────────────────────────
 function openPay(id) {
-  var b = getBks().find(function(b){ return b.id===id; });
+  var b = getBks().find(function(b){return b.id===id;});
   if (!b) return;
-  var link = SITE_URL+'/payment.html?code='+encodeURIComponent(b.code||'');
-  var msg  = 'Hi '+(b.name||'').split(' ')[0]+'! Your Seacoast RVIP ride is confirmed for '+
-             b.date+' at '+fT(b.time)+'.\n\nFare: $'+b.price+
-             '\nPay here: '+link+'\n\nCode: '+b.code+'\n— Ramon (987) 416-3283';
+  curPayBk = b;
 
-  document.getElementById('pay-body').innerHTML =
-    '<div style="background:#f7f7f7;border-left:3px solid #775a19;padding:1rem;margin-bottom:1.25rem;font-size:.83rem">'+
-      '<div style="font-weight:700;margin-bottom:3px">'+x(b.name)+'</div>'+
-      '<div style="color:#666">'+x(b.phone)+' · '+x(b.date)+' · $'+b.price+'</div>'+
-    '</div>'+
-    '<div style="background:#fdfaf4;border:1px solid #e8c97a;padding:1rem;text-align:center;margin-bottom:1.25rem">'+
-      '<div style="font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;color:#775a19;margin-bottom:4px">Payment Link</div>'+
-      '<div style="font-size:.72rem;word-break:break-all;color:#555;margin-bottom:.5rem">'+link+'</div>'+
-      '<div style="font-family:\'Times New Roman\',serif;font-size:2rem;font-weight:700">$'+b.price+'</div>'+
-    '</div>'+
-    '<div style="margin-bottom:1.25rem">'+
-      '<label style="font-family:\'Work Sans\',sans-serif;font-size:.58rem;text-transform:uppercase;letter-spacing:.1em;color:#999;display:block;margin-bottom:6px">Message</label>'+
-      '<textarea id="pay-msg" style="width:100%;background:#f7f7f7;border:0;border-bottom:2px solid #ddd;padding:.75rem 0;font-family:Inter,sans-serif;font-size:.8rem;resize:none;outline:none;height:130px;box-sizing:border-box;line-height:1.6">'+msg+'</textarea>'+
-    '</div>'+
-    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:.75rem">'+
-      '<a href="sms:'+b.phone+'&body='+encodeURIComponent(msg)+'" class="btn bk-btn" style="text-decoration:none;justify-content:center;padding:.875rem"><span class="material-symbols-outlined" style="font-size:15px">sms</span>Text</a>'+
-      '<a href="mailto:'+(b.email||'')+'?subject='+encodeURIComponent('Seacoast RVIP — Ride Confirmed')+'&body='+encodeURIComponent(msg)+'" class="btn bo-btn" style="text-decoration:none;justify-content:center;padding:.875rem"><span class="material-symbols-outlined" style="font-size:15px">mail</span>Email</a>'+
-    '</div>'+
-    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:.75rem">'+
-      '<a href="https://wa.me/'+(b.phone||'').replace(/\\D/g,'')+\"?text=\"+encodeURIComponent(msg)+'" target="_blank" class="btn bgr-btn" style="text-decoration:none;justify-content:center;padding:.875rem"><span class="material-symbols-outlined" style="font-size:15px">chat</span>WhatsApp</a>'+
-      '<button onclick="navigator.clipboard.writeText(\''+link+'\').then(function(){toast(\'Copied!\');})" class="btn bo-btn" style="justify-content:center;padding:.875rem"><span class="material-symbols-outlined" style="font-size:15px">content_copy</span>Copy Link</button>'+
-    '</div>'+
-    '<button onclick="markPaid(\''+id+'\')" class="btn bgr-btn" style="width:100%;justify-content:center;padding:.875rem"><span class="material-symbols-outlined" style="font-size:15px">check_circle</span>Mark as Paid</button>';
+  var link = SITE+'/payment.html?code='+encodeURIComponent(b.code||'');
+  var msg  = 'Hi '+((b.name||'').split(' ')[0]||'there')+'! Your Seacoast RVIP ride is confirmed for '+
+             (b.date||'—')+' at '+fT(b.time)+
+             '.\n\nFare: $'+b.price+'\nPay here: '+link+
+             '\n\nCode: '+(b.code||'—')+'\n— Ramon (987) 416-3283';
+
+  document.getElementById('pay-info').innerHTML =
+    '<strong>'+e(b.name)+'</strong><br>'+
+    '<span style="color:#666;font-size:.78rem">'+e(b.phone)+' · '+e(b.date||'—')+' · $'+b.price+'</span>';
+  document.getElementById('pay-link-txt').textContent = link;
+  document.getElementById('pay-amount').textContent   = '$'+b.price;
+  document.getElementById('pay-msg').value            = msg;
   openM('m-pay');
 }
 
-function markPaid(id) {
-  var bks=getBks(), b=bks.find(function(b){return b.id===id;});
+function paySMS() {
+  if (!curPayBk) return;
+  var msg = document.getElementById('pay-msg').value;
+  window.open('sms:'+curPayBk.phone+'&body='+encodeURIComponent(msg));
+}
+function payEmail() {
+  if (!curPayBk) return;
+  var msg = document.getElementById('pay-msg').value;
+  var sub = encodeURIComponent('Seacoast RVIP — Ride Confirmed');
+  window.open('mailto:'+(curPayBk.email||curPayBk.phone)+'?subject='+sub+'&body='+encodeURIComponent(msg));
+}
+function payWA() {
+  if (!curPayBk) return;
+  var msg  = document.getElementById('pay-msg').value;
+  var num  = (curPayBk.phone||'').replace(/\D/g,'');
+  window.open('https://wa.me/'+num+'?text='+encodeURIComponent(msg));
+}
+function payCopy() {
+  var link = SITE+'/payment.html?code='+encodeURIComponent((curPayBk&&curPayBk.code)||'');
+  navigator.clipboard.writeText(link).then(function(){toast('Link copied!');}).catch(function(){toast('Could not copy');});
+}
+function payMarkPaid() {
+  if (!curPayBk) return;
+  var bks=getBks(), b=bks.find(function(x){return x.id===curPayBk.id;});
   if(b){b.status='Paid';setBks(bks);fbSync(b);}
   closeM('m-pay'); renderBks(); toast('✅ Marked as Paid!');
 }
 
-// ═══════════════════════════════════
-// ADD TO CLIENT ACCOUNT
-// ═══════════════════════════════════
+// ─────────────────────────────────────────────
+//  ADD TO CLIENT — uses curClBk variable
+// ─────────────────────────────────────────────
 function openCl(id) {
-  pendingBk = getBks().find(function(b){ return b.id===id; });
-  if (!pendingBk) return;
-  document.getElementById('cl-bk-info').innerHTML =
-    '<strong>'+x(pendingBk.name)+'</strong> — '+x(pendingBk.service)+
-    '<br><span style="color:#888;font-size:.78rem">'+x(pendingBk.date)+' · $'+pendingBk.price+'</span>';
-  document.getElementById('cl-phone').value = pendingBk.phone||'';
+  curClBk = getBks().find(function(b){return b.id===id;});
+  if (!curClBk) return;
+  document.getElementById('cl-info').innerHTML =
+    '<strong>'+e(curClBk.name)+'</strong> — '+e(curClBk.service)+
+    '<br><span style="color:#888;font-size:.78rem">'+e(curClBk.date)+' · $'+curClBk.price+'</span>';
+  document.getElementById('cl-phone').value = curClBk.phone||'';
   document.getElementById('cl-err').style.display = 'none';
   document.getElementById('cl-ok').style.display  = 'none';
   openM('m-cl');
 }
 
 async function saveToClient() {
-  if (!pendingBk) return;
-  if (!db) { showCLErr('Firebase not connected.\nUpdate Firebase Rules to allow read/write.'); return; }
+  if (!curClBk) return;
+  if (!db) { clErr('Firebase not connected. Update Firebase Rules.'); return; }
   var raw = document.getElementById('cl-phone').value.replace(/\D/g,'');
-  if (raw.length<7) { showCLErr('Enter a valid phone number'); return; }
-  var ph = raw.length===10 ? '+1'+raw : (raw.length===11&&raw[0]==='1' ? '+'+raw : '+'+raw);
-  var b  = pendingBk;
-  var st = document.getElementById('cl-status').value;
+  if (raw.length<7) { clErr('Enter a valid phone number'); return; }
+  var ph = raw.length===10?'+1'+raw:(raw.length===11&&raw[0]==='1'?'+'+raw:'+'+raw);
+  var b=curClBk, st=document.getElementById('cl-status').value;
   try {
     var cid=null, fmts=[ph,raw,'+1'+raw.slice(-10)];
     for(var i=0;i<fmts.length&&!cid;i++){
@@ -713,185 +680,150 @@ async function saveToClient() {
     document.getElementById('cl-err').style.display='none';
     toast('Trip added!');
     setTimeout(function(){closeM('m-cl');},2000);
-  } catch(e){showCLErr('Error: '+e.message+'\n\nCheck Firebase Rules.');}
+  }catch(ex){clErr('Error: '+ex.message);}
 }
-function showCLErr(m){var el=document.getElementById('cl-err');el.textContent=m;el.style.display='block';}
+function clErr(m){var el=document.getElementById('cl-err');el.textContent=m;el.style.display='block';}
 
-// ═══════════════════════════════════
-// CLIENTS TAB
-// ═══════════════════════════════════
+// ─────────────────────────────────────────────
+//  CLIENTS TAB
+// ─────────────────────────────────────────────
 async function loadClients() {
   var el=document.getElementById('cl-list');
-  if(!db){el.innerHTML=fbErr();return;}
+  if(!db){el.innerHTML=fbErrHTML();return;}
   el.innerHTML='<div style="text-align:center;padding:2rem;color:#aaa;font-size:.8rem">Loading...</div>';
   try{
     var snap=await db.collection('clients').orderBy('createdAt','desc').limit(100).get();
     var list=[]; snap.forEach(function(d){list.push(Object.assign({id:d.id},d.data()));});
-    document.getElementById('st5').textContent=list.length;
-    if(!list.length){el.innerHTML='<div class="empty-state"><span class="material-symbols-outlined">people</span><div style="font-size:.8rem">No clients yet</div></div>';return;}
+    document.getElementById('s5').textContent=list.length;
+    if(!list.length){el.innerHTML='<div class="empty"><span class="material-symbols-outlined">people</span><div style="font-size:.8rem">No clients yet</div></div>';return;}
     el.innerHTML=list.map(function(c){
       var since=c.createdAt?new Date(c.createdAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'—';
-      var tag=c.createdByAdmin?'<span class="bdg b-yw" style="margin-left:6px">Admin added</span>':'<span class="bdg b-gr" style="margin-left:6px">Self signup</span>';
-      return '<div class="bk" style="margin-bottom:.625rem">'+
+      var tag=c.createdByAdmin?'<span class="bdg byw" style="margin-left:6px">Admin added</span>':'<span class="bdg bgr" style="margin-left:6px">Self signup</span>';
+      return '<div class="card" style="margin-bottom:.625rem">'+
         '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:.75rem">'+
           '<div>'+
-            '<div style="font-weight:700;margin-bottom:4px">'+x(c.name||c.phone||'Unknown')+tag+'</div>'+
-            '<div class="meta"><span class="material-symbols-outlined">phone</span>'+x(c.phone||'—')+'</div>'+
-            (c.email?'<div class="meta"><span class="material-symbols-outlined">mail</span>'+x(c.email)+'</div>':'')+
-            (c.address?'<div class="meta"><span class="material-symbols-outlined">home</span>'+x(c.address)+'</div>':'')+
+            '<div style="font-weight:700;margin-bottom:4px">'+e(c.name||c.phone||'Unknown')+tag+'</div>'+
+            '<div class="crow"><span class="material-symbols-outlined">phone</span>'+e(c.phone||'—')+'</div>'+
+            (c.email?'<div class="crow"><span class="material-symbols-outlined">mail</span>'+e(c.email)+'</div>':'')+
+            (c.address?'<div class="crow"><span class="material-symbols-outlined">home</span>'+e(c.address)+'</div>':'')+
           '</div>'+
           '<div style="text-align:right">'+
             '<div style="font-size:.68rem;color:#aaa;margin-bottom:.5rem">Since '+since+'</div>'+
-            '<a href="sms:'+(c.phone||'')+'" class="btn bk-btn" style="text-decoration:none;font-size:.62rem"><span class="material-symbols-outlined" style="font-size:12px">sms</span>Text</a>'+
+            '<a href="sms:'+(c.phone||'')+'" class="btn bk" style="text-decoration:none;font-size:.62rem"><span class="material-symbols-outlined" style="font-size:12px">sms</span>Text</a>'+
           '</div>'+
         '</div>'+
       '</div>';
     }).join('');
-  }catch(e){el.innerHTML=fbErr(e.message);}
+  }catch(ex){el.innerHTML=fbErrHTML(ex.message);}
 }
 
-// ═══════════════════════════════════
-// QUOTES TAB
-// ═══════════════════════════════════
+// ─────────────────────────────────────────────
+//  QUOTES TAB — uses QMAP, no JSON in onclick
+// ─────────────────────────────────────────────
 async function loadQuotes() {
   var el=document.getElementById('qt-list');
-  if(!db){el.innerHTML=fbErr();return;}
+  if(!db){el.innerHTML=fbErrHTML();return;}
   el.innerHTML='<div style="text-align:center;padding:2rem;color:#aaa;font-size:.8rem">Loading...</div>';
   try{
     var snap=await db.collection('quotes').orderBy('createdAt','desc').limit(100).get();
-    var list=[]; snap.forEach(function(d){list.push(Object.assign({docId:d.id},d.data()));});
-    if(!list.length){el.innerHTML='<div class="empty-state"><span class="material-symbols-outlined">request_quote</span><div style="font-size:.8rem">No quote requests yet</div></div>';return;}
+    QMAP={};
+    var list=[]; snap.forEach(function(d){var q=Object.assign({docId:d.id},d.data());QMAP[d.id]=q;list.push(q);});
+    if(!list.length){el.innerHTML='<div class="empty"><span class="material-symbols-outlined">request_quote</span><div style="font-size:.8rem">No quote requests yet</div></div>';return;}
+    var SC2={converted:'bgr',dismissed:'brd'};
     el.innerHTML=list.map(function(q){
       var since=q.createdAt?new Date(q.createdAt).toLocaleDateString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):'—';
-      var badge=q.status==='converted'?'b-gr':q.status==='dismissed'?'b-rd':'b-yw';
-      var label=q.status==='converted'?'Converted':q.status==='dismissed'?'Dismissed':'New';
-      // Store quote data in a global map to avoid JSON-in-onclick issues
-      QUOTE_MAP[q.docId] = q;
-      return '<div class="bk" style="border-left-color:#16a34a;margin-bottom:.75rem">'+
+      var badge=SC2[q.status]||'byw', label=q.status==='converted'?'Converted':q.status==='dismissed'?'Dismissed':'New';
+      return '<div class="card green" style="margin-bottom:.75rem">'+
         '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:.75rem">'+
           '<div style="flex:1;min-width:180px">'+
             '<div style="display:flex;align-items:center;gap:.625rem;flex-wrap:wrap;margin-bottom:.5rem">'+
-              '<span class="bk-name">'+x(q.name||'—')+'</span>'+
+              '<span class="cname">'+e(q.name||'—')+'</span>'+
               '<span class="bdg '+badge+'">'+label+'</span>'+
             '</div>'+
-            '<div class="meta"><span class="material-symbols-outlined">directions_car</span>'+x(q.service||'—')+'</div>'+
-            (q.date?'<div class="meta"><span class="material-symbols-outlined">calendar_today</span>'+x(q.date)+(q.time?' at '+q.time:'')+'</div>':'')+
-            (q.pickup?'<div class="meta"><span class="material-symbols-outlined">location_on</span>'+x(q.pickup)+' → '+x(q.destination||'?')+'</div>':'')+
-            '<div class="meta"><span class="material-symbols-outlined">phone</span>'+x(q.phone||'—')+(q.email?' · '+x(q.email):'')+'</div>'+
-            (q.notes?'<div class="meta"><span class="material-symbols-outlined">notes</span>'+x(q.notes)+'</div>':'')+
+            '<div class="crow"><span class="material-symbols-outlined">directions_car</span>'+e(q.service||'—')+'</div>'+
+            (q.date?'<div class="crow"><span class="material-symbols-outlined">calendar_today</span>'+e(q.date)+(q.time?' at '+q.time:'')+'</div>':'')+
+            (q.pickup?'<div class="crow"><span class="material-symbols-outlined">location_on</span>'+e(q.pickup)+' → '+e(q.destination||'')+'</div>':'')+
+            '<div class="crow"><span class="material-symbols-outlined">phone</span>'+e(q.phone||'—')+(q.email?' · '+e(q.email):'')+'</div>'+
+            (q.notes?'<div class="crow"><span class="material-symbols-outlined">notes</span>'+e(q.notes)+'</div>':'')+
             '<div style="font-size:.65rem;color:#bbb;margin-top:.375rem">Received '+since+'</div>'+
           '</div>'+
           '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:.5rem">'+
             (q.passengers?'<div style="font-size:.78rem;color:#888">'+q.passengers+' pax</div>':'')+
             '<div style="display:flex;gap:.375rem;flex-wrap:wrap;justify-content:flex-end">'+
-              '<button onclick="convertQuote(\''+q.docId+'\')" class="btn bgr-btn" style="font-size:.65rem"><span class="material-symbols-outlined" style="font-size:13px">add_task</span>Convert</button>'+
-              '<button onclick="replyQuote(\''+q.docId+'\')"   class="btn bbl-btn" style="font-size:.65rem"><span class="material-symbols-outlined" style="font-size:13px">sms</span>Reply</button>'+
-              '<button onclick="dismissQuote(\''+q.docId+'\')" class="btn bo-btn"  style="font-size:.65rem"><span class="material-symbols-outlined" style="font-size:13px">close</span>Dismiss</button>'+
+              '<button onclick="convertQ(\''+q.docId+'\')" class="btn bgn" style="font-size:.65rem"><span class="material-symbols-outlined" style="font-size:13px">add_task</span>Convert</button>'+
+              '<button onclick="replyQ(\''+q.docId+'\')"   class="btn bdb" style="font-size:.65rem"><span class="material-symbols-outlined" style="font-size:13px">sms</span>Reply</button>'+
+              '<button onclick="dismissQ(\''+q.docId+'\')" class="btn bo"  style="font-size:.65rem"><span class="material-symbols-outlined" style="font-size:13px">close</span>Dismiss</button>'+
             '</div>'+
           '</div>'+
         '</div>'+
       '</div>';
     }).join('');
-  }catch(e){el.innerHTML=fbErr(e.message);}
+  }catch(ex){el.innerHTML=fbErrHTML(ex.message);}
 }
 
-// Use a global map so quote data passes safely without JSON-in-onclick
-var QUOTE_MAP = {};
-
-function convertQuote(docId) {
-  var q = QUOTE_MAP[docId]; if(!q) return;
+function convertQ(docId) {
+  var q=QMAP[docId]; if(!q) return;
   document.getElementById('add-title').textContent = 'New Booking (from Quote)';
-  document.getElementById('eid').value = '';
-  document.getElementById('fn').value  = q.name||'';
-  document.getElementById('fp').value  = q.phone||'';
-  document.getElementById('fe').value  = q.email||'';
-  document.getElementById('fsv').value = q.service||'';
-  document.getElementById('fd').value  = q.date||'';
-  document.getElementById('ft').value  = q.time||'';
-  document.getElementById('fpu').value = q.pickup||'';
-  document.getElementById('fde').value = q.destination||'';
-  document.getElementById('fno').value = q.notes||'';
-  document.getElementById('fpr').value = '';
-  document.getElementById('fst').value = 'Confirmed';
-  pendingQid = docId;
-  genCode();
-  openM('m-add');
+  document.getElementById('eid').value='';
+  document.getElementById('fn').value=q.name||'';  document.getElementById('fp').value=q.phone||'';
+  document.getElementById('fe').value=q.email||''; document.getElementById('fsv').value=q.service||'';
+  document.getElementById('fd').value=q.date||'';  document.getElementById('ft').value=q.time||'';
+  document.getElementById('fpu').value=q.pickup||''; document.getElementById('fde').value=q.destination||'';
+  document.getElementById('fno').value=q.notes||''; document.getElementById('fpr').value='';
+  document.getElementById('fst').value='Confirmed';
+  curQid=docId; genCode(); openM('m-add');
 }
-
-function replyQuote(docId) {
-  var q = QUOTE_MAP[docId]; if(!q) return;
-  var msg = 'Hi '+(q.name||'there').split(' ')[0]+'! Thank you for your quote request for '+(q.service||'your trip')+
-            '.\n\nMy quote for your trip: $[PRICE]\n\nTo confirm and book:\n'+SITE_URL+'/schedule.html\n\n— Ramon (987) 416-3283';
-  document.getElementById('msg-modal-title').textContent = 'Reply to '+(q.name||'Client');
-  document.getElementById('msg-txt').value = msg;
-  document.getElementById('msg-phone').value = q.phone||'';
-  document.getElementById('msg-result').style.display = 'none';
-  updWA(msg, q.phone||'');
+function replyQ(docId) {
+  var q=QMAP[docId]; if(!q) return;
+  var msg='Hi '+(q.name||'there').split(' ')[0]+'! Thank you for your quote request for '+(q.service||'your trip')+'.\n\nMy quote: $[ADD PRICE HERE]\n\nReady to confirm? Book here:\n'+SITE+'/schedule.html\n\n— Ramon (987) 416-3283';
+  document.getElementById('msg-title').textContent='Reply to '+(q.name||'Client');
+  document.getElementById('msg-txt').value=msg;
+  document.getElementById('msg-phone').value=q.phone||'';
+  document.getElementById('msg-res').style.display='none';
   openM('m-msg');
 }
-
-async function dismissQuote(docId) {
+async function dismissQ(docId) {
   if(!db||!confirm('Dismiss this quote?')) return;
-  try{
-    await db.collection('quotes').doc(docId).update({status:'dismissed'});
-    toast('Dismissed'); loadQuotes();
-  }catch(e){toast('Error: '+e.message);}
+  try{await db.collection('quotes').doc(docId).update({status:'dismissed'});toast('Dismissed');loadQuotes();}
+  catch(ex){toast('Error: '+ex.message);}
 }
 
-// ═══════════════════════════════════
-// MESSAGES
-// ═══════════════════════════════════
+// ─────────────────────────────────────────────
+//  MESSAGES — uses MMAP, no JSON in onclick
+// ─────────────────────────────────────────────
 var MSGS=[
   {cat:'After the Ride',color:'#16a34a',items:[
-    {t:'Thank You',d:'Right after the ride',
-     m:'Hi [Name]! Thank you for choosing Seacoast RVIP today!\n\nWhenever you need a ride, just text me.\n\n— Ramon\n(987) 416-3283'},
-    {t:'Thank You + Google Review',d:'Best for building reviews',
-     m:'Hi [Name]! Thank you for riding with Seacoast RVIP!\n\nA quick Google review means the world:\n\n'+REVIEW_URL+'\n\nThank you! — Ramon (987) 416-3283'},
-    {t:'Safe Flight',d:'After airport drop-off',
-     m:'Hi [Name]! Hope you made it through security smoothly! ✈️\n\nHave a safe trip. Seacoast RVIP will be ready when you return.\n\n— Ramon (987) 416-3283'}
+    {t:'Thank You',d:'Right after the ride',m:'Hi [Name]! Thank you for choosing Seacoast RVIP today!\n\nWhenever you need a ride, just text me.\n\n— Ramon\n(987) 416-3283'},
+    {t:'Thank You + Google Review',d:'Best for building reviews',m:'Hi [Name]! Thank you for riding with Seacoast RVIP!\n\nA quick Google review means the world:\n\n'+GREVIEW+'\n\nThank you! — Ramon (987) 416-3283'},
+    {t:'Safe Flight',d:'After airport drop-off',m:'Hi [Name]! Hope you made it through security! ✈️\n\nHave a safe trip. I\'ll be ready when you return.\n\n— Ramon (987) 416-3283'}
   ]},
   {cat:'Ride Reminders',color:'#1d4ed8',items:[
-    {t:'Day Before Reminder',d:'Night before the ride',
-     m:'Hi [Name]! Quick reminder — your Seacoast RVIP ride is tomorrow [Date] at [Time].\n\nI will be at [Pickup] 5 minutes early in the black SUV.\n\n— Ramon (987) 416-3283'},
-    {t:'Morning of Ride',d:'1–2 hours before pickup',
-     m:'Good morning [Name]! Your ride is today at [Time].\n\nI will be at [Pickup] a few minutes early!\n\n— Ramon (987) 416-3283'},
-    {t:'On My Way',d:'When leaving to pick up',
-     m:'Hi [Name]! On my way — arriving at [Pickup] in about [X] minutes. 🚗\n\n— Ramon'},
-    {t:'I Have Arrived',d:'Waiting outside',
-     m:"Hi [Name]! I'm outside at [Pickup] — black SUV, ready when you are!\n\n— Ramon"}
+    {t:'Day Before Reminder',d:'Night before',m:'Hi [Name]! Reminder — your Seacoast RVIP ride is tomorrow [Date] at [Time].\n\nI\'ll be at [Pickup] 5 minutes early in the black SUV.\n\n— Ramon (987) 416-3283'},
+    {t:'Morning of Ride',d:'1–2 hrs before pickup',m:'Good morning [Name]! Your ride is today at [Time].\n\nI\'ll be at [Pickup] a few minutes early!\n\n— Ramon (987) 416-3283'},
+    {t:'On My Way',d:'When leaving to pick up',m:'Hi [Name]! On my way — arriving at [Pickup] in about [X] minutes. 🚗\n\n— Ramon'},
+    {t:'I Have Arrived',d:'Waiting outside',m:'Hi [Name]! I\'m outside at [Pickup] — black SUV, ready when you are!\n\n— Ramon'}
   ]},
   {cat:'Holidays & Events',color:'#775a19',items:[
-    {t:"New Year's Eve",d:'Dec 28–30',
-     m:"Hi [Name]! Happy almost New Year! 🥂\n\nPlanning to celebrate? Let Seacoast RVIP get you there safely.\n\n— Ramon (987) 416-3283"},
-    {t:'4th of July',d:'July 1–3',
-     m:'Hi [Name]! Happy 4th of July weekend! 🇺🇸\n\nHeading to fireworks? I have a safe ride for you!\n\n— Ramon (987) 416-3283'},
-    {t:'Casino Night',d:'Casino weekends',
-     m:'Hi [Name]! Feeling lucky this weekend? 🎰\n\nSeacoast RVIP runs to Foxwoods & Mohegan Sun — no parking hassle!\n\n— Ramon (987) 416-3283'},
-    {t:'Christmas Holidays',d:'Dec 15–20',
-     m:'Hi [Name]! Wishing you a wonderful holiday season! 🎄\n\nNeed airport rides or party transportation? Seacoast RVIP is here.\n\n— Ramon (987) 416-3283'}
+    {t:'New Year\'s Eve',d:'Dec 28–30',m:'Hi [Name]! Happy almost New Year! 🥂\n\nNeed a safe ride to celebrate? Seacoast RVIP has you covered.\n\n— Ramon (987) 416-3283'},
+    {t:'4th of July',d:'July 1–3',m:'Hi [Name]! Happy 4th! 🇺🇸\n\nHeading to fireworks? I have a safe ride for you!\n\n— Ramon (987) 416-3283'},
+    {t:'Casino Night',d:'Casino weekends',m:'Hi [Name]! Feeling lucky? 🎰\n\nSeacoast RVIP runs to Foxwoods & Mohegan Sun!\n\n— Ramon (987) 416-3283'},
+    {t:'Christmas Holidays',d:'Dec 15–20',m:'Hi [Name]! Happy Holidays! 🎄\n\nNeed airport rides or party transportation? I\'m here.\n\n— Ramon (987) 416-3283'}
   ]},
   {cat:'Business Growth',color:'#7c3aed',items:[
-    {t:'Referral Program',d:'Ask loyal clients for referrals',
-     m:"Hi [Name]! Know anyone who needs reliable transportation in the Seacoast area?\n\nRefer a friend who books and I'll give you $10 off your next trip!\n\n— Ramon (987) 416-3283"},
-    {t:'Re-engagement',d:'Clients quiet 60+ days',
-     m:"Hi [Name]! It's been a while — just checking in! 👋\n\nSeacoast RVIP is here whenever you need a ride.\n\n— Ramon (987) 416-3283"},
-    {t:'Corporate Offer',d:'For clients with businesses',
-     m:'Hi [Name]! Does your company need professional transportation for clients or airport runs?\n\nSeacoast RVIP offers reliable corporate service with priority booking.\n\n— Ramon (987) 416-3283'}
+    {t:'Referral Program',d:'Ask for referrals',m:'Hi [Name]! Know anyone who needs reliable transportation?\n\nRefer a friend who books and I\'ll give you $10 off your next trip!\n\n— Ramon (987) 416-3283'},
+    {t:'Re-engagement',d:'Clients quiet 60+ days',m:'Hi [Name]! It\'s been a while — just checking in! 👋\n\nSeacoast RVIP is here whenever you need a ride.\n\n— Ramon (987) 416-3283'},
+    {t:'Corporate Offer',d:'For business clients',m:'Hi [Name]! Does your company need professional transportation?\n\nSeacoast RVIP offers reliable corporate service with priority booking.\n\n— Ramon (987) 416-3283'}
   ]}
 ];
 
-// Store template text in a global map — same safe pattern as quotes
-var MSG_MAP = {};
-
 function buildMsgs() {
-  MSG_MAP = {};
-  document.getElementById('msg-tpl').innerHTML = MSGS.map(function(cat){
+  MMAP={};
+  var html=MSGS.map(function(cat,ci){
     return '<div style="margin-bottom:2rem">'+
       '<div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:'+cat.color+';padding-bottom:.5rem;border-bottom:2px solid '+cat.color+';margin-bottom:.875rem">'+cat.cat+'</div>'+
-      cat.items.map(function(m, i){
-        var key = cat.cat+'_'+i;
-        MSG_MAP[key] = {title:m.t, text:m.m};
-        return '<div class="msg-card" style="border-left-color:'+cat.color+'" onclick="openMsgM(\''+key+'\')">'+
+      cat.items.map(function(m,mi){
+        var key='m'+ci+'_'+mi; MMAP[key]={title:m.t,text:m.m};
+        return '<div class="msgcard" style="border-left-color:'+cat.color+'" onclick="openMsg(\''+key+'\')">'+
           '<div style="display:flex;justify-content:space-between;gap:1rem">'+
             '<div><div style="font-size:.78rem;font-weight:600;margin-bottom:2px">'+m.t+'</div><div style="font-size:.68rem;color:#aaa">'+m.d+'</div></div>'+
             '<span class="material-symbols-outlined" style="font-size:16px;color:#ddd;flex-shrink:0">chevron_right</span>'+
@@ -901,21 +833,16 @@ function buildMsgs() {
       }).join('')+
     '</div>';
   }).join('');
+  document.getElementById('msg-tpl').innerHTML=html;
 }
 
-function openMsgM(key) {
-  var m = MSG_MAP[key]; if(!m) return;
-  document.getElementById('msg-modal-title').textContent = m.title;
-  document.getElementById('msg-txt').value = m.text;
-  document.getElementById('msg-phone').value = '';
-  document.getElementById('msg-result').style.display = 'none';
-  updWA(m.text,'');
+function openMsg(key) {
+  var m=MMAP[key]; if(!m) return;
+  document.getElementById('msg-title').textContent=m.title;
+  document.getElementById('msg-txt').value=m.text;
+  document.getElementById('msg-phone').value='';
+  document.getElementById('msg-res').style.display='none';
   openM('m-msg');
-}
-
-function updWA(text,phone){
-  var n=(phone||'').replace(/\D/g,'');
-  document.getElementById('msg-wa').href=(n.length>=7?'https://wa.me/'+n:'https://wa.me')+'?text='+encodeURIComponent(text);
 }
 
 async function loadMsgClients(){
@@ -925,9 +852,9 @@ async function loadMsgClients(){
   try{
     var snap=await db.collection('clients').get();
     var opts=['<option value="">— Select client —</option>'];
-    snap.forEach(function(d){var c=d.data();if(c.phone)opts.push('<option value="'+c.phone+'">'+x(c.name||c.phone)+' · '+c.phone+'</option>');});
+    snap.forEach(function(d){var c=d.data();if(c.phone)opts.push('<option value="'+c.phone+'">'+e(c.name||c.phone)+' · '+c.phone+'</option>');});
     sel.innerHTML=opts.join('');
-  }catch(e){sel.innerHTML='<option value="">Error loading</option>';}
+  }catch(ex){sel.innerHTML='<option value="">Error</option>';}
 }
 
 function msgOne(){
@@ -937,7 +864,13 @@ function msgOne(){
   window.open('sms:+'+ph+'&body='+encodeURIComponent(txt));
   showMR('Text app opened!',true);
 }
-
+function msgWA(){
+  var ph=document.getElementById('msg-phone').value.replace(/\D/g,'');
+  var txt=document.getElementById('msg-txt').value;
+  if(ph.length<7){showMR('Enter a phone number first',false);return;}
+  window.open('https://wa.me/'+ph+'?text='+encodeURIComponent(txt));
+  showMR('WhatsApp opened!',true);
+}
 async function msgAll(){
   var txt=document.getElementById('msg-txt').value;
   if(!txt.trim()){showMR('Message is empty',false);return;}
@@ -949,49 +882,32 @@ async function msgAll(){
     if(!phones.length){showMR('No clients found',false);return;}
     showMR('Opening for '+phones.length+' clients...',true);
     phones.forEach(function(ph,i){setTimeout(function(){window.open('sms:'+ph+'&body='+encodeURIComponent(txt));},i*900);});
-  }catch(e){showMR('Error: '+e.message,false);}
+  }catch(ex){showMR('Error: '+ex.message,false);}
 }
-
 function msgCopy(){
   navigator.clipboard.writeText(document.getElementById('msg-txt').value)
-    .then(function(){showMR('Copied!',true);})
-    .catch(function(){showMR('Copy manually',false);});
+    .then(function(){showMR('Copied!',true);}).catch(function(){showMR('Select and copy manually',false);});
 }
-
 function showMR(msg,ok){
-  var el=document.getElementById('msg-result');
+  var el=document.getElementById('msg-res');
   el.textContent=msg;
   el.style.background=ok?'#f0fdf4':'#fef2f2';
   el.style.color=ok?'#15803d':'#b91c1c';
   el.style.borderLeft=ok?'3px solid #16a34a':'3px solid #dc2626';
-  el.style.padding='.75rem';
-  el.style.display='block';
+  el.style.padding='.75rem';el.style.display='block';
 }
-
 async function loadBcCount(){
   if(!db)return;
   try{var s=await db.collection('clients').get();document.getElementById('bc-count').textContent=s.size+' clients';}catch(e){}
 }
 
-// ═══════════════════════════════════
-// MODAL HELPERS
-// ═══════════════════════════════════
+// ─────────────────────────────────────────────
+//  HELPERS
+// ─────────────────────────────────────────────
 function openM(id){document.getElementById(id).classList.add('open');document.body.style.overflow='hidden';}
 function closeM(id){document.getElementById(id).classList.remove('open');document.body.style.overflow='';}
-
-// ═══════════════════════════════════
-// TOAST
-// ═══════════════════════════════════
-function toast(msg){
-  var t=document.getElementById('toast');
-  t.textContent=msg; t.style.display='block';
-  setTimeout(function(){t.style.display='none';},3000);
-}
-
-// ═══════════════════════════════════
-// FIREBASE ERROR HELPER
-// ═══════════════════════════════════
-function fbErr(extra){
+function toast(msg){var t=document.getElementById('toast');t.textContent=msg;t.style.display='block';setTimeout(function(){t.style.display='none';},3000);}
+function fbErrHTML(extra){
   return '<div style="background:#fef2f2;border-left:3px solid #dc2626;padding:1.25rem;font-size:.83rem;color:#b91c1c">'+
     '<strong>'+(extra?'Error: '+extra:'Firebase not connected')+'</strong><br><br>'+
     'Go to <strong>Firebase Console → seacoast-rip → Firestore → Rules</strong> and publish:<br><br>'+
@@ -999,28 +915,19 @@ function fbErr(extra){
   '</div>';
 }
 
-// ═══════════════════════════════════
-// BOOT
-// ═══════════════════════════════════
+// ─────────────────────────────────────────────
+//  BOOT
+// ─────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', function(){
-  // Close modals on background click
-  document.querySelectorAll('.overlay').forEach(function(el){
-    el.addEventListener('click', function(e){ if(e.target===this) closeM(this.id); });
+  document.querySelectorAll('.ov').forEach(function(el){
+    el.addEventListener('click',function(ev){if(ev.target===this)closeM(this.id);});
   });
-
-  // Live WhatsApp link update in message modal
-  var ta=document.getElementById('msg-txt');
-  var ph=document.getElementById('msg-phone');
-  if(ta) ta.addEventListener('input', function(){ updWA(this.value, ph?ph.value:''); });
-  if(ph) ph.addEventListener('input', function(){ updWA(ta?ta.value:'', this.value); });
-
-  // Auto-login check
   if(localStorage.getItem('rv-auth')==='1'){
     document.getElementById('pg-login').style.display='none';
     document.getElementById('pg-dash').style.display='block';
     initDash();
   } else {
-    setTimeout(function(){ document.getElementById('pwd').focus(); }, 100);
+    setTimeout(function(){document.getElementById('pwd').focus();},100);
   }
 });
 </script>
