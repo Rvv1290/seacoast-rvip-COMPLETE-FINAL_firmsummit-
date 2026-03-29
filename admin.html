@@ -146,6 +146,19 @@ body{font-family:'Inter',sans-serif;background:#f0f0f0;min-height:100vh}
       <button class="tab" onclick="goTab('quotes',this)" style="color:#16a34a;font-weight:700">Quotes ●</button>
       <button class="tab" onclick="goTab('messages',this)" style="color:#1d4ed8;font-weight:700">Messages ✉</button>
       <button class="tab" onclick="goTab('driver',this)" style="color:#16a34a;font-weight:700">Driver ⊕</button>
+      <button class="tab" onclick="goTab('manage-drivers',this)" style="color:#7c3aed;font-weight:700">Manage Drivers ⚙</button>
+    </div>
+
+    
+    <div id="sec-manage-drivers" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;flex-wrap:wrap;gap:.75rem">
+        <div>
+          <div style="font-family:'Times New Roman',serif;font-size:1.1rem;font-weight:700">Manage Drivers</div>
+          <div style="font-size:.75rem;color:#888;margin-top:3px">Add drivers and set their login passwords</div>
+        </div>
+        <button onclick="openAddDriver()" class="btn bk"><span class="material-symbols-outlined" style="font-size:14px">person_add</span>Add Driver</button>
+      </div>
+      <div id="dr-mgmt-list"></div>
     </div>
 
     <div id="sec-all">
@@ -270,6 +283,12 @@ body{font-family:'Inter',sans-serif;background:#f0f0f0;min-height:100vh}
             </button>
           </div>
         </div>
+        
+        <div><label class="flbl">Assign Driver</label>
+          <select id="fdr" class="fsel">
+            <option value="">— Unassigned —</option>
+          </select>
+        </div>
         <div><label class="flbl">Vehicle</label>
           <select id="fve" class="fsel"><option>Black SUV Luxury</option><option>Regular Black SUV</option></select>
         </div>
@@ -331,6 +350,24 @@ body{font-family:'Inter',sans-serif;background:#f0f0f0;min-height:100vh}
       <div id="cl-ok"  style="display:none;background:#f0fdf4;border-left:3px solid #16a34a;padding:.75rem;font-size:.78rem;color:#15803d;margin-bottom:.875rem">✅ Trip added to client account!</div>
       <button onclick="saveToClient()" class="btn bpp" style="width:100%;justify-content:center;padding:.875rem">Add to Client Account</button>
       <p style="font-size:.65rem;color:#bbb;text-align:center;margin-top:.75rem">Client must have signed up at account.html</p>
+    </div>
+  </div>
+</div>
+
+
+<!-- ADD/EDIT DRIVER MODAL -->
+<div class="ov" id="m-driver">
+  <div class="modal" style="max-width:400px">
+    <div class="mhd"><h3 id="dr-title">Add Driver</h3><button class="mx" onclick="closeM('m-driver')">✕</button></div>
+    <div class="mbdy">
+      <input type="hidden" id="dr-eid"/>
+      <div style="margin-bottom:1rem"><label class="flbl">Driver Name *</label><input id="dr-name" class="finp" placeholder="Driver Name"/></div>
+      <div style="margin-bottom:1rem"><label class="flbl">Login Password *</label><input id="dr-pwd" class="finp" type="text" placeholder="Password"/></div>
+      <div style="margin-bottom:1.25rem"><label class="flbl">Phone</label><input id="dr-phone" class="finp" type="tel" placeholder="Phone"/></div>
+      <div style="display:flex;gap:.75rem;justify-content:flex-end">
+        <button onclick="closeM('m-driver')" class="btn bo">Cancel</button>
+        <button onclick="saveDriver()" class="btn bk">Save Driver</button>
+      </div>
     </div>
   </div>
 </div>
@@ -398,7 +435,8 @@ try {
 var curTab    = 'all';
 var curPayBk  = null;   // booking open in pay modal
 var curClBk   = null;   // booking open in client modal
-var curQid    = null;   // quote docId being converted
+var curQid    = null;
+var curUser   = null; // {name, role, id}   // quote docId being converted
 var QMAP      = {};     // docId -> quote object
 var MMAP      = {};     // key -> {title,text}
 
@@ -411,13 +449,47 @@ function setBks(a)   { localStorage.setItem('rv-bks', JSON.stringify(a)); }
 // ─────────────────────────────────────────────
 //  LOGIN
 // ─────────────────────────────────────────────
+
 function doLogin() {
-  if (document.getElementById('pwd').value === PWD) {
+  var p = document.getElementById('pwd').value;
+  if (p === PWD) {
+    curUser = {name:'Admin', role:'admin'};
     localStorage.setItem('rv-auth','1');
-    document.getElementById('pg-login').style.display = 'none';
-    document.getElementById('pg-dash').style.display  = 'block';
-    initDash();
+    localStorage.setItem('rv-user', JSON.stringify(curUser));
+    showDash();
   } else {
+    var drs = getDrivers();
+    var dr = drs.find(function(d){return d.pwd === p;});
+    if(dr) {
+      curUser = {name:dr.name, role:'driver', id:dr.id};
+      localStorage.setItem('rv-auth','1');
+      localStorage.setItem('rv-user', JSON.stringify(curUser));
+      showDash();
+    } else {
+      document.getElementById('lerr').style.display = 'block';
+      document.getElementById('pwd').value = '';
+      document.getElementById('pwd').focus();
+    }
+  }
+}
+
+function showDash() {
+  document.getElementById('pg-login').style.display = 'none';
+  document.getElementById('pg-dash').style.display  = 'block';
+  
+  // Hide admin-only tabs if driver
+  if(curUser.role === 'driver') {
+    document.querySelectorAll('.tab').forEach(function(t){
+      var txt = t.textContent.toLowerCase();
+      if(txt.includes('clients') || txt.includes('quotes') || txt.includes('messages') || txt.includes('manage')) {
+        t.style.display = 'none';
+      }
+    });
+  }
+  curUser = JSON.parse(localStorage.getItem('rv-user') || '{"name":"Admin","role":"admin"}');
+    showDash();
+}
+ else {
     document.getElementById('lerr').style.display = 'block';
     document.getElementById('pwd').value = '';
     document.getElementById('pwd').focus();
@@ -472,7 +544,11 @@ function renderBks() {
   document.getElementById('s3').textContent = '$'+rev.toFixed(0);
   document.getElementById('s4').textContent = aw;
 
+  
   var list = bks.filter(function(b){
+    if (curUser.role === 'driver' && b.driverId !== curUser.id) return false;
+    if (curTab==='upcoming') return b.status==='Confirmed'||b.status==='Pending';
+
     if (curTab==='upcoming') return b.status==='Confirmed'||b.status==='Pending';
     if (curTab==='awaiting') return b.status==='Confirmed';
     if (curTab==='done')     return b.status==='Paid'||b.status==='Completed';
@@ -503,7 +579,11 @@ function renderBks() {
         '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:.5rem">' +
           '<div style="font-family:\'Times New Roman\',serif;font-size:1.6rem;font-weight:700;color:#775a19">$'+(b.price||'—')+'</div>' +
           '<div style="display:flex;gap:.375rem;flex-wrap:wrap;justify-content:flex-end">' +
-            '<button onclick="openPay(\''+b.id+'\')" class="btn bk"><span class="material-symbols-outlined" style="font-size:13px">send</span>Send</button>' +
+            
+            '<button onclick="openPay(''+b.id+'')" class="btn bk"><span class="material-symbols-outlined" style="font-size:13px">send</span>Send</button>' +
+            '<button onclick="sendUpdate(''+b.id+'', \'onway\')" class="btn bdb"><span class="material-symbols-outlined" style="font-size:13px">directions_car</span>On Way</button>' +
+            '<button onclick="sendUpdate(''+b.id+'', \'arrived\')" class="btn bgn"><span class="material-symbols-outlined" style="font-size:13px">location_on</span>Arrived</button>' +
+
             '<button onclick="openCl(\''+b.id+'\')"  class="btn bpp"><span class="material-symbols-outlined" style="font-size:12px">person_add</span></button>' +
             '<button onclick="openEdit(\''+b.id+'\')" class="btn bo"><span class="material-symbols-outlined" style="font-size:13px">edit</span></button>' +
             '<button onclick="delBk(\''+b.id+'\')"   class="btn br"><span class="material-symbols-outlined" style="font-size:13px">delete</span></button>' +
@@ -524,13 +604,14 @@ function goTab(tab, btn) {
   curTab = tab;
   document.querySelectorAll('.tab').forEach(function(b){b.classList.remove('on');});
   btn.classList.add('on');
-  ['sec-all','sec-clients','sec-quotes','sec-messages','sec-driver'].forEach(function(id){
+  ['sec-all','sec-clients','sec-quotes','sec-messages','sec-driver','sec-manage-drivers'].forEach(function(id){
     document.getElementById(id).style.display='none';
   });
   if      (tab==='clients')  { document.getElementById('sec-clients').style.display='block';  loadClients(); }
   else if (tab==='quotes')   { document.getElementById('sec-quotes').style.display='block';   loadQuotes(); }
   else if (tab==='messages') { document.getElementById('sec-messages').style.display='block'; buildMsgs(); loadBcCount(); }
   else if (tab==='driver')   { document.getElementById('sec-driver').style.display='block';  loadDriverRides(); }
+  else if (tab==='manage-drivers') { document.getElementById('sec-manage-drivers').style.display='block'; renderDrivers(); }
   else                       { document.getElementById('sec-all').style.display='block';      renderBks(); }
 }
 
@@ -565,6 +646,8 @@ function openEdit(id) {
   document.getElementById('fco').value = b.code||'';
   document.getElementById('fve').value = b.vehicle||'';
   document.getElementById('fno').value = b.notes||'';
+  updateDriverSelects();
+  document.getElementById('fdr').value = b.driverId||'';
   curQid = null;
   openM('m-add');
 }
@@ -593,6 +676,7 @@ function saveBk() {
     status:document.getElementById('fst').value,
     code:(document.getElementById('fco').value.trim()||'').toUpperCase(),
     notes:document.getElementById('fno').value.trim(),
+    driverId:document.getElementById('fdr').value,
     source:'admin', createdAt:orig?orig.createdAt:new Date().toISOString()
   };
   if (eid){var i=bks.findIndex(function(b){return b.id===eid;});if(i>-1)bks[i]=bk;}
@@ -1125,6 +1209,88 @@ function addToCalendar(id) {
 }
 
 // ─────────────────────────────────────────────
+
+// ─────────────────────────────────────────────
+//  DRIVER MANAGEMENT
+// ─────────────────────────────────────────────
+function getDrivers() { try{return JSON.parse(localStorage.getItem('rv-drivers')||'[]');}catch(e){return[];} }
+function setDrivers(a) { localStorage.setItem('rv-drivers', JSON.stringify(a)); }
+
+function renderDrivers() {
+  var drs = getDrivers();
+  var el = document.getElementById('dr-mgmt-list');
+  if(!drs.length) { el.innerHTML = '<div class="empty">No drivers added yet</div>'; return; }
+  el.innerHTML = drs.map(function(d){
+    return '<div class="card">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center">'+
+        '<div><div style="font-weight:700">'+e(d.name)+'</div><div style="font-size:.75rem;color:#888">Password: '+e(d.pwd)+'</div></div>'+
+        '<div style="display:flex;gap:.5rem">'+
+          '<button onclick="openEditDriver(''+d.id+'')" class="btn bo">Edit</button>'+
+          '<button onclick="delDriver(''+d.id+'')" class="btn br">Delete</button>'+
+        '</div>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+  updateDriverSelects();
+}
+
+function openAddDriver() {
+  document.getElementById('dr-title').textContent = 'Add Driver';
+  document.getElementById('dr-eid').value = '';
+  document.getElementById('dr-name').value = '';
+  document.getElementById('dr-pwd').value = '';
+  document.getElementById('dr-phone').value = '';
+  openM('m-driver');
+}
+
+function openEditDriver(id) {
+  var d = getDrivers().find(function(x){return x.id===id;});
+  if(!d) return;
+  document.getElementById('dr-title').textContent = 'Edit Driver';
+  document.getElementById('dr-eid').value = d.id;
+  document.getElementById('dr-name').value = d.name;
+  document.getElementById('dr-pwd').value = d.pwd;
+  document.getElementById('dr-phone').value = d.phone||'';
+  openM('m-driver');
+}
+
+function saveDriver() {
+  var name = document.getElementById('dr-name').value.trim();
+  var pwd = document.getElementById('dr-pwd').value.trim();
+  if(!name || !pwd) { toast('Name and Password required'); return; }
+  var drs = getDrivers(), eid = document.getElementById('dr-eid').value;
+  var dr = { id:eid||Date.now().toString(), name:name, pwd:pwd, phone:document.getElementById('dr-phone').value.trim() };
+  if(eid) { var i=drs.findIndex(function(x){return x.id===eid;}); if(i>-1) drs[i]=dr; }
+  else drs.push(dr);
+  setDrivers(drs);
+  closeM('m-driver'); renderDrivers(); toast('Driver saved');
+}
+
+function delDriver(id) {
+  if(!confirm('Delete this driver?')) return;
+  setDrivers(getDrivers().filter(function(x){return x.id!==id;}));
+  renderDrivers(); toast('Driver deleted');
+}
+
+function updateDriverSelects() {
+  var drs = getDrivers();
+  var opts = '<option value="">— Unassigned —</option>' + 
+             '<option value="admin">Admin (Me)</option>' +
+             drs.map(function(d){return '<option value="'+d.id+'">'+e(d.name)+'</option>';}).join('');
+  document.getElementById('fdr').innerHTML = opts;
+}
+
+
+function sendUpdate(id, type) {
+  var b = getBks().find(function(x){return x.id===id;});
+  if(!b) return;
+  var msg = "";
+  if(type === 'onway') msg = "Hi "+(b.name||'there').split(' ')[0]+"! This is your Seacoast RVIP driver. I'm on my way to pick you up! See you soon.";
+  if(type === 'arrived') msg = "Hi "+(b.name||'there').split(' ')[0]+"! I have arrived at your pickup location. I'm in the black SUV. Ready when you are!";
+  
+  window.open('sms:'+b.phone+'?body='+encodeURIComponent(msg));
+}
+
 //  HELPERS
 // ─────────────────────────────────────────────
 function openM(id){document.getElementById(id).classList.add('open');document.body.style.overflow='hidden';}
@@ -1148,7 +1314,8 @@ window.addEventListener('DOMContentLoaded', function(){
   if(localStorage.getItem('rv-auth')==='1'){
     document.getElementById('pg-login').style.display='none';
     document.getElementById('pg-dash').style.display='block';
-    initDash();
+    curUser = JSON.parse(localStorage.getItem('rv-user') || '{"name":"Admin","role":"admin"}');
+    showDash();
   } else {
     setTimeout(function(){document.getElementById('pwd').focus();},100);
   }
