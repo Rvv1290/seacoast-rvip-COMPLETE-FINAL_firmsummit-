@@ -307,13 +307,14 @@ body{font-family:'Inter',sans-serif;background:#f0f0f0;min-height:100vh}
           <select id="fve" class="fsel"><option>Black SUV Luxury</option><option>Regular Black SUV</option></select>
         </div>
         
-        <div class="g2a">
+        <div>
           <label class="flbl">Assign Driver</label>
           <select id="fdr" class="fsel">
             <option value="">— Unassigned —</option>
             <option value="admin">Admin (Me)</option>
           </select>
         </div>
+        <div><label class="flbl">Tip Amount ($)</label><input id="fti" class="finp" type="number" min="0" step="1" placeholder="0"/></div>
 
         <div class="g2a"><label class="flbl">Notes</label><input id="fno" class="finp" placeholder="Flight number, special requests..."/></div>
       </div>
@@ -453,7 +454,7 @@ function getBks()    { try{return JSON.parse(localStorage.getItem('rv-bks')||'[]
 function setBks(a)   { localStorage.setItem('rv-bks', JSON.stringify(a)); }
 function getDrivers(){ try{return JSON.parse(localStorage.getItem('rv-drivers')||'[]');}catch(e){return[];} }
 function setDrivers(a){ localStorage.setItem('rv-drivers', JSON.stringify(a)); }
-function getDrRate() { return parseFloat(localStorage.getItem(DR_RATE_KEY)) || 70; }
+function getDrRate() { return parseFloat(localStorage.getItem(DR_RATE_KEY)) || 75; }
 
 // ─────────────────────────────────────────────
 //  LOGIN
@@ -580,10 +581,11 @@ function renderBks() {
   lEl.innerHTML = list.map(function(b,i){
     var dTag = '';
     if (b.driverId) {
-      if (b.driverId === 'admin') dTag = '<span class="bdg bpp">Driver: Admin</span>';
+      var dStatus = b.driverStatus === 'Completed' ? '<span class="bdg bgn">Driver Completed</span>' : '';
+      if (b.driverId === 'admin') dTag = '<span class="bdg bpp">Driver: Admin</span>' + dStatus;
       else {
         var dr = drs.find(function(x){return x.id === b.driverId;});
-        dTag = '<span class="bdg bpp">Driver: ' + e(dr ? dr.name : 'Unknown') + '</span>';
+        dTag = '<span class="bdg bpp">Driver: ' + e(dr ? dr.name : 'Unknown') + '</span>' + dStatus;
       }
     }
     // Store booking in a data attribute index — no JSON in onclick
@@ -605,6 +607,7 @@ function renderBks() {
         '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:.5rem">' +
           '<div style="font-family:\'Times New Roman\',serif;font-size:1.6rem;font-weight:700;color:#775a19">$'+(b.price||'—')+'</div>' +
           '<div style="display:flex;gap:.375rem;flex-wrap:wrap;justify-content:flex-end">' +
+            '<button onclick="addToCalendar(\''+b.id+'\')" class="btn bo" title="Add to Calendar"><span class="material-symbols-outlined" style="font-size:13px">calendar_add_on</span></button>' +
             '<button onclick="openPay(\''+b.id+'\')" class="btn bk"><span class="material-symbols-outlined" style="font-size:13px">send</span>Send</button>' +
             '<button onclick="openCl(\''+b.id+'\')"  class="btn bpp"><span class="material-symbols-outlined" style="font-size:12px">person_add</span></button>' +
             '<button onclick="openEdit(\''+b.id+'\')" class="btn bo"><span class="material-symbols-outlined" style="font-size:13px">edit</span></button>' +
@@ -645,7 +648,10 @@ function goTab(tab, btn) {
 function openAdd() {
   document.getElementById('add-title').textContent = 'New Booking';
   document.getElementById('eid').value = '';
-  ['fn','fp','fe','fd','ft','fpu','fde','fpr','fco','fno'].forEach(function(id){document.getElementById(id).value='';});
+  ['fn','fp','fe','fd','ft','fpu','fde','fpr','fco','fno','fti'].forEach(function(id){
+    var el = document.getElementById(id);
+    if(el) el.value='';
+  });
   document.getElementById('fst').value = 'Confirmed';
   updateDriverSelects();
   document.getElementById('fdr').value = '';
@@ -668,6 +674,7 @@ function openEdit(id) {
   document.getElementById('fpu').value = b.pickup||'';
   document.getElementById('fde').value = b.destination||'';
   document.getElementById('fpr').value = b.price||'';
+  document.getElementById('fti').value = b.tip||'';
   document.getElementById('fst').value = b.status||'Confirmed';
   document.getElementById('fco').value = b.code||'';
   document.getElementById('fve').value = b.vehicle||'';
@@ -700,7 +707,9 @@ function saveBk() {
     vehicle:document.getElementById('fve').value,
     driverId:document.getElementById('fdr').value||'',
     price:parseFloat(price),
+    tip:parseFloat(document.getElementById('fti').value)||0,
     status:document.getElementById('fst').value,
+    driverStatus:orig?orig.driverStatus||'':'',
     code:(document.getElementById('fco').value.trim()||'').toUpperCase(),
     notes:document.getElementById('fno').value.trim(),
     source:'admin', createdAt:orig?orig.createdAt:new Date().toISOString()
@@ -731,7 +740,9 @@ async function fbSync(bk) {
       service:bk.service||'', date:bk.date||'', time:bk.time||'',
       pickup:bk.pickup||'', destination:bk.destination||'',
       vehicle:bk.vehicle||'', price:parseFloat(bk.price)||0,
+      tip:parseFloat(bk.tip)||0,
       driverId:bk.driverId||'',
+      driverStatus:bk.driverStatus||'',
       status:bk.status||'Confirmed', notes:bk.notes||'',
       source:bk.source||'admin', updatedAt:new Date().toISOString()
     },{merge:true});
@@ -1077,20 +1088,23 @@ function saveDrRate() {
   loadDriverRides();
 }
 
-function loadDriverRides() {
+function loadDriverRides(filterDrId) {
   var bks = getBks().filter(function(b){ return b.status !== 'Cancelled'; })
                     .sort(function(a,b){ return new Date(b.date)-new Date(a.date); });
   var rate = getDrRate() / 100;
   var totalPay = 0, totalRev = 0;
   var filteredBks = bks;
-  if(curUser && curUser.role === 'driver') {
+  if(filterDrId && typeof filterDrId === 'string') {
+    filteredBks = bks.filter(function(b){ return b.driverId === filterDrId; });
+  } else if(curUser && curUser.role === 'driver') {
     filteredBks = bks.filter(function(b){ return b.driverId === curUser.id; });
   }
   
   filteredBks.forEach(function(b){
     var pr = parseFloat(b.price)||0;
-    totalPay += pr * rate;
-    totalRev += pr;
+    var tip = parseFloat(b.tip)||0;
+    totalPay += (pr * rate) + tip;
+    totalRev += pr + tip;
   });
   document.getElementById('dr-total').textContent = filteredBks.length;
   document.getElementById('dr-pay').textContent   = '$' + totalPay.toFixed(2);
@@ -1104,15 +1118,35 @@ function loadDriverRides() {
   }
   el.innerHTML = filteredBks.map(function(b) {
     var pr  = parseFloat(b.price)||0;
+    var tip = parseFloat(b.tip)||0;
     var dp  = (pr * rate).toFixed(2);
     var cp  = (pr * (1-rate)).toFixed(2);
+    var totalPayout = ((pr * rate) + tip).toFixed(2);
     var SC  = {Pending:'byw',Confirmed:'bbl',Paid:'bgr',Completed:'bgr',Cancelled:'brd'};
+    
     var driverControls = '';
+    var actionBtns = '';
+    
     if (curUser && curUser.role === 'admin') {
-       driverControls = '<div style="font-size:.72rem;color:#16a34a;font-weight:600;margin-top:2px">Driver: $'+dp+'</div>'+
-                        '<div style="font-size:.72rem;color:#775a19;font-weight:600">Company: $'+cp+'</div>';
+       driverControls = '<div style="font-size:.72rem;color:#16a34a;font-weight:600;margin-top:2px">Driver Payout: $'+totalPayout+'</div>'+
+                        '<div style="font-size:.72rem;color:#775a19;font-weight:600">Company Retained: $'+cp+'</div>';
+       actionBtns = '<button onclick="addToCalendar(\''+b.id+'\')" class="btn bo" style="font-size:.62rem"><span class="material-symbols-outlined" style="font-size:13px">calendar_add_on</span>Calendar</button>'+
+                    '<button onclick="markPaidDr(\''+b.id+'\')" class="btn bgn" style="font-size:.62rem"><span class="material-symbols-outlined" style="font-size:13px">check_circle</span>Mark Paid</button>';
     } else {
-       driverControls = '<div style="font-size:.72rem;color:#16a34a;font-weight:600;margin-top:2px">Payout: $'+dp+'</div>';
+       var dName = encodeURIComponent(curUser.name);
+       var cName = encodeURIComponent(e(b.name).split(' ')[0]||'there');
+       var assignMsg = "Hi "+cName+"! This is "+dName+", your assigned driver for your upcoming Seacoast RVIP ride.";
+       var arriveMsg = "Hi "+cName+", this is your driver "+dName+". I am arriving soon at your pickup location!";
+       var ph = (b.phone||'').replace(/\D/g,'');
+       
+       driverControls = '<div style="font-size:.75rem;margin-top:4px;color:#555">Fare: $'+pr.toFixed(2)+'</div>'+
+                        '<div style="font-size:.75rem;color:#b91c1c">Commission (-'+(100-getDrRate())+'%): -$'+cp+'</div>'+
+                        '<div style="font-size:.75rem;color:#16a34a">Tips (100%): +$'+tip.toFixed(2)+'</div>'+
+                        '<div style="font-size:.85rem;color:#111;font-weight:700;margin-top:2px;border-top:1px solid #ddd;padding-top:2px">Net Payout: $'+totalPayout+'</div>';
+       
+       actionBtns = '<button onclick="window.open(\'sms:+'+ph+'&body='+assignMsg+'\')" class="btn bo" style="font-size:.62rem"><span class="material-symbols-outlined" style="font-size:13px">sms</span>Intro text</button>'+
+                    '<button onclick="window.open(\'sms:+'+ph+'&body='+arriveMsg+'\')" class="btn bo" style="font-size:.62rem"><span class="material-symbols-outlined" style="font-size:13px">sms</span>Arriving</button>'+
+                    '<button onclick="markCompleteDr(\''+b.id+'\')" class="btn bgn" style="font-size:.62rem"><span class="material-symbols-outlined" style="font-size:13px">done_all</span>Complete Ride</button>';
     }
     
     return '<div class="card" style="margin-bottom:.625rem">'+
@@ -1121,7 +1155,7 @@ function loadDriverRides() {
           '<div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;margin-bottom:.375rem">'+
             '<span style="font-weight:700;font-size:.9rem">'+e(b.name)+'</span>'+
             '<span class="bdg '+(SC[b.status]||'byw')+'">'+e(b.status)+'</span>'+
-            (b.code?'<span class="ctag">'+e(b.code)+'</span>':'')+
+            (b.driverStatus==='Completed' ? '<span class="bdg bgn">Driver Completed</span>':'')+
           '</div>'+
           '<div class="crow"><span class="material-symbols-outlined">calendar_today</span>'+e(b.date||'—')+' · '+fT(b.time)+'</div>'+
           '<div class="crow"><span class="material-symbols-outlined">directions_car</span>'+e(b.service||'—')+'</div>'+
@@ -1131,13 +1165,20 @@ function loadDriverRides() {
           '<div style="font-family:\'Times New Roman\',serif;font-size:1.5rem;font-weight:700;color:#111">$'+pr.toFixed(2)+'</div>'+
           driverControls+
           '<div style="display:flex;gap:.375rem;margin-top:.625rem;justify-content:flex-end;flex-wrap:wrap">'+
-            '<button onclick="addToCalendar(\''+b.id+'\')" class="btn bo" style="font-size:.62rem"><span class="material-symbols-outlined" style="font-size:13px">calendar_add_on</span>Calendar</button>'+
-            '<button onclick="markPaidDr(\''+b.id+'\')" class="btn bgn" style="font-size:.62rem"><span class="material-symbols-outlined" style="font-size:13px">check_circle</span>Paid</button>'+
+            actionBtns+
           '</div>'+
         '</div>'+
       '</div>'+
     '</div>';
   }).join('');
+}
+
+function markCompleteDr(id) {
+  var bks=getBks(), b=bks.find(function(x){return x.id===id;});
+  if(!b) return;
+  b.driverStatus = 'Completed';
+  setBks(bks); fbSync(b);
+  loadDriverRides(); toast('✅ Ride marked as completed!');
 }
 
 function markPaidDr(id) {
@@ -1261,16 +1302,62 @@ function renderDrivers() {
   var el = document.getElementById('dr-list');
   if(!drs.length) { el.innerHTML = '<div class="empty">No drivers added yet</div>'; return; }
   el.innerHTML = drs.map(function(d){
+    var verifiedBadge = d.docVerified ? '<span class="bdg bgn" style="margin-left:5px">Docs Verified</span>' : '<span class="bdg brd" style="margin-left:5px">Pending Docs</span>';
+    var docLinkBtn = d.docLink ? '<button onclick="window.open(\''+d.docLink+'\', \'_blank\')" class="btn bo" style="font-size:.62rem;padding:4px"><span class="material-symbols-outlined" style="font-size:13px">description</span> DocuSign</button>' : '';
+
     return '<div class="card">'+
-      '<div style="display:flex;justify-content:space-between;align-items:center">'+
-        '<div><div class="cname">'+e(d.name)+'</div><div class="crow">'+e(d.phone)+' · Pwd: '+e(d.pwd)+'</div></div>'+
-        '<div style="display:flex;gap:5px">'+
-          '<button onclick="openEditDriver(\''+d.id+'\')" class="btn bo">Edit</button>'+
-          '<button onclick="delDriver(\''+d.id+'\')" class="btn br">Delete</button>'+
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px">'+
+        '<div>'+
+           '<div class="cname">'+e(d.name) + verifiedBadge + '</div>'+
+           '<div class="crow" style="margin-top:6px"><span class="material-symbols-outlined" style="font-size:13px">phone</span> '+e(d.phone)+' &nbsp;·&nbsp; Pwd: <code>'+e(d.pwd)+'</code></div>'+
+           '<div style="margin-top:6px;display:flex;gap:5px">'+docLinkBtn+'</div>'+
+        '</div>'+
+        '<div style="display:flex;flex-wrap:wrap;gap:5px">'+
+          '<button onclick="loadDriverRides(\''+d.id+'\');goTab(\'driver\')" class="btn bbl" style="font-size:.7rem"><span class="material-symbols-outlined" style="font-size:14px">visibility</span>Rides</button>'+
+          '<button onclick="export1099(\''+d.id+'\')" class="btn bgn" style="font-size:.7rem"><span class="material-symbols-outlined" style="font-size:14px">receipt_long</span>1099 Report</button>'+
+          '<button onclick="openEditDriver(\''+d.id+'\')" class="btn bo"><span class="material-symbols-outlined" style="font-size:14px">edit</span></button>'+
+          '<button onclick="delDriver(\''+d.id+'\')" class="btn br"><span class="material-symbols-outlined" style="font-size:14px">delete</span></button>'+
         '</div>'+
       '</div>'+
     '</div>';
   }).join('');
+}
+
+function export1099(drId) {
+  var d = getDrivers().find(function(x){return x.id === drId;});
+  if(!d) return;
+  var bks = getBks().filter(function(b){ return b.driverId === drId && b.status === 'Completed'; });
+  var year = prompt('Enter year for '+d.name+'\'s 1099 Report (e.g., 2026):', new Date().getFullYear());
+  if (!year) return;
+  
+  bks = bks.filter(function(b){ return (b.date||'').startsWith(year.toString()); });
+  if(!bks.length) { toast('No completed rides found for year '+year); return; }
+  
+  var rate = getDrRate() / 100;
+  var totalPay = 0, totalTips = 0;
+  var rows = [['Date','Client','Service','Fare','Driver Commission ('+(rate*100)+'%)','Tips (100%)','Total Payout']];
+  
+  bks.forEach(function(b){
+    var pr = parseFloat(b.price)||0;
+    var tip = parseFloat(b.tip)||0;
+    var comm = pr * rate;
+    totalPay += comm;
+    totalTips += tip;
+    rows.push([
+      b.date||'', b.name||'', b.service||'', 
+      pr.toFixed(2), comm.toFixed(2), tip.toFixed(2), (comm + tip).toFixed(2)
+    ]);
+  });
+  
+  rows.push(['','','','TOTALS', totalPay.toFixed(2), totalTips.toFixed(2), (totalPay+totalTips).toFixed(2)]);
+  
+  var csv = rows.map(function(r){ return r.map(function(c){ return '"'+String(c).replace(/"/g,'""')+'"'; }).join(','); }).join('\n');
+  var blob = new Blob([csv],{type:'text/csv'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = '1099-Report-'+d.name.replace(/\s+/g,'-')+'-'+year+'.csv';
+  a.click();
+  toast('1099 Report downloaded!');
 }
 
 function openAddDriver() {
@@ -1278,6 +1365,8 @@ function openAddDriver() {
   document.getElementById('dr-name').value = '';
   document.getElementById('dr-phone').value = '';
   document.getElementById('dr-pwd').value = '';
+  document.getElementById('dr-doc').value = '';
+  document.getElementById('dr-vfd').checked = false;
   openM('m-dr');
 }
 
@@ -1288,6 +1377,8 @@ function openEditDriver(id) {
   document.getElementById('dr-name').value = d.name;
   document.getElementById('dr-phone').value = d.phone;
   document.getElementById('dr-pwd').value = d.pwd;
+  document.getElementById('dr-doc').value = d.docLink || '';
+  document.getElementById('dr-vfd').checked = d.docVerified || false;
   openM('m-dr');
 }
 
@@ -1296,7 +1387,14 @@ function saveDriver() {
   var pwd = document.getElementById('dr-pwd').value.trim();
   if(!name || !pwd) { toast('Name and Password required'); return; }
   var drs = getDrivers(), eid = document.getElementById('dr-eid').value;
-  var dr = { id: eid || Date.now().toString(), name: name, phone: document.getElementById('dr-phone').value, pwd: pwd };
+  var dr = { 
+    id: eid || Date.now().toString(), 
+    name: name, 
+    phone: document.getElementById('dr-phone').value, 
+    pwd: pwd,
+    docLink: document.getElementById('dr-doc').value.trim(),
+    docVerified: document.getElementById('dr-vfd').checked
+  };
   if(eid) { var i = drs.findIndex(function(x){return x.id===eid;}); if(i>-1) drs[i]=dr; }
   else drs.push(dr);
   setDrivers(drs); closeM('m-dr'); renderDrivers(); toast('Driver saved');
@@ -1312,11 +1410,26 @@ function renderMarket() {
   var bks = getBks().filter(function(b){ return (!b.driverId || b.driverId === '') && b.status !== 'Cancelled' && b.status !== 'Completed'; });
   var el = document.getElementById('market-list');
   if(!bks.length) { el.innerHTML = '<div class="empty">No available rides in marketplace</div>'; return; }
+  
+  var rate = getDrRate() / 100;
+  
   el.innerHTML = bks.map(function(b){
+    var pr = parseFloat(b.price)||0;
+    var payout = (pr * rate).toFixed(2);
+    
     return '<div class="card market-card">'+
-      '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">'+
-        '<div><div class="cname">'+e(b.name)+'</div><div class="crow">'+e(b.date)+' at '+fT(b.time)+'</div><div class="crow">'+e(b.pickup)+' → '+e(b.destination)+'</div></div>'+
-        '<button onclick="claimRide(\''+b.id+'\')" class="btn bgn">Claim Ride</button>'+
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px">'+
+        '<div style="flex:1;min-width:200px">'+
+          '<div class="cname">'+e(b.name)+'</div>'+
+          '<div class="crow"><span class="material-symbols-outlined" style="font-size:14px">calendar_today</span> '+e(b.date)+' at '+fT(b.time)+'</div>'+
+          '<div class="crow"><span class="material-symbols-outlined" style="font-size:14px">near_me</span> Pickup: '+e(b.pickup)+'</div>'+
+          '<div class="crow"><span class="material-symbols-outlined" style="font-size:14px">flag</span> Drop-off: '+e(b.destination)+'</div>'+
+        '</div>'+
+        '<div style="text-align:right">'+
+          '<div style="font-size:.75rem;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px">Your Payout</div>'+
+          '<div style="font-family:\'Times New Roman\',serif;font-size:1.8rem;font-weight:700;color:#16a34a;margin-bottom:10px">$'+payout+'</div>'+
+          '<button onclick="claimRide(\''+b.id+'\')" class="btn bgn" style="width:100%;justify-content:center">Claim Ride</button>'+
+        '</div>'+
       '</div>'+
     '</div>';
   }).join('');
@@ -1368,6 +1481,11 @@ window.addEventListener('DOMContentLoaded', function(){
       <div style="margin-bottom:1rem"><label class="flbl">Driver Name</label><input id="dr-name" class="finp" placeholder="Full Name"/></div>
       <div style="margin-bottom:1rem"><label class="flbl">Phone Number</label><input id="dr-phone" class="finp" type="tel" placeholder="978..."/></div>
       <div style="margin-bottom:1rem"><label class="flbl">Login Password</label><input id="dr-pwd" class="finp" placeholder="Set a password"/></div>
+      <div style="margin-bottom:1rem"><label class="flbl">DocuSign Account Link</label><input id="dr-doc" class="finp" placeholder="https://docusign.com/..."/></div>
+      <div style="margin-bottom:1.5rem;display:flex;align-items:center;gap:10px">
+        <input id="dr-vfd" type="checkbox" style="width:18px;height:18px;cursor:pointer;accent-color:#16a34a">
+        <label for="dr-vfd" class="flbl" style="margin:0;cursor:pointer;user-select:none">Documents Verified & Background Checked</label>
+      </div>
       <button onclick="saveDriver()" class="btn bg" style="width:100%;justify-content:center;padding:.8rem">Save Driver</button>
     </div>
   </div>
