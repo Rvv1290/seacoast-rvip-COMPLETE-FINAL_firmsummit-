@@ -588,8 +588,11 @@ function renderBks() {
       else {
         var dr = drs.find(function(x){return x.id === b.driverId;});
         dTag = '<span class="bdg bpp">Driver: ' + e(dr ? dr.name : 'Unknown') + '</span>' + dStatus;
-        if (b.driverStatus === 'Completed' && b.status !== 'Paid') {
-          payDriverBtnHtml = '<button onclick="initiateDriverPay(\''+b.id+'\')" class="btn bg" style="font-size:.62rem;background:#10b981;color:#fff;border-color:#059669"><span class="material-symbols-outlined" style="font-size:13px">payments</span>Pay Driver</button>';
+        if (b.driverPaid) {
+          payDriverBtnHtml = '<span class="bdg bgn" style="background:#047857;color:#fff;font-size:10px;padding:3px 6px"><span class="material-symbols-outlined" style="font-size:11px;vertical-align:middle;margin-right:2px">verified</span>Driver Paid</span>';
+        } else if (b.driverStatus === 'Completed') {
+          payDriverBtnHtml = '<button onclick="initiateDriverPay(\''+b.id+'\')" class="btn bg" style="font-size:.62rem;background:#10b981;color:#fff;border-color:#059669"><span class="material-symbols-outlined" style="font-size:13px">payments</span>Pay Driver</button>' +
+            '<button onclick="markDriverAsPaid(\''+b.id+'\')" class="btn bo" style="font-size:.62rem;padding:4px" title="Confirm Driver Paid"><span class="material-symbols-outlined" style="font-size:13px">check</span></button>';
         }
       }
     }
@@ -655,6 +658,24 @@ function initiateDriverPay(bkId) {
     document.getElementById('paydr-meth').textContent = method + ' via ' + e(d.name);
     document.getElementById('paydr-det').textContent = details;
     openM('m-paydr');
+  }
+}
+
+function markDriverAsPaid(id) {
+  if(!confirm("Are you sure you want to mark this driver payment as COMPLETED?")) return;
+  var bks = getBks();
+  var b = bks.find(function(x){return x.id === id;});
+  if(b) {
+    b.driverPaid = true;
+    setBks(bks);
+    if(typeof fbSync === 'function') fbSync(b);
+    
+    // Refresh UI properly depending on where we are
+    if(document.getElementById('sec-driver') && document.getElementById('sec-driver').style.display !== 'none') {
+       loadDriverRides(b.driverId);
+    } 
+    renderBks();
+    toast('✅ Driver marked as paid!');
   }
 }
 
@@ -1203,11 +1224,13 @@ function loadDriverRides(filterDrId) {
        driverControls = '<div style="font-size:.72rem;color:#16a34a;font-weight:600;margin-top:2px">Driver Payout: $'+totalPayout+'</div>'+
                         '<div style="font-size:.72rem;color:#775a19;font-weight:600">Company Retained: $'+cp+'</div>';
        
-       var payDriverBtnHtml = b.driverStatus === 'Completed' && b.status !== 'Paid' ? '<button onclick="initiateDriverPay(\''+b.id+'\')" class="btn bg" style="font-size:.62rem;background:#10b981;color:#fff;border-color:#059669"><span class="material-symbols-outlined" style="font-size:13px">payments</span>Pay Driver</button>' : '';
+       var payDriverBtnHtml = b.driverPaid ? '<span class="bdg bgn" style="background:#047857;color:#fff;font-size:10px;padding:3px 6px"><span class="material-symbols-outlined" style="font-size:11px;vertical-align:middle;margin-right:2px">verified</span>Driver Paid</span>' 
+                            : (b.driverStatus === 'Completed' ? '<button onclick="initiateDriverPay(\''+b.id+'\')" class="btn bg" style="font-size:.62rem;background:#10b981;color:#fff;border-color:#059669"><span class="material-symbols-outlined" style="font-size:13px">payments</span>Pay Driver</button>' +
+                              '<button onclick="markDriverAsPaid(\''+b.id+'\')" class="btn bo" style="font-size:.62rem;padding:4px" title="Confirm Driver Paid"><span class="material-symbols-outlined" style="font-size:13px">check</span></button>' : '');
 
        actionBtns = payDriverBtnHtml + 
                     '<button onclick="addToCalendar(\''+b.id+'\')" class="btn bo" style="font-size:.62rem"><span class="material-symbols-outlined" style="font-size:13px">calendar_add_on</span>Calendar</button>'+
-                    '<button onclick="markPaidDr(\''+b.id+'\')" class="btn bgn" style="font-size:.62rem"><span class="material-symbols-outlined" style="font-size:13px">check_circle</span>Mark Paid</button>';
+                    '<button onclick="markPaidDr(\''+b.id+'\')" class="btn bgn" style="font-size:.62rem"><span class="material-symbols-outlined" style="font-size:13px">check_circle</span>Mark Client Paid</button>';
     } else {
        var dName = encodeURIComponent(curUser.name);
        var cName = encodeURIComponent(e(b.name).split(' ')[0]||'there');
