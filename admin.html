@@ -450,6 +450,7 @@ function setBks(a)   { localStorage.setItem('rv-bks', JSON.stringify(a)); }
 //  LOGIN
 // ─────────────────────────────────────────────
 
+
 function doLogin() {
   var p = document.getElementById('pwd').value;
   if (p === PWD) {
@@ -477,8 +478,11 @@ function showDash() {
   document.getElementById('pg-login').style.display = 'none';
   document.getElementById('pg-dash').style.display  = 'block';
   
+  // Reset tab visibility first
+  document.querySelectorAll('.tab').forEach(function(t){ t.style.display = ''; });
+
   // Hide admin-only tabs if driver
-  if(curUser.role === 'driver') {
+  if(curUser && curUser.role === 'driver') {
     document.querySelectorAll('.tab').forEach(function(t){
       var txt = t.textContent.toLowerCase();
       if(txt.includes('clients') || txt.includes('quotes') || txt.includes('messages') || txt.includes('manage')) {
@@ -486,15 +490,9 @@ function showDash() {
       }
     });
   }
-  curUser = JSON.parse(localStorage.getItem('rv-user') || '{"name":"Admin","role":"admin"}');
-    showDash();
+  initDash();
 }
- else {
-    document.getElementById('lerr').style.display = 'block';
-    document.getElementById('pwd').value = '';
-    document.getElementById('pwd').focus();
-  }
-}
+
 function doLogout() { localStorage.removeItem('rv-auth'); location.reload(); }
 
 // ─────────────────────────────────────────────
@@ -1225,8 +1223,8 @@ function renderDrivers() {
       '<div style="display:flex;justify-content:space-between;align-items:center">'+
         '<div><div style="font-weight:700">'+e(d.name)+'</div><div style="font-size:.75rem;color:#888">Password: '+e(d.pwd)+'</div></div>'+
         '<div style="display:flex;gap:.5rem">'+
-          '<button onclick="openEditDriver(''+d.id+'')" class="btn bo">Edit</button>'+
-          '<button onclick="delDriver(''+d.id+'')" class="btn br">Delete</button>'+
+          '<button onclick="openEditDriver('"+d.id+"')" class="btn bo">Edit</button>'+
+          '<button onclick="delDriver('"+d.id+"')" class="btn br">Delete</button>'+
         '</div>'+
       '</div>'+
     '</div>';
@@ -1311,11 +1309,11 @@ window.addEventListener('DOMContentLoaded', function(){
   document.querySelectorAll('.ov').forEach(function(el){
     el.addEventListener('click',function(ev){if(ev.target===this)closeM(this.id);});
   });
+  
   if(localStorage.getItem('rv-auth')==='1'){
-    document.getElementById('pg-login').style.display='none';
-    document.getElementById('pg-dash').style.display='block';
     curUser = JSON.parse(localStorage.getItem('rv-user') || '{"name":"Admin","role":"admin"}');
     showDash();
+  } else {
   } else {
     setTimeout(function(){document.getElementById('pwd').focus();},100);
   }
