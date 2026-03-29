@@ -113,13 +113,15 @@ function shareRVIP() {
   <link rel="icon" type="image/png" sizes="32x32" href="/seacoast_rvip_favicon_32.png"/>
 <style>
 .font-headline,h1,h2,h3,h4{font-family:"Times New Roman",Times,Georgia,serif!important}
-/* Expand content to full width */
-.max-w-5xl{max-width:100%!important}
-.max-w-3xl{max-width:900px!important}
 .max-w-5xl{max-width:100%!important}
 
-.footer-grid{grid-template-columns:1.5fr 1fr 1fr!important}
-@media(max-width:767px){.footer-grid{grid-template-columns:1fr!important}}
+.footer-grid { grid-template-columns: 1.2fr auto 1.2fr !important; }
+.footer-grid > div:nth-child(2) { justify-self: center; }
+.footer-grid > div:nth-child(3) { justify-self: end; }
+@media(max-width:850px) {
+  .footer-grid { grid-template-columns: 1fr !important; gap: 3rem !important; }
+  .footer-grid > div { justify-self: start !important; }
+}
 </style>
 </head>
 <body class="bg-surface font-body text-on-surface antialiased">
@@ -425,7 +427,7 @@ async function contactSubmit(e) {
 </main>
 <!-- Footer -->
 <footer style="background:#0a0a0a;color:white;padding:4rem 0 2rem">
-  <div style="max-width:1200px;margin:0 auto;padding:0 2rem">
+  <div style="max-width:1440px;margin:0 auto;padding:0 5%">
     <div style="display:grid;grid-template-columns:1fr;gap:2.5rem;padding-bottom:2.5rem;border-bottom:1px solid rgba(255,255,255,0.08)" class="footer-grid">
       <div>
         <div style="font-family:'Times New Roman',Times,serif;font-size:1.5rem;font-weight:700;color:white;margin-bottom:0.75rem">Seacoast RVIP</div>
