@@ -5,12 +5,28 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>Admin | Seacoast RVIP</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Work+Sans:wght@400;600&display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-.material-symbols-outlined{font-variation-settings:"FILL" 0,"wght" 300,"GRAD" 0,"opsz" 24}
+
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+}
+
 body{font-family:'Inter',sans-serif;background:#f0f0f0;min-height:100vh}
 
 #pg-login{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:1rem}
@@ -83,7 +99,7 @@ body{font-family:'Inter',sans-serif;background:#f0f0f0;min-height:100vh}
   .g2{grid-template-columns:1fr}.g2a{grid-column:1}
 }
 
-/* New Features CSS */
+/* --- NEW FEATURES CSS --- */
 #pwd-icon { cursor: pointer; color: #aaa; padding: 5px; position: absolute; right: 0; top: 50%; transform: translateY(-50%); }
 .debug-info { margin-top:1rem; font-size:0.6rem; color:#ccc; text-align:center; display:none; }
 .market-card { border-left-color: #1d4ed8 !important; }
@@ -102,10 +118,11 @@ body{font-family:'Inter',sans-serif;background:#f0f0f0;min-height:100vh}
     <div style="margin-bottom:1rem">
       <label class="flbl">Password</label>
       <div style="position: relative;">
-        <input id="pwd" type="password" class="finp" placeholder="Enter password" onkeydown="if(event.key==='Enter')doLogin()"/>
+        <input id="pwd" type="password" class="finp" placeholder="Enter password" />
         <span onclick="togglePwd()" class="material-symbols-outlined" id="pwd-icon">visibility</span>
       </div>
       <div id="debug-info" class="debug-info"></div>
+        
     </div>
     <div id="lerr" style="display:none;background:#fef2f2;border-left:3px solid #dc2626;padding:.625rem;font-size:.78rem;color:#dc2626;margin-bottom:1rem">
       Wrong password. Try again.
@@ -413,7 +430,7 @@ body{font-family:'Inter',sans-serif;background:#f0f0f0;min-height:100vh}
 // ─────────────────────────────────────────────
 //  CONFIG
 // ─────────────────────────────────────────────
-var PWD      = 'seacoast2025';
+var PWD = 'seacoast2025';
 var SITE     = 'https://www.seacoastrvip.com';
 var GREVIEW  = 'https://g.page/r/YOUR_GOOGLE_REVIEW_LINK';
 
@@ -442,8 +459,7 @@ try {
 var curTab    = 'all';
 var curPayBk  = null;   // booking open in pay modal
 var curClBk   = null;   // booking open in client modal
-var curQid    = null;
-var curUser   = null;   // quote docId being converted
+var curQid    = null;   // quote docId being converted
 var QMAP      = {};     // docId -> quote object
 var MMAP      = {};     // key -> {title,text}
 
@@ -453,21 +469,9 @@ var MMAP      = {};     // key -> {title,text}
 function getBks()    { try{return JSON.parse(localStorage.getItem('rv-bks')||'[]');}catch(e){return[];} }
 function setBks(a)   { localStorage.setItem('rv-bks', JSON.stringify(a)); }
 
-function getDrivers() { try{return JSON.parse(localStorage.getItem('rv-drivers')||'[]');}catch(e){return[];} }
-function setDrivers(a) { localStorage.setItem('rv-drivers', JSON.stringify(a)); }
-
-
 // ─────────────────────────────────────────────
 //  LOGIN
 // ─────────────────────────────────────────────
-
-function togglePwd() {
-  var x = document.getElementById('pwd');
-  var icon = document.getElementById('pwd-icon');
-  if (x.type === 'password') { x.type = 'text'; icon.textContent = 'visibility_off'; }
-  else { x.type = 'password'; icon.textContent = 'visibility'; }
-}
-
 function doLogin() {
   var input = document.getElementById('pwd');
   var cleanValue = input.value.trim();
@@ -513,12 +517,6 @@ function showDash() {
   var bBtn = document.getElementById('admin-broadcast-banner');
   if(bBtn) bBtn.style.display = (curUser && curUser.role === 'admin') ? 'flex' : 'none';
   initDash();
-}
- else {
-    document.getElementById('lerr').style.display = 'block';
-    document.getElementById('pwd').value = '';
-    document.getElementById('pwd').focus();
-  }
 }
 function doLogout() { localStorage.removeItem('rv-auth'); localStorage.removeItem('rv-user'); location.reload(); }
 
@@ -1099,8 +1097,8 @@ function loadDriverRides() {
           '<div style="font-size:.72rem;color:#16a34a;font-weight:600;margin-top:2px">Driver: $'+dp+'</div>'+
           '<div style="font-size:.72rem;color:#775a19;font-weight:600">Company: $'+cp+'</div>'+
           '<div style="display:flex;gap:.375rem;margin-top:.625rem;justify-content:flex-end;flex-wrap:wrap">'+
-            '<button onclick="addToCalendar('"+b.id+"')" class="btn bo" style="font-size:.62rem"><span class="material-symbols-outlined" style="font-size:13px">calendar_add_on</span>Calendar</button>'+
-            '<button onclick="markPaidDr('"+b.id+"')" class="btn bgn" style="font-size:.62rem"><span class="material-symbols-outlined" style="font-size:13px">check_circle</span>Paid</button>'+
+            '<button onclick="addToCalendar('\''+b.id+'\'')" class="btn bo" style="font-size:.62rem"><span class="material-symbols-outlined" style="font-size:13px">calendar_add_on</span>Calendar</button>'+
+            '<button onclick="markPaidDr('\''+b.id+'\'')" class="btn bgn" style="font-size:.62rem"><span class="material-symbols-outlined" style="font-size:13px">check_circle</span>Paid</button>'+
           '</div>'+
         '</div>'+
       '</div>'+
@@ -1146,14 +1144,7 @@ function openDriverPay() {
     'th{text-align:left;font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;color:#aaa;padding:.5rem;border-bottom:2px solid #eee}'+
     '.total-row{display:flex;justify-content:space-between;padding:.75rem 0;border-top:2px solid #111;margin-top:.5rem}'+
     '.total-label{font-weight:700;font-size:.9rem}.total-val{font-weight:700;font-size:1.25rem;color:#16a34a}'+
-    '
-/* New Features CSS */
-#pwd-icon { cursor: pointer; color: #aaa; padding: 5px; position: absolute; right: 0; top: 50%; transform: translateY(-50%); }
-.debug-info { margin-top:1rem; font-size:0.6rem; color:#ccc; text-align:center; display:none; }
-.market-card { border-left-color: #1d4ed8 !important; }
-.broadcast-banner { background: #fffbeb; border: 1px solid #fef3c7; padding: 0.75rem; margin-bottom: 1rem; display: flex; align-items: center; justify-content: space-between; border-radius: 4px; }
-
-</style></head><body>'+
+    '</style></head><body>'+
     '<h1>Seacoast RVIP LLC</h1>'+
     '<div class="sub">Driver Invoice &nbsp;·&nbsp; Generated: '+today+'&nbsp;·&nbsp; Commission Rate: '+getDrRate()+'%</div>'+
     '<table><thead><tr>'+
@@ -1163,22 +1154,7 @@ function openDriverPay() {
     '<div class="total-row"><span class="total-label">Total Driver Payout</span><span class="total-val">$'+total.toFixed(2)+'</span></div>'+
     '<div class="total-row"><span class="total-label">Company Retained</span><span style="font-weight:700;font-size:1rem;color:#775a19">$'+(gross-total).toFixed(2)+'</span></div>'+
     '<p style="margin-top:2rem;font-size:.75rem;color:#aaa">Seacoast RVIP LLC · info@seacoastrvip.com · (978) 255-3140 · seacoastrvip.com</p>'+
-    '
-<!-- MODAL: ADD DRIVER -->
-<div id="m-dr" class="ov">
-  <div class="modal" style="max-width:400px">
-    <div class="mhd"><h3>Add/Edit Driver</h3><button onclick="closeM('m-dr')" class="mx">×</button></div>
-    <div class="mbdy">
-      <input id="dr-eid" type="hidden"/>
-      <div style="margin-bottom:1rem"><label class="flbl">Driver Name</label><input id="dr-name" class="finp" placeholder="Full Name"/></div>
-      <div style="margin-bottom:1rem"><label class="flbl">Phone Number</label><input id="dr-phone" class="finp" placeholder="978..."/></div>
-      <div style="margin-bottom:1rem"><label class="flbl">Login Password</label><input id="dr-pwd" class="finp" placeholder="Set a password"/></div>
-      <button onclick="saveDriver()" class="btn bg" style="width:100%;justify-content:center;padding:.8rem">Save Driver</button>
-    </div>
-  </div>
-</div>
-
-</body></html>';
+    '';
 
   var w = window.open('','_blank');
   w.document.write(html);
@@ -1261,13 +1237,26 @@ function fbErrHTML(extra){
 
 
 // ─────────────────────────────────────────────
-//  DRIVER MANAGEMENT
+//  NEW FEATURES LOGIC
 // ─────────────────────────────────────────────
+var curUser = null;
+
+function getDrivers() { try{return JSON.parse(localStorage.getItem('rv-drivers')||'[]');}catch(e){return[];} }
+function setDrivers(a) { localStorage.setItem('rv-drivers', JSON.stringify(a)); }
+
+function togglePwd() {
+  var x = document.getElementById('pwd');
+  var icon = document.getElementById('pwd-icon');
+  if (x.type === 'password') { x.type = 'text'; icon.textContent = 'visibility_off'; }
+  else { x.type = 'password'; icon.textContent = 'visibility'; }
+}
+
 function updateDriverSelects() {
   var drs = getDrivers();
   var html = '<option value="">— Unassigned —</option><option value="admin">Admin (Me)</option>';
   drs.forEach(function(d){ html += '<option value="'+d.id+'">'+e(d.name)+'</option>'; });
-  document.getElementById('fdr').innerHTML = html;
+  var el = document.getElementById('fdr');
+  if(el) el.innerHTML = html;
 }
 
 function renderDrivers() {
@@ -1279,8 +1268,8 @@ function renderDrivers() {
       '<div style="display:flex;justify-content:space-between;align-items:center">'+
         '<div><div class="cname">'+e(d.name)+'</div><div class="crow">'+e(d.phone)+' · Pwd: '+e(d.pwd)+'</div></div>'+
         '<div style="display:flex;gap:5px">'+
-          '<button onclick="openEditDriver(''+d.id+'')" class="btn bo">Edit</button>'+
-          '<button onclick="delDriver(''+d.id+'')" class="btn br">Delete</button>'+
+          '<button onclick="openEditDriver(\''+d.id+'\')" class="btn bo">Edit</button>'+
+          '<button onclick="delDriver(\''+d.id+'\')" class="btn br">Delete</button>'+
         '</div>'+
       '</div>'+
     '</div>';
@@ -1322,9 +1311,6 @@ function delDriver(id) {
   renderDrivers(); toast('Deleted');
 }
 
-// ─────────────────────────────────────────────
-//  MARKETPLACE & BROADCAST
-// ─────────────────────────────────────────────
 function renderMarket() {
   var bks = getBks().filter(function(b){ return !b.driverId || b.driverId === ''; });
   var el = document.getElementById('market-list');
@@ -1333,7 +1319,7 @@ function renderMarket() {
     return '<div class="card market-card">'+
       '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">'+
         '<div><div class="cname">'+e(b.name)+'</div><div class="crow">'+e(b.date)+' at '+fT(b.time)+'</div><div class="crow">'+e(b.pickup)+' → '+e(b.destination)+'</div></div>'+
-        '<button onclick="claimRide('"+b.id+"')" class="btn bgn">Claim Ride</button>'+
+        '<button onclick="claimRide(\''+b.id+'\')" class="btn bgn">Claim Ride</button>'+
       '</div>'+
     '</div>';
   }).join('');
@@ -1356,14 +1342,6 @@ function broadcastToDrivers() {
   window.open('sms:'+nums+'&body='+encodeURIComponent(msg));
 }
 
-// ─────────────────────────────────────────────
-//  HELPERS
-// ─────────────────────────────────────────────
-function openM(id){ document.getElementById(id).classList.add('open'); }
-function closeM(id){ document.getElementById(id).classList.remove('open'); }
-function toast(m){ var t=document.getElementById('toast'); t.textContent=m; t.style.display='block'; setTimeout(function(){t.style.display='none';},3000); }
-function fbErrHTML(m){ return '<div style="padding:2rem;text-align:center;color:#dc2626;font-size:.8rem"><span class="material-symbols-outlined" style="font-size:2rem;display:block;margin-bottom:.5rem">error</span>'+(m||'Firebase connection error')+'</div>'; }
-
 
 // ─────────────────────────────────────────────
 //  BOOT
@@ -1378,7 +1356,6 @@ window.addEventListener('DOMContentLoaded', function() {
     showDash();
   }
 });
-</script>
 
 <!-- MODAL: ADD DRIVER -->
 <div id="m-dr" class="ov">
