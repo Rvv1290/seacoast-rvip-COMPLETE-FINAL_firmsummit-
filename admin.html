@@ -215,7 +215,7 @@ body{font-family:'Inter',sans-serif;background:#f0f0f0;min-height:100vh}
         </div>
         <div style="font-size:.75rem;color:#888">Example: $145 fare × 70% = $101.50 driver payout · $43.50 company revenue</div>
       </div>
-      <div id="dr-list"><div class="empty-state"><span class="material-symbols-outlined">directions_car</span><div style="font-size:.8rem">Click Refresh to load driver ride records</div></div></div>
+      <div id="dr-list"><div class="empty"><span class="material-symbols-outlined">directions_car</span><div style="font-size:.8rem">Click Refresh to load driver ride records</div></div></div>
     </div>
 <div id="sec-messages" style="display:none">
       <div style="margin-bottom:1.5rem">
@@ -654,7 +654,7 @@ function openPay(id) {
 function paySMS() {
   if (!curPayBk) return;
   var msg = document.getElementById('pay-msg').value;
-  window.open('sms:'+curPayBk.phone+'&body='+encodeURIComponent(msg));
+  window.open('sms:'+curPayBk.phone+'?body='+encodeURIComponent(msg));
 }
 function payEmail() {
   if (!curPayBk) return;
@@ -901,7 +901,7 @@ function msgOne(){
   var ph=document.getElementById('msg-phone').value.replace(/\D/g,'');
   var txt=document.getElementById('msg-txt').value;
   if(ph.length<7){showMR('Enter a phone number first',false);return;}
-  window.open('sms:+'+ph+'&body='+encodeURIComponent(txt));
+  window.open('sms:+'+ph+'?body='+encodeURIComponent(txt));
   showMR('Text app opened!',true);
 }
 function msgWA(){
@@ -921,7 +921,7 @@ async function msgAll(){
     var phones=[]; snap.forEach(function(d){var p=d.data().phone;if(p)phones.push(p);});
     if(!phones.length){showMR('No clients found',false);return;}
     showMR('Opening for '+phones.length+' clients...',true);
-    phones.forEach(function(ph,i){setTimeout(function(){window.open('sms:'+ph+'&body='+encodeURIComponent(txt));},i*900);});
+    phones.forEach(function(ph,i){setTimeout(function(){window.open('sms:'+ph+'?body='+encodeURIComponent(txt));},i*900);});
   }catch(ex){showMR('Error: '+ex.message,false);}
 }
 function msgCopy(){
@@ -975,7 +975,7 @@ function loadDriverRides() {
 
   var el = document.getElementById('dr-list');
   if (!bks.length) {
-    el.innerHTML = '<div class="empty-state"><span class="material-symbols-outlined">directions_car</span><div style="font-size:.8rem">No rides yet</div></div>';
+    el.innerHTML = '<div class="empty"><span class="material-symbols-outlined">directions_car</span><div style="font-size:.8rem">No rides yet</div></div>';
     return;
   }
   el.innerHTML = bks.map(function(b) {
@@ -989,19 +989,19 @@ function loadDriverRides() {
           '<div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;margin-bottom:.375rem">'+
             '<span style="font-weight:700;font-size:.9rem">'+e(b.name)+'</span>'+
             '<span class="bdg '+(SC[b.status]||'byw')+'">'+e(b.status)+'</span>'+
-            (b.code?'<span class="code-tag">'+e(b.code)+'</span>':'')+
+            (b.code?'<span class="ctag">'+e(b.code)+'</span>':'')+
           '</div>'+
           '<div class="crow"><span class="material-symbols-outlined">calendar_today</span>'+e(b.date||'—')+' · '+fT(b.time)+'</div>'+
           '<div class="crow"><span class="material-symbols-outlined">directions_car</span>'+e(b.service||'—')+'</div>'+
           (b.pickup?'<div class="crow"><span class="material-symbols-outlined">location_on</span>'+e(b.pickup)+' → '+e(b.destination||'')+'</div>':'')+
         '</div>'+
         '<div style="text-align:right;min-width:160px">'+
-          '<div style="font-family:'Times New Roman',serif;font-size:1.5rem;font-weight:700;color:#111">$'+pr.toFixed(2)+'</div>'+
+          '<div style="font-family:\'Times New Roman\',serif;font-size:1.5rem;font-weight:700;color:#111">$'+pr.toFixed(2)+'</div>'+
           '<div style="font-size:.72rem;color:#16a34a;font-weight:600;margin-top:2px">Driver: $'+dp+'</div>'+
           '<div style="font-size:.72rem;color:#775a19;font-weight:600">Company: $'+cp+'</div>'+
           '<div style="display:flex;gap:.375rem;margin-top:.625rem;justify-content:flex-end;flex-wrap:wrap">'+
-            '<button onclick="addToCalendar(''+b.id+'')" class="btn bo" style="font-size:.62rem"><span class="material-symbols-outlined" style="font-size:13px">calendar_add_on</span>Calendar</button>'+
-            '<button onclick="markPaidDr(''+b.id+'')" class="btn bgn" style="font-size:.62rem"><span class="material-symbols-outlined" style="font-size:13px">check_circle</span>Paid</button>'+
+            "<button onclick=\"addToCalendar('"+ b.id +"')\" class=\"btn bo\" style=\"font-size:.62rem\"><span class=\"material-symbols-outlined\" style=\"font-size:13px\">calendar_add_on</span>Calendar</button>"+
+            "<button onclick=\"markPaidDr('"+ b.id +"')\" class=\"btn bgn\" style=\"font-size:.62rem\"><span class=\"material-symbols-outlined\" style=\"font-size:13px\">check_circle</span>Paid</button>"+
           '</div>'+
         '</div>'+
       '</div>'+
