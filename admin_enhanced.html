@@ -147,7 +147,8 @@ body{font-family:'Inter',sans-serif;background:#f0f0f0;min-height:100vh}
       <button class="tab" onclick="goTab('messages',this)" style="color:#1d4ed8;font-weight:700">Messages ✉</button>
       <button class="tab" onclick="goTab('driver',this)" style="color:#16a34a;font-weight:700">Driver ⊕</button>
       <button class="tab" onclick="goTab('manage-drivers',this)" style="color:#7c3aed;font-weight:700">Manage Drivers ⚙</button>
-    </div>
+    
+      <button class="tab" id="tab-market" onclick="goTab('market',this)" style="color:#d97706;font-weight:700">Marketplace 🛒</button></div>
 
     
     <div id="sec-manage-drivers" style="display:none">
@@ -429,6 +430,7 @@ try {
   console.log('Firebase ready');
 } catch(e) { console.warn('Firebase:', e.message); }
 
+
 // ─────────────────────────────────────────────
 //  STATE — plain variables, no JSON-in-onclick
 // ─────────────────────────────────────────────
@@ -436,7 +438,7 @@ var curTab    = 'all';
 var curPayBk  = null;   // booking open in pay modal
 var curClBk   = null;   // booking open in client modal
 var curQid    = null;
-var curUser   = null; // {name, role, id}   // quote docId being converted
+var curUser   = null; // {name, role, id}
 var QMAP      = {};     // docId -> quote object
 var MMAP      = {};     // key -> {title,text}
 
@@ -449,8 +451,6 @@ function setBks(a)   { localStorage.setItem('rv-bks', JSON.stringify(a)); }
 // ─────────────────────────────────────────────
 //  LOGIN
 // ─────────────────────────────────────────────
-
-
 function doLogin() {
   var p = document.getElementById('pwd').value;
   if (p === PWD) {
@@ -490,10 +490,19 @@ function showDash() {
       }
     });
   }
+  
+  // Show/hide Broadcast button based on role
+  var bBtn = document.getElementById('btn-broadcast');
+  if(bBtn) bBtn.style.display = (curUser && curUser.role === 'admin') ? 'flex' : 'none';
+  
   initDash();
 }
 
-function doLogout() { localStorage.removeItem('rv-auth'); location.reload(); }
+function doLogout() { 
+  localStorage.removeItem('rv-auth'); 
+  localStorage.removeItem('rv-user');
+  location.reload(); 
+}
 
 // ─────────────────────────────────────────────
 //  INIT
@@ -542,11 +551,8 @@ function renderBks() {
   document.getElementById('s3').textContent = '$'+rev.toFixed(0);
   document.getElementById('s4').textContent = aw;
 
-  
   var list = bks.filter(function(b){
-    if (curUser.role === 'driver' && b.driverId !== curUser.id) return false;
-    if (curTab==='upcoming') return b.status==='Confirmed'||b.status==='Pending';
-
+    if (curUser && curUser.role === 'driver' && b.driverId !== curUser.id) return false;
     if (curTab==='upcoming') return b.status==='Confirmed'||b.status==='Pending';
     if (curTab==='awaiting') return b.status==='Confirmed';
     if (curTab==='done')     return b.status==='Paid'||b.status==='Completed';
@@ -559,7 +565,6 @@ function renderBks() {
 
   var SC={Pending:'byw',Confirmed:'bbl',Paid:'bgr',Completed:'bgr',Cancelled:'brd'};
   lEl.innerHTML = list.map(function(b,i){
-    // Store booking in a data attribute index — no JSON in onclick
     return '<div class="card" data-bk-idx="'+i+'" id="bkcard'+b.id+'">' +
       '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:.75rem">' +
         '<div style="flex:1;min-width:180px">' +
@@ -577,11 +582,9 @@ function renderBks() {
         '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:.5rem">' +
           '<div style="font-family:\'Times New Roman\',serif;font-size:1.6rem;font-weight:700;color:#775a19">$'+(b.price||'—')+'</div>' +
           '<div style="display:flex;gap:.375rem;flex-wrap:wrap;justify-content:flex-end">' +
-            
-            '<button onclick="openPay(''+b.id+'')" class="btn bk"><span class="material-symbols-outlined" style="font-size:13px">send</span>Send</button>' +
-            '<button onclick="sendUpdate(''+b.id+'', \'onway\')" class="btn bdb"><span class="material-symbols-outlined" style="font-size:13px">directions_car</span>On Way</button>' +
-            '<button onclick="sendUpdate(''+b.id+'', \'arrived\')" class="btn bgn"><span class="material-symbols-outlined" style="font-size:13px">location_on</span>Arrived</button>' +
-
+            '<button onclick="openPay(\''+b.id+'\')" class="btn bk"><span class="material-symbols-outlined" style="font-size:13px">send</span>Send</button>' +
+            '<button onclick="sendUpdate(\''+b.id+'\', \'onway\')" class="btn bdb"><span class="material-symbols-outlined" style="font-size:13px">directions_car</span>On Way</button>' +
+            '<button onclick="sendUpdate(\''+b.id+'\', \'arrived\')" class="btn bgn"><span class="material-symbols-outlined" style="font-size:13px">location_on</span>Arrived</button>' +
             '<button onclick="openCl(\''+b.id+'\')"  class="btn bpp"><span class="material-symbols-outlined" style="font-size:12px">person_add</span></button>' +
             '<button onclick="openEdit(\''+b.id+'\')" class="btn bo"><span class="material-symbols-outlined" style="font-size:13px">edit</span></button>' +
             '<button onclick="delBk(\''+b.id+'\')"   class="btn br"><span class="material-symbols-outlined" style="font-size:13px">delete</span></button>' +
@@ -603,13 +606,15 @@ function goTab(tab, btn) {
   document.querySelectorAll('.tab').forEach(function(b){b.classList.remove('on');});
   btn.classList.add('on');
   ['sec-all','sec-clients','sec-quotes','sec-messages','sec-driver','sec-manage-drivers'].forEach(function(id){
-    document.getElementById(id).style.display='none';
+    var el = document.getElementById(id);
+    if(el) el.style.display='none';
   });
   if      (tab==='clients')  { document.getElementById('sec-clients').style.display='block';  loadClients(); }
   else if (tab==='quotes')   { document.getElementById('sec-quotes').style.display='block';   loadQuotes(); }
   else if (tab==='messages') { document.getElementById('sec-messages').style.display='block'; buildMsgs(); loadBcCount(); }
   else if (tab==='driver')   { document.getElementById('sec-driver').style.display='block';  loadDriverRides(); }
   else if (tab==='manage-drivers') { document.getElementById('sec-manage-drivers').style.display='block'; renderDrivers(); }
+  else if (tab==='market')   { document.getElementById('sec-market').style.display='block'; renderMarket(); }
   else                       { document.getElementById('sec-all').style.display='block';      renderBks(); }
 }
 
@@ -623,6 +628,7 @@ function openAdd() {
   document.getElementById('fst').value = 'Confirmed';
   curQid = null;
   genCode();
+  updateDriverSelects();
   openM('m-add');
 }
 
@@ -704,6 +710,7 @@ async function fbSync(bk) {
       pickup:bk.pickup||'', destination:bk.destination||'',
       vehicle:bk.vehicle||'', price:parseFloat(bk.price)||0,
       status:bk.status||'Confirmed', notes:bk.notes||'',
+      driverId:bk.driverId||'',
       source:bk.source||'admin', updatedAt:new Date().toISOString()
     },{merge:true});
   } catch(ex){console.warn('fbSync:',ex.message);}
@@ -711,7 +718,6 @@ async function fbSync(bk) {
 
 // ─────────────────────────────────────────────
 //  SEND PAYMENT
-//  Uses curPayBk variable — NO JSON in onclick
 // ─────────────────────────────────────────────
 function openPay(id) {
   var b = getBks().find(function(b){return b.id===id;});
@@ -762,7 +768,7 @@ function payMarkPaid() {
 }
 
 // ─────────────────────────────────────────────
-//  ADD TO CLIENT — uses curClBk variable
+//  ADD TO CLIENT
 // ─────────────────────────────────────────────
 function openCl(id) {
   curClBk = getBks().find(function(b){return b.id===id;});
@@ -778,7 +784,7 @@ function openCl(id) {
 
 async function saveToClient() {
   if (!curClBk) return;
-  if (!db) { clErr('Firebase not connected. Update Firebase Rules.'); return; }
+  if (!db) { clErr('Firebase not connected.'); return; }
   var raw = document.getElementById('cl-phone').value.replace(/\D/g,'');
   if (raw.length<7) { clErr('Enter a valid phone number'); return; }
   var ph = raw.length===10?'+1'+raw:(raw.length===11&&raw[0]==='1'?'+'+raw:'+'+raw);
@@ -798,8 +804,8 @@ async function saveToClient() {
       pickup:b.pickup||'',destination:b.destination||'',vehicle:b.vehicle||'',
       price:b.price||0,code:b.code||'',status:st,addedAt:new Date().toISOString()
     });
-    document.getElementById('cl-ok').style.display='block';
-    document.getElementById('cl-err').style.display='none';
+    document.getElementById('cl-ok').style.display = 'block';
+    document.getElementById('cl-err').style.display = 'none';
     toast('Trip added!');
     setTimeout(function(){closeM('m-cl');},2000);
   }catch(ex){clErr('Error: '+ex.message);}
@@ -840,7 +846,7 @@ async function loadClients() {
 }
 
 // ─────────────────────────────────────────────
-//  QUOTES TAB — uses QMAP, no JSON in onclick
+//  QUOTES TAB
 // ─────────────────────────────────────────────
 async function loadQuotes() {
   var el=document.getElementById('qt-list');
@@ -872,9 +878,9 @@ async function loadQuotes() {
           '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:.5rem">'+
             (q.passengers?'<div style="font-size:.78rem;color:#888">'+q.passengers+' pax</div>':'')+
             '<div style="display:flex;gap:.375rem;flex-wrap:wrap;justify-content:flex-end">'+
-              '<button onclick="convertQ(\''+q.docId+'\')" class="btn bgn" style="font-size:.65rem"><span class="material-symbols-outlined" style="font-size:13px">add_task</span>Convert</button>'+
-              '<button onclick="replyQ(\''+q.docId+'\')"   class="btn bdb" style="font-size:.65rem"><span class="material-symbols-outlined" style="font-size:13px">sms</span>Reply</button>'+
-              '<button onclick="dismissQ(\''+q.docId+'\')" class="btn bo"  style="font-size:.65rem"><span class="material-symbols-outlined" style="font-size:13px">close</span>Dismiss</button>'+
+              '<button onclick="convertQ(''+q.docId+'')" class="btn bgn" style="font-size:.65rem"><span class="material-symbols-outlined" style="font-size:13px">add_task</span>Convert</button>'+
+              '<button onclick="replyQ(''+q.docId+'')"   class="btn bdb" style="font-size:.65rem"><span class="material-symbols-outlined" style="font-size:13px">sms</span>Reply</button>'+
+              '<button onclick="dismissQ(''+q.docId+'')" class="btn bo"  style="font-size:.65rem"><span class="material-symbols-outlined" style="font-size:13px">close</span>Dismiss</button>'+
             '</div>'+
           '</div>'+
         '</div>'+
@@ -893,7 +899,7 @@ function convertQ(docId) {
   document.getElementById('fpu').value=q.pickup||''; document.getElementById('fde').value=q.destination||'';
   document.getElementById('fno').value=q.notes||''; document.getElementById('fpr').value='';
   document.getElementById('fst').value='Confirmed';
-  curQid=docId; genCode(); openM('m-add');
+  curQid=docId; genCode(); updateDriverSelects(); openM('m-add');
 }
 function replyQ(docId) {
   var q=QMAP[docId]; if(!q) return;
@@ -911,7 +917,7 @@ async function dismissQ(docId) {
 }
 
 // ─────────────────────────────────────────────
-//  MESSAGES — uses MMAP, no JSON in onclick
+//  MESSAGES
 // ─────────────────────────────────────────────
 var MSGS=[
   {cat:'After the Ride',color:'#16a34a',items:[
@@ -1023,10 +1029,9 @@ async function loadBcCount(){
   try{var s=await db.collection('clients').get();document.getElementById('bc-count').textContent=s.size+' clients';}catch(e){}
 }
 
-
-// ═══════════════════════════════════════
-// DRIVER RECORDS & ACCOUNTING
-// ═══════════════════════════════════════
+// ─────────────────────────────────────────────
+//  DRIVER RECORDS & ACCOUNTING
+// ─────────────────────────────────────────────
 var DR_RATE_KEY = 'dr-rate';
 
 function getDrRate() {
@@ -1041,8 +1046,11 @@ function saveDrRate() {
 }
 
 function loadDriverRides() {
-  var bks = getBks().filter(function(b){ return b.status !== 'Cancelled'; })
-                    .sort(function(a,b){ return new Date(b.date)-new Date(a.date); });
+  var bks = getBks().filter(function(b){ 
+    if (curUser && curUser.role === 'driver' && b.driverId !== curUser.id) return false;
+    return b.status !== 'Cancelled'; 
+  }).sort(function(a,b){ return new Date(b.date)-new Date(a.date); });
+  
   var rate = getDrRate() / 100;
   var totalPay = 0, totalRev = 0;
   bks.forEach(function(b){
@@ -1082,8 +1090,8 @@ function loadDriverRides() {
           '<div style="font-size:.72rem;color:#16a34a;font-weight:600;margin-top:2px">Driver: $'+dp+'</div>'+
           '<div style="font-size:.72rem;color:#775a19;font-weight:600">Company: $'+cp+'</div>'+
           '<div style="display:flex;gap:.375rem;margin-top:.625rem;justify-content:flex-end;flex-wrap:wrap">'+
-            "<button onclick=\"addToCalendar('"+ b.id +"')\" class=\"btn bo\" style=\"font-size:.62rem\"><span class=\"material-symbols-outlined\" style=\"font-size:13px\">calendar_add_on</span>Calendar</button>"+
-            "<button onclick=\"markPaidDr('"+ b.id +"')\" class=\"btn bgn\" style=\"font-size:.62rem\"><span class=\"material-symbols-outlined\" style=\"font-size:13px\">check_circle</span>Paid</button>"+
+            '<button onclick="addToCalendar(\''+b.id+'\')" class="btn bo" style="font-size:.62rem"><span class="material-symbols-outlined" style="font-size:13px">calendar_add_on</span>Calendar</button>'+
+            '<button onclick="markPaidDr(\''+b.id+'\')" class="btn bgn" style="font-size:.62rem"><span class="material-symbols-outlined" style="font-size:13px">check_circle</span>Paid</button>'+
           '</div>'+
         '</div>'+
       '</div>'+
@@ -1091,7 +1099,6 @@ function loadDriverRides() {
   }).join('');
 }
 
-// Mark ride as paid (driver paid out)
 function markPaidDr(id) {
   var bks=getBks(), b=bks.find(function(x){return x.id===id;});
   if(!b) return;
@@ -1101,9 +1108,11 @@ function markPaidDr(id) {
   toast('✅ Marked Completed — driver paid');
 }
 
-// Generate driver invoice as a printable window
 function openDriverPay() {
-  var bks   = getBks().filter(function(b){ return b.status!=='Cancelled'; });
+  var bks   = getBks().filter(function(b){ 
+    if (curUser && curUser.role === 'driver' && b.driverId !== curUser.id) return false;
+    return b.status!=='Cancelled'; 
+  });
   var rate  = getDrRate() / 100;
   var total = bks.reduce(function(s,b){ return s+(parseFloat(b.price)||0)*rate; }, 0);
   var gross = bks.reduce(function(s,b){ return s+(parseFloat(b.price)||0); }, 0);
@@ -1147,9 +1156,11 @@ function openDriverPay() {
   setTimeout(function(){ w.print(); }, 600);
 }
 
-// Export driver rides as CSV
 function exportDriverCSV() {
-  var bks  = getBks().filter(function(b){ return b.status!=='Cancelled'; });
+  var bks  = getBks().filter(function(b){ 
+    if (curUser && curUser.role === 'driver' && b.driverId !== curUser.id) return false;
+    return b.status!=='Cancelled'; 
+  });
   var rate = getDrRate() / 100;
   var rows = [['Date','Client','Phone','Service','Fare','Driver Pay','Company','Status','Code']];
   bks.forEach(function(b){
@@ -1166,47 +1177,24 @@ function exportDriverCSV() {
   toast('CSV downloaded!');
 }
 
-// ═══════════════════════════════════════
-// CALENDAR SYNC — Google Calendar
-// ═══════════════════════════════════════
 function addToCalendar(id) {
   var b = getBks().find(function(x){ return x.id===id; });
   if (!b) return;
-
-  // Build event datetime
-  var dateStr = b.date || ''; // YYYY-MM-DD
-  var timeStr = b.time || '08:00'; // HH:MM
+  var dateStr = b.date || '';
+  var timeStr = b.time || '08:00';
   if (!dateStr) { toast('Booking has no date set'); return; }
-
-  // Format for Google Calendar: YYYYMMDDTHHMMSS
   var dt = dateStr.replace(/-/g,'') + 'T' + timeStr.replace(':','') + '00';
-  // End time = 1 hour later
   var hour = parseInt(timeStr.split(':')[0])||8;
   var min  = parseInt(timeStr.split(':')[1])||0;
   var endH = String(hour+1).padStart(2,'0');
   var dte  = dateStr.replace(/-/g,'') + 'T' + endH + String(min).padStart(2,'0') + '00';
-
   var title    = encodeURIComponent('🚗 Seacoast RVIP — ' + (b.name||'Client'));
-  var details  = encodeURIComponent(
-    'Client: ' + (b.name||'—') + '\n' +
-    'Phone: '  + (b.phone||'—') + '\n' +
-    'Service: '+ (b.service||'—') + '\n' +
-    'Pickup: ' + (b.pickup||'—') + '\n' +
-    'Drop-off: '+(b.destination||'—') + '\n' +
-    'Fare: $'  + (b.price||'—') + '\n' +
-    'Code: '   + (b.code||'—')
-  );
+  var details  = encodeURIComponent('Client: ' + (b.name||'—') + '\n' + 'Phone: '  + (b.phone||'—') + '\n' + 'Service: '+ (b.service||'—') + '\n' + 'Pickup: ' + (b.pickup||'—') + '\n' + 'Drop-off: '+(b.destination||'—') + '\n' + 'Fare: $'  + (b.price||'—') + '\n' + 'Code: '   + (b.code||'—'));
   var location = encodeURIComponent(b.pickup || '');
-
-  var url = 'https://calendar.google.com/calendar/r/eventedit?text=' + title +
-            '&dates=' + dt + '/' + dte +
-            '&details=' + details + '&location=' + location;
-
+  var url = 'https://calendar.google.com/calendar/r/eventedit?text=' + title + '&dates=' + dt + '/' + dte + '&details=' + details + '&location=' + location;
   window.open(url, '_blank');
-  toast('Google Calendar opened — save the event!');
+  toast('Google Calendar opened!');
 }
-
-// ─────────────────────────────────────────────
 
 // ─────────────────────────────────────────────
 //  DRIVER MANAGEMENT
@@ -1223,8 +1211,8 @@ function renderDrivers() {
       '<div style="display:flex;justify-content:space-between;align-items:center">'+
         '<div><div style="font-weight:700">'+e(d.name)+'</div><div style="font-size:.75rem;color:#888">Password: '+e(d.pwd)+'</div></div>'+
         '<div style="display:flex;gap:.5rem">'+
-          '<button onclick="openEditDriver('"+d.id+"')" class="btn bo">Edit</button>'+
-          '<button onclick="delDriver('"+d.id+"')" class="btn br">Delete</button>'+
+          '<button onclick="openEditDriver(\''+d.id+'\')" class="btn bo">Edit</button>'+
+          '<button onclick="delDriver(\''+d.id+'\')" class="btn br">Delete</button>'+
         '</div>'+
       '</div>'+
     '</div>';
@@ -1278,15 +1266,116 @@ function updateDriverSelects() {
   document.getElementById('fdr').innerHTML = opts;
 }
 
-
 function sendUpdate(id, type) {
   var b = getBks().find(function(x){return x.id===id;});
   if(!b) return;
   var msg = "";
-  if(type === 'onway') msg = "Hi "+(b.name||'there').split(' ')[0]+"! This is your Seacoast RVIP driver. I'm on my way to pick you up! See you soon.";
-  if(type === 'arrived') msg = "Hi "+(b.name||'there').split(' ')[0]+"! I have arrived at your pickup location. I'm in the black SUV. Ready when you are!";
-  
+  if(type === 'onway') msg = "Hi "+(b.name||'there').split(' ')[0]+"! This is your Seacoast RVIP driver. I\'m on my way to pick you up! See you soon.";
+  if(type === 'arrived') msg = "Hi "+(b.name||'there').split(' ')[0]+"! I have arrived at your pickup location. I\'m in the black SUV. Ready when you are!";
   window.open('sms:'+b.phone+'?body='+encodeURIComponent(msg));
+}
+
+// ─────────────────────────────────────────────
+
+// ─────────────────────────────────────────────
+//  MARKETPLACE & BROADCAST
+// ─────────────────────────────────────────────
+function renderMarket() {
+  var bks = getBks().filter(function(b){ 
+    return (!b.driverId || b.driverId === '' || b.driverId === 'admin') && 
+           (b.status === 'Confirmed' || b.status === 'Pending'); 
+  }).sort(function(a,b){ return new Date(a.date)-new Date(b.date); });
+
+  var el = document.getElementById('market-list');
+  if (!bks.length) {
+    el.innerHTML = '<div class="empty"><span class="material-symbols-outlined">shopping_cart</span><div style="font-size:.8rem">No unassigned rides available</div></div>';
+    return;
+  }
+
+  el.innerHTML = bks.map(function(b) {
+    var SC = {Pending:'byw',Confirmed:'bbl'};
+    return '<div class="card" style="margin-bottom:.625rem; border-left-color:#d97706">'+
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:.75rem">'+
+        '<div style="flex:1;min-width:180px">'+
+          '<div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;margin-bottom:.375rem">'+
+            '<span style="font-weight:700;font-size:.9rem">'+e(b.name)+'</span>'+
+            '<span class="bdg '+(SC[b.status]||'byw')+'">'+e(b.status)+'</span>'+
+            (b.code?'<span class="ctag">'+e(b.code)+'</span>':'')+
+          '</div>'+
+          '<div class="crow"><span class="material-symbols-outlined">calendar_today</span>'+e(b.date||'—')+' · '+fT(b.time)+'</div>'+
+          '<div class="crow"><span class="material-symbols-outlined">directions_car</span>'+e(b.service||'—')+'</div>'+
+          (b.pickup?'<div class="crow"><span class="material-symbols-outlined">location_on</span>'+e(b.pickup)+' → '+e(b.destination||'')+'</div>':'')+
+        '</div>'+
+        '<div style="text-align:right;min-width:120px">'+
+          '<div style="font-family:\'Times New Roman\',serif;font-size:1.5rem;font-weight:700;color:#775a19">$'+(parseFloat(b.price)||0).toFixed(2)+'</div>'+
+          '<div style="margin-top:.625rem">'+
+            '<button onclick="claimRide(\''+b.id+'\')" class="btn bgn" style="width:100%"><span class="material-symbols-outlined" style="font-size:14px">check_circle</span>Claim Ride</button>'+
+          '</div>'+
+        '</div>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+async function claimRide(id) {
+  if(!confirm('Claim this ride? It will be assigned to you immediately.')) return;
+  var bks = getBks(), b = bks.find(function(x){return x.id===id;});
+  if(!b) return;
+  
+  // Update locally
+  b.driverId = curUser.id || 'admin';
+  setBks(bks);
+  
+  // Sync to Firebase
+  if(db) {
+    try {
+      await db.collection('bookings').doc(id).update({
+        driverId: b.driverId,
+        updatedAt: new Date().toISOString()
+      });
+      toast('Ride claimed successfully!');
+      renderMarket();
+      renderBks();
+    } catch(e) {
+      toast('Error claiming ride: ' + e.message);
+    }
+  } else {
+    toast('Ride claimed locally (Firebase not connected)');
+    renderMarket();
+    renderBks();
+  }
+}
+
+async function broadcastRides() {
+  var unassigned = getBks().filter(function(b){ 
+    return (!b.driverId || b.driverId === '' || b.driverId === 'admin') && 
+           (b.status === 'Confirmed' || b.status === 'Pending'); 
+  });
+  
+  if(unassigned.length === 0) {
+    toast('No unassigned rides to broadcast.');
+    return;
+  }
+
+  var drs = getDrivers();
+  var phones = drs.map(function(d){ return d.phone; }).filter(function(p){ return p && p.length > 5; });
+  
+  if(phones.length === 0) {
+    toast('No drivers with phone numbers found.');
+    return;
+  }
+
+  var msg = "Seacoast RVIP: " + unassigned.length + " new ride(s) available in the Marketplace! Log in now to claim them.\n\n" + SITE + "/admin.html";
+  
+  if(!confirm('Send broadcast text to ' + phones.length + ' drivers?')) return;
+  
+  phones.forEach(function(ph, i) {
+    setTimeout(function() {
+      window.open('sms:' + ph + '?body=' + encodeURIComponent(msg));
+    }, i * 1000);
+  });
+  
+  toast('Broadcast initiated!');
 }
 
 //  HELPERS
@@ -1313,7 +1402,6 @@ window.addEventListener('DOMContentLoaded', function(){
   if(localStorage.getItem('rv-auth')==='1'){
     curUser = JSON.parse(localStorage.getItem('rv-user') || '{"name":"Admin","role":"admin"}');
     showDash();
-  } else {
   } else {
     setTimeout(function(){document.getElementById('pwd').focus();},100);
   }
