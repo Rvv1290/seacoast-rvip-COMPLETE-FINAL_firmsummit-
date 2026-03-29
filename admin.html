@@ -227,6 +227,8 @@ body{font-family:'Inter',sans-serif;background:#f0f0f0;min-height:100vh}
     </div>
 
     <div id="sec-driver" style="display:none">
+      <div id="dr-profile-hero" style="display:none;margin-bottom:1.5rem"></div>
+
       <!-- Driver Records & Accounting -->
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin-bottom:1.5rem">
         <div class="sbox" style="background:#fff;border-bottom:3px solid #16a34a;padding:1.25rem;text-align:center">
@@ -1131,8 +1133,41 @@ function loadDriverRides(filterDrId) {
   var rate = getDrRate() / 100;
   var totalPay = 0, totalRev = 0;
   var filteredBks = bks;
-  if(filterDrId && typeof filterDrId === 'string') {
+  
+  var heroEl = document.getElementById('dr-profile-hero');
+  if (heroEl) heroEl.style.display = 'none';
+
+  if(filterDrId && typeof filterDrId === 'string' && curUser && curUser.role === 'admin') {
     filteredBks = bks.filter(function(b){ return b.driverId === filterDrId; });
+    var d = getDrivers().find(function(x){return x.id === filterDrId;});
+    if (d && heroEl) {
+      var picHtml = d.carPic ? '<img src="'+e(d.carPic)+'" style="width:120px;height:120px;object-fit:cover;border-radius:50%;border:4px solid #fff;box-shadow:0 4px 10px rgba(0,0,0,0.1);flex-shrink:0" alt="Car"/>' : '<div style="width:120px;height:120px;background:#eee;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#999;border:4px solid #fff;box-shadow:0 4px 10px rgba(0,0,0,0.1);flex-shrink:0"><span class="material-symbols-outlined" style="font-size:36px">directions_car</span></div>';
+      var verifiedBadge = d.docVerified ? '<span class="bdg bgn" style="margin-left:5px;font-size:12px">Docs Verified</span>' : '<span class="bdg brd" style="margin-left:5px;font-size:12px">Pending Docs</span>';
+      
+      heroEl.innerHTML = '<div style="background:#fff;border-radius:12px;padding:25px;box-shadow:0 4px 15px rgba(0,0,0,0.05);display:flex;gap:20px;align-items:center;flex-wrap:wrap">' +
+        picHtml +
+        '<div style="flex:1;min-width:250px">' +
+           '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:15px">' +
+             '<div>' +
+               '<h1 style="margin:0 0 5px 0;font-family:\'Times New Roman\',serif;font-size:2rem;color:#111">' + e(d.name) + verifiedBadge + '</h1>' +
+               '<div style="display:flex;gap:15px;color:#555;font-size:.9rem;flex-wrap:wrap;margin-bottom:10px">' +
+                 '<span><span class="material-symbols-outlined" style="font-size:14px;vertical-align:middle;margin-right:4px">phone</span>' + e(d.phone) + '</span>' +
+                 '<span><span class="material-symbols-outlined" style="font-size:14px;vertical-align:middle;margin-right:4px">home</span>' + e(d.address||'No Address Set') + '</span>' +
+               '</div>' +
+               '<div style="display:flex;gap:15px;color:#555;font-size:.9rem;flex-wrap:wrap">' +
+                 '<span><span class="material-symbols-outlined" style="font-size:14px;vertical-align:middle;margin-right:4px">directions_car</span>' + e(d.car||'No Car Specs') + ' (' + e(d.plate||'No Plate') + ')</span>' +
+                 '<span><span class="material-symbols-outlined" style="font-size:14px;vertical-align:middle;margin-right:4px">payments</span>' + e(d.payMethod||'No payout method') + ' (' + e(d.payDetails||'No handles') + ')</span>' +
+               '</div>' +
+             '</div>' +
+             '<div style="display:flex;gap:8px;flex-direction:column;align-items:flex-end">' +
+                '<button onclick="export1099(\''+d.id+'\')" class="btn bgn" style="font-size:.75rem"><span class="material-symbols-outlined" style="font-size:15px">receipt_long</span>Generate 1099</button>' +
+                '<button onclick="goTab(\'manage-drivers\')" class="btn bo" style="font-size:.75rem"><span class="material-symbols-outlined" style="font-size:15px">arrow_back</span>Back to CRM</button>' +
+             '</div>' +
+           '</div>' +
+        '</div>' +
+      '</div>';
+      heroEl.style.display = 'block';
+    }
   } else if(curUser && curUser.role === 'driver') {
     filteredBks = bks.filter(function(b){ return b.driverId === curUser.id; });
   }
@@ -1167,7 +1202,11 @@ function loadDriverRides(filterDrId) {
     if (curUser && curUser.role === 'admin') {
        driverControls = '<div style="font-size:.72rem;color:#16a34a;font-weight:600;margin-top:2px">Driver Payout: $'+totalPayout+'</div>'+
                         '<div style="font-size:.72rem;color:#775a19;font-weight:600">Company Retained: $'+cp+'</div>';
-       actionBtns = '<button onclick="addToCalendar(\''+b.id+'\')" class="btn bo" style="font-size:.62rem"><span class="material-symbols-outlined" style="font-size:13px">calendar_add_on</span>Calendar</button>'+
+       
+       var payDriverBtnHtml = b.driverStatus === 'Completed' && b.status !== 'Paid' ? '<button onclick="initiateDriverPay(\''+b.id+'\')" class="btn bg" style="font-size:.62rem;background:#10b981;color:#fff;border-color:#059669"><span class="material-symbols-outlined" style="font-size:13px">payments</span>Pay Driver</button>' : '';
+
+       actionBtns = payDriverBtnHtml + 
+                    '<button onclick="addToCalendar(\''+b.id+'\')" class="btn bo" style="font-size:.62rem"><span class="material-symbols-outlined" style="font-size:13px">calendar_add_on</span>Calendar</button>'+
                     '<button onclick="markPaidDr(\''+b.id+'\')" class="btn bgn" style="font-size:.62rem"><span class="material-symbols-outlined" style="font-size:13px">check_circle</span>Mark Paid</button>';
     } else {
        var dName = encodeURIComponent(curUser.name);
@@ -1341,18 +1380,24 @@ function renderDrivers() {
   el.innerHTML = drs.map(function(d){
     var verifiedBadge = d.docVerified ? '<span class="bdg bgn" style="margin-left:5px">Docs Verified</span>' : '<span class="bdg brd" style="margin-left:5px">Pending Docs</span>';
     var docLinkBtn = d.docLink ? '<button onclick="window.open(\''+d.docLink+'\', \'_blank\')" class="btn bo" style="font-size:.62rem;padding:4px"><span class="material-symbols-outlined" style="font-size:13px">description</span> DocuSign</button>' : '';
+    
+    var picHtml = d.carPic ? '<img src="'+e(d.carPic)+'" style="width:100px;height:70px;object-fit:cover;border-radius:6px;border:1px solid #ddd;flex-shrink:0" alt="Car"/>' : '<div style="width:100px;height:70px;background:#eee;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#999;font-size:11px;flex-shrink:0"><span class="material-symbols-outlined" style="font-size:24px">directions_car</span></div>';
 
-    return '<div class="card">'+
-      '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px">'+
-        '<div>'+
-           '<div class="cname">'+e(d.name) + verifiedBadge + '</div>'+
-           '<div class="crow" style="margin-top:6px"><span class="material-symbols-outlined" style="font-size:13px">phone</span> '+e(d.phone)+' &nbsp;·&nbsp; Pwd: <code>'+e(d.pwd)+'</code></div>'+
-           '<div style="margin-top:6px;display:flex;gap:5px">'+docLinkBtn+'</div>'+
+    return '<div class="card" style="cursor:pointer" onclick="if(event.target.tagName!==\'BUTTON\'&&event.target.tagName!==\'SPAN\'){loadDriverRides(\''+d.id+'\');goTab(\'driver\');}">'+
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:15px">'+
+        '<div style="display:flex;gap:15px;align-items:center;flex-wrap:wrap;flex:1">'+
+           picHtml+
+           '<div>'+
+              '<div class="cname" style="margin-bottom:4px">'+e(d.name) + verifiedBadge + '</div>'+
+              '<div class="crow" style="margin-top:2px;font-size:.8rem"><span class="material-symbols-outlined" style="font-size:13px">phone</span> '+e(d.phone)+' &nbsp;·&nbsp; Pwd: <code>'+e(d.pwd)+'</code></div>'+
+              '<div class="crow" style="margin-top:2px;font-size:.8rem"><span class="material-symbols-outlined" style="font-size:13px">directions_car</span> '+e(d.car||'No vehicle set')+' &nbsp;·&nbsp; Plate: '+e(d.plate||'N/A')+'</div>'+
+              '<div class="crow" style="margin-top:2px;font-size:.8rem"><span class="material-symbols-outlined" style="font-size:13px">payments</span> '+e(d.payMethod||'Not set')+' ('+e(d.payDetails||'No details')+')</div>'+
+              '<div style="margin-top:6px;display:flex;gap:5px">'+docLinkBtn+'</div>'+
+           '</div>'+
         '</div>'+
-        '<div style="display:flex;flex-wrap:wrap;gap:5px">'+
-          '<button onclick="loadDriverRides(\''+d.id+'\');goTab(\'driver\')" class="btn bbl" style="font-size:.7rem"><span class="material-symbols-outlined" style="font-size:14px">visibility</span>Rides</button>'+
-          '<button onclick="export1099(\''+d.id+'\')" class="btn bgn" style="font-size:.7rem"><span class="material-symbols-outlined" style="font-size:14px">receipt_long</span>1099 Report</button>'+
-          '<button onclick="openEditDriver(\''+d.id+'\')" class="btn bo"><span class="material-symbols-outlined" style="font-size:14px">edit</span></button>'+
+        '<div style="display:flex;flex-wrap:wrap;gap:5px;flex-direction:column;align-items:flex-end">'+
+          '<button onclick="loadDriverRides(\''+d.id+'\');goTab(\'driver\')" class="btn bbl" style="font-size:.7rem"><span class="material-symbols-outlined" style="font-size:14px">visibility</span>View Profile</button>'+
+          '<button onclick="openEditDriver(\''+d.id+'\')" class="btn bo"><span class="material-symbols-outlined" style="font-size:14px">edit</span>Edit Profile</button>'+
           '<button onclick="delDriver(\''+d.id+'\')" class="btn br"><span class="material-symbols-outlined" style="font-size:14px">delete</span></button>'+
         '</div>'+
       '</div>'+
