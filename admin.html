@@ -106,7 +106,6 @@ body{font-family:'Inter',sans-serif;background:#f0f0f0;min-height:100vh}
         <span onclick="togglePwd()" class="material-symbols-outlined" id="pwd-icon">visibility</span>
       </div>
       <div id="debug-info" class="debug-info"></div>
-        onkeydown="if(event.key==='Enter')doLogin()"/>
     </div>
     <div id="lerr" style="display:none;background:#fef2f2;border-left:3px solid #dc2626;padding:.625rem;font-size:.78rem;color:#dc2626;margin-bottom:1rem">
       Wrong password. Try again.
@@ -1100,8 +1099,8 @@ function loadDriverRides() {
           '<div style="font-size:.72rem;color:#16a34a;font-weight:600;margin-top:2px">Driver: $'+dp+'</div>'+
           '<div style="font-size:.72rem;color:#775a19;font-weight:600">Company: $'+cp+'</div>'+
           '<div style="display:flex;gap:.375rem;margin-top:.625rem;justify-content:flex-end;flex-wrap:wrap">'+
-            '<button onclick="addToCalendar(''+b.id+'')" class="btn bo" style="font-size:.62rem"><span class="material-symbols-outlined" style="font-size:13px">calendar_add_on</span>Calendar</button>'+
-            '<button onclick="markPaidDr(''+b.id+'')" class="btn bgn" style="font-size:.62rem"><span class="material-symbols-outlined" style="font-size:13px">check_circle</span>Paid</button>'+
+            '<button onclick="addToCalendar('"+b.id+"')" class="btn bo" style="font-size:.62rem"><span class="material-symbols-outlined" style="font-size:13px">calendar_add_on</span>Calendar</button>'+
+            '<button onclick="markPaidDr('"+b.id+"')" class="btn bgn" style="font-size:.62rem"><span class="material-symbols-outlined" style="font-size:13px">check_circle</span>Paid</button>'+
           '</div>'+
         '</div>'+
       '</div>'+
@@ -1334,7 +1333,7 @@ function renderMarket() {
     return '<div class="card market-card">'+
       '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">'+
         '<div><div class="cname">'+e(b.name)+'</div><div class="crow">'+e(b.date)+' at '+fT(b.time)+'</div><div class="crow">'+e(b.pickup)+' → '+e(b.destination)+'</div></div>'+
-        '<button onclick="claimRide(''+b.id+'')" class="btn bgn">Claim Ride</button>'+
+        '<button onclick="claimRide('"+b.id+"')" class="btn bgn">Claim Ride</button>'+
       '</div>'+
     '</div>';
   }).join('');
