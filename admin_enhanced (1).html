@@ -94,8 +94,10 @@ body{font-family:'Inter',sans-serif;background:#f0f0f0;min-height:100vh}
     <div class="lsub">Admin Dashboard</div>
     <div style="margin-bottom:1rem">
       <label class="flbl">Password</label>
-      <input id="pwd" type="password" class="finp" placeholder="Enter password"
-        onkeydown="if(event.key==='Enter')doLogin()"/>
+      <div style="position: relative;">
+        <input id="pwd" type="password" class="finp" placeholder="Enter password" onkeydown="if(event.key===\'Enter\')doLogin()"/>
+        <span onclick="togglePwd()" style="position: absolute; right: 0; top: 50%; transform: translateY(-50%); cursor: pointer; color: #aaa; padding: 5px;" class="material-symbols-outlined" id="pwd-icon">visibility</span>
+      </div>
     </div>
     <div id="lerr" style="display:none;background:#fef2f2;border-left:3px solid #dc2626;padding:.625rem;font-size:.78rem;color:#dc2626;margin-bottom:1rem">
       Wrong password. Try again.
@@ -451,8 +453,21 @@ function setBks(a)   { localStorage.setItem('rv-bks', JSON.stringify(a)); }
 // ─────────────────────────────────────────────
 //  LOGIN
 // ─────────────────────────────────────────────
+
+function togglePwd() {
+  var x = document.getElementById('pwd');
+  var icon = document.getElementById('pwd-icon');
+  if (x.type === 'password') {
+    x.type = 'text';
+    icon.textContent = 'visibility_off';
+  } else {
+    x.type = 'password';
+    icon.textContent = 'visibility';
+  }
+}
+
 function doLogin() {
-  var p = document.getElementById('pwd').value;
+  var p = document.getElementById('pwd').value.trim();
   if (p === PWD) {
     curUser = {name:'Admin', role:'admin'};
     localStorage.setItem('rv-auth','1');
