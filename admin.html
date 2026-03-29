@@ -535,8 +535,722 @@ function doLogout() {
   location.reload(); 
 }
 
+function initDash() {
+  document.getElementById('today-lbl').textContent =
+    new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+  renderBks();
+  if (db) {
+    getBks().forEach(function(b){ fbSync(b); });
+    pullFromFirebase();
+    db.collection('clients').get()
+      .then(function(s){ document.getElementById('s5').textContent = s.size; })
+      .catch(function(){});
+  }
+}
+
+// Pull website-submitted bookings not yet in localStorage
+async function pullFromFirebase() {
+  if (!db) return;
+  try {
+    var snap = await db.collection('bookings').orderBy('createdAt','desc').limit(200).get();
+    var local = getBks();
+    var ids = {};
+    local.forEach(function(b){ ids[b.id] = true; });
+    var added = 0;
+    snap.forEach(function(d){
+      var b = d.data();
+      if (b.id && !ids[b.id]) { local.push(b); added++; }
+    });
+    if (added > 0) { setBks(local); renderBks(); toast(added+' new booking'+(added>1?'s':'')+' from website!'); }
+  } catch(e) { console.warn('pull:', e.message); }
+}
+
 // ─────────────────────────────────────────────
-//  INIT & RENDER (REMAINING LOGIC)
+//  RENDER
 // ─────────────────────────────────────────────
-// (Rest of the functions extracted from the original file)
-</script></body></html>
+function renderBks() {
+  var bks = getBks();
+  var up  = bks.filter(function(b){return b.status==='Confirmed'||b.status==='Pending';}).length;
+  var rev = bks.filter(function(b){return b.status==='Paid'||b.status==='Completed';})
+               .reduce(function(s,b){return s+(parseFloat(b.price)||0);},0);
+  var aw  = bks.filter(function(b){return b.status==='Confirmed';}).length;
+  document.getElementById('s1').textContent = bks.length;
+  document.getElementById('s2').textContent = up;
+  document.getElementById('s3').textContent = '$'+rev.toFixed(0);
+  document.getElementById('s4').textContent = aw;
+
+  var list = bks.filter(function(b){
+    if (curTab==='upcoming') return b.status==='Confirmed'||b.status==='Pending';
+    if (curTab==='awaiting') return b.status==='Confirmed';
+    if (curTab==='done')     return b.status==='Paid'||b.status==='Completed';
+    return true;
+  }).sort(function(a,b){ return new Date(a.date)-new Date(b.date); });
+
+  var lEl=document.getElementById('bk-list'), eEl=document.getElementById('bk-empty');
+  if (!list.length) { lEl.innerHTML=''; eEl.style.display='block'; return; }
+  eEl.style.display='none';
+
+  var SC={Pending:'byw',Confirmed:'bbl',Paid:'bgr',Completed:'bgr',Cancelled:'brd'};
+  lEl.innerHTML = list.map(function(b,i){
+    // Store booking in a data attribute index — no JSON in onclick
+    return '<div class="card" data-bk-idx="'+i+'" id="bkcard'+b.id+'">' +
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:.75rem">' +
+        '<div style="flex:1;min-width:180px">' +
+          '<div style="display:flex;align-items:center;gap:.625rem;flex-wrap:wrap;margin-bottom:.5rem">' +
+            '<span class="cname">'+e(b.name)+'</span>' +
+            '<span class="bdg '+(SC[b.status]||'byw')+'">'+e(b.status)+'</span>' +
+            (b.code?'<span class="ctag">'+e(b.code)+'</span>':'') +
+            (b.source==='website-form'?'<span class="bdg bpu">Web</span>':'') +
+          '</div>' +
+          '<div class="crow"><span class="material-symbols-outlined">calendar_today</span>'+e(b.date||'—')+' at '+fT(b.time)+'</div>' +
+          '<div class="crow"><span class="material-symbols-outlined">directions_car</span>'+e(b.service||'—')+'</div>' +
+          (b.pickup?'<div class="crow"><span class="material-symbols-outlined">location_on</span>'+e(b.pickup)+' → '+e(b.destination||'')+'</div>':'') +
+          '<div class="crow"><span class="material-symbols-outlined">phone</span>'+e(b.phone||'—')+(b.email?' · '+e(b.email):'')+'</div>' +
+        '</div>' +
+        '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:.5rem">' +
+          '<div style="font-family:\'Times New Roman\',serif;font-size:1.6rem;font-weight:700;color:#775a19">$'+(b.price||'—')+'</div>' +
+          '<div style="display:flex;gap:.375rem;flex-wrap:wrap;justify-content:flex-end">' +
+            '<button onclick="openPay(\''+b.id+'\')" class="btn bk"><span class="material-symbols-outlined" style="font-size:13px">send</span>Send</button>' +
+            '<button onclick="openCl(\''+b.id+'\')"  class="btn bpp"><span class="material-symbols-outlined" style="font-size:12px">person_add</span></button>' +
+            '<button onclick="openEdit(\''+b.id+'\')" class="btn bo"><span class="material-symbols-outlined" style="font-size:13px">edit</span></button>' +
+            '<button onclick="delBk(\''+b.id+'\')"   class="btn br"><span class="material-symbols-outlined" style="font-size:13px">delete</span></button>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function e(s){ if(!s)return''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function fT(t){ if(!t)return'—'; try{var p=t.split(':'),h=parseInt(p[0]),m=p[1],a=h>=12?'PM':'AM';h=h%12||12;return h+':'+m+' '+a;}catch(x){return t;} }
+
+// ─────────────────────────────────────────────
+//  TABS
+// ─────────────────────────────────────────────
+function goTab(tab, btn) {
+  curTab = tab;
+  document.querySelectorAll('.tab').forEach(function(b){b.classList.remove('on');});
+  btn.classList.add('on');
+  ['sec-all','sec-clients','sec-quotes','sec-messages','sec-driver','sec-manage-drivers','sec-market'].forEach(function(id){
+    document.getElementById(id).style.display='none';
+  });
+  if      (tab==='clients')  { document.getElementById('sec-clients').style.display='block';  loadClients(); }
+  else if (tab==='quotes')   { document.getElementById('sec-quotes').style.display='block';   loadQuotes(); }
+  else if (tab==='messages') { document.getElementById('sec-messages').style.display='block'; buildMsgs(); loadBcCount(); }
+  else if (tab==='driver')   { document.getElementById('sec-driver').style.display='block';  loadDriverRides(); }
+  else if (tab==='manage-drivers') { document.getElementById('sec-manage-drivers').style.display='block'; renderDrivers(); }
+  else if (tab==='market')   { document.getElementById('sec-market').style.display='block'; renderMarket(); }
+  else                       { document.getElementById('sec-all').style.display='block';      renderBks(); }
+}
+
+// ─────────────────────────────────────────────
+//  ADD / EDIT BOOKING
+// ─────────────────────────────────────────────
+function openAdd() {
+  document.getElementById('add-title').textContent = 'New Booking';
+  document.getElementById('eid').value = '';
+  ['fn','fp','fe','fd','ft','fpu','fde','fpr','fco','fno'].forEach(function(id){document.getElementById(id).value='';});
+  document.getElementById('fst').value = 'Confirmed';
+  curQid = null;
+  genCode(); updateDriverSelects();
+  openM('m-add');
+}
+
+function openEdit(id) {
+  var b = getBks().find(function(b){return b.id===id;});
+  if (!b) return;
+  document.getElementById('add-title').textContent = 'Edit Booking';
+  document.getElementById('eid').value = id;
+  document.getElementById('fn').value  = b.name||'';
+  document.getElementById('fp').value  = b.phone||'';
+  document.getElementById('fe').value  = b.email||'';
+  document.getElementById('fsv').value = b.service||'';
+  document.getElementById('fd').value  = b.date||'';
+  document.getElementById('ft').value  = b.time||'';
+  document.getElementById('fpu').value = b.pickup||'';
+  document.getElementById('fde').value = b.destination||'';
+  document.getElementById('fpr').value = b.price||'';
+  document.getElementById('fst').value = b.status||'Confirmed';
+  document.getElementById('fco').value = b.code||'';
+  document.getElementById('fve').value = b.vehicle||'';
+  document.getElementById('fno').value = b.notes||''; updateDriverSelects(); document.getElementById('fdr').value = b.driverId||'';
+  curQid = null;
+  openM('m-add');
+}
+
+function genCode() {
+  var c='ABCDEFGHJKLMNPQRSTUVWXYZ', n=String(Math.floor(Math.random()*9000)+1000);
+  var r=c[Math.floor(Math.random()*c.length)]+c[Math.floor(Math.random()*c.length)]+c[Math.floor(Math.random()*c.length)];
+  document.getElementById('fco').value = 'RVIP-'+n+'-'+r;
+}
+
+function saveBk() {
+  var name=document.getElementById('fn').value.trim(), phone=document.getElementById('fp').value.trim();
+  var price=document.getElementById('fpr').value.trim(), date=document.getElementById('fd').value.trim();
+  if (!name||!phone||!price||!date){toast('Fill in Name, Phone, Price and Date');return;}
+  var bks=getBks(), eid=document.getElementById('eid').value;
+  var orig=eid?bks.find(function(b){return b.id===eid;}):null;
+  var bk={
+    id:eid||Date.now().toString(), name:name, phone:phone,
+    email:document.getElementById('fe').value.trim(),
+    service:document.getElementById('fsv').value, date:date,
+    time:document.getElementById('ft').value,
+    pickup:document.getElementById('fpu').value.trim(),
+    destination:document.getElementById('fde').value.trim(),
+    vehicle:document.getElementById('fve').value,
+    price:parseFloat(price),
+    status:document.getElementById('fst').value,
+    code:(document.getElementById('fco').value.trim()||'').toUpperCase(),
+    notes:document.getElementById('fno').value.trim(), driverId:document.getElementById('fdr').value,
+    source:'admin', createdAt:orig?orig.createdAt:new Date().toISOString()
+  };
+  if (eid){var i=bks.findIndex(function(b){return b.id===eid;});if(i>-1)bks[i]=bk;}
+  else bks.push(bk);
+  setBks(bks); fbSync(bk);
+  if (curQid&&db){db.collection('quotes').doc(curQid).update({status:'converted'}).catch(function(){});curQid=null;}
+  closeM('m-add'); renderBks(); toast(eid?'Booking updated!':'Booking saved!');
+}
+
+function delBk(id) {
+  if(!confirm('Delete this booking?')) return;
+  setBks(getBks().filter(function(b){return b.id!==id;}));
+  if(db) db.collection('bookings').doc(id).delete().catch(function(){});
+  renderBks(); toast('Deleted');
+}
+
+// ─────────────────────────────────────────────
+//  FIREBASE SYNC
+// ─────────────────────────────────────────────
+async function fbSync(bk) {
+  if(!db) return;
+  try {
+    await db.collection('bookings').doc(bk.id).set({
+      id:bk.id, code:(bk.code||'').toUpperCase(),
+      name:bk.name||'', phone:bk.phone||'', email:bk.email||'',
+      service:bk.service||'', date:bk.date||'', time:bk.time||'',
+      pickup:bk.pickup||'', destination:bk.destination||'',
+      vehicle:bk.vehicle||'', price:parseFloat(bk.price)||0,
+      status:bk.status||'Confirmed', notes:bk.notes||'',
+      driverId:bk.driverId||'', source:bk.source||'admin', updatedAt:new Date().toISOString()
+    },{merge:true});
+  } catch(ex){console.warn('fbSync:',ex.message);}
+}
+
+// ─────────────────────────────────────────────
+//  SEND PAYMENT
+//  Uses curPayBk variable — NO JSON in onclick
+// ─────────────────────────────────────────────
+function openPay(id) {
+  var b = getBks().find(function(b){return b.id===id;});
+  if (!b) return;
+  curPayBk = b;
+
+  var link = SITE+'/payment.html?code='+encodeURIComponent(b.code||'');
+  var msg  = 'Hi '+((b.name||'').split(' ')[0]||'there')+'! Your Seacoast RVIP ride is confirmed for '+
+             (b.date||'—')+' at '+fT(b.time)+
+             '.\n\nFare: $'+b.price+'\nPay here: '+link+
+             '\n\nCode: '+(b.code||'—')+'\n— Ramon (978) 255-3140';
+
+  document.getElementById('pay-info').innerHTML =
+    '<strong>'+e(b.name)+'</strong><br>'+
+    '<span style="color:#666;font-size:.78rem">'+e(b.phone)+' · '+e(b.date||'—')+' · $'+b.price+'</span>';
+  document.getElementById('pay-link-txt').textContent = link;
+  document.getElementById('pay-amount').textContent   = '$'+b.price;
+  document.getElementById('pay-msg').value            = msg;
+  openM('m-pay');
+}
+
+function paySMS() {
+  if (!curPayBk) return;
+  var msg = document.getElementById('pay-msg').value;
+  window.open('sms:'+curPayBk.phone+'&body='+encodeURIComponent(msg));
+}
+function payEmail() {
+  if (!curPayBk) return;
+  var msg = document.getElementById('pay-msg').value;
+  var sub = encodeURIComponent('Seacoast RVIP — Ride Confirmed');
+  window.open('mailto:'+(curPayBk.email||curPayBk.phone)+'?subject='+sub+'&body='+encodeURIComponent(msg));
+}
+function payWA() {
+  if (!curPayBk) return;
+  var msg  = document.getElementById('pay-msg').value;
+  var num  = (curPayBk.phone||'').replace(/\D/g,'');
+  window.open('https://wa.me/'+num+'?text='+encodeURIComponent(msg));
+}
+function payCopy() {
+  var link = SITE+'/payment.html?code='+encodeURIComponent((curPayBk&&curPayBk.code)||'');
+  navigator.clipboard.writeText(link).then(function(){toast('Link copied!');}).catch(function(){toast('Could not copy');});
+}
+function payMarkPaid() {
+  if (!curPayBk) return;
+  var bks=getBks(), b=bks.find(function(x){return x.id===curPayBk.id;});
+  if(b){b.status='Paid';setBks(bks);fbSync(b);}
+  closeM('m-pay'); renderBks(); toast('✅ Marked as Paid!');
+}
+
+// ─────────────────────────────────────────────
+//  ADD TO CLIENT — uses curClBk variable
+// ─────────────────────────────────────────────
+function openCl(id) {
+  curClBk = getBks().find(function(b){return b.id===id;});
+  if (!curClBk) return;
+  document.getElementById('cl-info').innerHTML =
+    '<strong>'+e(curClBk.name)+'</strong> — '+e(curClBk.service)+
+    '<br><span style="color:#888;font-size:.78rem">'+e(curClBk.date)+' · $'+curClBk.price+'</span>';
+  document.getElementById('cl-phone').value = curClBk.phone||'';
+  document.getElementById('cl-err').style.display = 'none';
+  document.getElementById('cl-ok').style.display  = 'none';
+  openM('m-cl');
+}
+
+async function saveToClient() {
+  if (!curClBk) return;
+  if (!db) { clErr('Firebase not connected. Update Firebase Rules.'); return; }
+  var raw = document.getElementById('cl-phone').value.replace(/\D/g,'');
+  if (raw.length<7) { clErr('Enter a valid phone number'); return; }
+  var ph = raw.length===10?'+1'+raw:(raw.length===11&&raw[0]==='1'?'+'+raw:'+'+raw);
+  var b=curClBk, st=document.getElementById('cl-status').value;
+  try {
+    var cid=null, fmts=[ph,raw,'+1'+raw.slice(-10)];
+    for(var i=0;i<fmts.length&&!cid;i++){
+      var s=await db.collection('clients').where('phone','==',fmts[i]).limit(1).get();
+      if(!s.empty) s.forEach(function(d){cid=d.id;});
+    }
+    if(!cid){
+      var ref=db.collection('clients').doc(); cid=ref.id;
+      await ref.set({phone:ph,name:b.name||'',email:b.email||'',address:b.pickup||'',createdAt:new Date().toISOString(),createdByAdmin:true});
+    }
+    await db.collection('clients').doc(cid).collection('trips').add({
+      service:b.service||'',date:b.date||'',time:b.time||'',
+      pickup:b.pickup||'',destination:b.destination||'',vehicle:b.vehicle||'',
+      price:b.price||0,code:b.code||'',status:st,addedAt:new Date().toISOString()
+    });
+    document.getElementById('cl-ok').style.display='block';
+    document.getElementById('cl-err').style.display='none';
+    toast('Trip added!');
+    setTimeout(function(){closeM('m-cl');},2000);
+  }catch(ex){clErr('Error: '+ex.message);}
+}
+function clErr(m){var el=document.getElementById('cl-err');el.textContent=m;el.style.display='block';}
+
+// ─────────────────────────────────────────────
+//  CLIENTS TAB
+// ─────────────────────────────────────────────
+async function loadClients() {
+  var el=document.getElementById('cl-list');
+  if(!db){el.innerHTML=fbErrHTML();return;}
+  el.innerHTML='<div style="text-align:center;padding:2rem;color:#aaa;font-size:.8rem">Loading...</div>';
+  try{
+    var snap=await db.collection('clients').orderBy('createdAt','desc').limit(100).get();
+    var list=[]; snap.forEach(function(d){list.push(Object.assign({id:d.id},d.data()));});
+    document.getElementById('s5').textContent=list.length;
+    if(!list.length){el.innerHTML='<div class="empty"><span class="material-symbols-outlined">people</span><div style="font-size:.8rem">No clients yet</div></div>';return;}
+    el.innerHTML=list.map(function(c){
+      var since=c.createdAt?new Date(c.createdAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'—';
+      var tag=c.createdByAdmin?'<span class="bdg byw" style="margin-left:6px">Admin added</span>':'<span class="bdg bgr" style="margin-left:6px">Self signup</span>';
+      return '<div class="card" style="margin-bottom:.625rem">'+
+        '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:.75rem">'+
+          '<div>'+
+            '<div style="font-weight:700;margin-bottom:4px">'+e(c.name||c.phone||'Unknown')+tag+'</div>'+
+            '<div class="crow"><span class="material-symbols-outlined">phone</span>'+e(c.phone||'—')+'</div>'+
+            (c.email?'<div class="crow"><span class="material-symbols-outlined">mail</span>'+e(c.email)+'</div>':'')+
+            (c.address?'<div class="crow"><span class="material-symbols-outlined">home</span>'+e(c.address)+'</div>':'')+
+          '</div>'+
+          '<div style="text-align:right">'+
+            '<div style="font-size:.68rem;color:#aaa;margin-bottom:.5rem">Since '+since+'</div>'+
+            '<a href="sms:'+(c.phone||'')+'" class="btn bk" style="text-decoration:none;font-size:.62rem"><span class="material-symbols-outlined" style="font-size:12px">sms</span>Text</a>'+
+          '</div>'+
+        '</div>'+
+      '</div>';
+    }).join('');
+  }catch(ex){el.innerHTML=fbErrHTML(ex.message);}
+}
+
+// ─────────────────────────────────────────────
+//  QUOTES TAB — uses QMAP, no JSON in onclick
+// ─────────────────────────────────────────────
+async function loadQuotes() {
+  var el=document.getElementById('qt-list');
+  if(!db){el.innerHTML=fbErrHTML();return;}
+  el.innerHTML='<div style="text-align:center;padding:2rem;color:#aaa;font-size:.8rem">Loading...</div>';
+  try{
+    var snap=await db.collection('quotes').orderBy('createdAt','desc').limit(100).get();
+    QMAP={};
+    var list=[]; snap.forEach(function(d){var q=Object.assign({docId:d.id},d.data());QMAP[d.id]=q;list.push(q);});
+    if(!list.length){el.innerHTML='<div class="empty"><span class="material-symbols-outlined">request_quote</span><div style="font-size:.8rem">No quote requests yet</div></div>';return;}
+    var SC2={converted:'bgr',dismissed:'brd'};
+    el.innerHTML=list.map(function(q){
+      var since=q.createdAt?new Date(q.createdAt).toLocaleDateString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):'—';
+      var badge=SC2[q.status]||'byw', label=q.status==='converted'?'Converted':q.status==='dismissed'?'Dismissed':'New';
+      return '<div class="card green" style="margin-bottom:.75rem">'+
+        '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:.75rem">'+
+          '<div style="flex:1;min-width:180px">'+
+            '<div style="display:flex;align-items:center;gap:.625rem;flex-wrap:wrap;margin-bottom:.5rem">'+
+              '<span class="cname">'+e(q.name||'—')+'</span>'+
+              '<span class="bdg '+badge+'">'+label+'</span>'+
+            '</div>'+
+            '<div class="crow"><span class="material-symbols-outlined">directions_car</span>'+e(q.service||'—')+'</div>'+
+            (q.date?'<div class="crow"><span class="material-symbols-outlined">calendar_today</span>'+e(q.date)+(q.time?' at '+q.time:'')+'</div>':'')+
+            (q.pickup?'<div class="crow"><span class="material-symbols-outlined">location_on</span>'+e(q.pickup)+' → '+e(q.destination||'')+'</div>':'')+
+            '<div class="crow"><span class="material-symbols-outlined">phone</span>'+e(q.phone||'—')+(q.email?' · '+e(q.email):'')+'</div>'+
+            (q.notes?'<div class="crow"><span class="material-symbols-outlined">notes</span>'+e(q.notes)+'</div>':'')+
+            '<div style="font-size:.65rem;color:#bbb;margin-top:.375rem">Received '+since+'</div>'+
+          '</div>'+
+          '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:.5rem">'+
+            (q.passengers?'<div style="font-size:.78rem;color:#888">'+q.passengers+' pax</div>':'')+
+            '<div style="display:flex;gap:.375rem;flex-wrap:wrap;justify-content:flex-end">'+
+              '<button onclick="convertQ(\''+q.docId+'\')" class="btn bgn" style="font-size:.65rem"><span class="material-symbols-outlined" style="font-size:13px">add_task</span>Convert</button>'+
+              '<button onclick="replyQ(\''+q.docId+'\')"   class="btn bdb" style="font-size:.65rem"><span class="material-symbols-outlined" style="font-size:13px">sms</span>Reply</button>'+
+              '<button onclick="dismissQ(\''+q.docId+'\')" class="btn bo"  style="font-size:.65rem"><span class="material-symbols-outlined" style="font-size:13px">close</span>Dismiss</button>'+
+            '</div>'+
+          '</div>'+
+        '</div>'+
+      '</div>';
+    }).join('');
+  }catch(ex){el.innerHTML=fbErrHTML(ex.message);}
+}
+
+function convertQ(docId) {
+  var q=QMAP[docId]; if(!q) return;
+  document.getElementById('add-title').textContent = 'New Booking (from Quote)';
+  document.getElementById('eid').value='';
+  document.getElementById('fn').value=q.name||'';  document.getElementById('fp').value=q.phone||'';
+  document.getElementById('fe').value=q.email||''; document.getElementById('fsv').value=q.service||'';
+  document.getElementById('fd').value=q.date||'';  document.getElementById('ft').value=q.time||'';
+  document.getElementById('fpu').value=q.pickup||''; document.getElementById('fde').value=q.destination||'';
+  document.getElementById('fno').value=q.notes||''; document.getElementById('fpr').value='';
+  document.getElementById('fst').value='Confirmed';
+  curQid=docId; genCode(); updateDriverSelects(); openM('m-add');
+}
+function replyQ(docId) {
+  var q=QMAP[docId]; if(!q) return;
+  var msg='Hi '+(q.name||'there').split(' ')[0]+'! Thank you for your quote request for '+(q.service||'your trip')+'.\n\nMy quote: $[ADD PRICE HERE]\n\nReady to confirm? Book here:\n'+SITE+'/schedule.html\n\n— Ramon (978) 255-3140';
+  document.getElementById('msg-title').textContent='Reply to '+(q.name||'Client');
+  document.getElementById('msg-txt').value=msg;
+  document.getElementById('msg-phone').value=q.phone||'';
+  document.getElementById('msg-res').style.display='none';
+  openM('m-msg');
+}
+async function dismissQ(docId) {
+  if(!db||!confirm('Dismiss this quote?')) return;
+  try{await db.collection('quotes').doc(docId).update({status:'dismissed'});toast('Dismissed');loadQuotes();}
+  catch(ex){toast('Error: '+ex.message);}
+}
+
+// ─────────────────────────────────────────────
+//  MESSAGES — uses MMAP, no JSON in onclick
+// ─────────────────────────────────────────────
+var MSGS=[
+  {cat:'After the Ride',color:'#16a34a',items:[
+    {t:'Thank You',d:'Right after the ride',m:'Hi [Name]! Thank you for choosing Seacoast RVIP today!\n\nWhenever you need a ride, just text me.\n\n— Ramon\n(978) 255-3140'},
+    {t:'Thank You + Google Review',d:'Best for building reviews',m:'Hi [Name]! Thank you for riding with Seacoast RVIP!\n\nA quick Google review means the world:\n\n'+GREVIEW+'\n\nThank you! — Ramon (978) 255-3140'},
+    {t:'Safe Flight',d:'After airport drop-off',m:'Hi [Name]! Hope you made it through security! ✈️\n\nHave a safe trip. I\'ll be ready when you return.\n\n— Ramon (978) 255-3140'}
+  ]},
+  {cat:'Ride Reminders',color:'#1d4ed8',items:[
+    {t:'Day Before Reminder',d:'Night before',m:'Hi [Name]! Reminder — your Seacoast RVIP ride is tomorrow [Date] at [Time].\n\nI\'ll be at [Pickup] 5 minutes early in the black SUV.\n\n— Ramon (978) 255-3140'},
+    {t:'Morning of Ride',d:'1–2 hrs before pickup',m:'Good morning [Name]! Your ride is today at [Time].\n\nI\'ll be at [Pickup] a few minutes early!\n\n— Ramon (978) 255-3140'},
+    {t:'On My Way',d:'When leaving to pick up',m:'Hi [Name]! On my way — arriving at [Pickup] in about [X] minutes. 🚗\n\n— Ramon'},
+    {t:'I Have Arrived',d:'Waiting outside',m:'Hi [Name]! I\'m outside at [Pickup] — black SUV, ready when you are!\n\n— Ramon'}
+  ]},
+  {cat:'Holidays & Events',color:'#775a19',items:[
+    {t:'New Year\'s Eve',d:'Dec 28–30',m:'Hi [Name]! Happy almost New Year! 🥂\n\nNeed a safe ride to celebrate? Seacoast RVIP has you covered.\n\n— Ramon (978) 255-3140'},
+    {t:'4th of July',d:'July 1–3',m:'Hi [Name]! Happy 4th! 🇺🇸\n\nHeading to fireworks? I have a safe ride for you!\n\n— Ramon (978) 255-3140'},
+    {t:'Casino Night',d:'Casino weekends',m:'Hi [Name]! Feeling lucky? 🎰\n\nSeacoast RVIP runs to Foxwoods & Mohegan Sun!\n\n— Ramon (978) 255-3140'},
+    {t:'Christmas Holidays',d:'Dec 15–20',m:'Hi [Name]! Happy Holidays! 🎄\n\nNeed airport rides or party transportation? I\'m here.\n\n— Ramon (978) 255-3140'}
+  ]},
+  {cat:'Business Growth',color:'#7c3aed',items:[
+    {t:'Referral Program',d:'Ask for referrals',m:'Hi [Name]! Know anyone who needs reliable transportation?\n\nRefer a friend who books and I\'ll give you $10 off your next trip!\n\n— Ramon (978) 255-3140'},
+    {t:'Re-engagement',d:'Clients quiet 60+ days',m:'Hi [Name]! It\'s been a while — just checking in! 👋\n\nSeacoast RVIP is here whenever you need a ride.\n\n— Ramon (978) 255-3140'},
+    {t:'Corporate Offer',d:'For business clients',m:'Hi [Name]! Does your company need professional transportation?\n\nSeacoast RVIP offers reliable corporate service with priority booking.\n\n— Ramon (978) 255-3140'}
+  ]}
+];
+
+function buildMsgs() {
+  MMAP={};
+  var html=MSGS.map(function(cat,ci){
+    return '<div style="margin-bottom:2rem">'+
+      '<div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:'+cat.color+';padding-bottom:.5rem;border-bottom:2px solid '+cat.color+';margin-bottom:.875rem">'+cat.cat+'</div>'+
+      cat.items.map(function(m,mi){
+        var key='m'+ci+'_'+mi; MMAP[key]={title:m.t,text:m.m};
+        return '<div class="msgcard" style="border-left-color:'+cat.color+'" onclick="openMsg(\''+key+'\')">'+
+          '<div style="display:flex;justify-content:space-between;gap:1rem">'+
+            '<div><div style="font-size:.78rem;font-weight:600;margin-bottom:2px">'+m.t+'</div><div style="font-size:.68rem;color:#aaa">'+m.d+'</div></div>'+
+            '<span class="material-symbols-outlined" style="font-size:16px;color:#ddd;flex-shrink:0">chevron_right</span>'+
+          '</div>'+
+          '<div style="margin-top:.375rem;font-size:.68rem;color:#ccc;max-height:28px;overflow:hidden;line-height:1.4">'+m.m.replace(/\n/g,' · ').substring(0,90)+'...</div>'+
+        '</div>';
+      }).join('')+
+    '</div>';
+  }).join('');
+  document.getElementById('msg-tpl').innerHTML=html;
+}
+
+function openMsg(key) {
+  var m=MMAP[key]; if(!m) return;
+  document.getElementById('msg-title').textContent=m.title;
+  document.getElementById('msg-txt').value=m.text;
+  document.getElementById('msg-phone').value='';
+  document.getElementById('msg-res').style.display='none';
+  openM('m-msg');
+}
+
+async function loadMsgClients(){
+  var sel=document.getElementById('msg-sel');
+  if(!db){sel.innerHTML='<option value="">Firebase not connected</option>';return;}
+  sel.innerHTML='<option value="">Loading...</option>';
+  try{
+    var snap=await db.collection('clients').get();
+    var opts=['<option value="">— Select client —</option>'];
+    snap.forEach(function(d){var c=d.data();if(c.phone)opts.push('<option value="'+c.phone+'">'+e(c.name||c.phone)+' · '+c.phone+'</option>');});
+    sel.innerHTML=opts.join('');
+  }catch(ex){sel.innerHTML='<option value="">Error</option>';}
+}
+
+function msgOne(){
+  var ph=document.getElementById('msg-phone').value.replace(/\D/g,'');
+  var txt=document.getElementById('msg-txt').value;
+  if(ph.length<7){showMR('Enter a phone number first',false);return;}
+  window.open('sms:+'+ph+'&body='+encodeURIComponent(txt));
+  showMR('Text app opened!',true);
+}
+function msgWA(){
+  var ph=document.getElementById('msg-phone').value.replace(/\D/g,'');
+  var txt=document.getElementById('msg-txt').value;
+  if(ph.length<7){showMR('Enter a phone number first',false);return;}
+  window.open('https://wa.me/'+ph+'?text='+encodeURIComponent(txt));
+  showMR('WhatsApp opened!',true);
+}
+async function msgAll(){
+  var txt=document.getElementById('msg-txt').value;
+  if(!txt.trim()){showMR('Message is empty',false);return;}
+  if(!db){showMR('Firebase not connected',false);return;}
+  if(!confirm('Open text app for each client one by one?')) return;
+  try{
+    var snap=await db.collection('clients').get();
+    var phones=[]; snap.forEach(function(d){var p=d.data().phone;if(p)phones.push(p);});
+    if(!phones.length){showMR('No clients found',false);return;}
+    showMR('Opening for '+phones.length+' clients...',true);
+    phones.forEach(function(ph,i){setTimeout(function(){window.open('sms:'+ph+'&body='+encodeURIComponent(txt));},i*900);});
+  }catch(ex){showMR('Error: '+ex.message,false);}
+}
+function msgCopy(){
+  navigator.clipboard.writeText(document.getElementById('msg-txt').value)
+    .then(function(){showMR('Copied!',true);}).catch(function(){showMR('Select and copy manually',false);});
+}
+function showMR(msg,ok){
+  var el=document.getElementById('msg-res');
+  el.textContent=msg;
+  el.style.background=ok?'#f0fdf4':'#fef2f2';
+  el.style.color=ok?'#15803d':'#b91c1c';
+  el.style.borderLeft=ok?'3px solid #16a34a':'3px solid #dc2626';
+  el.style.padding='.75rem';el.style.display='block';
+}
+async function loadBcCount(){
+  if(!db)return;
+  try{var s=await db.collection('clients').get();document.getElementById('bc-count').textContent=s.size+' clients';}catch(e){}
+}
+
+
+// ═══════════════════════════════════════
+// DRIVER RECORDS & ACCOUNTING
+// ═══════════════════════════════════════
+var DR_RATE_KEY = 'dr-rate';
+
+function getDrRate() {
+  return parseFloat(localStorage.getItem(DR_RATE_KEY) || '70');
+}
+function saveDrRate() {
+  var r = parseFloat(document.getElementById('dr-rate').value);
+  if (isNaN(r)||r<0||r>100) { toast('Enter a valid rate 0–100'); return; }
+  localStorage.setItem(DR_RATE_KEY, r);
+  toast('Commission rate saved: ' + r + '%');
+  loadDriverRides();
+}
+
+function loadDriverRides() {
+  var bks = getBks().filter(function(b){ return b.status !== 'Cancelled'; })
+                    .sort(function(a,b){ return new Date(b.date)-new Date(a.date); });
+  var rate = getDrRate() / 100;
+  var totalPay = 0, totalRev = 0;
+  bks.forEach(function(b){
+    var pr = parseFloat(b.price)||0;
+    totalPay += pr * rate;
+    totalRev += pr;
+  });
+  document.getElementById('dr-total').textContent = bks.length;
+  document.getElementById('dr-pay').textContent   = '$' + totalPay.toFixed(2);
+  document.getElementById('dr-rev').textContent   = '$' + totalRev.toFixed(2);
+  document.getElementById('dr-rate').value        = getDrRate();
+
+  var el = document.getElementById('dr-list');
+  if (!bks.length) {
+    el.innerHTML = '<div class="empty-state"><span class="material-symbols-outlined">directions_car</span><div style="font-size:.8rem">No rides yet</div></div>';
+    return;
+  }
+  el.innerHTML = bks.map(function(b) {
+    var pr  = parseFloat(b.price)||0;
+    var dp  = (pr * rate).toFixed(2);
+    var cp  = (pr * (1-rate)).toFixed(2);
+    var SC  = {Pending:'byw',Confirmed:'bbl',Paid:'bgr',Completed:'bgr',Cancelled:'brd'};
+    return '<div class="card" style="margin-bottom:.625rem">'+
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:.75rem">'+
+        '<div style="flex:1;min-width:180px">'+
+          '<div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;margin-bottom:.375rem">'+
+            '<span style="font-weight:700;font-size:.9rem">'+e(b.name)+'</span>'+
+            '<span class="bdg '+(SC[b.status]||'byw')+'">'+e(b.status)+'</span>'+
+            (b.code?'<span class="code-tag">'+e(b.code)+'</span>':'')+
+          '</div>'+
+          '<div class="crow"><span class="material-symbols-outlined">calendar_today</span>'+e(b.date||'—')+' · '+fT(b.time)+'</div>'+
+          '<div class="crow"><span class="material-symbols-outlined">directions_car</span>'+e(b.service||'—')+'</div>'+
+          (b.pickup?'<div class="crow"><span class="material-symbols-outlined">location_on</span>'+e(b.pickup)+' → '+e(b.destination||'')+'</div>':'')+
+        '</div>'+
+        '<div style="text-align:right;min-width:160px">'+
+          '<div style="font-family:'Times New Roman',serif;font-size:1.5rem;font-weight:700;color:#111">$'+pr.toFixed(2)+'</div>'+
+          '<div style="font-size:.72rem;color:#16a34a;font-weight:600;margin-top:2px">Driver: $'+dp+'</div>'+
+          '<div style="font-size:.72rem;color:#775a19;font-weight:600">Company: $'+cp+'</div>'+
+          '<div style="display:flex;gap:.375rem;margin-top:.625rem;justify-content:flex-end;flex-wrap:wrap">'+
+            '<button onclick="addToCalendar(''+b.id+'')" class="btn bo" style="font-size:.62rem"><span class="material-symbols-outlined" style="font-size:13px">calendar_add_on</span>Calendar</button>'+
+            '<button onclick="markPaidDr(''+b.id+'')" class="btn bgn" style="font-size:.62rem"><span class="material-symbols-outlined" style="font-size:13px">check_circle</span>Paid</button>'+
+          '</div>'+
+        '</div>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+// Mark ride as paid (driver paid out)
+function markPaidDr(id) {
+  var bks=getBks(), b=bks.find(function(x){return x.id===id;});
+  if(!b) return;
+  b.status = 'Completed';
+  setBks(bks); fbSync(b);
+  loadDriverRides(); renderBks();
+  toast('✅ Marked Completed — driver paid');
+}
+
+// Generate driver invoice as a printable window
+function openDriverPay() {
+  var bks   = getBks().filter(function(b){ return b.status!=='Cancelled'; });
+  var rate  = getDrRate() / 100;
+  var total = bks.reduce(function(s,b){ return s+(parseFloat(b.price)||0)*rate; }, 0);
+  var gross = bks.reduce(function(s,b){ return s+(parseFloat(b.price)||0); }, 0);
+  var today = new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+
+  var rows = bks.map(function(b){
+    var pr = parseFloat(b.price)||0;
+    var dp = (pr*rate).toFixed(2);
+    return '<tr style="border-bottom:1px solid #f0f0f0">'+
+      '<td style="padding:.625rem .5rem;font-size:.8rem">'+e(b.date||'—')+'</td>'+
+      '<td style="padding:.625rem .5rem;font-size:.8rem">'+e(b.name||'—')+'</td>'+
+      '<td style="padding:.625rem .5rem;font-size:.8rem">'+e(b.service||'—')+'</td>'+
+      '<td style="padding:.625rem .5rem;font-size:.8rem;text-align:right">$'+pr.toFixed(2)+'</td>'+
+      '<td style="padding:.625rem .5rem;font-size:.8rem;text-align:right;color:#16a34a;font-weight:600">$'+dp+'</td>'+
+    '</tr>';
+  }).join('');
+
+  var html = '<html><head><title>Seacoast RVIP — Driver Invoice</title>'+
+    '<style>body{font-family:Inter,sans-serif;padding:2rem;max-width:700px;margin:0 auto;color:#111}'+
+    'h1{font-family:"Times New Roman",serif;font-size:1.75rem;margin-bottom:.25rem}'+
+    '.gold{color:#775a19}.sub{font-size:.8rem;color:#888;margin-bottom:2rem}'+
+    'table{width:100%;border-collapse:collapse;margin-bottom:1.5rem}'+
+    'th{text-align:left;font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;color:#aaa;padding:.5rem;border-bottom:2px solid #eee}'+
+    '.total-row{display:flex;justify-content:space-between;padding:.75rem 0;border-top:2px solid #111;margin-top:.5rem}'+
+    '.total-label{font-weight:700;font-size:.9rem}.total-val{font-weight:700;font-size:1.25rem;color:#16a34a}'+
+    '</style></head><body>'+
+    '<h1>Seacoast RVIP LLC</h1>'+
+    '<div class="sub">Driver Invoice &nbsp;·&nbsp; Generated: '+today+'&nbsp;·&nbsp; Commission Rate: '+getDrRate()+'%</div>'+
+    '<table><thead><tr>'+
+      '<th>Date</th><th>Client</th><th>Service</th><th style="text-align:right">Fare</th><th style="text-align:right">Driver Pay</th>'+
+    '</tr></thead><tbody>'+rows+'</tbody></table>'+
+    '<div class="total-row"><span class="total-label">Gross Revenue</span><span style="font-weight:700;font-size:1rem">$'+gross.toFixed(2)+'</span></div>'+
+    '<div class="total-row"><span class="total-label">Total Driver Payout</span><span class="total-val">$'+total.toFixed(2)+'</span></div>'+
+    '<div class="total-row"><span class="total-label">Company Retained</span><span style="font-weight:700;font-size:1rem;color:#775a19">$'+(gross-total).toFixed(2)+'</span></div>'+
+    '<p style="margin-top:2rem;font-size:.75rem;color:#aaa">Seacoast RVIP LLC · info@seacoastrvip.com · (978) 255-3140 · seacoastrvip.com</p>'+
+    '</body></html>';
+
+  var w = window.open('','_blank');
+  w.document.write(html);
+  w.document.close();
+  setTimeout(function(){ w.print(); }, 600);
+}
+
+// Export driver rides as CSV
+function exportDriverCSV() {
+  var bks  = getBks().filter(function(b){ return b.status!=='Cancelled'; });
+  var rate = getDrRate() / 100;
+  var rows = [['Date','Client','Phone','Service','Fare','Driver Pay','Company','Status','Code']];
+  bks.forEach(function(b){
+    var pr = parseFloat(b.price)||0;
+    rows.push([b.date||'',b.name||'',b.phone||'',b.service||'',
+      pr.toFixed(2),(pr*rate).toFixed(2),(pr*(1-rate)).toFixed(2),b.status||'',b.code||'']);
+  });
+  var csv = rows.map(function(r){ return r.map(function(c){ return '"'+String(c).replace(/"/g,'""')+'"'; }).join(','); }).join('\n');
+  var blob = new Blob([csv],{type:'text/csv'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'seacoast-rvip-rides-'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click();
+  toast('CSV downloaded!');
+}
+
+// ═══════════════════════════════════════
+// CALENDAR SYNC — Google Calendar
+// ═══════════════════════════════════════
+function addToCalendar(id) {
+  var b = getBks().find(function(x){ return x.id===id; });
+  if (!b) return;
+
+  // Build event datetime
+  var dateStr = b.date || ''; // YYYY-MM-DD
+  var timeStr = b.time || '08:00'; // HH:MM
+  if (!dateStr) { toast('Booking has no date set'); return; }
+
+  // Format for Google Calendar: YYYYMMDDTHHMMSS
+  var dt = dateStr.replace(/-/g,'') + 'T' + timeStr.replace(':','') + '00';
+  // End time = 1 hour later
+  var hour = parseInt(timeStr.split(':')[0])||8;
+  var min  = parseInt(timeStr.split(':')[1])||0;
+  var endH = String(hour+1).padStart(2,'0');
+  var dte  = dateStr.replace(/-/g,'') + 'T' + endH + String(min).padStart(2,'0') + '00';
+
+  var title    = encodeURIComponent('🚗 Seacoast RVIP — ' + (b.name||'Client'));
+  var details  = encodeURIComponent(
+    'Client: ' + (b.name||'—') + '\n' +
+    'Phone: '  + (b.phone||'—') + '\n' +
+    'Service: '+ (b.service||'—') + '\n' +
+    'Pickup: ' + (b.pickup||'—') + '\n' +
+    'Drop-off: '+(b.destination||'—') + '\n' +
+    'Fare: $'  + (b.price||'—') + '\n' +
+    'Code: '   + (b.code||'—')
+  );
+  var location = encodeURIComponent(b.pickup || '');
+
+  var url = 'https://calendar.google.com/calendar/r/eventedit?text=' + title +
+            '&dates=' + dt + '/' + dte +
+            '&details=' + details + '&location=' + location;
+
+  window.open(url, '_blank');
+  toast('Google Calendar opened — save the event!');
+}
+
+// ─────────────────────────────────────────────
+//  HELPERS
+// ─────────────────────────────────────────────
+function openM(id){document.getElementById(id).classList.add('open');document.body.style.overflow='hidden';}
+function closeM(id){document.getElementById(id).classList.remove('open');document.body.style.overflow='';}
+function toast(msg){var t=document.getElementById('toast');t.textContent=msg;t.style.display='block';setTimeout(function(){t.style.display='none';},3000);}
+function fbErrHTML(extra){
+  return '<div style="background:#fef2f2;border-left:3px solid #dc2626;padding:1.25rem;font-size:.83rem;color:#b91c1c">'+
+    '<strong>'+(extra?'Error: '+extra:'Firebase not connected')+'</strong><br><br>'+
+    'Go to <strong>Firebase Console → seacoast-rip → Firestore → Rules</strong> and publish:<br><br>'+
+    '<code style="background:#fff;padding:.25rem .5rem;display:inline-block;font-size:.75rem;margin-top:.5rem">match /{doc=**} { allow read, write: if true; }</code>'+
+  '</div>';
+}
+
+
+
+
+
+
+
+>
