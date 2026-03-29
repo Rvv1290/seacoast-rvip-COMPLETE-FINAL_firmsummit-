@@ -82,6 +82,12 @@ body{font-family:'Inter',sans-serif;background:#f0f0f0;min-height:100vh}
   .sbox:nth-child(4),.sbox:nth-child(5){border-top:1px solid #e0e0e0}
   .g2{grid-template-columns:1fr}.g2a{grid-column:1}
 }
+
+/* --- NEW FEATURES CSS --- */
+#pwd-icon { cursor: pointer; color: #aaa; padding: 5px; position: absolute; right: 0; top: 50%; transform: translateY(-50%); }
+.debug-info { margin-top:1rem; font-size:0.6rem; color:#ccc; text-align:center; display:none; }
+.market-card { border-left-color: #1d4ed8 !important; }
+.broadcast-banner { background: #fffbeb; border: 1px solid #fef3c7; padding: 0.75rem; margin-bottom: 1rem; display: flex; align-items: center; justify-content: space-between; border-radius: 4px; }
 </style>
 </head>
 <body>
@@ -94,8 +100,11 @@ body{font-family:'Inter',sans-serif;background:#f0f0f0;min-height:100vh}
     <div class="lsub">Admin Dashboard</div>
     <div style="margin-bottom:1rem">
       <label class="flbl">Password</label>
-      <input id="pwd" type="password" class="finp" placeholder="Enter password"
-        onkeydown="if(event.key==='Enter')doLogin()"/>
+      <div style="position: relative;">
+        <input id="pwd" type="password" class="finp" placeholder="Enter password" onkeydown="if(event.key==='Enter')doLogin()"/>
+        <span onclick="togglePwd()" class="material-symbols-outlined" id="pwd-icon">visibility</span>
+      </div>
+      <div id="debug-info" class="debug-info"></div>
     </div>
     <div id="lerr" style="display:none;background:#fef2f2;border-left:3px solid #dc2626;padding:.625rem;font-size:.78rem;color:#dc2626;margin-bottom:1rem">
       Wrong password. Try again.
@@ -145,6 +154,9 @@ body{font-family:'Inter',sans-serif;background:#f0f0f0;min-height:100vh}
       <button class="tab" onclick="goTab('clients',this)" style="color:#7c3aed;font-weight:700">Clients ●</button>
       <button class="tab" onclick="goTab('quotes',this)" style="color:#16a34a;font-weight:700">Quotes ●</button>
       <button class="tab" onclick="goTab('messages',this)" style="color:#1d4ed8;font-weight:700">Messages ✉</button>
+      <button class="tab" onclick="goTab('driver',this)" style="color:#16a34a;font-weight:700">Driver ⊕</button>
+      <button class="tab" onclick="goTab('market',this)" style="color:#1d4ed8;font-weight:700">Marketplace 🛒</button>
+      <button class="tab" onclick="goTab('manage-drivers',this)" style="color:#775a19;font-weight:700">Drivers ⚙</button>
     </div>
 
     <div id="sec-all">
@@ -192,6 +204,66 @@ body{font-family:'Inter',sans-serif;background:#f0f0f0;min-height:100vh}
       </div>
       <div id="msg-tpl"></div>
     </div>
+
+    <!-- MARKETPLACE -->
+    <div id="sec-market" style="display:none">
+      <div class="broadcast-banner" id="admin-broadcast-banner">
+        <div>
+          <div style="font-weight:700;font-size:0.85rem">Broadcast to Team</div>
+          <div style="font-size:0.7rem;color:#92400e">Notify all drivers about available rides</div>
+        </div>
+        <button onclick="broadcastToDrivers()" class="btn bg">📢 Broadcast</button>
+      </div>
+      <div id="market-list"></div>
+    </div>
+
+    <!-- MANAGE DRIVERS -->
+    <div id="sec-manage-drivers" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem">
+        <div style="font-family:'Times New Roman',serif;font-size:1.1rem;font-weight:700">Manage Drivers</div>
+        <button onclick="openAddDriver()" class="btn bk">+ Add Driver</button>
+      </div>
+      <div id="dr-list"></div>
+    </div>
+
+    <div id="sec-driver" style="display:none">
+      <!-- Driver Records & Accounting -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin-bottom:1.5rem">
+        <div class="sbox" style="background:#fff;border-bottom:3px solid #16a34a;padding:1.25rem;text-align:center">
+          <div id="dr-total" class="snum" style="color:#16a34a">0</div><div class="slbl">Total Rides</div>
+        </div>
+        <div class="sbox" style="background:#fff;border-bottom:3px solid #775a19;padding:1.25rem;text-align:center">
+          <div id="dr-pay" class="snum" style="color:#775a19">$0</div><div class="slbl">Driver Payout</div>
+        </div>
+        <div class="sbox" style="background:#fff;border-bottom:3px solid #7c3aed;padding:1.25rem;text-align:center">
+          <div id="dr-rev" class="snum" style="color:#7c3aed">$0</div><div class="slbl">Gross Revenue</div>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.75rem;margin-bottom:1.25rem">
+        <div>
+          <div style="font-family:'Times New Roman',serif;font-size:1.1rem;font-weight:700">Driver Records</div>
+          <div style="font-size:.75rem;color:#888;margin-top:3px">Manage rides, payouts, and driver invoices</div>
+        </div>
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+          <button onclick="openDriverPay()" class="btn bpp">Generate Invoice</button>
+          <button onclick="exportDriverCSV()" class="btn bo">Export CSV</button>
+          <button onclick="loadDriverRides()" class="btn bo"><span class="material-symbols-outlined" style="font-size:14px">refresh</span>Refresh</button>
+        </div>
+      </div>
+      <!-- Driver settings -->
+      <div class="card" style="margin-bottom:1.25rem;border-left-color:#16a34a">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.75rem;margin-bottom:1rem">
+          <div style="font-weight:600;font-size:.9rem">Driver Commission Rate</div>
+          <div style="display:flex;align-items:center;gap:.5rem">
+            <input id="dr-rate" type="number" min="0" max="100" value="70" class="finp" style="width:70px;text-align:center;font-weight:700"/>
+            <span style="font-size:.85rem;color:#555">% of fare goes to driver</span>
+            <button onclick="saveDrRate()" class="btn bgn" style="font-size:.65rem">Save</button>
+          </div>
+        </div>
+        <div style="font-size:.75rem;color:#888">Example: $145 fare × 70% = $101.50 driver payout · $43.50 company revenue</div>
+      </div>
+      <div id="dr-list-main"><div class="empty-state"><span class="material-symbols-outlined">directions_car</span><div style="font-size:.8rem">Click Refresh to load driver ride records</div></div></div>
+    </div>
   </div>
 </div>
 
@@ -234,6 +306,15 @@ body{font-family:'Inter',sans-serif;background:#f0f0f0;min-height:100vh}
         <div><label class="flbl">Vehicle</label>
           <select id="fve" class="fsel"><option>Black SUV Luxury</option><option>Regular Black SUV</option></select>
         </div>
+        
+        <div class="g2a">
+          <label class="flbl">Assign Driver</label>
+          <select id="fdr" class="fsel">
+            <option value="">— Unassigned —</option>
+            <option value="admin">Admin (Me)</option>
+          </select>
+        </div>
+
         <div class="g2a"><label class="flbl">Notes</label><input id="fno" class="finp" placeholder="Flight number, special requests..."/></div>
       </div>
       <div style="display:flex;gap:.75rem;justify-content:flex-end">
@@ -362,29 +443,79 @@ var curClBk   = null;   // booking open in client modal
 var curQid    = null;   // quote docId being converted
 var QMAP      = {};     // docId -> quote object
 var MMAP      = {};     // key -> {title,text}
+var curUser   = null;
+var DR_RATE_KEY = 'rv-dr-rate';
 
 // ─────────────────────────────────────────────
 //  STORAGE
 // ─────────────────────────────────────────────
 function getBks()    { try{return JSON.parse(localStorage.getItem('rv-bks')||'[]');}catch(e){return[];} }
 function setBks(a)   { localStorage.setItem('rv-bks', JSON.stringify(a)); }
+function getDrivers(){ try{return JSON.parse(localStorage.getItem('rv-drivers')||'[]');}catch(e){return[];} }
+function setDrivers(a){ localStorage.setItem('rv-drivers', JSON.stringify(a)); }
+function getDrRate() { return parseFloat(localStorage.getItem(DR_RATE_KEY)) || 70; }
 
 // ─────────────────────────────────────────────
 //  LOGIN
 // ─────────────────────────────────────────────
+function togglePwd() {
+  var x = document.getElementById('pwd');
+  var icon = document.getElementById('pwd-icon');
+  if (x.type === 'password') { x.type = 'text'; icon.textContent = 'visibility_off'; }
+  else { x.type = 'password'; icon.textContent = 'visibility'; }
+}
+
 function doLogin() {
-  if (document.getElementById('pwd').value === PWD) {
-    localStorage.setItem('rv-auth','1');
-    document.getElementById('pg-login').style.display = 'none';
-    document.getElementById('pg-dash').style.display  = 'block';
-    initDash();
+  var input = document.getElementById('pwd');
+  var cleanValue = input.value.trim();
+  var debug = document.getElementById('debug-info');
+  debug.textContent = "Input: '" + cleanValue + "' (Length: " + cleanValue.length + ")";
+  
+  if (cleanValue === PWD) {
+    curUser = {name:'Admin', role:'admin'};
+    saveSession(curUser);
+    showDash();
   } else {
-    document.getElementById('lerr').style.display = 'block';
-    document.getElementById('pwd').value = '';
-    document.getElementById('pwd').focus();
+    var drs = getDrivers();
+    var dr = drs.find(function(d){ return d.pwd.trim() === cleanValue; });
+    if(dr) {
+      curUser = {name:dr.name, role:'driver', id:dr.id};
+      saveSession(curUser);
+      showDash();
+    } else {
+      document.getElementById('lerr').style.display = 'block';
+      input.value = ''; input.focus();
+      debug.style.display = 'block';
+    }
   }
 }
-function doLogout() { localStorage.removeItem('rv-auth'); location.reload(); }
+
+function saveSession(user) {
+  localStorage.setItem('rv-auth', '1');
+  localStorage.setItem('rv-user', JSON.stringify(user));
+}
+
+function showDash() {
+  document.getElementById('pg-login').style.display = 'none';
+  document.getElementById('pg-dash').style.display  = 'block';
+  document.querySelectorAll('.tab').forEach(function(t){ t.style.display = ''; });
+  if(curUser && curUser.role === 'driver') {
+    document.querySelectorAll('.tab').forEach(function(t){
+      var txt = t.textContent.toLowerCase();
+      if(txt.includes('clients') || txt.includes('quotes') || txt.includes('messages') || txt.includes('drivers') || txt.includes('all') || txt.includes('upcoming') || txt.includes('awaiting') || txt.includes('completed')) {
+        t.style.display = 'none';
+      }
+    });
+    goTab('market', document.querySelector('.tab[onclick*="market"]'));
+  } else {
+    goTab('all', document.querySelector('.tab[onclick*="all"]'));
+  }
+  var bBtn = document.getElementById('admin-broadcast-banner');
+  if(bBtn) bBtn.style.display = (curUser && curUser.role === 'admin') ? 'flex' : 'none';
+  initDash();
+}
+
+function doLogout() { localStorage.removeItem('rv-auth'); localStorage.removeItem('rv-user'); location.reload(); }
 
 // ─────────────────────────────────────────────
 //  INIT
@@ -445,7 +576,16 @@ function renderBks() {
   eEl.style.display='none';
 
   var SC={Pending:'byw',Confirmed:'bbl',Paid:'bgr',Completed:'bgr',Cancelled:'brd'};
+  var drs = getDrivers();
   lEl.innerHTML = list.map(function(b,i){
+    var dTag = '';
+    if (b.driverId) {
+      if (b.driverId === 'admin') dTag = '<span class="bdg bpp">Driver: Admin</span>';
+      else {
+        var dr = drs.find(function(x){return x.id === b.driverId;});
+        dTag = '<span class="bdg bpp">Driver: ' + e(dr ? dr.name : 'Unknown') + '</span>';
+      }
+    }
     // Store booking in a data attribute index — no JSON in onclick
     return '<div class="card" data-bk-idx="'+i+'" id="bkcard'+b.id+'">' +
       '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:.75rem">' +
@@ -455,6 +595,7 @@ function renderBks() {
             '<span class="bdg '+(SC[b.status]||'byw')+'">'+e(b.status)+'</span>' +
             (b.code?'<span class="ctag">'+e(b.code)+'</span>':'') +
             (b.source==='website-form'?'<span class="bdg bpu">Web</span>':'') +
+            dTag +
           '</div>' +
           '<div class="crow"><span class="material-symbols-outlined">calendar_today</span>'+e(b.date||'—')+' at '+fT(b.time)+'</div>' +
           '<div class="crow"><span class="material-symbols-outlined">directions_car</span>'+e(b.service||'—')+'</div>' +
@@ -484,13 +625,17 @@ function fT(t){ if(!t)return'—'; try{var p=t.split(':'),h=parseInt(p[0]),m=p[1
 function goTab(tab, btn) {
   curTab = tab;
   document.querySelectorAll('.tab').forEach(function(b){b.classList.remove('on');});
-  btn.classList.add('on');
-  ['sec-all','sec-clients','sec-quotes','sec-messages'].forEach(function(id){
-    document.getElementById(id).style.display='none';
+  if(btn) btn.classList.add('on');
+  ['sec-all','sec-clients','sec-quotes','sec-messages','sec-manage-drivers','sec-market','sec-driver'].forEach(function(id){
+    var el = document.getElementById(id);
+    if(el) el.style.display='none';
   });
   if      (tab==='clients')  { document.getElementById('sec-clients').style.display='block';  loadClients(); }
   else if (tab==='quotes')   { document.getElementById('sec-quotes').style.display='block';   loadQuotes(); }
   else if (tab==='messages') { document.getElementById('sec-messages').style.display='block'; buildMsgs(); loadBcCount(); }
+  else if (tab==='manage-drivers') { document.getElementById('sec-manage-drivers').style.display='block'; renderDrivers(); }
+  else if (tab==='market')   { document.getElementById('sec-market').style.display='block';   renderMarket(); }
+  else if (tab==='driver')   { document.getElementById('sec-driver').style.display='block';   loadDriverRides(); }
   else                       { document.getElementById('sec-all').style.display='block';      renderBks(); }
 }
 
@@ -502,6 +647,8 @@ function openAdd() {
   document.getElementById('eid').value = '';
   ['fn','fp','fe','fd','ft','fpu','fde','fpr','fco','fno'].forEach(function(id){document.getElementById(id).value='';});
   document.getElementById('fst').value = 'Confirmed';
+  updateDriverSelects();
+  document.getElementById('fdr').value = '';
   curQid = null;
   genCode();
   openM('m-add');
@@ -525,6 +672,8 @@ function openEdit(id) {
   document.getElementById('fco').value = b.code||'';
   document.getElementById('fve').value = b.vehicle||'';
   document.getElementById('fno').value = b.notes||'';
+  updateDriverSelects();
+  document.getElementById('fdr').value = b.driverId||'';
   curQid = null;
   openM('m-add');
 }
@@ -549,6 +698,7 @@ function saveBk() {
     pickup:document.getElementById('fpu').value.trim(),
     destination:document.getElementById('fde').value.trim(),
     vehicle:document.getElementById('fve').value,
+    driverId:document.getElementById('fdr').value||'',
     price:parseFloat(price),
     status:document.getElementById('fst').value,
     code:(document.getElementById('fco').value.trim()||'').toUpperCase(),
@@ -581,6 +731,7 @@ async function fbSync(bk) {
       service:bk.service||'', date:bk.date||'', time:bk.time||'',
       pickup:bk.pickup||'', destination:bk.destination||'',
       vehicle:bk.vehicle||'', price:parseFloat(bk.price)||0,
+      driverId:bk.driverId||'',
       status:bk.status||'Confirmed', notes:bk.notes||'',
       source:bk.source||'admin', updatedAt:new Date().toISOString()
     },{merge:true});
@@ -916,6 +1067,279 @@ function fbErrHTML(extra){
 }
 
 // ─────────────────────────────────────────────
+//  DRIVER ACCOUNTING & RIDES
+// ─────────────────────────────────────────────
+function saveDrRate() {
+  var r = parseFloat(document.getElementById('dr-rate').value);
+  if (isNaN(r)||r<0||r>100) { toast('Enter a valid rate 0–100'); return; }
+  localStorage.setItem(DR_RATE_KEY, r);
+  toast('Commission rate saved: ' + r + '%');
+  loadDriverRides();
+}
+
+function loadDriverRides() {
+  var bks = getBks().filter(function(b){ return b.status !== 'Cancelled'; })
+                    .sort(function(a,b){ return new Date(b.date)-new Date(a.date); });
+  var rate = getDrRate() / 100;
+  var totalPay = 0, totalRev = 0;
+  var filteredBks = bks;
+  if(curUser && curUser.role === 'driver') {
+    filteredBks = bks.filter(function(b){ return b.driverId === curUser.id; });
+  }
+  
+  filteredBks.forEach(function(b){
+    var pr = parseFloat(b.price)||0;
+    totalPay += pr * rate;
+    totalRev += pr;
+  });
+  document.getElementById('dr-total').textContent = filteredBks.length;
+  document.getElementById('dr-pay').textContent   = '$' + totalPay.toFixed(2);
+  document.getElementById('dr-rev').textContent   = '$' + totalRev.toFixed(2);
+  document.getElementById('dr-rate').value        = getDrRate();
+
+  var el = document.getElementById('dr-list-main');
+  if (!filteredBks.length) {
+    el.innerHTML = '<div class="empty-state"><span class="material-symbols-outlined">directions_car</span><div style="font-size:.8rem">No rides yet</div></div>';
+    return;
+  }
+  el.innerHTML = filteredBks.map(function(b) {
+    var pr  = parseFloat(b.price)||0;
+    var dp  = (pr * rate).toFixed(2);
+    var cp  = (pr * (1-rate)).toFixed(2);
+    var SC  = {Pending:'byw',Confirmed:'bbl',Paid:'bgr',Completed:'bgr',Cancelled:'brd'};
+    var driverControls = '';
+    if (curUser && curUser.role === 'admin') {
+       driverControls = '<div style="font-size:.72rem;color:#16a34a;font-weight:600;margin-top:2px">Driver: $'+dp+'</div>'+
+                        '<div style="font-size:.72rem;color:#775a19;font-weight:600">Company: $'+cp+'</div>';
+    } else {
+       driverControls = '<div style="font-size:.72rem;color:#16a34a;font-weight:600;margin-top:2px">Payout: $'+dp+'</div>';
+    }
+    
+    return '<div class="card" style="margin-bottom:.625rem">'+
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:.75rem">'+
+        '<div style="flex:1;min-width:180px">'+
+          '<div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;margin-bottom:.375rem">'+
+            '<span style="font-weight:700;font-size:.9rem">'+e(b.name)+'</span>'+
+            '<span class="bdg '+(SC[b.status]||'byw')+'">'+e(b.status)+'</span>'+
+            (b.code?'<span class="ctag">'+e(b.code)+'</span>':'')+
+          '</div>'+
+          '<div class="crow"><span class="material-symbols-outlined">calendar_today</span>'+e(b.date||'—')+' · '+fT(b.time)+'</div>'+
+          '<div class="crow"><span class="material-symbols-outlined">directions_car</span>'+e(b.service||'—')+'</div>'+
+          (b.pickup?'<div class="crow"><span class="material-symbols-outlined">location_on</span>'+e(b.pickup)+' → '+e(b.destination||'')+'</div>':'')+
+        '</div>'+
+        '<div style="text-align:right;min-width:160px">'+
+          '<div style="font-family:\'Times New Roman\',serif;font-size:1.5rem;font-weight:700;color:#111">$'+pr.toFixed(2)+'</div>'+
+          driverControls+
+          '<div style="display:flex;gap:.375rem;margin-top:.625rem;justify-content:flex-end;flex-wrap:wrap">'+
+            '<button onclick="addToCalendar(\''+b.id+'\')" class="btn bo" style="font-size:.62rem"><span class="material-symbols-outlined" style="font-size:13px">calendar_add_on</span>Calendar</button>'+
+            '<button onclick="markPaidDr(\''+b.id+'\')" class="btn bgn" style="font-size:.62rem"><span class="material-symbols-outlined" style="font-size:13px">check_circle</span>Paid</button>'+
+          '</div>'+
+        '</div>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+function markPaidDr(id) {
+  var bks=getBks(), b=bks.find(function(x){return x.id===id;});
+  if(!b) return;
+  b.status = 'Completed';
+  setBks(bks); fbSync(b);
+  loadDriverRides(); renderBks();
+  toast('✅ Marked Completed — driver paid');
+}
+
+function openDriverPay() {
+  var bks   = getBks().filter(function(b){ return b.status!=='Cancelled'; });
+  var rate  = getDrRate() / 100;
+  if(curUser && curUser.role === 'driver') {
+      bks = bks.filter(function(b){ return b.driverId === curUser.id; });
+  }
+  var total = bks.reduce(function(s,b){ return s+(parseFloat(b.price)||0)*rate; }, 0);
+  var gross = bks.reduce(function(s,b){ return s+(parseFloat(b.price)||0); }, 0);
+  var today = new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+
+  var rows = bks.map(function(b){
+    var pr = parseFloat(b.price)||0;
+    var dp = (pr*rate).toFixed(2);
+    return '<tr style="border-bottom:1px solid #f0f0f0">'+
+      '<td style="padding:.625rem .5rem;font-size:.8rem">'+e(b.date||'—')+'</td>'+
+      '<td style="padding:.625rem .5rem;font-size:.8rem">'+e(b.name||'—')+'</td>'+
+      '<td style="padding:.625rem .5rem;font-size:.8rem">'+e(b.service||'—')+'</td>'+
+      '<td style="padding:.625rem .5rem;font-size:.8rem;text-align:right">$'+pr.toFixed(2)+'</td>'+
+      '<td style="padding:.625rem .5rem;font-size:.8rem;text-align:right;color:#16a34a;font-weight:600">$'+dp+'</td>'+
+    '</tr>';
+  }).join('');
+
+  var html = '<html><head><title>Seacoast RVIP — Driver Invoice</title>'+
+    '<style>body{font-family:Inter,sans-serif;padding:2rem;max-width:700px;margin:0 auto;color:#111}'+
+    'h1{font-family:"Times New Roman",serif;font-size:1.75rem;margin-bottom:.25rem}'+
+    '.gold{color:#775a19}.sub{font-size:.8rem;color:#888;margin-bottom:2rem}'+
+    'table{width:100%;border-collapse:collapse;margin-bottom:1.5rem}'+
+    'th{text-align:left;font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;color:#aaa;padding:.5rem;border-bottom:2px solid #eee}'+
+    '.total-row{display:flex;justify-content:space-between;padding:.75rem 0;border-top:2px solid #111;margin-top:.5rem}'+
+    '.total-label{font-weight:700;font-size:.9rem}.total-val{font-weight:700;font-size:1.25rem;color:#16a34a}'+
+    '</style></head><body>'+
+    '<h1>Seacoast RVIP LLC</h1>'+
+    '<div class="sub">Driver Invoice &nbsp;·&nbsp; Generated: '+today+'&nbsp;·&nbsp; Commission Rate: '+getDrRate()+'%</div>'+
+    '<table><thead><tr>'+
+      '<th>Date</th><th>Client</th><th>Service</th><th style="text-align:right">Fare</th><th style="text-align:right">Driver Pay</th>'+
+    '</tr></thead><tbody>'+rows+'</tbody></table>'+
+    '<div class="total-row"><span class="total-label">Gross Revenue</span><span style="font-weight:700;font-size:1rem">$'+gross.toFixed(2)+'</span></div>'+
+    '<div class="total-row"><span class="total-label">Total Driver Payout</span><span class="total-val">$'+total.toFixed(2)+'</span></div>'+
+    '<div class="total-row"><span class="total-label">Company Retained</span><span style="font-weight:700;font-size:1rem;color:#775a19">$'+(gross-total).toFixed(2)+'</span></div>'+
+    '<p style="margin-top:2rem;font-size:.75rem;color:#aaa">Seacoast RVIP LLC · info@seacoastrvip.com · (978) 255-3140 · seacoastrvip.com</p>'+
+    '';
+
+  var w = window.open('','_blank');
+  w.document.write(html);
+  w.document.close();
+  setTimeout(function(){ w.print(); }, 600);
+}
+
+function exportDriverCSV() {
+  var bks  = getBks().filter(function(b){ return b.status!=='Cancelled'; });
+  if (curUser && curUser.role === 'driver') bks = bks.filter(function(b){ return b.driverId === curUser.id; });
+  var rate = getDrRate() / 100;
+  var rows = [['Date','Client','Phone','Service','Fare','Driver Pay','Company','Status','Code']];
+  bks.forEach(function(b){
+    var pr = parseFloat(b.price)||0;
+    rows.push([b.date||'',b.name||'',b.phone||'',b.service||'',
+      pr.toFixed(2),(pr*rate).toFixed(2),(pr*(1-rate)).toFixed(2),b.status||'',b.code||'']);
+  });
+  var csv = rows.map(function(r){ return r.map(function(c){ return '"'+String(c).replace(/"/g,'""')+'"'; }).join(','); }).join('\n');
+  var blob = new Blob([csv],{type:'text/csv'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'seacoast-rvip-rides-'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click();
+  toast('CSV downloaded!');
+}
+
+function addToCalendar(id) {
+  var b = getBks().find(function(x){ return x.id===id; });
+  if (!b) return;
+  var dateStr = b.date || '';
+  var timeStr = b.time || '08:00';
+  if (!dateStr) { toast('Booking has no date set'); return; }
+  var dt = dateStr.replace(/-/g,'') + 'T' + timeStr.replace(':','') + '00';
+  var hour = parseInt(timeStr.split(':')[0])||8;
+  var min  = parseInt(timeStr.split(':')[1])||0;
+  var endH = String(hour+1).padStart(2,'0');
+  var dte  = dateStr.replace(/-/g,'') + 'T' + endH + String(min).padStart(2,'0') + '00';
+  var title    = encodeURIComponent('🚗 Seacoast RVIP — ' + (b.name||'Client'));
+  var details  = encodeURIComponent(
+    'Client: ' + (b.name||'—') + '\n' +
+    'Phone: '  + (b.phone||'—') + '\n' +
+    'Service: '+ (b.service||'—') + '\n' +
+    'Pickup: ' + (b.pickup||'—') + '\n' +
+    'Drop-off: '+(b.destination||'—') + '\n' +
+    'Fare: $'  + (b.price||'—') + '\n' +
+    'Code: '   + (b.code||'—')
+  );
+  var location = encodeURIComponent(b.pickup || '');
+  var url = 'https://calendar.google.com/calendar/r/eventedit?text=' + title +
+            '&dates=' + dt + '/' + dte +
+            '&details=' + details + '&location=' + location;
+  window.open(url, '_blank');
+  toast('Google Calendar opened — save the event!');
+}
+
+// ─────────────────────────────────────────────
+//  DRIVER MANAGEMENT & MARKETPLACE
+// ─────────────────────────────────────────────
+function updateDriverSelects() {
+  var drs = getDrivers();
+  var html = '<option value="">— Unassigned —</option><option value="admin">Admin (Me)</option>';
+  drs.forEach(function(d){ html += '<option value="'+d.id+'">'+e(d.name)+'</option>'; });
+  var el = document.getElementById('fdr');
+  if(el) el.innerHTML = html;
+}
+
+function renderDrivers() {
+  var drs = getDrivers();
+  var el = document.getElementById('dr-list');
+  if(!drs.length) { el.innerHTML = '<div class="empty">No drivers added yet</div>'; return; }
+  el.innerHTML = drs.map(function(d){
+    return '<div class="card">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center">'+
+        '<div><div class="cname">'+e(d.name)+'</div><div class="crow">'+e(d.phone)+' · Pwd: '+e(d.pwd)+'</div></div>'+
+        '<div style="display:flex;gap:5px">'+
+          '<button onclick="openEditDriver(\''+d.id+'\')" class="btn bo">Edit</button>'+
+          '<button onclick="delDriver(\''+d.id+'\')" class="btn br">Delete</button>'+
+        '</div>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+function openAddDriver() {
+  document.getElementById('dr-eid').value = '';
+  document.getElementById('dr-name').value = '';
+  document.getElementById('dr-phone').value = '';
+  document.getElementById('dr-pwd').value = '';
+  openM('m-dr');
+}
+
+function openEditDriver(id) {
+  var d = getDrivers().find(function(x){return x.id===id;});
+  if(!d) return;
+  document.getElementById('dr-eid').value = d.id;
+  document.getElementById('dr-name').value = d.name;
+  document.getElementById('dr-phone').value = d.phone;
+  document.getElementById('dr-pwd').value = d.pwd;
+  openM('m-dr');
+}
+
+function saveDriver() {
+  var name = document.getElementById('dr-name').value.trim();
+  var pwd = document.getElementById('dr-pwd').value.trim();
+  if(!name || !pwd) { toast('Name and Password required'); return; }
+  var drs = getDrivers(), eid = document.getElementById('dr-eid').value;
+  var dr = { id: eid || Date.now().toString(), name: name, phone: document.getElementById('dr-phone').value, pwd: pwd };
+  if(eid) { var i = drs.findIndex(function(x){return x.id===eid;}); if(i>-1) drs[i]=dr; }
+  else drs.push(dr);
+  setDrivers(drs); closeM('m-dr'); renderDrivers(); toast('Driver saved');
+}
+
+function delDriver(id) {
+  if(!confirm('Delete driver?')) return;
+  setDrivers(getDrivers().filter(function(x){return x.id!==id;}));
+  renderDrivers(); toast('Deleted');
+}
+
+function renderMarket() {
+  var bks = getBks().filter(function(b){ return (!b.driverId || b.driverId === '') && b.status !== 'Cancelled' && b.status !== 'Completed'; });
+  var el = document.getElementById('market-list');
+  if(!bks.length) { el.innerHTML = '<div class="empty">No available rides in marketplace</div>'; return; }
+  el.innerHTML = bks.map(function(b){
+    return '<div class="card market-card">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">'+
+        '<div><div class="cname">'+e(b.name)+'</div><div class="crow">'+e(b.date)+' at '+fT(b.time)+'</div><div class="crow">'+e(b.pickup)+' → '+e(b.destination)+'</div></div>'+
+        '<button onclick="claimRide(\''+b.id+'\')" class="btn bgn">Claim Ride</button>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+function claimRide(id) {
+  if(!curUser) return;
+  var bks = getBks(), b = bks.find(function(x){return x.id===id;});
+  if(b) {
+    b.driverId = (curUser.role === 'admin') ? 'admin' : curUser.id;
+    setBks(bks); fbSync(b); renderMarket(); toast('Ride claimed!');
+  }
+}
+
+function broadcastToDrivers() {
+  var drs = getDrivers();
+  if(!drs.length) { toast('No drivers to notify'); return; }
+  var nums = drs.map(function(d){return d.phone.replace(/\D/g,'');}).join(',');
+  var msg = "New rides available in the Seacoast RVIP Marketplace! Log in to claim them now.";
+  window.open('sms:'+nums+'&body='+encodeURIComponent(msg));
+}
+
+// ─────────────────────────────────────────────
 //  BOOT
 // ─────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', function(){
@@ -923,13 +1347,31 @@ window.addEventListener('DOMContentLoaded', function(){
     el.addEventListener('click',function(ev){if(ev.target===this)closeM(this.id);});
   });
   if(localStorage.getItem('rv-auth')==='1'){
-    document.getElementById('pg-login').style.display='none';
-    document.getElementById('pg-dash').style.display='block';
-    initDash();
+    try {
+      curUser = JSON.parse(localStorage.getItem('rv-user'));
+    } catch(e) {
+      curUser = {name:'Admin', role:'admin'};
+    }
+    showDash();
   } else {
     setTimeout(function(){document.getElementById('pwd').focus();},100);
   }
 });
 </script>
+
+<!-- MODAL: ADD DRIVER -->
+<div id="m-dr" class="ov">
+  <div class="modal" style="max-width:400px">
+    <div class="mhd"><h3>Add/Edit Driver</h3><button onclick="closeM('m-dr')" class="mx">×</button></div>
+    <div class="mbdy">
+      <input id="dr-eid" type="hidden"/>
+      <div style="margin-bottom:1rem"><label class="flbl">Driver Name</label><input id="dr-name" class="finp" placeholder="Full Name"/></div>
+      <div style="margin-bottom:1rem"><label class="flbl">Phone Number</label><input id="dr-phone" class="finp" type="tel" placeholder="978..."/></div>
+      <div style="margin-bottom:1rem"><label class="flbl">Login Password</label><input id="dr-pwd" class="finp" placeholder="Set a password"/></div>
+      <button onclick="saveDriver()" class="btn bg" style="width:100%;justify-content:center;padding:.8rem">Save Driver</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
