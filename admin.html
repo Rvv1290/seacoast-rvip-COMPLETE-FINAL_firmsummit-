@@ -579,13 +579,16 @@ function renderBks() {
   var SC={Pending:'byw',Confirmed:'bbl',Paid:'bgr',Completed:'bgr',Cancelled:'brd'};
   var drs = getDrivers();
   lEl.innerHTML = list.map(function(b,i){
-    var dTag = '';
+    var dTag = '', payDriverBtnHtml = '';
     if (b.driverId) {
       var dStatus = b.driverStatus === 'Completed' ? '<span class="bdg bgn">Driver Completed</span>' : '';
       if (b.driverId === 'admin') dTag = '<span class="bdg bpp">Driver: Admin</span>' + dStatus;
       else {
         var dr = drs.find(function(x){return x.id === b.driverId;});
         dTag = '<span class="bdg bpp">Driver: ' + e(dr ? dr.name : 'Unknown') + '</span>' + dStatus;
+        if (b.driverStatus === 'Completed' && b.status !== 'Paid') {
+          payDriverBtnHtml = '<button onclick="initiateDriverPay(\''+b.id+'\')" class="btn bg" style="font-size:.62rem;background:#10b981;color:#fff;border-color:#059669"><span class="material-symbols-outlined" style="font-size:13px">payments</span>Pay Driver</button>';
+        }
       }
     }
     // Store booking in a data attribute index — no JSON in onclick
@@ -607,6 +610,7 @@ function renderBks() {
         '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:.5rem">' +
           '<div style="font-family:\'Times New Roman\',serif;font-size:1.6rem;font-weight:700;color:#775a19">$'+(b.price||'—')+'</div>' +
           '<div style="display:flex;gap:.375rem;flex-wrap:wrap;justify-content:flex-end">' +
+            payDriverBtnHtml +
             '<button onclick="addToCalendar(\''+b.id+'\')" class="btn bo" title="Add to Calendar"><span class="material-symbols-outlined" style="font-size:13px">calendar_add_on</span></button>' +
             '<button onclick="openPay(\''+b.id+'\')" class="btn bk"><span class="material-symbols-outlined" style="font-size:13px">send</span>Send</button>' +
             '<button onclick="openCl(\''+b.id+'\')"  class="btn bpp"><span class="material-symbols-outlined" style="font-size:12px">person_add</span></button>' +
@@ -617,6 +621,39 @@ function renderBks() {
       '</div>' +
     '</div>';
   }).join('');
+}
+
+function initiateDriverPay(bkId) {
+  var bks = getBks();
+  var b = bks.find(function(x){return x.id === bkId;});
+  if(!b || !b.driverId || b.driverId === 'admin') return;
+
+  var d = getDrivers().find(function(x){return x.id === b.driverId;});
+  if(!d) { toast('Driver profile not found.'); return; }
+
+  var pr = parseFloat(b.price)||0;
+  var tip = parseFloat(b.tip)||0;
+  var rate = getDrRate() / 100;
+  var totalPayout = ((pr * rate) + tip).toFixed(2);
+
+  var method = d.payMethod || 'Not Set';
+  var details = d.payDetails || 'No details provided';
+
+  if(method === 'Venmo') {
+    var handle = details.replace('@','').trim();
+    window.open('https://venmo.com/'+handle+'?txn=pay&amount='+totalPayout+'&note=Seacoast+RVIP+Ride', '_blank');
+  } else if(method === 'CashApp') {
+    var handle = details.startsWith('$') ? details : '$'+details;
+    window.open('https://cash.app/'+handle+'/'+totalPayout, '_blank');
+  } else if(method === 'PayPal') {
+    var handle = details.replace('@','').trim();
+    window.open('https://paypal.me/'+handle+'/'+totalPayout, '_blank');
+  } else {
+    document.getElementById('paydr-amt').textContent = '$' + totalPayout;
+    document.getElementById('paydr-meth').textContent = method + ' via ' + e(d.name);
+    document.getElementById('paydr-det').textContent = details;
+    openM('m-paydr');
+  }
 }
 
 function e(s){ if(!s)return''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
@@ -1361,11 +1398,9 @@ function export1099(drId) {
 }
 
 function openAddDriver() {
-  document.getElementById('dr-eid').value = '';
-  document.getElementById('dr-name').value = '';
-  document.getElementById('dr-phone').value = '';
-  document.getElementById('dr-pwd').value = '';
-  document.getElementById('dr-doc').value = '';
+  var ids = ['dr-eid', 'dr-name', 'dr-phone', 'dr-address', 'dr-pwd', 'dr-car', 'dr-plate', 'dr-carpic', 'dr-paydetails', 'dr-doc'];
+  ids.forEach(function(i){ var el=document.getElementById(i); if(el) el.value=''; });
+  document.getElementById('dr-paym').value = 'Venmo';
   document.getElementById('dr-vfd').checked = false;
   openM('m-dr');
 }
@@ -1374,9 +1409,15 @@ function openEditDriver(id) {
   var d = getDrivers().find(function(x){return x.id===id;});
   if(!d) return;
   document.getElementById('dr-eid').value = d.id;
-  document.getElementById('dr-name').value = d.name;
-  document.getElementById('dr-phone').value = d.phone;
-  document.getElementById('dr-pwd').value = d.pwd;
+  document.getElementById('dr-name').value = d.name || '';
+  document.getElementById('dr-phone').value = d.phone || '';
+  document.getElementById('dr-address').value = d.address || '';
+  document.getElementById('dr-pwd').value = d.pwd || '';
+  document.getElementById('dr-car').value = d.car || '';
+  document.getElementById('dr-plate').value = d.plate || '';
+  document.getElementById('dr-carpic').value = d.carPic || '';
+  document.getElementById('dr-paym').value = d.payMethod || 'Venmo';
+  document.getElementById('dr-paydetails').value = d.payDetails || '';
   document.getElementById('dr-doc').value = d.docLink || '';
   document.getElementById('dr-vfd').checked = d.docVerified || false;
   openM('m-dr');
@@ -1391,7 +1432,13 @@ function saveDriver() {
     id: eid || Date.now().toString(), 
     name: name, 
     phone: document.getElementById('dr-phone').value, 
+    address: document.getElementById('dr-address').value,
     pwd: pwd,
+    car: document.getElementById('dr-car').value,
+    plate: document.getElementById('dr-plate').value,
+    carPic: document.getElementById('dr-carpic').value.trim(),
+    payMethod: document.getElementById('dr-paym').value,
+    payDetails: document.getElementById('dr-paydetails').value.trim(),
     docLink: document.getElementById('dr-doc').value.trim(),
     docVerified: document.getElementById('dr-vfd').checked
   };
@@ -1474,19 +1521,71 @@ window.addEventListener('DOMContentLoaded', function(){
 
 <!-- MODAL: ADD DRIVER -->
 <div id="m-dr" class="ov">
-  <div class="modal" style="max-width:400px">
-    <div class="mhd"><h3>Add/Edit Driver</h3><button onclick="closeM('m-dr')" class="mx">×</button></div>
+  <div class="modal" style="max-width:700px">
+    <div class="mhd"><h3>Driver Profile & Onboarding</h3><button onclick="closeM('m-dr')" class="mx">×</button></div>
     <div class="mbdy">
       <input id="dr-eid" type="hidden"/>
-      <div style="margin-bottom:1rem"><label class="flbl">Driver Name</label><input id="dr-name" class="finp" placeholder="Full Name"/></div>
-      <div style="margin-bottom:1rem"><label class="flbl">Phone Number</label><input id="dr-phone" class="finp" type="tel" placeholder="978..."/></div>
-      <div style="margin-bottom:1rem"><label class="flbl">Login Password</label><input id="dr-pwd" class="finp" placeholder="Set a password"/></div>
-      <div style="margin-bottom:1rem"><label class="flbl">DocuSign Account Link</label><input id="dr-doc" class="finp" placeholder="https://docusign.com/..."/></div>
-      <div style="margin-bottom:1.5rem;display:flex;align-items:center;gap:10px">
-        <input id="dr-vfd" type="checkbox" style="width:18px;height:18px;cursor:pointer;accent-color:#16a34a">
-        <label for="dr-vfd" class="flbl" style="margin:0;cursor:pointer;user-select:none">Documents Verified & Background Checked</label>
+      
+      <div style="font-weight:600;margin-bottom:10px;border-bottom:1px solid #ddd;padding-bottom:5px">Personal Details</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:15px;margin-bottom:15px">
+        <div><label class="flbl">Full Name</label><input id="dr-name" class="finp" placeholder="First Last"/></div>
+        <div><label class="flbl">Phone Number</label><input id="dr-phone" class="finp" type="tel" placeholder="978..."/></div>
+        <div><label class="flbl">Home Address</label><input id="dr-address" class="finp" placeholder="123 Main St..."/></div>
+        <div><label class="flbl">Login Password</label><input id="dr-pwd" class="finp" placeholder="Set a password"/></div>
       </div>
-      <button onclick="saveDriver()" class="btn bg" style="width:100%;justify-content:center;padding:.8rem">Save Driver</button>
+
+      <div style="font-weight:600;margin-bottom:10px;border-bottom:1px solid #ddd;padding-bottom:5px">Vehicle Information</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:15px;margin-bottom:15px">
+        <div><label class="flbl">Make, Model, Year & Color</label><input id="dr-car" class="finp" placeholder="2022 Cadillac Escalade - Black"/></div>
+        <div><label class="flbl">License Plate</label><input id="dr-plate" class="finp" placeholder="TX-1234"/></div>
+        <div style="grid-column: 1 / -1"><label class="flbl">Vehicle Photo (Image Link URL)</label><input id="dr-carpic" class="finp" placeholder="https://imgur.com/..."/></div>
+      </div>
+
+      <div style="font-weight:600;margin-bottom:10px;border-bottom:1px solid #ddd;padding-bottom:5px">Payout Configuration</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:15px;margin-bottom:15px">
+        <div>
+          <label class="flbl">Preferred Payment Method</label>
+          <select id="dr-paym" class="fsel">
+            <option value="Venmo">Venmo</option>
+            <option value="CashApp">CashApp</option>
+            <option value="PayPal">PayPal</option>
+            <option value="Zelle">Zelle</option>
+            <option value="Direct Deposit">Direct Deposit (ACH)</option>
+          </select>
+        </div>
+        <div>
+          <label class="flbl">Handle / Email / Routing & Acct</label>
+          <input id="dr-paydetails" class="finp" placeholder="@username or routing/account info"/>
+        </div>
+      </div>
+
+      <div style="font-weight:600;margin-bottom:10px;border-bottom:1px solid #ddd;padding-bottom:5px">Legal & Documents</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:20px;align-items:end">
+        <div><label class="flbl">DocuSign Agreement Link</label><input id="dr-doc" class="finp" placeholder="https://docusign.com/..."/></div>
+        <div style="display:flex;align-items:center;gap:10px;padding-bottom:8px">
+          <input id="dr-vfd" type="checkbox" style="width:18px;height:18px;cursor:pointer;accent-color:#16a34a">
+          <label for="dr-vfd" class="flbl" style="margin:0;cursor:pointer;user-select:none">Docs & Background Verified</label>
+        </div>
+      </div>
+      
+      <button onclick="saveDriver()" class="btn bg" style="width:100%;justify-content:center;padding:.8rem">Save Driver Profile</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: PAY DRIVER -->
+<div class="ov" id="m-paydr">
+  <div class="modal" style="max-width:400px;text-align:center">
+    <div class="mhd"><h3 style="color:#10b981">Bank Transfer Details</h3><button class="mx" onclick="closeM('m-paydr')">✕</button></div>
+    <div class="mbdy">
+      <div style="font-size:.9rem;color:#555;margin-bottom:10px">Securely process the exact payout amount inside your business banking portal using the details below.</div>
+      <div style="font-size:2rem;font-weight:700;color:#111;margin-bottom:15px;font-family:'Times New Roman',serif" id="paydr-amt"></div>
+      <div style="background:#f4f4f5;padding:15px;border-radius:8px;border:1px dashed #ccc;margin-bottom:20px;text-align:left">
+        <div style="font-weight:600;margin-bottom:5px;display:flex;justify-content:space-between"><span id="paydr-meth">Method</span></div>
+        <div id="paydr-det" style="font-family:monospace;font-size:1.1rem;word-break:break-all;padding:8px 0;color:#333;font-weight:bold"></div>
+      </div>
+      <div style="font-size:.85rem;color:#888;margin-bottom:15px">Once completed, close this window and mark the ride as "Paid" to complete the cycle.</div>
+      <button onclick="closeM('m-paydr')" class="btn bg" style="width:100%;justify-content:center;padding:.8rem;background:#10b981">Understood</button>
     </div>
   </div>
 </div>
