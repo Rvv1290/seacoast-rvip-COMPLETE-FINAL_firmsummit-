@@ -5,28 +5,12 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>Admin | Seacoast RVIP</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Work+Sans:wght@400;600&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-
-.material-symbols-outlined {
-  font-family: 'Material Symbols Outlined';
-  font-weight: normal;
-  font-style: normal;
-  font-size: 24px;
-  line-height: 1;
-  letter-spacing: normal;
-  text-transform: none;
-  display: inline-block;
-  white-space: nowrap;
-  word-wrap: normal;
-  direction: ltr;
-  -webkit-font-feature-settings: 'liga';
-  -webkit-font-smoothing: antialiased;
-}
-
+.material-symbols-outlined{font-variation-settings:"FILL" 0,"wght" 300,"GRAD" 0,"opsz" 24}
 body{font-family:'Inter',sans-serif;background:#f0f0f0;min-height:100vh}
 
 #pg-login{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:1rem}
@@ -98,13 +82,6 @@ body{font-family:'Inter',sans-serif;background:#f0f0f0;min-height:100vh}
   .sbox:nth-child(4),.sbox:nth-child(5){border-top:1px solid #e0e0e0}
   .g2{grid-template-columns:1fr}.g2a{grid-column:1}
 }
-
-/* --- NEW FEATURES CSS --- */
-#pwd-icon { cursor: pointer; color: #aaa; padding: 5px; position: absolute; right: 0; top: 50%; transform: translateY(-50%); }
-.debug-info { margin-top:1rem; font-size:0.6rem; color:#ccc; text-align:center; display:none; }
-.market-card { border-left-color: #1d4ed8 !important; }
-.broadcast-banner { background: #fffbeb; border: 1px solid #fef3c7; padding: 0.75rem; margin-bottom: 1rem; display: flex; align-items: center; justify-content: space-between; border-radius: 4px; }
-
 </style>
 </head>
 <body>
@@ -117,12 +94,8 @@ body{font-family:'Inter',sans-serif;background:#f0f0f0;min-height:100vh}
     <div class="lsub">Admin Dashboard</div>
     <div style="margin-bottom:1rem">
       <label class="flbl">Password</label>
-      <div style="position: relative;">
-        <input id="pwd" type="password" class="finp" placeholder="Enter password" />
-        <span onclick="togglePwd()" class="material-symbols-outlined" id="pwd-icon">visibility</span>
-      </div>
-      <div id="debug-info" class="debug-info"></div>
-        
+      <input id="pwd" type="password" class="finp" placeholder="Enter password"
+        onkeydown="if(event.key==='Enter')doLogin()"/>
     </div>
     <div id="lerr" style="display:none;background:#fef2f2;border-left:3px solid #dc2626;padding:.625rem;font-size:.78rem;color:#dc2626;margin-bottom:1rem">
       Wrong password. Try again.
@@ -173,9 +146,6 @@ body{font-family:'Inter',sans-serif;background:#f0f0f0;min-height:100vh}
       <button class="tab" onclick="goTab('quotes',this)" style="color:#16a34a;font-weight:700">Quotes ●</button>
       <button class="tab" onclick="goTab('messages',this)" style="color:#1d4ed8;font-weight:700">Messages ✉</button>
       <button class="tab" onclick="goTab('driver',this)" style="color:#16a34a;font-weight:700">Driver ⊕</button>
-      <button class="tab" onclick="goTab('market',this)" style="color:#1d4ed8;font-weight:700">Marketplace 🛒</button>
-      <button class="tab" onclick="goTab('manage-drivers',this)" style="color:#775a19;font-weight:700">Drivers ⚙</button>
-
     </div>
 
     <div id="sec-all">
@@ -207,28 +177,6 @@ body{font-family:'Inter',sans-serif;background:#f0f0f0;min-height:100vh}
         <button onclick="loadQuotes()" class="btn bo"><span class="material-symbols-outlined" style="font-size:14px">refresh</span>Refresh</button>
       </div>
       <div id="qt-list"><div class="empty"><span class="material-symbols-outlined">request_quote</span><div style="font-size:.8rem">Click Refresh to load quotes</div></div></div>
-    </div>
-
-    
-    <!-- MARKETPLACE -->
-    <div id="sec-market" style="display:none">
-      <div class="broadcast-banner" id="admin-broadcast-banner">
-        <div>
-          <div style="font-weight:700;font-size:0.85rem">Broadcast to Team</div>
-          <div style="font-size:0.7rem;color:#92400e">Notify all drivers about available rides</div>
-        </div>
-        <button onclick="broadcastToDrivers()" class="btn bg">📢 Broadcast</button>
-      </div>
-      <div id="market-list"></div>
-    </div>
-
-    <!-- MANAGE DRIVERS -->
-    <div id="sec-manage-drivers" style="display:none">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem">
-        <div style="font-family:'Times New Roman',serif;font-size:1.1rem;font-weight:700">Manage Drivers</div>
-        <button onclick="openAddDriver()" class="btn bk">+ Add Driver</button>
-      </div>
-      <div id="dr-list"></div>
     </div>
 
     <div id="sec-driver" style="display:none">
@@ -325,15 +273,6 @@ body{font-family:'Inter',sans-serif;background:#f0f0f0;min-height:100vh}
         <div><label class="flbl">Vehicle</label>
           <select id="fve" class="fsel"><option>Black SUV Luxury</option><option>Regular Black SUV</option></select>
         </div>
-        
-        <div class="g2a">
-          <label class="flbl">Assign Driver</label>
-          <select id="fdr" class="fsel">
-            <option value="">— Unassigned —</option>
-            <option value="admin">Admin (Me)</option>
-          </select>
-        </div>
-
         <div class="g2a"><label class="flbl">Notes</label><input id="fno" class="finp" placeholder="Flight number, special requests..."/></div>
       </div>
       <div style="display:flex;gap:.75rem;justify-content:flex-end">
@@ -430,7 +369,7 @@ body{font-family:'Inter',sans-serif;background:#f0f0f0;min-height:100vh}
 // ─────────────────────────────────────────────
 //  CONFIG
 // ─────────────────────────────────────────────
-var PWD = 'seacoast2025';
+var PWD      = 'seacoast2025';
 var SITE     = 'https://www.seacoastrvip.com';
 var GREVIEW  = 'https://g.page/r/YOUR_GOOGLE_REVIEW_LINK';
 
@@ -473,52 +412,18 @@ function setBks(a)   { localStorage.setItem('rv-bks', JSON.stringify(a)); }
 //  LOGIN
 // ─────────────────────────────────────────────
 function doLogin() {
-  var input = document.getElementById('pwd');
-  var cleanValue = input.value.trim();
-  var debug = document.getElementById('debug-info');
-  debug.textContent = "Input: '" + cleanValue + "' (Length: " + cleanValue.length + ")";
-  
-  if (cleanValue === PWD) {
-    curUser = {name:'Admin', role:'admin'};
-    saveSession(curUser);
-    showDash();
+  if (document.getElementById('pwd').value === PWD) {
+    localStorage.setItem('rv-auth','1');
+    document.getElementById('pg-login').style.display = 'none';
+    document.getElementById('pg-dash').style.display  = 'block';
+    initDash();
   } else {
-    var drs = getDrivers();
-    var dr = drs.find(function(d){ return d.pwd.trim() === cleanValue; });
-    if(dr) {
-      curUser = {name:dr.name, role:'driver', id:dr.id};
-      saveSession(curUser);
-      showDash();
-    } else {
-      document.getElementById('lerr').style.display = 'block';
-      input.value = ''; input.focus();
-      debug.style.display = 'block';
-    }
+    document.getElementById('lerr').style.display = 'block';
+    document.getElementById('pwd').value = '';
+    document.getElementById('pwd').focus();
   }
 }
-
-function saveSession(user) {
-  localStorage.setItem('rv-auth', '1');
-  localStorage.setItem('rv-user', JSON.stringify(user));
-}
-
-function showDash() {
-  document.getElementById('pg-login').style.display = 'none';
-  document.getElementById('pg-dash').style.display  = 'block';
-  document.querySelectorAll('.tab').forEach(function(t){ t.style.display = ''; });
-  if(curUser && curUser.role === 'driver') {
-    document.querySelectorAll('.tab').forEach(function(t){
-      var txt = t.textContent.toLowerCase();
-      if(txt.includes('clients') || txt.includes('quotes') || txt.includes('messages') || txt.includes('drivers')) {
-        t.style.display = 'none';
-      }
-    });
-  }
-  var bBtn = document.getElementById('admin-broadcast-banner');
-  if(bBtn) bBtn.style.display = (curUser && curUser.role === 'admin') ? 'flex' : 'none';
-  initDash();
-}
-function doLogout() { localStorage.removeItem('rv-auth'); localStorage.removeItem('rv-user'); location.reload(); }
+function doLogout() { localStorage.removeItem('rv-auth'); location.reload(); }
 
 // ─────────────────────────────────────────────
 //  INIT
@@ -619,15 +524,13 @@ function goTab(tab, btn) {
   curTab = tab;
   document.querySelectorAll('.tab').forEach(function(b){b.classList.remove('on');});
   btn.classList.add('on');
-  ['sec-all','sec-clients','sec-quotes','sec-messages','sec-driver','sec-manage-drivers','sec-market'].forEach(function(id){
+  ['sec-all','sec-clients','sec-quotes','sec-messages','sec-driver'].forEach(function(id){
     document.getElementById(id).style.display='none';
   });
   if      (tab==='clients')  { document.getElementById('sec-clients').style.display='block';  loadClients(); }
   else if (tab==='quotes')   { document.getElementById('sec-quotes').style.display='block';   loadQuotes(); }
   else if (tab==='messages') { document.getElementById('sec-messages').style.display='block'; buildMsgs(); loadBcCount(); }
   else if (tab==='driver')   { document.getElementById('sec-driver').style.display='block';  loadDriverRides(); }
-  else if (tab==='manage-drivers') { document.getElementById('sec-manage-drivers').style.display='block'; renderDrivers(); }
-  else if (tab==='market')   { document.getElementById('sec-market').style.display='block'; renderMarket(); }
   else                       { document.getElementById('sec-all').style.display='block';      renderBks(); }
 }
 
@@ -640,7 +543,7 @@ function openAdd() {
   ['fn','fp','fe','fd','ft','fpu','fde','fpr','fco','fno'].forEach(function(id){document.getElementById(id).value='';});
   document.getElementById('fst').value = 'Confirmed';
   curQid = null;
-  genCode(); updateDriverSelects();
+  genCode();
   openM('m-add');
 }
 
@@ -661,7 +564,7 @@ function openEdit(id) {
   document.getElementById('fst').value = b.status||'Confirmed';
   document.getElementById('fco').value = b.code||'';
   document.getElementById('fve').value = b.vehicle||'';
-  document.getElementById('fno').value = b.notes||''; updateDriverSelects(); document.getElementById('fdr').value = b.driverId||'';
+  document.getElementById('fno').value = b.notes||'';
   curQid = null;
   openM('m-add');
 }
@@ -689,7 +592,7 @@ function saveBk() {
     price:parseFloat(price),
     status:document.getElementById('fst').value,
     code:(document.getElementById('fco').value.trim()||'').toUpperCase(),
-    notes:document.getElementById('fno').value.trim(), driverId:document.getElementById('fdr').value,
+    notes:document.getElementById('fno').value.trim(),
     source:'admin', createdAt:orig?orig.createdAt:new Date().toISOString()
   };
   if (eid){var i=bks.findIndex(function(b){return b.id===eid;});if(i>-1)bks[i]=bk;}
@@ -718,7 +621,7 @@ async function fbSync(bk) {
       service:bk.service||'', date:bk.date||'', time:bk.time||'',
       pickup:bk.pickup||'', destination:bk.destination||'',
       vehicle:bk.vehicle||'', price:parseFloat(bk.price)||0,
-      status:bk.status||'Confirmed', notes:bk.notes||'', driverId:bk.driverId||'',
+      status:bk.status||'Confirmed', notes:bk.notes||'',
       source:bk.source||'admin', updatedAt:new Date().toISOString()
     },{merge:true});
   } catch(ex){console.warn('fbSync:',ex.message);}
@@ -908,7 +811,7 @@ function convertQ(docId) {
   document.getElementById('fpu').value=q.pickup||''; document.getElementById('fde').value=q.destination||'';
   document.getElementById('fno').value=q.notes||''; document.getElementById('fpr').value='';
   document.getElementById('fst').value='Confirmed';
-  curQid=docId; genCode(); updateDriverSelects(); openM('m-add');
+  curQid=docId; genCode(); openM('m-add');
 }
 function replyQ(docId) {
   var q=QMAP[docId]; if(!q) return;
@@ -1097,8 +1000,8 @@ function loadDriverRides() {
           '<div style="font-size:.72rem;color:#16a34a;font-weight:600;margin-top:2px">Driver: $'+dp+'</div>'+
           '<div style="font-size:.72rem;color:#775a19;font-weight:600">Company: $'+cp+'</div>'+
           '<div style="display:flex;gap:.375rem;margin-top:.625rem;justify-content:flex-end;flex-wrap:wrap">'+
-            '<button onclick="addToCalendar('\''+b.id+'\'')" class="btn bo" style="font-size:.62rem"><span class="material-symbols-outlined" style="font-size:13px">calendar_add_on</span>Calendar</button>'+
-            '<button onclick="markPaidDr('\''+b.id+'\'')" class="btn bgn" style="font-size:.62rem"><span class="material-symbols-outlined" style="font-size:13px">check_circle</span>Paid</button>'+
+            '<button onclick="addToCalendar(''+b.id+'')" class="btn bo" style="font-size:.62rem"><span class="material-symbols-outlined" style="font-size:13px">calendar_add_on</span>Calendar</button>'+
+            '<button onclick="markPaidDr(''+b.id+'')" class="btn bgn" style="font-size:.62rem"><span class="material-symbols-outlined" style="font-size:13px">check_circle</span>Paid</button>'+
           '</div>'+
         '</div>'+
       '</div>'+
@@ -1154,7 +1057,7 @@ function openDriverPay() {
     '<div class="total-row"><span class="total-label">Total Driver Payout</span><span class="total-val">$'+total.toFixed(2)+'</span></div>'+
     '<div class="total-row"><span class="total-label">Company Retained</span><span style="font-weight:700;font-size:1rem;color:#775a19">$'+(gross-total).toFixed(2)+'</span></div>'+
     '<p style="margin-top:2rem;font-size:.75rem;color:#aaa">Seacoast RVIP LLC · info@seacoastrvip.com · (978) 255-3140 · seacoastrvip.com</p>'+
-    '';
+    '</body></html>';
 
   var w = window.open('','_blank');
   w.document.write(html);
@@ -1235,141 +1138,21 @@ function fbErrHTML(extra){
   '</div>';
 }
 
-
-// ─────────────────────────────────────────────
-//  NEW FEATURES LOGIC
-// ─────────────────────────────────────────────
-var curUser = null;
-
-function getDrivers() { try{return JSON.parse(localStorage.getItem('rv-drivers')||'[]');}catch(e){return[];} }
-function setDrivers(a) { localStorage.setItem('rv-drivers', JSON.stringify(a)); }
-
-function togglePwd() {
-  var x = document.getElementById('pwd');
-  var icon = document.getElementById('pwd-icon');
-  if (x.type === 'password') { x.type = 'text'; icon.textContent = 'visibility_off'; }
-  else { x.type = 'password'; icon.textContent = 'visibility'; }
-}
-
-function updateDriverSelects() {
-  var drs = getDrivers();
-  var html = '<option value="">— Unassigned —</option><option value="admin">Admin (Me)</option>';
-  drs.forEach(function(d){ html += '<option value="'+d.id+'">'+e(d.name)+'</option>'; });
-  var el = document.getElementById('fdr');
-  if(el) el.innerHTML = html;
-}
-
-function renderDrivers() {
-  var drs = getDrivers();
-  var el = document.getElementById('dr-list');
-  if(!drs.length) { el.innerHTML = '<div class="empty">No drivers added yet</div>'; return; }
-  el.innerHTML = drs.map(function(d){
-    return '<div class="card">'+
-      '<div style="display:flex;justify-content:space-between;align-items:center">'+
-        '<div><div class="cname">'+e(d.name)+'</div><div class="crow">'+e(d.phone)+' · Pwd: '+e(d.pwd)+'</div></div>'+
-        '<div style="display:flex;gap:5px">'+
-          '<button onclick="openEditDriver(\''+d.id+'\')" class="btn bo">Edit</button>'+
-          '<button onclick="delDriver(\''+d.id+'\')" class="btn br">Delete</button>'+
-        '</div>'+
-      '</div>'+
-    '</div>';
-  }).join('');
-}
-
-function openAddDriver() {
-  document.getElementById('dr-eid').value = '';
-  document.getElementById('dr-name').value = '';
-  document.getElementById('dr-phone').value = '';
-  document.getElementById('dr-pwd').value = '';
-  openM('m-dr');
-}
-
-function openEditDriver(id) {
-  var d = getDrivers().find(function(x){return x.id===id;});
-  if(!d) return;
-  document.getElementById('dr-eid').value = d.id;
-  document.getElementById('dr-name').value = d.name;
-  document.getElementById('dr-phone').value = d.phone;
-  document.getElementById('dr-pwd').value = d.pwd;
-  openM('m-dr');
-}
-
-function saveDriver() {
-  var name = document.getElementById('dr-name').value.trim();
-  var pwd = document.getElementById('dr-pwd').value.trim();
-  if(!name || !pwd) { toast('Name and Password required'); return; }
-  var drs = getDrivers(), eid = document.getElementById('dr-eid').value;
-  var dr = { id: eid || Date.now().toString(), name: name, phone: document.getElementById('dr-phone').value, pwd: pwd };
-  if(eid) { var i = drs.findIndex(function(x){return x.id===eid;}); if(i>-1) drs[i]=dr; }
-  else drs.push(dr);
-  setDrivers(drs); closeM('m-dr'); renderDrivers(); toast('Driver saved');
-}
-
-function delDriver(id) {
-  if(!confirm('Delete driver?')) return;
-  setDrivers(getDrivers().filter(function(x){return x.id!==id;}));
-  renderDrivers(); toast('Deleted');
-}
-
-function renderMarket() {
-  var bks = getBks().filter(function(b){ return !b.driverId || b.driverId === ''; });
-  var el = document.getElementById('market-list');
-  if(!bks.length) { el.innerHTML = '<div class="empty">No available rides in marketplace</div>'; return; }
-  el.innerHTML = bks.map(function(b){
-    return '<div class="card market-card">'+
-      '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">'+
-        '<div><div class="cname">'+e(b.name)+'</div><div class="crow">'+e(b.date)+' at '+fT(b.time)+'</div><div class="crow">'+e(b.pickup)+' → '+e(b.destination)+'</div></div>'+
-        '<button onclick="claimRide(\''+b.id+'\')" class="btn bgn">Claim Ride</button>'+
-      '</div>'+
-    '</div>';
-  }).join('');
-}
-
-function claimRide(id) {
-  if(!curUser) return;
-  var bks = getBks(), b = bks.find(function(x){return x.id===id;});
-  if(b) {
-    b.driverId = (curUser.role === 'admin') ? 'admin' : curUser.id;
-    setBks(bks); fbSync(b); renderMarket(); toast('Ride claimed!');
-  }
-}
-
-function broadcastToDrivers() {
-  var drs = getDrivers();
-  if(!drs.length) { toast('No drivers to notify'); return; }
-  var nums = drs.map(function(d){return d.phone.replace(/\D/g,'');}).join(',');
-  var msg = "New rides available in the Seacoast RVIP Marketplace! Log in to claim them now.";
-  window.open('sms:'+nums+'&body='+encodeURIComponent(msg));
-}
-
-
 // ─────────────────────────────────────────────
 //  BOOT
 // ─────────────────────────────────────────────
-window.addEventListener('DOMContentLoaded', function() {
-  if (localStorage.getItem('rv-auth') === '1') {
-    try {
-      curUser = JSON.parse(localStorage.getItem('rv-user'));
-    } catch(e) {
-      curUser = {name:'Admin', role:'admin'};
-    }
-    showDash();
+window.addEventListener('DOMContentLoaded', function(){
+  document.querySelectorAll('.ov').forEach(function(el){
+    el.addEventListener('click',function(ev){if(ev.target===this)closeM(this.id);});
+  });
+  if(localStorage.getItem('rv-auth')==='1'){
+    document.getElementById('pg-login').style.display='none';
+    document.getElementById('pg-dash').style.display='block';
+    initDash();
+  } else {
+    setTimeout(function(){document.getElementById('pwd').focus();},100);
   }
 });
-
-<!-- MODAL: ADD DRIVER -->
-<div id="m-dr" class="ov">
-  <div class="modal" style="max-width:400px">
-    <div class="mhd"><h3>Add/Edit Driver</h3><button onclick="closeM('m-dr')" class="mx">×</button></div>
-    <div class="mbdy">
-      <input id="dr-eid" type="hidden"/>
-      <div style="margin-bottom:1rem"><label class="flbl">Driver Name</label><input id="dr-name" class="finp" placeholder="Full Name"/></div>
-      <div style="margin-bottom:1rem"><label class="flbl">Phone Number</label><input id="dr-phone" class="finp" placeholder="978..."/></div>
-      <div style="margin-bottom:1rem"><label class="flbl">Login Password</label><input id="dr-pwd" class="finp" placeholder="Set a password"/></div>
-      <button onclick="saveDriver()" class="btn bg" style="width:100%;justify-content:center;padding:.8rem">Save Driver</button>
-    </div>
-  </div>
-</div>
-
+</script>
 </body>
 </html>
