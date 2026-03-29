@@ -145,7 +145,6 @@ body{font-family:'Inter',sans-serif;background:#f0f0f0;min-height:100vh}
       <button class="tab" onclick="goTab('clients',this)" style="color:#7c3aed;font-weight:700">Clients ●</button>
       <button class="tab" onclick="goTab('quotes',this)" style="color:#16a34a;font-weight:700">Quotes ●</button>
       <button class="tab" onclick="goTab('messages',this)" style="color:#1d4ed8;font-weight:700">Messages ✉</button>
-      <button class="tab" onclick="goTab('driver',this)" style="color:#16a34a;font-weight:700">Driver ⊕</button>
     </div>
 
     <div id="sec-all">
@@ -179,45 +178,7 @@ body{font-family:'Inter',sans-serif;background:#f0f0f0;min-height:100vh}
       <div id="qt-list"><div class="empty"><span class="material-symbols-outlined">request_quote</span><div style="font-size:.8rem">Click Refresh to load quotes</div></div></div>
     </div>
 
-    <div id="sec-driver" style="display:none">
-      <!-- Driver Records & Accounting -->
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin-bottom:1.5rem">
-        <div class="sbox" style="background:#fff;border-bottom:3px solid #16a34a;padding:1.25rem;text-align:center">
-          <div id="dr-total" class="snum" style="color:#16a34a">0</div><div class="slbl">Total Rides</div>
-        </div>
-        <div class="sbox" style="background:#fff;border-bottom:3px solid #775a19;padding:1.25rem;text-align:center">
-          <div id="dr-pay" class="snum" style="color:#775a19">$0</div><div class="slbl">Driver Payout</div>
-        </div>
-        <div class="sbox" style="background:#fff;border-bottom:3px solid #7c3aed;padding:1.25rem;text-align:center">
-          <div id="dr-rev" class="snum" style="color:#7c3aed">$0</div><div class="slbl">Gross Revenue</div>
-        </div>
-      </div>
-      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.75rem;margin-bottom:1.25rem">
-        <div>
-          <div style="font-family:'Times New Roman',serif;font-size:1.1rem;font-weight:700">Driver Records</div>
-          <div style="font-size:.75rem;color:#888;margin-top:3px">Manage rides, payouts, and driver invoices</div>
-        </div>
-        <div style="display:flex;gap:.5rem;flex-wrap:wrap">
-          <button onclick="openDriverPay()" class="btn bpp">Generate Invoice</button>
-          <button onclick="exportDriverCSV()" class="btn bo">Export CSV</button>
-          <button onclick="loadDriverRides()" class="btn bo"><span class="material-symbols-outlined" style="font-size:14px">refresh</span>Refresh</button>
-        </div>
-      </div>
-      <!-- Driver settings -->
-      <div class="card" style="margin-bottom:1.25rem;border-left-color:#16a34a">
-        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.75rem;margin-bottom:1rem">
-          <div style="font-weight:600;font-size:.9rem">Driver Commission Rate</div>
-          <div style="display:flex;align-items:center;gap:.5rem">
-            <input id="dr-rate" type="number" min="0" max="100" value="70" class="finp" style="width:70px;text-align:center;font-weight:700"/>
-            <span style="font-size:.85rem;color:#555">% of fare goes to driver</span>
-            <button onclick="saveDrRate()" class="btn bgn" style="font-size:.65rem">Save</button>
-          </div>
-        </div>
-        <div style="font-size:.75rem;color:#888">Example: $145 fare × 70% = $101.50 driver payout · $43.50 company revenue</div>
-      </div>
-      <div id="dr-list"><div class="empty-state"><span class="material-symbols-outlined">directions_car</span><div style="font-size:.8rem">Click Refresh to load driver ride records</div></div></div>
-    </div>
-<div id="sec-messages" style="display:none">
+    <div id="sec-messages" style="display:none">
       <div style="margin-bottom:1.5rem">
         <div style="font-family:'Times New Roman',serif;font-size:1.1rem;font-weight:700;margin-bottom:3px">Message Templates</div>
         <div style="font-size:.75rem;color:#888">Tap a template → edit → send to a client or all clients.</div>
@@ -524,13 +485,12 @@ function goTab(tab, btn) {
   curTab = tab;
   document.querySelectorAll('.tab').forEach(function(b){b.classList.remove('on');});
   btn.classList.add('on');
-  ['sec-all','sec-clients','sec-quotes','sec-messages','sec-driver'].forEach(function(id){
+  ['sec-all','sec-clients','sec-quotes','sec-messages'].forEach(function(id){
     document.getElementById(id).style.display='none';
   });
   if      (tab==='clients')  { document.getElementById('sec-clients').style.display='block';  loadClients(); }
   else if (tab==='quotes')   { document.getElementById('sec-quotes').style.display='block';   loadQuotes(); }
   else if (tab==='messages') { document.getElementById('sec-messages').style.display='block'; buildMsgs(); loadBcCount(); }
-  else if (tab==='driver')   { document.getElementById('sec-driver').style.display='block';  loadDriverRides(); }
   else                       { document.getElementById('sec-all').style.display='block';      renderBks(); }
 }
 
@@ -640,7 +600,7 @@ function openPay(id) {
   var msg  = 'Hi '+((b.name||'').split(' ')[0]||'there')+'! Your Seacoast RVIP ride is confirmed for '+
              (b.date||'—')+' at '+fT(b.time)+
              '.\n\nFare: $'+b.price+'\nPay here: '+link+
-             '\n\nCode: '+(b.code||'—')+'\n— Ramon (978) 255-3140';
+             '\n\nCode: '+(b.code||'—')+'\n— Ramon (987) 416-3283';
 
   document.getElementById('pay-info').innerHTML =
     '<strong>'+e(b.name)+'</strong><br>'+
@@ -815,7 +775,7 @@ function convertQ(docId) {
 }
 function replyQ(docId) {
   var q=QMAP[docId]; if(!q) return;
-  var msg='Hi '+(q.name||'there').split(' ')[0]+'! Thank you for your quote request for '+(q.service||'your trip')+'.\n\nMy quote: $[ADD PRICE HERE]\n\nReady to confirm? Book here:\n'+SITE+'/schedule.html\n\n— Ramon (978) 255-3140';
+  var msg='Hi '+(q.name||'there').split(' ')[0]+'! Thank you for your quote request for '+(q.service||'your trip')+'.\n\nMy quote: $[ADD PRICE HERE]\n\nReady to confirm? Book here:\n'+SITE+'/schedule.html\n\n— Ramon (987) 416-3283';
   document.getElementById('msg-title').textContent='Reply to '+(q.name||'Client');
   document.getElementById('msg-txt').value=msg;
   document.getElementById('msg-phone').value=q.phone||'';
@@ -833,26 +793,26 @@ async function dismissQ(docId) {
 // ─────────────────────────────────────────────
 var MSGS=[
   {cat:'After the Ride',color:'#16a34a',items:[
-    {t:'Thank You',d:'Right after the ride',m:'Hi [Name]! Thank you for choosing Seacoast RVIP today!\n\nWhenever you need a ride, just text me.\n\n— Ramon\n(978) 255-3140'},
-    {t:'Thank You + Google Review',d:'Best for building reviews',m:'Hi [Name]! Thank you for riding with Seacoast RVIP!\n\nA quick Google review means the world:\n\n'+GREVIEW+'\n\nThank you! — Ramon (978) 255-3140'},
-    {t:'Safe Flight',d:'After airport drop-off',m:'Hi [Name]! Hope you made it through security! ✈️\n\nHave a safe trip. I\'ll be ready when you return.\n\n— Ramon (978) 255-3140'}
+    {t:'Thank You',d:'Right after the ride',m:'Hi [Name]! Thank you for choosing Seacoast RVIP today!\n\nWhenever you need a ride, just text me.\n\n— Ramon\n(987) 416-3283'},
+    {t:'Thank You + Google Review',d:'Best for building reviews',m:'Hi [Name]! Thank you for riding with Seacoast RVIP!\n\nA quick Google review means the world:\n\n'+GREVIEW+'\n\nThank you! — Ramon (987) 416-3283'},
+    {t:'Safe Flight',d:'After airport drop-off',m:'Hi [Name]! Hope you made it through security! ✈️\n\nHave a safe trip. I\'ll be ready when you return.\n\n— Ramon (987) 416-3283'}
   ]},
   {cat:'Ride Reminders',color:'#1d4ed8',items:[
-    {t:'Day Before Reminder',d:'Night before',m:'Hi [Name]! Reminder — your Seacoast RVIP ride is tomorrow [Date] at [Time].\n\nI\'ll be at [Pickup] 5 minutes early in the black SUV.\n\n— Ramon (978) 255-3140'},
-    {t:'Morning of Ride',d:'1–2 hrs before pickup',m:'Good morning [Name]! Your ride is today at [Time].\n\nI\'ll be at [Pickup] a few minutes early!\n\n— Ramon (978) 255-3140'},
+    {t:'Day Before Reminder',d:'Night before',m:'Hi [Name]! Reminder — your Seacoast RVIP ride is tomorrow [Date] at [Time].\n\nI\'ll be at [Pickup] 5 minutes early in the black SUV.\n\n— Ramon (987) 416-3283'},
+    {t:'Morning of Ride',d:'1–2 hrs before pickup',m:'Good morning [Name]! Your ride is today at [Time].\n\nI\'ll be at [Pickup] a few minutes early!\n\n— Ramon (987) 416-3283'},
     {t:'On My Way',d:'When leaving to pick up',m:'Hi [Name]! On my way — arriving at [Pickup] in about [X] minutes. 🚗\n\n— Ramon'},
     {t:'I Have Arrived',d:'Waiting outside',m:'Hi [Name]! I\'m outside at [Pickup] — black SUV, ready when you are!\n\n— Ramon'}
   ]},
   {cat:'Holidays & Events',color:'#775a19',items:[
-    {t:'New Year\'s Eve',d:'Dec 28–30',m:'Hi [Name]! Happy almost New Year! 🥂\n\nNeed a safe ride to celebrate? Seacoast RVIP has you covered.\n\n— Ramon (978) 255-3140'},
-    {t:'4th of July',d:'July 1–3',m:'Hi [Name]! Happy 4th! 🇺🇸\n\nHeading to fireworks? I have a safe ride for you!\n\n— Ramon (978) 255-3140'},
-    {t:'Casino Night',d:'Casino weekends',m:'Hi [Name]! Feeling lucky? 🎰\n\nSeacoast RVIP runs to Foxwoods & Mohegan Sun!\n\n— Ramon (978) 255-3140'},
-    {t:'Christmas Holidays',d:'Dec 15–20',m:'Hi [Name]! Happy Holidays! 🎄\n\nNeed airport rides or party transportation? I\'m here.\n\n— Ramon (978) 255-3140'}
+    {t:'New Year\'s Eve',d:'Dec 28–30',m:'Hi [Name]! Happy almost New Year! 🥂\n\nNeed a safe ride to celebrate? Seacoast RVIP has you covered.\n\n— Ramon (987) 416-3283'},
+    {t:'4th of July',d:'July 1–3',m:'Hi [Name]! Happy 4th! 🇺🇸\n\nHeading to fireworks? I have a safe ride for you!\n\n— Ramon (987) 416-3283'},
+    {t:'Casino Night',d:'Casino weekends',m:'Hi [Name]! Feeling lucky? 🎰\n\nSeacoast RVIP runs to Foxwoods & Mohegan Sun!\n\n— Ramon (987) 416-3283'},
+    {t:'Christmas Holidays',d:'Dec 15–20',m:'Hi [Name]! Happy Holidays! 🎄\n\nNeed airport rides or party transportation? I\'m here.\n\n— Ramon (987) 416-3283'}
   ]},
   {cat:'Business Growth',color:'#7c3aed',items:[
-    {t:'Referral Program',d:'Ask for referrals',m:'Hi [Name]! Know anyone who needs reliable transportation?\n\nRefer a friend who books and I\'ll give you $10 off your next trip!\n\n— Ramon (978) 255-3140'},
-    {t:'Re-engagement',d:'Clients quiet 60+ days',m:'Hi [Name]! It\'s been a while — just checking in! 👋\n\nSeacoast RVIP is here whenever you need a ride.\n\n— Ramon (978) 255-3140'},
-    {t:'Corporate Offer',d:'For business clients',m:'Hi [Name]! Does your company need professional transportation?\n\nSeacoast RVIP offers reliable corporate service with priority booking.\n\n— Ramon (978) 255-3140'}
+    {t:'Referral Program',d:'Ask for referrals',m:'Hi [Name]! Know anyone who needs reliable transportation?\n\nRefer a friend who books and I\'ll give you $10 off your next trip!\n\n— Ramon (987) 416-3283'},
+    {t:'Re-engagement',d:'Clients quiet 60+ days',m:'Hi [Name]! It\'s been a while — just checking in! 👋\n\nSeacoast RVIP is here whenever you need a ride.\n\n— Ramon (987) 416-3283'},
+    {t:'Corporate Offer',d:'For business clients',m:'Hi [Name]! Does your company need professional transportation?\n\nSeacoast RVIP offers reliable corporate service with priority booking.\n\n— Ramon (987) 416-3283'}
   ]}
 ];
 
@@ -939,189 +899,6 @@ function showMR(msg,ok){
 async function loadBcCount(){
   if(!db)return;
   try{var s=await db.collection('clients').get();document.getElementById('bc-count').textContent=s.size+' clients';}catch(e){}
-}
-
-
-// ═══════════════════════════════════════
-// DRIVER RECORDS & ACCOUNTING
-// ═══════════════════════════════════════
-var DR_RATE_KEY = 'dr-rate';
-
-function getDrRate() {
-  return parseFloat(localStorage.getItem(DR_RATE_KEY) || '70');
-}
-function saveDrRate() {
-  var r = parseFloat(document.getElementById('dr-rate').value);
-  if (isNaN(r)||r<0||r>100) { toast('Enter a valid rate 0–100'); return; }
-  localStorage.setItem(DR_RATE_KEY, r);
-  toast('Commission rate saved: ' + r + '%');
-  loadDriverRides();
-}
-
-function loadDriverRides() {
-  var bks = getBks().filter(function(b){ return b.status !== 'Cancelled'; })
-                    .sort(function(a,b){ return new Date(b.date)-new Date(a.date); });
-  var rate = getDrRate() / 100;
-  var totalPay = 0, totalRev = 0;
-  bks.forEach(function(b){
-    var pr = parseFloat(b.price)||0;
-    totalPay += pr * rate;
-    totalRev += pr;
-  });
-  document.getElementById('dr-total').textContent = bks.length;
-  document.getElementById('dr-pay').textContent   = '$' + totalPay.toFixed(2);
-  document.getElementById('dr-rev').textContent   = '$' + totalRev.toFixed(2);
-  document.getElementById('dr-rate').value        = getDrRate();
-
-  var el = document.getElementById('dr-list');
-  if (!bks.length) {
-    el.innerHTML = '<div class="empty-state"><span class="material-symbols-outlined">directions_car</span><div style="font-size:.8rem">No rides yet</div></div>';
-    return;
-  }
-  el.innerHTML = bks.map(function(b) {
-    var pr  = parseFloat(b.price)||0;
-    var dp  = (pr * rate).toFixed(2);
-    var cp  = (pr * (1-rate)).toFixed(2);
-    var SC  = {Pending:'byw',Confirmed:'bbl',Paid:'bgr',Completed:'bgr',Cancelled:'brd'};
-    return '<div class="card" style="margin-bottom:.625rem">'+
-      '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:.75rem">'+
-        '<div style="flex:1;min-width:180px">'+
-          '<div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;margin-bottom:.375rem">'+
-            '<span style="font-weight:700;font-size:.9rem">'+e(b.name)+'</span>'+
-            '<span class="bdg '+(SC[b.status]||'byw')+'">'+e(b.status)+'</span>'+
-            (b.code?'<span class="code-tag">'+e(b.code)+'</span>':'')+
-          '</div>'+
-          '<div class="crow"><span class="material-symbols-outlined">calendar_today</span>'+e(b.date||'—')+' · '+fT(b.time)+'</div>'+
-          '<div class="crow"><span class="material-symbols-outlined">directions_car</span>'+e(b.service||'—')+'</div>'+
-          (b.pickup?'<div class="crow"><span class="material-symbols-outlined">location_on</span>'+e(b.pickup)+' → '+e(b.destination||'')+'</div>':'')+
-        '</div>'+
-        '<div style="text-align:right;min-width:160px">'+
-          '<div style="font-family:'Times New Roman',serif;font-size:1.5rem;font-weight:700;color:#111">$'+pr.toFixed(2)+'</div>'+
-          '<div style="font-size:.72rem;color:#16a34a;font-weight:600;margin-top:2px">Driver: $'+dp+'</div>'+
-          '<div style="font-size:.72rem;color:#775a19;font-weight:600">Company: $'+cp+'</div>'+
-          '<div style="display:flex;gap:.375rem;margin-top:.625rem;justify-content:flex-end;flex-wrap:wrap">'+
-            '<button onclick="addToCalendar(''+b.id+'')" class="btn bo" style="font-size:.62rem"><span class="material-symbols-outlined" style="font-size:13px">calendar_add_on</span>Calendar</button>'+
-            '<button onclick="markPaidDr(''+b.id+'')" class="btn bgn" style="font-size:.62rem"><span class="material-symbols-outlined" style="font-size:13px">check_circle</span>Paid</button>'+
-          '</div>'+
-        '</div>'+
-      '</div>'+
-    '</div>';
-  }).join('');
-}
-
-// Mark ride as paid (driver paid out)
-function markPaidDr(id) {
-  var bks=getBks(), b=bks.find(function(x){return x.id===id;});
-  if(!b) return;
-  b.status = 'Completed';
-  setBks(bks); fbSync(b);
-  loadDriverRides(); renderBks();
-  toast('✅ Marked Completed — driver paid');
-}
-
-// Generate driver invoice as a printable window
-function openDriverPay() {
-  var bks   = getBks().filter(function(b){ return b.status!=='Cancelled'; });
-  var rate  = getDrRate() / 100;
-  var total = bks.reduce(function(s,b){ return s+(parseFloat(b.price)||0)*rate; }, 0);
-  var gross = bks.reduce(function(s,b){ return s+(parseFloat(b.price)||0); }, 0);
-  var today = new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
-
-  var rows = bks.map(function(b){
-    var pr = parseFloat(b.price)||0;
-    var dp = (pr*rate).toFixed(2);
-    return '<tr style="border-bottom:1px solid #f0f0f0">'+
-      '<td style="padding:.625rem .5rem;font-size:.8rem">'+e(b.date||'—')+'</td>'+
-      '<td style="padding:.625rem .5rem;font-size:.8rem">'+e(b.name||'—')+'</td>'+
-      '<td style="padding:.625rem .5rem;font-size:.8rem">'+e(b.service||'—')+'</td>'+
-      '<td style="padding:.625rem .5rem;font-size:.8rem;text-align:right">$'+pr.toFixed(2)+'</td>'+
-      '<td style="padding:.625rem .5rem;font-size:.8rem;text-align:right;color:#16a34a;font-weight:600">$'+dp+'</td>'+
-    '</tr>';
-  }).join('');
-
-  var html = '<html><head><title>Seacoast RVIP — Driver Invoice</title>'+
-    '<style>body{font-family:Inter,sans-serif;padding:2rem;max-width:700px;margin:0 auto;color:#111}'+
-    'h1{font-family:"Times New Roman",serif;font-size:1.75rem;margin-bottom:.25rem}'+
-    '.gold{color:#775a19}.sub{font-size:.8rem;color:#888;margin-bottom:2rem}'+
-    'table{width:100%;border-collapse:collapse;margin-bottom:1.5rem}'+
-    'th{text-align:left;font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;color:#aaa;padding:.5rem;border-bottom:2px solid #eee}'+
-    '.total-row{display:flex;justify-content:space-between;padding:.75rem 0;border-top:2px solid #111;margin-top:.5rem}'+
-    '.total-label{font-weight:700;font-size:.9rem}.total-val{font-weight:700;font-size:1.25rem;color:#16a34a}'+
-    '</style></head><body>'+
-    '<h1>Seacoast RVIP LLC</h1>'+
-    '<div class="sub">Driver Invoice &nbsp;·&nbsp; Generated: '+today+'&nbsp;·&nbsp; Commission Rate: '+getDrRate()+'%</div>'+
-    '<table><thead><tr>'+
-      '<th>Date</th><th>Client</th><th>Service</th><th style="text-align:right">Fare</th><th style="text-align:right">Driver Pay</th>'+
-    '</tr></thead><tbody>'+rows+'</tbody></table>'+
-    '<div class="total-row"><span class="total-label">Gross Revenue</span><span style="font-weight:700;font-size:1rem">$'+gross.toFixed(2)+'</span></div>'+
-    '<div class="total-row"><span class="total-label">Total Driver Payout</span><span class="total-val">$'+total.toFixed(2)+'</span></div>'+
-    '<div class="total-row"><span class="total-label">Company Retained</span><span style="font-weight:700;font-size:1rem;color:#775a19">$'+(gross-total).toFixed(2)+'</span></div>'+
-    '<p style="margin-top:2rem;font-size:.75rem;color:#aaa">Seacoast RVIP LLC · info@seacoastrvip.com · (978) 255-3140 · seacoastrvip.com</p>'+
-    '</body></html>';
-
-  var w = window.open('','_blank');
-  w.document.write(html);
-  w.document.close();
-  setTimeout(function(){ w.print(); }, 600);
-}
-
-// Export driver rides as CSV
-function exportDriverCSV() {
-  var bks  = getBks().filter(function(b){ return b.status!=='Cancelled'; });
-  var rate = getDrRate() / 100;
-  var rows = [['Date','Client','Phone','Service','Fare','Driver Pay','Company','Status','Code']];
-  bks.forEach(function(b){
-    var pr = parseFloat(b.price)||0;
-    rows.push([b.date||'',b.name||'',b.phone||'',b.service||'',
-      pr.toFixed(2),(pr*rate).toFixed(2),(pr*(1-rate)).toFixed(2),b.status||'',b.code||'']);
-  });
-  var csv = rows.map(function(r){ return r.map(function(c){ return '"'+String(c).replace(/"/g,'""')+'"'; }).join(','); }).join('\n');
-  var blob = new Blob([csv],{type:'text/csv'});
-  var a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'seacoast-rvip-rides-'+new Date().toISOString().slice(0,10)+'.csv';
-  a.click();
-  toast('CSV downloaded!');
-}
-
-// ═══════════════════════════════════════
-// CALENDAR SYNC — Google Calendar
-// ═══════════════════════════════════════
-function addToCalendar(id) {
-  var b = getBks().find(function(x){ return x.id===id; });
-  if (!b) return;
-
-  // Build event datetime
-  var dateStr = b.date || ''; // YYYY-MM-DD
-  var timeStr = b.time || '08:00'; // HH:MM
-  if (!dateStr) { toast('Booking has no date set'); return; }
-
-  // Format for Google Calendar: YYYYMMDDTHHMMSS
-  var dt = dateStr.replace(/-/g,'') + 'T' + timeStr.replace(':','') + '00';
-  // End time = 1 hour later
-  var hour = parseInt(timeStr.split(':')[0])||8;
-  var min  = parseInt(timeStr.split(':')[1])||0;
-  var endH = String(hour+1).padStart(2,'0');
-  var dte  = dateStr.replace(/-/g,'') + 'T' + endH + String(min).padStart(2,'0') + '00';
-
-  var title    = encodeURIComponent('🚗 Seacoast RVIP — ' + (b.name||'Client'));
-  var details  = encodeURIComponent(
-    'Client: ' + (b.name||'—') + '\n' +
-    'Phone: '  + (b.phone||'—') + '\n' +
-    'Service: '+ (b.service||'—') + '\n' +
-    'Pickup: ' + (b.pickup||'—') + '\n' +
-    'Drop-off: '+(b.destination||'—') + '\n' +
-    'Fare: $'  + (b.price||'—') + '\n' +
-    'Code: '   + (b.code||'—')
-  );
-  var location = encodeURIComponent(b.pickup || '');
-
-  var url = 'https://calendar.google.com/calendar/r/eventedit?text=' + title +
-            '&dates=' + dt + '/' + dte +
-            '&details=' + details + '&location=' + location;
-
-  window.open(url, '_blank');
-  toast('Google Calendar opened — save the event!');
 }
 
 // ─────────────────────────────────────────────
