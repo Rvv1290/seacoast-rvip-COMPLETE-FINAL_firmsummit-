@@ -669,8 +669,8 @@
       <!-- MANAGE DRIVERS -->
       <div id="sec-manage-drivers" style="display:none">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem">
-          <div style="font-family:'Times New Roman',serif;font-size:1.1rem;font-weight:700">Manage Drivers</div>
-          <button onclick="openAddDriver()" class="btn bk">+ Add Driver</button>
+          <div style="font-family:'Times New Roman',serif;font-size:1.1rem;font-weight:700">Active Drivers Operations</div>
+          <div style="font-size:0.8rem;color:#666">Drivers self-register via Portal Link</div>
         </div>
         <div id="dr-list"></div>
       </div>
@@ -943,6 +943,23 @@
       }
       db = firebase.firestore();
       console.log('Firebase ready');
+      
+      // Auto-sync Central Drivers Database
+      window.allDriversCache = [];
+      db.collection('drivers').onSnapshot(function(snap) {
+        window.allDriversCache = [];
+        snap.forEach(function(doc) {
+          var d = doc.data();
+          d.id = d.email || d.uid || doc.id; // Map id correctly
+          d.name = (d.profile && d.profile.name) ? d.profile.name : (d.email || d.id);
+          d.phone = (d.profile && d.profile.phone) ? d.profile.phone : '';
+          d.car = (d.profile && d.profile.vMake) ? (d.profile.vMake + ' ' + (d.profile.vModel||'')) : '';
+          d.plate = (d.profile && d.profile.vPlate) ? d.profile.vPlate : '';
+          window.allDriversCache.push(d);
+        });
+        if(curTab === 'manage-drivers') renderDrivers();
+        if(curTab === 'compliance') renderCompliance();
+      });
     } catch (e) { console.warn('Firebase:', e.message); }
 
     // ─────────────────────────────────────────────
@@ -962,8 +979,8 @@
     // ─────────────────────────────────────────────
     function getBks() { try { return JSON.parse(localStorage.getItem('rv-bks') || '[]'); } catch (e) { return []; } }
     function setBks(a) { localStorage.setItem('rv-bks', JSON.stringify(a)); }
-    function getDrivers() { try { return JSON.parse(localStorage.getItem('rv-drivers') || '[]'); } catch (e) { return []; } }
-    function setDrivers(a) { localStorage.setItem('rv-drivers', JSON.stringify(a)); }
+    function getDrivers() { return window.allDriversCache || []; }
+    function setDrivers(a) {} // Deprecated, managed by Firebase
     function getDrRate() { return parseFloat(localStorage.getItem(DR_RATE_KEY)) || 75; }
 
     // ─────────────────────────────────────────────
@@ -1985,26 +2002,24 @@
       if (!drs.length) { el.innerHTML = '<div class="empty">No drivers added yet</div>'; return; }
       el.innerHTML = drs.map(function (d) {
         var verifiedBadge = d.docVerified ? '<span class="bdg bgn" style="margin-left:5px">Docs Verified</span>' : '<span class="bdg brd" style="margin-left:5px">Pending Docs</span>';
-        var docLinkBtn = d.docLink ? '<button onclick="window.open(\'' + d.docLink + '\', \'_blank\')" class="btn bo" style="font-size:.62rem;padding:4px"><span class="material-symbols-outlined" style="font-size:13px">description</span> DocuSign</button>' : '';
+        var docLinkBtn = '';
 
-        var picHtml = d.carPic ? '<img src="' + e(d.carPic) + '" style="width:100px;height:70px;object-fit:cover;border-radius:6px;border:1px solid #ddd;flex-shrink:0" alt="Car"/>' : '<div style="width:100px;height:70px;background:#eee;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#999;font-size:11px;flex-shrink:0"><span class="material-symbols-outlined" style="font-size:24px">directions_car</span></div>';
+        var picHtml = '<div style="width:100px;height:70px;background:#eee;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#999;font-size:11px;flex-shrink:0"><span class="material-symbols-outlined" style="font-size:24px">directions_car</span></div>';
 
         return '<div class="card" style="cursor:pointer" onclick="if(event.target.tagName!==\'BUTTON\'&&event.target.tagName!==\'SPAN\'){loadDriverRides(\'' + d.id + '\');goTab(\'driver\');}">' +
           '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:15px">' +
           '<div style="display:flex;gap:15px;align-items:center;flex-wrap:wrap;flex:1">' +
           picHtml +
           '<div>' +
-          '<div class="cname" style="margin-bottom:4px">' + e(d.name) + verifiedBadge + '</div>' +
-          '<div class="crow" style="margin-top:2px;font-size:.8rem"><span class="material-symbols-outlined" style="font-size:13px">phone</span> ' + e(d.phone) + ' &nbsp;·&nbsp; Pwd: <code>' + e(d.pwd) + '</code></div>' +
+          '<div class="cname" style="margin-bottom:4px;font-size:1.05rem">' + e(d.name) + ' <span class="bdg bgn" style="margin-left:5px">' + e(d.status||'Unknown') + '</span></div>' +
+          '<div class="crow" style="margin-top:2px;font-size:.8rem"><span class="material-symbols-outlined" style="font-size:13px">phone</span> ' + e(d.phone) + '</div>' +
           '<div class="crow" style="margin-top:2px;font-size:.8rem"><span class="material-symbols-outlined" style="font-size:13px">directions_car</span> ' + e(d.car || 'No vehicle set') + ' &nbsp;·&nbsp; Plate: ' + e(d.plate || 'N/A') + '</div>' +
-          '<div class="crow" style="margin-top:2px;font-size:.8rem"><span class="material-symbols-outlined" style="font-size:13px">payments</span> ' + e(d.payMethod || 'Not set') + ' (' + e(d.payDetails || 'No details') + ')</div>' +
-          '<div style="margin-top:6px;display:flex;gap:5px">' + docLinkBtn + '</div>' +
+          '<div class="crow" style="margin-top:2px;font-size:.85rem;font-weight:600"><span class="material-symbols-outlined" style="font-size:13px">payments</span> 75% Commission Structure</div>' +
           '</div>' +
           '</div>' +
           '<div style="display:flex;flex-wrap:wrap;gap:5px;flex-direction:column;align-items:flex-end">' +
-          '<button onclick="loadDriverRides(\'' + d.id + '\');goTab(\'driver\')" class="btn bbl" style="font-size:.7rem"><span class="material-symbols-outlined" style="font-size:14px">visibility</span>View Profile</button>' +
-          '<button onclick="openEditDriver(\'' + d.id + '\')" class="btn bo"><span class="material-symbols-outlined" style="font-size:14px">edit</span>Edit Profile</button>' +
-          '<button onclick="delDriver(\'' + d.id + '\')" class="btn br"><span class="material-symbols-outlined" style="font-size:14px">delete</span></button>' +
+          '<button onclick="loadDriverRides(\'' + d.id + '\');goTab(\'driver\')" class="btn bbl" style="font-size:.7rem"><span class="material-symbols-outlined" style="font-size:14px">visibility</span>View Financials/Rides</button>' +
+          '<button onclick="delDriver(\'' + d.id + '\')" class="btn brd" style="font-size:.7rem"><span class="material-symbols-outlined" style="font-size:14px">delete</span>Remove Profile</button>' +
           '</div>' +
           '</div>' +
           '</div>';
@@ -2048,94 +2063,41 @@
       toast('1099 Report downloaded!');
     }
 
-    function openAddDriver() {
-      var ids = ['dr-eid', 'dr-name', 'dr-phone', 'dr-address', 'dr-pwd', 'dr-car', 'dr-plate', 'dr-carpic', 'dr-paydetails', 'dr-doc'];
-      ids.forEach(function (i) { var el = document.getElementById(i); if (el) el.value = ''; });
-      document.getElementById('dr-paym').value = 'Venmo';
-      document.getElementById('dr-vfd').checked = false;
-      openM('m-dr');
-    }
-
-    function openEditDriver(id) {
-      var d = getDrivers().find(function (x) { return x.id === id; });
-      if (!d) return;
-      document.getElementById('dr-eid').value = d.id;
-      document.getElementById('dr-name').value = d.name || '';
-      document.getElementById('dr-phone').value = d.phone || '';
-      document.getElementById('dr-address').value = d.address || '';
-      document.getElementById('dr-pwd').value = d.pwd || '';
-      document.getElementById('dr-car').value = d.car || '';
-      document.getElementById('dr-plate').value = d.plate || '';
-      document.getElementById('dr-carpic').value = d.carPic || '';
-      document.getElementById('dr-paym').value = d.payMethod || 'Venmo';
-      document.getElementById('dr-paydetails').value = d.payDetails || '';
-      document.getElementById('dr-doc').value = d.docLink || '';
-      document.getElementById('dr-vfd').checked = d.docVerified || false;
-      openM('m-dr');
-    }
-
-    function saveDriver() {
-      var name = document.getElementById('dr-name').value.trim();
-      var pwd = document.getElementById('dr-pwd').value.trim();
-      if (!name || !pwd) { toast('Name and Password required'); return; }
-      var drs = getDrivers(), eid = document.getElementById('dr-eid').value;
-      var dr = {
-        id: eid || Date.now().toString(),
-        name: name,
-        phone: document.getElementById('dr-phone').value,
-        address: document.getElementById('dr-address').value,
-        pwd: pwd,
-        car: document.getElementById('dr-car').value,
-        plate: document.getElementById('dr-plate').value,
-        carPic: document.getElementById('dr-carpic').value.trim(),
-        payMethod: document.getElementById('dr-paym').value,
-        payDetails: document.getElementById('dr-paydetails').value.trim(),
-        docLink: document.getElementById('dr-doc').value.trim(),
-        docVerified: document.getElementById('dr-vfd').checked
-      };
-      if (eid) { var i = drs.findIndex(function (x) { return x.id === eid; }); if (i > -1) drs[i] = dr; }
-      else drs.push(dr);
-      setDrivers(drs); closeM('m-dr'); renderDrivers(); toast('Driver saved');
-    }
-
     function delDriver(id) {
-      if (!confirm('Delete driver?')) return;
-      setDrivers(getDrivers().filter(function (x) { return x.id !== id; }));
-      renderDrivers(); toast('Deleted');
+      if (!confirm('Permanently remove this driver from the network?')) return;
+      if (db) db.collection('drivers').doc(id).delete();
+      toast('Driver profile deleted permanently');
     }
 
     // ─────────────────────────────────────────────
     //  COMPLIANCE REVIEW LOGIC (Linked to driver-portal.html)
     // ─────────────────────────────────────────────
     function renderCompliance() {
-      var allDrv = JSON.parse(localStorage.getItem('rv_all_drivers') || '{}');
+      var activeDrivers = window.allDriversCache || [];
       var el = document.getElementById('comp-list');
-      var keys = Object.keys(allDrv);
       
-      if (!keys.length) { 
-        el.innerHTML = '<div class="empty">No active driver onboarding profiles found.</div>'; 
+      if (!activeDrivers.length) { 
+        el.innerHTML = '<div class="empty">No active driver onboarding profiles found. Wait for a driver to sign up using the portal link.</div>'; 
         return; 
       }
 
       var cOk = 0, cPen = 0, cSus = 0;
       var h = '';
 
-      keys.forEach(function(k) {
-        var d = allDrv[k];
+      activeDrivers.forEach(function(d) {
         var st = d.status || 'Pending';
         if(st === 'Approved') cOk++;
         else if (st === 'Pending') cPen++;
         else cSus++;
 
         var bdg = st === 'Approved' ? 'bgr' : (st === 'Pending' ? 'byw' : 'brd');
-        var nm = (d.profile && d.profile.name) ? d.profile.name : (d.email || d.uid || 'Unknown Driver');
 
         h += '<div class="card" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">' +
           '<div>' +
-            '<div style="font-weight:700;margin-bottom:4px">' + e(nm) + ' <span class="bdg ' + bdg + '" style="margin-left:8px">' + st + '</span></div>' +
-            '<div style="font-size:0.8rem;color:#666">' + e(d.email) + (d.profile && d.profile.phone ? ' · ' + e(d.profile.phone) : '') + '</div>' +
+            '<div style="font-weight:700;margin-bottom:4px;font-size:1.1rem">' + e(d.name) + ' <span class="bdg ' + bdg + '" style="margin-left:8px">' + st + '</span></div>' +
+            '<div style="font-size:0.8rem;color:#666">' + e(d.email) + (d.phone ? ' · ' + e(d.phone) : '') + '</div>' +
           '</div>' +
-          '<button onclick="openCompRev(\'' + k + '\')" class="btn bo" style="font-size:.7rem;padding:.4rem .8rem">Review Docs</button>' +
+          '<button onclick="openCompRev(\'' + d.id + '\')" class="btn bo" style="font-size:.75rem;padding:.5rem 1rem">Review Docs</button>' +
         '</div>';
       });
 
@@ -2149,12 +2111,10 @@
 
     function openCompRev(uid) {
       curCompUid = uid;
-      var allDrv = JSON.parse(localStorage.getItem('rv_all_drivers') || '{}');
-      var d = allDrv[uid];
+      var d = (window.allDriversCache || []).find(function(x){return x.id === uid;});
       if(!d) return;
 
-      var nm = (d.profile && d.profile.name) ? d.profile.name : (d.email || uid);
-      document.getElementById('cr-title').textContent = 'Review: ' + nm;
+      document.getElementById('cr-title').textContent = 'Review: ' + e(d.name);
 
       var tbody = document.getElementById('cr-docs-body');
       var h = '';
@@ -2190,17 +2150,19 @@
     }
 
     function compUpdate(docId, newSt) {
-      if(!curCompUid) return;
-      var allDrv = JSON.parse(localStorage.getItem('rv_all_drivers') || '{}');
-      if(!allDrv[curCompUid]) return;
+      if(!curCompUid || !db) return;
+      var d = (window.allDriversCache || []).find(function(x){return x.id === curCompUid;});
+      if(!d || !d.documents) return;
 
-      allDrv[curCompUid].documents[docId].status = newSt;
-      allDrv[curCompUid].documents[docId].lastUpdated = new Date().toISOString();
+      d.documents[docId].status = newSt;
+      d.documents[docId].lastUpdated = new Date().toISOString();
       
-      localStorage.setItem('rv_all_drivers', JSON.stringify(allDrv));
-      toast('Document marked ' + newSt);
-      openCompRev(curCompUid); // Re-render modal
-      renderCompliance(); // Re-render table in background
+      db.collection('drivers').doc(curCompUid).update({
+        documents: d.documents
+      }).then(function() {
+        toast('Document marked ' + newSt);
+        openCompRev(curCompUid);
+      });
     }
 
     function broadcastToDrivers() {
@@ -2231,76 +2193,7 @@
     });
   </script>
 
-  <!-- MODAL: ADD DRIVER -->
-  <div id="m-dr" class="ov">
-    <div class="modal" style="max-width:700px">
-      <div class="mhd">
-        <h3>Driver Profile & Onboarding</h3><button onclick="closeM('m-dr')" class="mx">×</button>
-      </div>
-      <div class="mbdy">
-        <input id="dr-eid" type="hidden" />
-
-        <div style="font-weight:600;margin-bottom:10px;border-bottom:1px solid #ddd;padding-bottom:5px">Personal Details
-        </div>
-        <div
-          style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:15px;margin-bottom:15px">
-          <div><label class="flbl">Full Name</label><input id="dr-name" class="finp" placeholder="First Last" /></div>
-          <div><label class="flbl">Phone Number</label><input id="dr-phone" class="finp" type="tel"
-              placeholder="978..." /></div>
-          <div><label class="flbl">Home Address</label><input id="dr-address" class="finp"
-              placeholder="123 Main St..." /></div>
-          <div><label class="flbl">Login Password</label><input id="dr-pwd" class="finp" placeholder="Set a password" />
-          </div>
-        </div>
-
-        <div style="font-weight:600;margin-bottom:10px;border-bottom:1px solid #ddd;padding-bottom:5px">Vehicle
-          Information</div>
-        <div
-          style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:15px;margin-bottom:15px">
-          <div><label class="flbl">Make, Model, Year & Color</label><input id="dr-car" class="finp"
-              placeholder="2022 Cadillac Escalade - Black" /></div>
-          <div><label class="flbl">License Plate</label><input id="dr-plate" class="finp" placeholder="TX-1234" /></div>
-          <div style="grid-column: 1 / -1"><label class="flbl">Vehicle Photo (Image Link URL)</label><input
-              id="dr-carpic" class="finp" placeholder="https://imgur.com/..." /></div>
-        </div>
-
-        <div style="font-weight:600;margin-bottom:10px;border-bottom:1px solid #ddd;padding-bottom:5px">Payout
-          Configuration</div>
-        <div
-          style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:15px;margin-bottom:15px">
-          <div>
-            <label class="flbl">Preferred Payment Method</label>
-            <select id="dr-paym" class="fsel">
-              <option value="Venmo">Venmo</option>
-              <option value="CashApp">CashApp</option>
-              <option value="PayPal">PayPal</option>
-              <option value="Zelle">Zelle</option>
-              <option value="Direct Deposit">Direct Deposit (ACH)</option>
-            </select>
-          </div>
-          <div>
-            <label class="flbl">Handle / Email / Routing & Acct</label>
-            <input id="dr-paydetails" class="finp" placeholder="@username or routing/account info" />
-          </div>
-        </div>
-
-        <div style="font-weight:600;margin-bottom:10px;border-bottom:1px solid #ddd;padding-bottom:5px">Legal &
-          Documents</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:20px;align-items:end">
-          <div><label class="flbl">DocuSign Agreement Link</label><input id="dr-doc" class="finp"
-              placeholder="https://docusign.com/..." /></div>
-          <div style="display:flex;align-items:center;gap:10px;padding-bottom:8px">
-            <input id="dr-vfd" type="checkbox" style="width:18px;height:18px;cursor:pointer;accent-color:#16a34a">
-            <label for="dr-vfd" class="flbl" style="margin:0;cursor:pointer;user-select:none">Docs & Background
-              Verified</label>
-          </div>
-        </div>
-
-        <button onclick="saveDriver()" class="btn bg" style="width:100%;justify-content:center;padding:.8rem">Save
-          Driver Profile</button>
-      </div>
-    </div>
-  </div>
+  <!-- MODAL ADD DRIVER REMOVED (Handled via driver-portal.html) -->
 
   <!-- MODAL: PAY DRIVER -->
   <div class="ov" id="m-paydr">
