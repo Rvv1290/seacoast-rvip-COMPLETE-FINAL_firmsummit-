@@ -215,7 +215,7 @@ function saveBookingToFirebase(data) {
   <div style="margin-top:auto;padding-top:2rem">
     <div style="font-family:'Times New Roman',serif;color:rgba(255,255,255,0.3);font-size:0.75rem">The Ride You Can Count On</div>
     <div style="display:flex;gap:1rem;margin-top:0.75rem">
-      <a href="tel:+19874163283" style="color:#775a19;font-family:Inter,sans-serif;font-size:0.8rem;text-decoration:none">(987) 416-3283</a>
+      <a href="tel:+19782553140" style="color:#775a19;font-family:Inter,sans-serif;font-size:0.8rem;text-decoration:none">(978) 255-3140</a>
     </div>
   </div>
 </div>
@@ -277,15 +277,15 @@ window.addEventListener('DOMContentLoaded', checkWidth);
       <span class="material-symbols-outlined text-5xl mb-3 block" style="color:#22c55e">check_circle</span>
       <h2 class="font-headline text-2xl mb-2 text-primary">Booking Request Sent!</h2>
       <p class="text-on-surface-variant text-sm mb-2">We'll confirm your ride by text and email within minutes.</p>
-      <p class="text-xs text-on-surface-variant">Questions? Call/text: <strong>(603) 000-0000</strong></p>
+      <p class="text-xs text-on-surface-variant">Questions? Call/text: <strong>(978) 255-3140</strong></p>
       <a href="index.html" class="mt-5 inline-block bg-primary text-white px-8 py-3 text-sm font-label uppercase tracking-widest border-b-2 border-secondary">← Back to Home</a>
     </div>
 
-    <!-- FormSubmit — emails go directly to ramonvv202618@icloud.com -->
-    <form id="book-form" action="https://formsubmit.co/ramonvv202618@icloud.com" method="POST" onsubmit="handleSubmit(event)" autocomplete="on">
+    <!-- FormSubmit — emails go directly to info@seacoastrvip.com -->
+    <form id="book-form" action="https://formsubmit.co/info@seacoastrvip.com" method="POST" onsubmit="handleSubmit(event)" autocomplete="on">
       <input type="hidden" name="_subject" value="[BOOKING REQUEST] New Reservation — Seacoast RVIP"/>
       <input type="hidden" name="_replyto" id="reply-email"/>
-      <input type="hidden" name="_cc" value="ramonvv202618@icloud.com"/>
+      <input type="hidden" name="_cc" value="info@seacoastrvip.com"/>
       <input type="hidden" name="_captcha" value="false"/>
       <input type="hidden" name="_template" value="table"/>
       
@@ -295,8 +295,8 @@ window.addEventListener('DOMContentLoaded', checkWidth);
 🚗 SEACOAST RVIP LLC
 The Ride You Can Count On
 
-📞 (987) 416-3283
-✉️  ramonvv202618@icloud.com
+📞 (978) 255-3140
+✉️  info@seacoastrvip.com
 🌐 seacoastrvip.com
 
 CONFIDENTIALITY NOTICE: This communication is intended solely for the named recipient(s) and may contain confidential and/or privileged information. If you have received this in error, please notify the sender immediately and destroy all copies. Seacoast RVIP LLC · NH, United States
@@ -324,8 +324,8 @@ CONFIDENTIALITY NOTICE: This communication is intended solely for the named reci
               <input class="f-input" name="Phone" type="tel" required placeholder="Your phone number"/>
             </div>
             <div>
-              <label class="f-label">Email *</label>
-              <input class="f-input" name="Email" type="email" required placeholder="your@email.com"
+              <label class="f-label">Email <span class="text-zinc-500 font-normal">(Optional for Receipts)</span></label>
+              <input class="f-input" name="Email" type="email" placeholder="your@email.com"
                 oninput="document.getElementById('reply-email').value=this.value"/>
             </div>
           </div>
@@ -512,7 +512,7 @@ CONFIDENTIALITY NOTICE: This communication is intended solely for the named reci
 
       <!-- ERROR -->
       <div id="err-msg" class="hidden mb-4 p-4 bg-red-50 border border-red-200 text-red-700 text-sm rounded">
-        Something went wrong. Please call us at <strong>(603) 000-0000</strong>
+        Something went wrong. Please call us at <strong>(978) 255-3140</strong>
       </div>
 
       <!-- SUBMIT -->
@@ -521,8 +521,8 @@ CONFIDENTIALITY NOTICE: This communication is intended solely for the named reci
         Request My Ride →
       </button>
       <p class="text-center text-xs text-on-surface-variant mt-4">
-        Prefer to call? <a href="tel:6030000000" class="text-secondary font-semibold underline">(603) 000-0000</a> &nbsp;|&nbsp;
-        <a href="sms:6030000000" class="text-secondary font-semibold underline">Text Us</a>
+        Prefer to call? <a href="tel:9782553140" class="text-secondary font-semibold underline">(978) 255-3140</a> &nbsp;|&nbsp;
+        <a href="sms:9782553140" class="text-secondary font-semibold underline">Text Us</a>
       </p>
     </form>
   </section>
@@ -588,12 +588,12 @@ CONFIDENTIALITY NOTICE: This communication is intended solely for the named reci
             Share
           </button>
           <span style="color:rgba(255,255,255,0.15)">|</span>
-          <a href="mailto:ramonvv202618@icloud.com" style="color:#775a19;font-family:Inter,sans-serif;font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;text-decoration:none;display:inline-flex;align-items:center;gap:4px">
+          <a href="mailto:info@seacoastrvip.com" style="color:#775a19;font-family:Inter,sans-serif;font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;text-decoration:none;display:inline-flex;align-items:center;gap:4px">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#775a19" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
             Email
           </a>
           <span style="color:rgba(255,255,255,0.15)">|</span>
-          <a href="tel:+19874163283" style="color:#775a19;font-family:Inter,sans-serif;font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;text-decoration:none;display:inline-flex;align-items:center;gap:4px">
+          <a href="tel:+19782553140" style="color:#775a19;font-family:Inter,sans-serif;font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;text-decoration:none;display:inline-flex;align-items:center;gap:4px">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#775a19" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.93 19.79 19.79 0 0 1 1.69 5.38 2 2 0 0 1 3.68 3.21h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 10.9a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 17.92z"/></svg>
             Call
           </a>
@@ -616,8 +616,8 @@ CONFIDENTIALITY NOTICE: This communication is intended solely for the named reci
       <div>
         <div style="font-family:Inter,sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.15em;color:#775a19;font-weight:600;margin-bottom:1rem">Contact</div>
         <div style="display:flex;flex-direction:column;gap:0.5rem">
-          <a href="tel:+19874163283" style="font-family:Inter,sans-serif;font-size:0.8rem;color:rgba(255,255,255,0.55);text-decoration:none">(987) 416-3283</a>
-          <a href="mailto:ramonvv202618@icloud.com" style="font-family:Inter,sans-serif;font-size:0.8rem;color:rgba(255,255,255,0.55);text-decoration:none">ramonvv202618@icloud.com</a>
+          <a href="tel:+19782553140" style="font-family:Inter,sans-serif;font-size:0.8rem;color:rgba(255,255,255,0.55);text-decoration:none">(978) 255-3140</a>
+          <a href="mailto:info@seacoastrvip.com" style="font-family:Inter,sans-serif;font-size:0.8rem;color:rgba(255,255,255,0.55);text-decoration:none">info@seacoastrvip.com</a>
           <a href="schedule.html" style="display:inline-block;margin-top:0.75rem;background:#775a19;color:white;padding:0.625rem 1.25rem;font-family:Inter,sans-serif;font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;text-decoration:none;border-bottom:2px solid #5d4201">Book Now</a>
         </div>
       </div>
@@ -906,7 +906,7 @@ function handleSubmit(e) {
   var fd = new FormData(form);
 
   // Submit to FormSubmit via fetch
-  fetch('https://formsubmit.co/ramonvv202618@icloud.com', {
+  fetch('https://formsubmit.co/info@seacoastrvip.com', {
     method: 'POST',
     body: fd
   }).then(function(r) {
@@ -919,7 +919,7 @@ function handleSubmit(e) {
     setTimeout(function() {
       var f2 = document.createElement('form');
       f2.method = 'POST';
-      f2.action = 'https://formsubmit.co/ramonvv202618@icloud.com';
+      f2.action = 'https://formsubmit.co/info@seacoastrvip.com';
       f2.style.display = 'none';
       var fd2 = new FormData(form);
       fd2.forEach(function(val, key) {
@@ -947,11 +947,14 @@ function saveBookingToStorage(code) {
   var data = {
     code: code,
     name: form.querySelector('[name="Full Name"]') ? form.querySelector('[name="Full Name"]').value : '',
+    phone: form.querySelector('[name="Phone"]') ? form.querySelector('[name="Phone"]').value : '',
+    email: form.querySelector('[name="Email"]') ? form.querySelector('[name="Email"]').value : '',
     service: form.querySelector('[name="Service Type"]') ? form.querySelector('[name="Service Type"]').value : '',
     date: form.querySelector('[name="Date"]') ? form.querySelector('[name="Date"]').value : '',
     time: form.querySelector('[name="Pickup Time"]') ? form.querySelector('[name="Pickup Time"]').value : '',
     pickup: (document.getElementById('pickup-input') || form.querySelector('[name="Pickup Address"]') || {value:''}).value,
     destination: (document.getElementById('dest-input') || form.querySelector('[name="Destination"]') || {value:''}).value,
+    notes: form.querySelector('[name="Special Requests"]') ? form.querySelector('[name="Special Requests"]').value : '',
     vehicle: document.querySelector('[name="Vehicle Class"]:checked') ? document.querySelector('[name="Vehicle Class"]:checked').value : 'Black SUV Luxury',
     passengers: document.getElementById('hid-pass') ? document.getElementById('hid-pass').value : '1',
     amount: getEstimatedAmount(),
@@ -1005,7 +1008,7 @@ function showSuccessWithCode(code, form) {
       Go to Payment Page →
     </a>
 
-    <p style="font-size:11px;color:#444748">Questions? Call/text: <a href="tel:6030000000" style="color:#775a19;font-weight:600">(603) 000-0000</a></p>
+    <p style="font-size:11px;color:#444748">Questions? Call/text: <a href="tel:9782553140" style="color:#775a19;font-weight:600">(978) 255-3140</a></p>
   `;
   msg.style.display = 'block';
   window.scrollTo(0, 0);

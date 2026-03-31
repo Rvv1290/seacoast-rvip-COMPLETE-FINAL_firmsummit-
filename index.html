@@ -118,8 +118,13 @@ function shareRVIP() {
 .max-w-3xl{max-width:900px!important}
 .max-w-5xl{max-width:100%!important}
 
-.footer-grid{grid-template-columns:1.5fr 1fr 1fr!important}
-@media(max-width:767px){.footer-grid{grid-template-columns:1fr!important}}
+.footer-grid { grid-template-columns: 1.2fr auto 1.2fr !important; }
+.footer-grid > div:nth-child(2) { justify-self: center; }
+.footer-grid > div:nth-child(3) { justify-self: end; }
+@media(max-width:850px) {
+  .footer-grid { grid-template-columns: 1fr !important; gap: 3rem !important; }
+  .footer-grid > div { justify-self: start !important; }
+}
 </style>
 </head>
 <body class="text-on-background antialiased overflow-x-hidden">
@@ -334,7 +339,7 @@ window.addEventListener('DOMContentLoaded', checkWidth);
 </section>
 </main>
 <footer style="background:#0a0a0a;color:white;padding:4rem 0 2rem">
-  <div style="max-width:100%;padding:0 2rem">
+  <div style="max-width:1440px;margin:0 auto;padding:0 5%">
     <div style="display:grid;grid-template-columns:1fr;gap:2.5rem;padding-bottom:2.5rem;border-bottom:1px solid rgba(255,255,255,0.08)" class="footer-grid">
       <div>
         <div style="font-family:'Times New Roman',Times,serif;font-size:1.5rem;font-weight:700;color:white;margin-bottom:0.75rem">Seacoast RVIP</div>
@@ -371,7 +376,7 @@ window.addEventListener('DOMContentLoaded', checkWidth);
         <div style="display:flex;flex-direction:column;gap:0.5rem">
           <a href="tel:+19782553140" style="font-family:Inter,sans-serif;font-size:0.8rem;color:rgba(255,255,255,0.55);text-decoration:none">(978) 255-3140</a>
           <a href="mailto:info@seacoastrvip.com" style="font-family:Inter,sans-serif;font-size:0.8rem;color:rgba(255,255,255,0.55);text-decoration:none">info@seacoastrvip.com</a>
-          <a href="schedule.html" style="display:inline-block;margin-top:0.75rem;background:#775a19;color:white;padding:0.625rem 1.25rem;font-family:Inter,sans-serif;font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;text-decoration:none;border-bottom:2px solid #5d4201">Book Now</a>
+          <a href="schedule.html" style="display:block;width:100%;box-sizing:border-box;text-align:center;margin-top:1rem;background:#775a19;color:white;padding:0.875rem 1.25rem;font-family:Inter,sans-serif;font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;text-decoration:none;transition:opacity 0.2s" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">Book Now</a>
         </div>
       </div>
     </div>
@@ -384,7 +389,9 @@ window.addEventListener('DOMContentLoaded', checkWidth);
     </div>
   </div>
   <style>
-  @media(min-width:768px){.footer-grid{grid-template-columns:1.5fr 1fr 1fr!important}}
+  @media(min-width:768px){
+    .footer-grid{grid-template-columns:1.5fr 1fr 1fr!important}
+  }
   </style>
 </footer>
 </body>

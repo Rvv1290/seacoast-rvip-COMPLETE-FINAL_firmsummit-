@@ -363,7 +363,11 @@ window.addEventListener('DOMContentLoaded', checkWidth);
 <!-- Footer -->
 <footer style="background:#0a0a0a;color:white;padding:4rem 0 2rem">
   <div style="max-width:100%;padding:0 2rem">
+
+    <!-- Top row -->
     <div style="display:grid;grid-template-columns:1fr;gap:2.5rem;padding-bottom:2.5rem;border-bottom:1px solid rgba(255,255,255,0.08)" class="footer-grid">
+
+      <!-- Brand -->
       <div>
         <div style="font-family:'Times New Roman',Times,serif;font-size:1.5rem;font-weight:700;color:white;margin-bottom:0.75rem">Seacoast RVIP</div>
         <p style="font-family:Inter,sans-serif;font-size:0.8rem;color:rgba(255,255,255,0.45);line-height:1.7;max-width:280px;margin-bottom:1.25rem">The Ride You Can Count On. Premium private car service in the NH Seacoast area.</p>
@@ -384,16 +388,20 @@ window.addEventListener('DOMContentLoaded', checkWidth);
           </a>
         </div>
       </div>
+
+      <!-- Nav links -->
       <div>
         <div style="font-family:Inter,sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.15em;color:#775a19;font-weight:600;margin-bottom:1rem">Navigate</div>
         <div style="display:flex;flex-direction:column;gap:0.625rem">
-          <a href="index.html"    style="font-family:Inter,sans-serif;font-size:0.8rem;color:rgba(255,255,255,0.55);text-decoration:none" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.55)'">Home</a>
-          <a href="services.html" style="font-family:Inter,sans-serif;font-size:0.8rem;color:rgba(255,255,255,0.55);text-decoration:none" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.55)'">Services &amp; Pricing</a>
-          <a href="about.html"    style="font-family:Inter,sans-serif;font-size:0.8rem;color:rgba(255,255,255,0.55);text-decoration:none" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.55)'">About Us</a>
-          <a href="contact.html"  style="font-family:Inter,sans-serif;font-size:0.8rem;color:rgba(255,255,255,0.55);text-decoration:none" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.55)'">Contact</a>
-          <a href="schedule.html" style="font-family:Inter,sans-serif;font-size:0.8rem;color:rgba(255,255,255,0.55);text-decoration:none" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.55)'">Book a Ride</a>
+          <a href="index.html" style="font-family:Inter,sans-serif;font-size:0.8rem;color:rgba(255,255,255,0.55);text-decoration:none;transition:color 0.2s" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.55)'">Home</a>
+          <a href="services.html" style="font-family:Inter,sans-serif;font-size:0.8rem;color:rgba(255,255,255,0.55);text-decoration:none;transition:color 0.2s" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.55)'">Services &amp; Pricing</a>
+          <a href="about.html" style="font-family:Inter,sans-serif;font-size:0.8rem;color:rgba(255,255,255,0.55);text-decoration:none;transition:color 0.2s" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.55)'">About Us</a>
+          <a href="contact.html" style="font-family:Inter,sans-serif;font-size:0.8rem;color:rgba(255,255,255,0.55);text-decoration:none;transition:color 0.2s" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.55)'">Contact</a>
+          <a href="schedule.html" style="font-family:Inter,sans-serif;font-size:0.8rem;color:rgba(255,255,255,0.55);text-decoration:none;transition:color 0.2s" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.55)'">Book a Ride</a>
         </div>
       </div>
+
+      <!-- Contact -->
       <div>
         <div style="font-family:Inter,sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.15em;color:#775a19;font-weight:600;margin-bottom:1rem">Contact</div>
         <div style="display:flex;flex-direction:column;gap:0.5rem">
@@ -403,17 +411,42 @@ window.addEventListener('DOMContentLoaded', checkWidth);
         </div>
       </div>
     </div>
+
+    <!-- Bottom bar -->
     <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;padding-top:1.5rem;gap:0.75rem">
       <p style="font-family:Inter,sans-serif;font-size:0.7rem;color:rgba(255,255,255,0.25);margin:0">© 2025 Seacoast RVIP LLC. All rights reserved.</p>
       <div style="display:flex;gap:1.5rem">
-        <a href="privacy.html" style="font-family:Inter,sans-serif;font-size:0.7rem;color:rgba(255,255,255,0.3);text-decoration:none" onmouseover="this.style.color='#775a19'" onmouseout="this.style.color='rgba(255,255,255,0.3)'">Privacy Policy</a>
-        <a href="terms.html"   style="font-family:Inter,sans-serif;font-size:0.7rem;color:rgba(255,255,255,0.3);text-decoration:none" onmouseover="this.style.color='#775a19'" onmouseout="this.style.color='rgba(255,255,255,0.3)'">Terms of Service</a>
+        <a href="privacy.html" target="_blank" style="font-family:Inter,sans-serif;font-size:0.7rem;color:rgba(255,255,255,0.3);text-decoration:none" onmouseover="this.style.color='#775a19'" onmouseout="this.style.color='rgba(255,255,255,0.3)'">Privacy Policy</a>
+        <a href="terms.html" target="_blank" style="font-family:Inter,sans-serif;font-size:0.7rem;color:rgba(255,255,255,0.3);text-decoration:none" onmouseover="this.style.color='#775a19'" onmouseout="this.style.color='rgba(255,255,255,0.3)'">Terms of Service</a>
       </div>
     </div>
   </div>
+
   <style>
-  @media(min-width:768px){.footer-grid{grid-template-columns:1.5fr 1fr 1fr!important}}
+  @media(min-width:768px){
+    .footer-grid{grid-template-columns:1.5fr 1fr 1fr!important}
+  }
   </style>
 </footer>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  var bookingKeywords = ["Book Now", "Reserve Your Ride", "Book Your Trip", "Book Your Journey", "Book a Ride", "BOOK NOW", "Reserve Now", "Book Now"];
+  document.querySelectorAll("button").forEach(function(btn) {
+    var txt = btn.textContent.trim();
+    bookingKeywords.forEach(function(kw) {
+      if (txt === kw || txt.includes(kw)) {
+        if (!btn.closest("a") && !btn.closest("form[action]")) {
+          btn.style.cursor = "pointer";
+          btn.addEventListener("click", function(e) {
+            e.preventDefault();
+            window.location.href = 'schedule.html';
+            e.stopPropagation();
+          });
+        }
+      });
+    });
+  });
+});
+</script>
 </body>
 </html>
