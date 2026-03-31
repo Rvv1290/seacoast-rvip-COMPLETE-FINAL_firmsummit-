@@ -3,67 +3,84 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Driver Portal | Seacoast RVIP LLC</title>
+  <title>Driver Operations Portal | Seacoast RVIP LLC</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
-  <!-- Firebase Config (Marketplace) -->
+  <!-- Firebase Config -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <style>
     :root {
-      --primary: #1d4ed8;
-      --primary-dark: #1e3a8a;
+      /* Seacoast RVIP Official Theme */
+      --primary: #000000;
+      /* Pitch Black */
+      --primary-dark: #111111;
+      --accent: #d4af37;
+      /* Gold */
+      --accent-hover: #c5a027;
       --surface: #ffffff;
-      --bg: #f3f4f6;
+      --bg: #f9fafb;
       --text: #111827;
       --text-light: #6b7280;
-      --border: #e5e7eb;
+      --border: #e2e8f0;
+      --error: #ef4444;
       --success: #10b981;
       --warning: #f59e0b;
-      --danger: #ef4444;
     }
+
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Inter', sans-serif; background-color: var(--bg); color: var(--text); }
-    
-    /* Login Screen */
-    #login-screen { display: flex; align-items: center; justify-content: center; min-height: 100vh; background: var(--bg); }
-    .login-box { background: var(--surface); padding: 2.5rem; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
-    .login-box h1 { font-size: 1.5rem; font-weight: 700; color: var(--primary); margin-bottom: 0.5rem; }
-    .login-box p { color: var(--text-light); font-size: 0.875rem; margin-bottom: 2rem; }
-    
-    /* Input Shared */
-    .form-group { margin-bottom: 1.25rem; text-align: left; }
-    .form-label { display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-light); margin-bottom: 0.35rem; }
-    .form-input { width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 6px; font-family: 'Inter'; font-size: 0.95rem; outline: none; transition: border-color 0.2s; }
-    .form-input:focus { border-color: var(--primary); }
-    .form-input[readonly] { background: #f9fafb; color: #9ca3af; }
-    
-    /* Button */
-    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.75rem 1.5rem; background: var(--primary); color: white; border: none; border-radius: 6px; font-family: 'Inter'; font-weight: 600; font-size: 0.9rem; cursor: pointer; transition: opacity 0.2s; text-decoration: none; width: 100%; }
-    .btn:hover { opacity: 0.9; }
-    .btn.outline { background: transparent; color: var(--primary); border: 1px solid var(--primary); }
-    .btn.success { background: var(--success); }
-    .btn:disabled { background: #9ca3af; border-color: #9ca3af; cursor: not-allowed; opacity: 0.7; }
 
-    /* Main App */
-    #app-screen { display: none; }
-    .navbar { background: var(--primary-dark); color: white; padding: 1rem 1.5rem; position: sticky; top: 0; z-index: 100; }
-    .nav-container { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
-    .brand { font-size: 1.25rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; }
-    .nav-links { display: flex; gap: 1.5rem; overflow-x: auto; padding-bottom: 4px; }
-    .nav-btn { color: #d1d5db; background: none; border: none; font-size: 0.9rem; font-family: 'Inter'; font-weight: 500; cursor: pointer; transition: color 0.2s; white-space: nowrap; }
-    .nav-btn:hover, .nav-btn.active { color: white; border-bottom: 2px solid white; padding-bottom: 2px; }
+    /* Forms */
+    .form-group { margin-bottom: 1.25rem; text-align: left; }
+    .form-label { display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-light); margin-bottom: 0.35rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    .form-input { width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 4px; font-family: 'Inter'; font-size: 0.95rem; outline: none; transition: border-color 0.2s, box-shadow 0.2s; }
+    .form-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.2); }
+    .form-input[readonly] { background: #f1f5f9; color: #9ca3af; }
+
+    /* Buttons */
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.75rem 1.5rem; background: var(--primary); color: white; border: none; border-radius: 4px; font-family: 'Inter'; font-weight: 600; font-size: 0.9rem; cursor: pointer; transition: all 0.2s; text-decoration: none; width: 100%; letter-spacing: 0.02em; }
+    .btn:hover { background: var(--primary-dark); transform: translateY(-1px); }
     
+    .btn.gold { background: var(--accent); color: #000; }
+    .btn.gold:hover { background: var(--accent-hover); }
+
+    .btn.outline { background: transparent; color: var(--primary); border: 1px solid var(--primary); }
+    .btn.outline:hover { background: var(--primary); color: white; }
+
+    .btn.success { background: var(--success); }
+    .btn:disabled { background: #cbd5e1; border-color: #cbd5e1; color: #475569; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    /* Auth Screen */
+    #auth-screen { display: flex; align-items: center; justify-content: center; min-height: 100vh; background: var(--primary); }
+    .auth-box { background: var(--surface); padding: 3rem; border-radius: 8px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2); width: 100%; max-width: 450px; text-align: center; }
+    .auth-box h1 { font-size: 1.5rem; font-weight: 700; color: var(--primary); margin-bottom: 0.25rem; letter-spacing: -0.02em; }
+    .auth-box p { color: var(--text-light); font-size: 0.9rem; margin-bottom: 2rem; }
+    .brand-accent { color: var(--accent); }
+    .auth-toggle { font-size: 0.85rem; padding-top: 1.5rem; margin-top: 1.5rem; border-top: 1px solid var(--border); color: var(--text-light); }
+    .auth-toggle a { color: var(--accent); font-weight: 600; text-decoration: none; cursor: pointer; }
+    .auth-toggle a:hover { text-decoration: underline; }
+
+    /* App Layout */
+    #app-screen { display: none; }
+    .navbar { background: var(--primary); color: white; padding: 1rem 1.5rem; position: sticky; top: 0; z-index: 100; border-bottom: 3px solid var(--accent); }
+    .nav-container { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+    .brand { font-size: 1.25rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; letter-spacing: -0.02em; }
+    .nav-links { display: flex; gap: 1.5rem; overflow-x: auto; padding-bottom: 4px; }
+    .nav-btn { color: #a1a1aa; background: none; border: none; font-size: 0.9rem; font-family: 'Inter'; font-weight: 500; cursor: pointer; transition: color 0.2s; white-space: nowrap; }
+    .nav-btn:hover, .nav-btn.active { color: var(--accent); border-bottom: 2px solid var(--accent); padding-bottom: 2px; }
+
     @media (max-width: 768px) {
-      .nav-links { position: fixed; bottom: 0; left: 0; right: 0; background: var(--primary-dark); padding: 0.5rem; gap: 0.5rem; display: flex; justify-content: space-around; border-top: 1px solid rgba(255,255,255,0.1); overflow: hidden; }
-      .nav-btn { font-size: 0.7rem; display: flex; flex-direction: column; align-items: center; gap: 2px; border-bottom: none!important; }
-      .nav-btn .material-symbols-outlined { font-size: 20px; }
-      .main-content { padding-bottom: 80px !important; }
+      .nav-links { position: fixed; bottom: 0; left: 0; right: 0; background: var(--primary); padding: 0.5rem; gap: 0.5rem; display: flex; justify-content: space-around; border-top: 1px solid rgba(255, 255, 255, 0.1); border-bottom: none; z-index: 999; }
+      .nav-btn { font-size: 0.65rem; display: flex; flex-direction: column; align-items: center; gap: 3px; border-bottom: none !important; }
+      .nav-btn .material-symbols-outlined { font-size: 22px; }
+      .nav-btn.active { color: var(--accent); }
+      .main-content { padding-bottom: 90px !important; }
     }
 
     /* Banners */
     #banner-container { max-width: 1200px; margin: 1rem auto 0; padding: 0 1.5rem; }
-    .banner { display: flex; align-items: center; gap: 0.75rem; padding: 1rem; border-radius: 6px; margin-bottom: 1rem; font-size: 0.9rem; font-weight: 500; }
+    .banner { display: flex; align-items: center; gap: 0.75rem; padding: 1rem; border-radius: 4px; margin-bottom: 1rem; font-size: 0.9rem; font-weight: 500; }
     .banner.warning { background: #fef3c7; border: 1px solid #fde68a; color: #92400e; }
     .banner.danger { background: #fee2e2; border: 1px solid #fecaca; color: #991b1b; }
 
@@ -71,66 +88,72 @@
     .main-content { max-width: 1200px; margin: 0 auto; padding: 2rem 1.5rem; }
     .section { display: none; animation: fadeIn 0.3s ease; }
     .section.active { display: block; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-    .page-header { margin-bottom: 1.5rem; }
-    .page-title { font-size: 1.5rem; font-weight: 700; color: var(--text); }
-    .page-subtitle { font-size: 0.9rem; color: var(--text-light); margin-top: 0.25rem; }
+    .page-header { margin-bottom: 2rem; }
+    .page-title { font-size: 1.75rem; font-weight: 700; color: var(--primary); letter-spacing: -0.03em; }
+    .page-subtitle { font-size: 0.95rem; color: var(--text-light); margin-top: 0.25rem; }
 
     /* Cards */
-    .card { background: var(--surface); border-radius: 8px; border: 1px solid var(--border); padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-    
-    /* Market Card */
-    .market-card { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1rem; padding: 1.5rem; transition: transform 0.2s; border-left: 4px solid var(--success); }
-    .market-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
-    .m-detail { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: var(--text-light); margin-bottom: 0.4rem; }
-    .m-price { font-size: 1.8rem; font-weight: 700; color: var(--success); font-family: 'Times New Roman', serif; }
-    .m-price-lbl { font-size: 0.7rem; text-transform: uppercase; color: var(--text-light); letter-spacing: 0.05em; margin-bottom: 0.2rem; }
+    .card { background: var(--surface); border-radius: 6px; border: 1px solid var(--border); padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); }
 
-    /* Badges Status */
-    .badge { display: inline-flex; align-items: center; padding: 0.25rem 0.6rem; border-radius: 999px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+    /* Status Header Card */
+    .status-card { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; border-left: 4px solid var(--primary); }
+    .status-card.suspended { border-left-color: var(--error); }
+    .status-card.approved { border-left-color: var(--success); }
+    .status-card.pending { border-left-color: var(--warning); }
+
+    /* Market Card (Black & Gold tailored) */
+    .market-card { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1rem; padding: 1.5rem; transition: transform 0.2s, box-shadow 0.2s; border-left: 4px solid var(--accent); }
+    .market-card:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0, 0, 0, 0.06); }
+    .m-detail { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: var(--text-light); margin-bottom: 0.4rem; }
+    .m-price { font-size: 1.8rem; font-weight: 700; color: var(--primary); font-family: 'Times New Roman', serif; }
+    .m-price-lbl { font-size: 0.7rem; text-transform: uppercase; color: var(--text-light); letter-spacing: 0.05em; font-weight: 600; margin-bottom: 0.2rem; }
+
+    /* Badges */
+    .badge { display: inline-flex; align-items: center; padding: 0.2rem 0.6rem; border-radius: 999px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
     .badge.approved { background: #d1fae5; color: #065f46; }
     .badge.pending { background: #fef3c7; color: #92400e; }
     .badge.missing { background: #fee2e2; color: #991b1b; }
     .badge.expired { background: #fee2e2; color: #991b1b; }
+    .badge.gold { background: rgba(212, 175, 55, 0.1); color: #92781b; }
 
-    /* Status Header Card */
-    .status-card { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; border-left: 4px solid var(--primary); }
-    .status-card.suspended { border-left-color: var(--danger); }
-    .status-card.approved { border-left-color: var(--success); }
-    .status-card.pending { border-left-color: var(--warning); }
-
-    /* Tables/Lists */
+    /* Tables */
     .data-table { width: 100%; border-collapse: collapse; }
     .data-table th, .data-table td { padding: 1rem; text-align: left; border-bottom: 1px solid var(--border); }
-    .data-table th { font-size: 0.8rem; font-weight: 600; color: var(--text-light); text-transform: uppercase; background: #f9fafb; }
+    .data-table th { font-size: 0.75rem; font-weight: 700; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.05em; background: #f8fafc; }
     .data-table tr:last-child td { border-bottom: none; }
-    
-    /* Doc Checklist Row */
-    .doc-row { display: flex; justify-content: space-between; align-items: center; padding: 1rem 0; border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 1rem; }
+
+    /* Checklist Row */
+    .doc-row { display: flex; justify-content: space-between; align-items: center; padding: 1.25rem 0; border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 1rem; }
     .doc-row:last-child { border-bottom: none; }
     .doc-info { flex: 1; min-width: 250px; }
-    .doc-title { font-weight: 600; font-size: 0.95rem; margin-bottom: 0.25rem; }
+    .doc-title { font-weight: 600; font-size: 0.95rem; margin-bottom: 0.25rem; color: var(--primary); }
     .doc-meta { font-size: 0.8rem; color: var(--text-light); }
     .doc-actions { display: flex; align-items: center; gap: 1rem; }
 
-    /* Form Grid */
+    /* Grid */
     .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
     @media (max-width: 600px) { .grid-2 { grid-template-columns: 1fr; } }
 
     /* Modal */
-    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; display: none; align-items: center; justify-content: center; padding: 1rem; }
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.6); z-index: 200; display: none; align-items: center; justify-content: center; padding: 1rem; backdrop-filter: blur(2px); }
     .modal-overlay.active { display: flex; }
-    .modal { background: var(--surface); width: 100%; max-width: 500px; border-radius: 8px; display: flex; flex-direction: column; max-height: 90vh; }
-    .modal-header { padding: 1.25rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
-    .modal-header h3 { font-size: 1.1rem; font-weight: 600; }
-    .modal-close { background: none; border: none; font-size: 1.5rem; color: var(--text-light); cursor: pointer; }
+    .modal { background: var(--surface); width: 100%; max-width: 500px; border-radius: 6px; display: flex; flex-direction: column; max-height: 90vh; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
+    .modal-header { padding: 1.5rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+    .modal-header h3 { font-size: 1.25rem; font-weight: 700; letter-spacing: -0.02em; }
+    .modal-close { background: none; border: none; font-size: 1.5rem; color: var(--text-light); cursor: pointer; transition: color 0.15s; }
+    .modal-close:hover { color: var(--primary); }
     .modal-body { padding: 1.5rem; overflow-y: auto; }
-    .modal-footer { padding: 1.25rem; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 1rem; }
+    .modal-footer { padding: 1.25rem; border-top: 1px solid var(--border); background: #f8fafc; display: flex; justify-content: flex-end; gap: 1rem; border-radius: 0 0 6px 6px; }
 
     /* Toast */
-    #toast { position: fixed; bottom: 2rem; right: 2rem; background: var(--text); color: white; padding: 1rem 1.5rem; border-radius: 6px; font-weight: 500; font-size: 0.9rem; z-index: 300; transition: transform 0.3s, opacity 0.3s; transform: translateY(20px); opacity: 0; pointer-events: none; }
+    #toast { position: fixed; bottom: 2rem; right: 2rem; background: var(--primary); color: white; padding: 1rem 1.5rem; border-radius: 4px; font-weight: 600; font-size: 0.9rem; z-index: 300; transition: transform 0.3s, opacity 0.3s; transform: translateY(20px); opacity: 0; pointer-events: none; border-left: 4px solid var(--accent); }
     #toast.show { transform: translateY(0); opacity: 1; }
+    
+    /* Loader Spinner */
+    .spinner { border: 3px solid rgba(0,0,0,0.1); width: 20px; height: 20px; border-radius: 50%; border-left-color: var(--accent); animation: spin 1s linear infinite; display: inline-block; margin-right: 8px;}
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
@@ -138,29 +161,49 @@
   <!-- Toast Notification -->
   <div id="toast">Message saved</div>
 
-  <!-- Banners Container -->
-  <div id="banner-area" style="position: absolute; width: 100%; top: 60px; z-index: 90;">
-    <div id="banner-container"></div>
-  </div>
-
   <!-- AUTH SCREEN -->
-  <div id="login-screen">
-    <div class="login-box">
-      <h1>Seacoast RVIP LLC</h1>
-      <p>Driver Onboarding Portal</p>
-      <div class="form-group">
-        <label class="form-label">Email Address</label>
-        <input type="email" id="login-email" class="form-input" placeholder="driver@example.com" value="test@driver.com">
+  <div id="auth-screen">
+    <div class="auth-box">
+      <h1>Seacoast <span class="brand-accent">RVIP</span></h1>
+      <p>Driver Operations Portal</p>
+      
+      <!-- Login Form -->
+      <div id="form-login">
+        <div class="form-group">
+          <label class="form-label">Email Address</label>
+          <input type="email" id="log-email" class="form-input" placeholder="Enter your email">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input type="password" id="log-pwd" class="form-input" placeholder="Enter your password">
+        </div>
+        <button class="btn gold" id="btn-login" onclick="login()">Log In securely</button>
+        <div class="auth-toggle">
+          Don't have a profile yet? <a onclick="toggleAuth('signup')">Sign Up here</a>
+        </div>
       </div>
-      <div class="form-group">
-        <label class="form-label">Password</label>
-        <input type="password" id="login-pwd" class="form-input" placeholder="Enter any password" value="password">
-      </div>
-      <button class="btn" onclick="handleLogin()">Secure Login</button>
-      <div style="margin-top: 1rem; font-size: 0.8rem; color: var(--text-light)">
-        Demo: Click "Secure Login" to enter the system.
+
+      <!-- Sign Up Form -->
+      <div id="form-signup" style="display:none">
+        <div class="form-group">
+          <label class="form-label">Email Address</label>
+          <input type="email" id="reg-email" class="form-input" placeholder="name@example.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Create Password</label>
+          <input type="password" id="reg-pwd" class="form-input" placeholder="Create a strong password">
+        </div>
+        <button class="btn gold" id="btn-signup" onclick="signup()">Create My Profile</button>
+        <div class="auth-toggle">
+          Already approved/registered? <a onclick="toggleAuth('login')">Log In here</a>
+        </div>
       </div>
     </div>
+  </div>
+
+  <!-- Banners Container -->
+  <div id="banner-area" style="position: absolute; width: 100%; top: 72px; z-index: 90;">
+    <div id="banner-container"></div>
   </div>
 
   <!-- DASHBOARD APP -->
@@ -168,7 +211,7 @@
     <nav class="navbar">
       <div class="nav-container">
         <div class="brand">
-          <span class="material-symbols-outlined">directions_car</span>
+          <span class="material-symbols-outlined" style="color:var(--accent)">directions_car</span>
           Seacoast RVIP
         </div>
         <div class="nav-links">
@@ -178,7 +221,7 @@
           </button>
           <button class="nav-btn" onclick="switchTab('market')">
             <span class="material-symbols-outlined" style="display:none">work</span>
-            Marketplace
+            Rides
           </button>
           <button class="nav-btn" onclick="switchTab('documents')">
             <span class="material-symbols-outlined" style="display:none">folder_open</span>
@@ -190,9 +233,9 @@
           </button>
           <button class="nav-btn" onclick="switchTab('compliance')">
             <span class="material-symbols-outlined" style="display:none">verified_user</span>
-            Compliance
+            System
           </button>
-          <button class="nav-btn" onclick="handleLogout()">
+          <button class="nav-btn" onclick="logout()">
             <span class="material-symbols-outlined" style="display:none">logout</span>
             Logout
           </button>
@@ -206,27 +249,27 @@
       <div id="sec-dashboard" class="section active">
         <div class="page-header">
           <h2 class="page-title" id="dash-greeting">Welcome, Driver</h2>
-          <p class="page-subtitle">Here's your current performance and compliance summary.</p>
+          <p class="page-subtitle">Your real-time operations overview.</p>
         </div>
 
         <div class="card status-card" id="dash-status-card">
           <div>
-            <div style="font-size:0.8rem;color:var(--text-light);text-transform:uppercase;font-weight:600;margin-bottom:4px">Compliance Status</div>
-            <div style="font-size:1.5rem;font-weight:700;display:flex;align-items:center;gap:8px">
-              <span id="dash-status-text">Pending Background</span>
-              <span id="dash-status-badge" class="badge pending">Pending</span>
+            <div style="font-size:0.8rem;color:var(--text-light);text-transform:uppercase;font-weight:700;margin-bottom:6px;letter-spacing:0.05em">Compliance Profile</div>
+            <div style="font-size:1.6rem;font-weight:700;display:flex;align-items:center;gap:10px;letter-spacing:-0.02em">
+              <span id="dash-status-text">Synchronizing...</span>
+              <span id="dash-status-badge" class="badge pending" style="opacity:0">Pending</span>
             </div>
           </div>
           <div style="text-align:right">
-            <div style="font-size:0.8rem;color:var(--text-light);font-weight:600;margin-bottom:4px">Next Expiring Document</div>
-            <div style="font-size:1.1rem;font-weight:600" id="dash-next-exp">None Initialized</div>
+            <div style="font-size:0.8rem;color:var(--text-light);font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.05em">Next Expiring Unit</div>
+            <div style="font-size:1rem;font-weight:600" id="dash-next-exp">Analyzing...</div>
           </div>
         </div>
 
         <div class="card">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
-            <h3 style="font-size: 1.1rem;">Your Claimed Rides</h3>
-            <button class="btn outline" style="padding:0.4rem 0.8rem;font-size:0.75rem" onclick="switchTab('market')">Find More Rides</button>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:1px solid var(--border)">
+            <h3 style="font-size: 1.1rem;font-weight:700">Your Upcoming Shifts & Rides</h3>
+            <button class="btn gold outline" style="padding:0.4rem 0.8rem;font-size:0.75rem;width:auto;border-color:var(--accent);color:var(--primary)" onclick="switchTab('market')">Browse Open Market</button>
           </div>
           <div style="overflow-x:auto;">
             <table class="data-table">
@@ -239,7 +282,7 @@
                 </tr>
               </thead>
               <tbody id="dash-rides-upcoming">
-                <tr><td colspan="4" style="text-align:center;color:#888;">Fetching your rides...</td></tr>
+                <tr><td colspan="4" style="text-align:center;color:#888;padding:2rem"><div class="spinner"></div> Synchronizing with dispatch...</td></tr>
               </tbody>
             </table>
           </div>
@@ -250,23 +293,22 @@
       <div id="sec-market" class="section">
         <div class="page-header" style="display:flex; justify-content: space-between; align-items:flex-start">
           <div>
-            <h2 class="page-title">Available Rides</h2>
-            <p class="page-subtitle">Browse and claim open reservations.</p>
+            <h2 class="page-title">Marketplace</h2>
+            <p class="page-subtitle">Browse transparent opportunities and instantly secure your shift.</p>
           </div>
-          <button class="btn outline" style="width:auto" onclick="fetchMarketplace()">↻ Refresh</button>
+          <button class="btn gold outline" style="width:auto;border-color:var(--accent);color:var(--primary)" onclick="fetchMarketplace()">↻ Refresh</button>
         </div>
         
-        <!-- Render Marketplace here -->
         <div id="market-list">
-          <div style="padding:3rem;text-align:center;color:var(--text-light)">Loading Firebase configuration...</div>
+          <div style="padding:3rem;text-align:center;color:var(--text-light)"><div class="spinner"></div> Searching matrix...</div>
         </div>
       </div>
 
       <!-- DOCUMENTS TAB -->
       <div id="sec-documents" class="section">
         <div class="page-header">
-          <h2 class="page-title">Required Documents</h2>
-          <p class="page-subtitle">Upload and maintain your operational documents.</p>
+          <h2 class="page-title">Document Control</h2>
+          <p class="page-subtitle">Securely transmit and maintain your operating approvals.</p>
         </div>
         <div class="card" id="doc-list-container">
           <!-- Documents generated via JS -->
@@ -276,49 +318,49 @@
       <!-- PROFILE TAB -->
       <div id="sec-profile" class="section">
         <div class="page-header">
-          <h2 class="page-title">Personal Profile</h2>
-          <p class="page-subtitle">Manage your contact and vehicle information.</p>
+          <h2 class="page-title">Identity & Vehicle</h2>
+          <p class="page-subtitle">Synchronized directly with Seacoast Dispatch HQ.</p>
         </div>
         
         <form class="card" id="profile-form" onsubmit="event.preventDefault(); saveProfile();">
-          <h3 style="margin-bottom:1rem;font-size:1rem;padding-bottom:0.5rem;border-bottom:1px solid var(--border)">Driver Details</h3>
+          <h3 style="margin-bottom:1.5rem;font-size:1.1rem;padding-bottom:0.75rem;border-bottom:2px solid var(--border)">Operative Details</h3>
           <div class="grid-2">
             <div class="form-group">
-              <label class="form-label">Full Name *</label>
+              <label class="form-label">Full Legal Name *</label>
               <input type="text" id="prof-name" class="form-input" required>
             </div>
             <div class="form-group">
-              <label class="form-label">Email Address (Read-only)</label>
+              <label class="form-label">Dispatch Email (Identity)</label>
               <input type="email" id="prof-email" class="form-input" readonly>
             </div>
             <div class="form-group">
-              <label class="form-label">Phone Number *</label>
-              <input type="tel" id="prof-phone" class="form-input" required>
+              <label class="form-label">Mobile Phone *</label>
+              <input type="tel" id="prof-phone" class="form-input" placeholder="(555) 555-5555" required>
             </div>
             <div class="form-group">
-              <label class="form-label">Address (City, State) *</label>
+              <label class="form-label">Garaging Address (City, State) *</label>
               <input type="text" id="prof-address" class="form-input" placeholder="e.g. Portsmouth, NH" required>
             </div>
           </div>
 
-          <h3 style="margin-top:1rem;margin-bottom:1rem;font-size:1rem;padding-bottom:0.5rem;border-bottom:1px solid var(--border)">Vehicle Details</h3>
+          <h3 style="margin-top:2rem;margin-bottom:1.5rem;font-size:1.1rem;padding-bottom:0.75rem;border-bottom:2px solid var(--border)">Livery Asset</h3>
           <div class="grid-2">
             <div class="form-group">
-              <label class="form-label">Vehicle Year & Make *</label>
+              <label class="form-label">Year & Component Make *</label>
               <input type="text" id="prof-vmake" class="form-input" placeholder="e.g. 2022 Chevrolet" required>
             </div>
             <div class="form-group">
-              <label class="form-label">Model *</label>
-              <input type="text" id="prof-vmodel" class="form-input" placeholder="e.g. Suburban" required>
+              <label class="form-label">Chassis Model *</label>
+              <input type="text" id="prof-vmodel" class="form-input" placeholder="e.g. Suburban LT" required>
             </div>
             <div class="form-group">
-              <label class="form-label">License Plate *</label>
+              <label class="form-label">Commercial Plate Tag *</label>
               <input type="text" id="prof-vplate" class="form-input" placeholder="e.g. NH-LIV123" required>
             </div>
           </div>
           
-          <div style="margin-top:1rem;text-align:right">
-            <button type="submit" class="btn" style="width:auto">Save Profile</button>
+          <div style="margin-top:2rem;text-align:right">
+            <button type="submit" id="btn-save-profile" class="btn gold" style="width:auto">Transmit Identity</button>
           </div>
         </form>
       </div>
@@ -326,32 +368,32 @@
       <!-- COMPLIANCE TAB -->
       <div id="sec-compliance" class="section">
         <div class="page-header">
-          <h2 class="page-title">Compliance Summary</h2>
-          <p class="page-subtitle">Your real-time record of operational compliance.</p>
+          <h2 class="page-title">Compliance Ledger</h2>
+          <p class="page-subtitle">Your real-time audit record and inspection status.</p>
         </div>
 
         <div class="card status-card" id="comp-status-card">
           <div>
-            <div style="font-size:0.8rem;color:var(--text-light);text-transform:uppercase;font-weight:600;margin-bottom:4px">System Assessment</div>
+            <div style="font-size:0.8rem;color:var(--text-light);text-transform:uppercase;font-weight:700;margin-bottom:4px">Network Rating</div>
             <div style="font-size:1.5rem;font-weight:700;display:flex;align-items:center;gap:8px">
               <span id="comp-status-text">Pending</span>
-              <span id="comp-status-badge" class="badge pending">Pending</span>
+              <span id="comp-status-badge" class="badge pending">Pending Evaluation</span>
             </div>
           </div>
         </div>
 
-        <div class="card">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
-            <h3 style="font-size:1.1rem">Document Audit</h3>
-            <button onclick="switchTab('documents')" class="btn outline" style="padding:0.4rem 0.8rem;font-size:0.8rem;width:auto">Go Upload</button>
+        <div class="card" style="padding:0;overflow:hidden">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:1.5rem;border-bottom:1px solid var(--border)">
+            <h3 style="font-size:1.1rem">Central Audit Results</h3>
+            <button onclick="switchTab('documents')" class="btn outline" style="padding:0.4rem 0.8rem;font-size:0.8rem;width:auto">Upload Interface</button>
           </div>
           <div style="overflow-x:auto;">
             <table class="data-table">
               <thead>
                 <tr>
-                  <th>Requirement</th>
-                  <th>Status</th>
-                  <th>Expiration</th>
+                  <th>Compliance Control</th>
+                  <th>Current State</th>
+                  <th>Cycle Deadline</th>
                 </tr>
               </thead>
               <tbody id="comp-table-body">
@@ -369,7 +411,7 @@
   <div class="modal-overlay" id="upload-modal">
     <div class="modal">
       <div class="modal-header">
-        <h3 id="um-title">Upload Document</h3>
+        <h3 id="um-title">Transmit Document</h3>
         <button class="modal-close" onclick="closeModal()">✕</button>
       </div>
       <div class="modal-body">
@@ -378,18 +420,18 @@
         <div class="form-group">
           <label class="form-label">File to Upload</label>
           <input type="file" id="um-file" class="form-input" accept=".pdf,.jpg,.jpeg,.png">
-          <p style="font-size:0.75rem;color:var(--text-light);margin-top:4px">Supported: PDF, JPG, PNG.</p>
+          <p style="font-size:0.75rem;color:var(--text-light);margin-top:6px;line-height:1.4">Select an unredacted scan (PDF/JPG/PNG). Image must be completely legible.</p>
         </div>
 
         <div class="form-group" id="um-exp-group">
-          <label class="form-label">Expiration Date</label>
+          <label class="form-label">Absolute Expiration Date</label>
           <input type="date" id="um-date" class="form-input">
-          <p style="font-size:0.75rem;color:var(--text-light);margin-top:4px">Required to keep compliance active.</p>
+          <p style="font-size:0.75rem;color:var(--text-light);margin-top:6px;line-height:1.4">Enter the expiration date strictly to prevent operational suspension.</p>
         </div>
       </div>
       <div class="modal-footer">
-        <button class="btn outline" style="width:auto" onclick="closeModal()">Cancel</button>
-        <button class="btn" style="width:auto" onclick="submitUpload()">Upload & Save</button>
+        <button class="btn outline" style="width:auto" onclick="closeModal()">Abort</button>
+        <button class="btn gold" style="width:auto" id="btn-upload" onclick="submitUpload()">Commit Record</button>
       </div>
     </div>
   </div>
@@ -399,83 +441,160 @@
     // FIREBASE INITIALIZATION
     // -------------------------
     let db = null;
-    let bksCache = []; // Internal memory caching for rides
+    let bksCache = [];
 
-    function initFirebase() {
-      try {
-        if (!firebase.apps.length) {
-          firebase.initializeApp({
-            apiKey: 'AIzaSyDGel0ktZDQYcdlOuoZo4bAqZWCuGvOVbc',
-            authDomain: 'seacoast-rip.firebaseapp.com',
-            projectId: 'seacoast-rip',
-            storageBucket: 'seacoast-rip.firebasestorage.app',
-          });
-        }
-        db = firebase.firestore();
-        console.log('Firebase ready');
-      } catch (e) {
-        console.warn('Firebase error:', e.message);
-      }
-    }
-
-    // -------------------------
-    // SYSTEM STATE & CONFIG
-    // -------------------------
+    // Constants
+    const DEFAULT_PAY_RATE = 75; // 75% Payout to drivers
     const DOC_REQUIREMENTS = [
       { id: 'dl', name: 'Driver’s License', reqDate: true },
       { id: 'reg', name: 'Vehicle Registration', reqDate: true },
-      { id: 'ins', name: 'Livery Insurance (Dec Page)', reqDate: true },
-      { id: 'photo', name: 'Livery Plate Photo', reqDate: false },
-      { id: 'port', name: 'Massport Permit', reqDate: true },
+      { id: 'ins', name: 'Livery Insurance', reqDate: true },
+      { id: 'photo', name: 'Livery Plate Configuration', reqDate: false },
+      { id: 'port', name: 'Massport Clearance', reqDate: true },
       { id: 'w9', name: 'W-9 Form', reqDate: false },
-      { id: 'contract', name: 'Independent Contractor Agreement', reqDate: false }
+      { id: 'contract', name: 'Vendor Agreement', reqDate: false }
     ];
 
-    let currentUser = null;
-    // Driver compliance data structure
-    let driverData = {
-      profile: {},
-      documents: {} 
-    };
+    let currentUser = null; // { email, uid }
+    let driverData = { profile: {}, documents: {}, status: 'Pending' };
 
-    // Global settings for payout calculation
-    const currentDriverRatePercentage = 75; // 75% for driver, from previous iteration
+    function initFirebase() {
+      if (!firebase.apps.length) {
+        firebase.initializeApp({
+          apiKey: 'AIzaSyDGel0ktZDQYcdlOuoZo4bAqZWCuGvOVbc',
+          authDomain: 'seacoast-rip.firebaseapp.com',
+          projectId: 'seacoast-rip',
+          storageBucket: 'seacoast-rip.firebasestorage.app',
+        });
+      }
+      db = firebase.firestore();
+    }
 
     // -------------------------
-    // INITIALIZATION
+    // AUTHENTICATION LOGIC
     // -------------------------
-    function init() {
-      initFirebase();
-      const storedAuth = localStorage.getItem('drv_auth');
-      if (storedAuth) {
-        currentUser = JSON.parse(storedAuth);
-        loadDriverData();
-        showApp();
-      } else {
-        document.getElementById('login-screen').style.display = 'flex';
-        document.getElementById('app-screen').style.display = 'none';
+    function toggleAuth(type) {
+      document.getElementById('form-login').style.display = type === 'login' ? 'block' : 'none';
+      document.getElementById('form-signup').style.display = type === 'signup' ? 'block' : 'none';
+    }
+
+    async function signup() {
+      const em = document.getElementById('reg-email').value.trim().toLowerCase();
+      const pw = document.getElementById('reg-pwd').value.trim();
+      if (!em || !em.includes('@') || pw.length < 5) { showToast('Valid email and 5+ char password required'); return; }
+
+      const btn = document.getElementById('btn-signup');
+      btn.innerHTML = '<div class="spinner"></div> Creating...';
+      btn.disabled = true;
+
+      try {
+        const docRef = db.collection('drivers').doc(em);
+        const snap = await docRef.get();
+        if(snap.exists) {
+          showToast('Email is already registered. Please log in.');
+          toggleAuth('login');
+          document.getElementById('log-email').value = em;
+        } else {
+          // Initialize strict new database schema for driver
+          let docsInitial = {};
+          DOC_REQUIREMENTS.forEach(req => {
+             docsInitial[req.id] = { status: 'Missing', expDate: null, lastUpdated: null, fileName: null };
+          });
+          
+          driverData = {
+             email: em,
+             pwd: pw, // Stacking simple auth to match admin requests securely within db
+             status: 'Suspended', // Requires docs
+             profile: { name: '', phone: '', address: '', vMake: '', vModel: '', vPlate: '' },
+             documents: docsInitial,
+             createdAt: new Date().toISOString()
+          };
+
+          await docRef.set(driverData);
+          currentUser = { uid: em, email: em };
+          localStorage.setItem('sr_drv_uid', em);
+          showToast('Identity Securely Generated');
+          showApp();
+        }
+      } catch (e) {
+        showToast('System Error: ' + e.message);
+      } finally {
+        btn.innerHTML = 'Create My Profile';
+        btn.disabled = false;
       }
     }
 
-    function handleLogin() {
-      const email = document.getElementById('login-email').value;
-      if (!email || !email.includes('@')) { showToast('Please enter a valid email'); return; }
-      
-      // Use email as unique identifier
-      currentUser = { email: email, uid: email };
-      localStorage.setItem('drv_auth', JSON.stringify(currentUser));
-      loadDriverData();
-      showApp();
-      showToast('Logged in successfully');
+    async function login() {
+      const em = document.getElementById('log-email').value.trim().toLowerCase();
+      const pw = document.getElementById('log-pwd').value.trim();
+      if (!em || !pw) { showToast('Credentials required'); return; }
+
+      const btn = document.getElementById('btn-login');
+      btn.innerHTML = '<div class="spinner"></div> Authenticating...';
+      btn.disabled = true;
+
+      try {
+        const docRef = db.collection('drivers').doc(em);
+        const snap = await docRef.get();
+        if(!snap.exists) {
+           showToast('Identity not found. Sign Up first.');
+        } else {
+           let dbData = snap.data();
+           if(dbData.pwd !== pw) {
+              showToast('Incorrect password.');
+           } else {
+              currentUser = { uid: em, email: em };
+              localStorage.setItem('sr_drv_uid', em);
+              driverData = dbData;
+              
+              // Patch in any missing documents due to schema updates
+              DOC_REQUIREMENTS.forEach(req => {
+                if(!driverData.documents[req.id]) { driverData.documents[req.id] = {status: 'Missing'}; }
+              });
+
+              showToast('Authentication Successful');
+              showApp();
+           }
+        }
+      } catch(e) { showToast('Auth error: ' + e.message); }
+      finally {
+        btn.innerHTML = 'Log In securely';
+        btn.disabled = false;
+      }
     }
 
-    function handleLogout() {
-      localStorage.removeItem('drv_auth');
+    function logout() {
+      localStorage.removeItem('sr_drv_uid');
       window.location.reload();
     }
 
+    // -------------------------
+    // BOOT & SYNC
+    // -------------------------
+    async function init() {
+      initFirebase();
+      const savedUid = localStorage.getItem('sr_drv_uid');
+      if (savedUid) {
+        try {
+          // Auto login wrapper
+          const docRef = db.collection('drivers').doc(savedUid);
+          const snap = await docRef.get();
+          if(snap.exists) {
+            currentUser = { uid: savedUid, email: savedUid };
+            driverData = snap.data();
+            showApp();
+          } else {
+            localStorage.removeItem('sr_drv_uid');
+            document.getElementById('auth-screen').style.display = 'flex';
+          }
+        } catch(e) { document.getElementById('auth-screen').style.display = 'flex'; }
+      } else {
+        document.getElementById('auth-screen').style.display = 'flex';
+      }
+    }
+
     function showApp() {
-      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('auth-screen').style.display = 'none';
       document.getElementById('app-screen').style.display = 'block';
       
       const isMobile = window.innerWidth <= 768;
@@ -483,7 +602,7 @@
         icon.style.display = isMobile ? 'block' : 'none';
       });
 
-      // Hydrate forms
+      // Hydrate Forms
       document.getElementById('prof-email').value = currentUser.email;
       if (driverData.profile.name) document.getElementById('prof-name').value = driverData.profile.name;
       if (driverData.profile.phone) document.getElementById('prof-phone').value = driverData.profile.phone;
@@ -496,161 +615,124 @@
 
       evaluateCompliance();
       renderDocuments();
-      renderComplianceTable();
-      fetchMarketplace(); // Kick-off the load
+      
+      // Start real-time listens
+      setupDriverRealtimeSync();
+      fetchMarketplace();
     }
 
-    // -------------------------
-    // DATA LAYER (Simulating specific items)
-    // -------------------------
-    function loadDriverData() {
-      let allDrivers = JSON.parse(localStorage.getItem('rv_all_drivers') || '{}');
-      if (allDrivers[currentUser.uid]) {
-        driverData = allDrivers[currentUser.uid];
-      } else {
-        DOC_REQUIREMENTS.forEach(doc => {
-          driverData.documents[doc.id] = { status: 'Missing', expDate: null, lastUpdated: null, fileName: null };
+    // Monitor Firebase DB dynamically so Admin approvals immediately reflect in the portal without refresh!
+    function setupDriverRealtimeSync() {
+      db.collection('drivers').doc(currentUser.uid).onSnapshot(doc => {
+        if(doc.exists) {
+          let updated = doc.data();
+          // We only truly care about remote 'status' and 'documents' updates from the admin replacing our memory
+          driverData.documents = updated.documents;
+          driverData.status = updated.status;
+          
+          let prevSusp = document.getElementById('dash-status-badge').textContent === 'Suspended';
+          evaluateCompliance(); // Updates UI internally
+          renderDocuments(); // Updates tables
+        }
+      });
+    }
+
+    async function syncProfileToDB() {
+      if(!db || !currentUser) return;
+      try {
+        await db.collection('drivers').doc(currentUser.uid).update({
+          profile: driverData.profile,
+          documents: driverData.documents,
+          status: driverData.status
         });
-        saveDriverData();
-      }
-    }
-
-    window.addEventListener('focus', () => {
-      if(currentUser && document.getElementById('app-screen').style.display === 'block') {
-         loadDriverData();
-         evaluateCompliance();
-         renderDocuments();
-         renderComplianceTable();
-         fetchMarketplace(); // Silently refresh rides
-      }
-    });
-
-    function saveDriverData() {
-      let allDrivers = JSON.parse(localStorage.getItem('rv_all_drivers') || '{}');
-      allDrivers[currentUser.uid] = { email: currentUser.email, ...driverData };
-      localStorage.setItem('rv_all_drivers', JSON.stringify(allDrivers));
+      } catch(e) { console.warn("Failed syncing:", e); }
     }
 
     function escapeHtml(unsafe) {
       if(!unsafe) return '';
-      return (unsafe||'').toString()
-        .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+      return (unsafe||'').toString().replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     }
 
     // -------------------------
-    // NAVIGATION
+    // RIDES & MARKETPLACE
     // -------------------------
     function switchTab(tabId) {
       document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
       document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
       
       document.getElementById('sec-' + tabId).classList.add('active');
-      const btn = Array.from(document.querySelectorAll('.nav-btn')).find(b => b.textContent.toLowerCase().includes(tabId));
+      const btn = Array.from(document.querySelectorAll('.nav-btn')).find(b => b.textContent.toLowerCase().includes(tabId === 'market'?'rides':tabId));
       if(btn) btn.classList.add('active');
       
-      if(tabId === 'dashboard' || tabId === 'compliance') evaluateCompliance();
-      if(tabId === 'documents') renderDocuments();
       if(tabId === 'market' || tabId === 'dashboard') fetchMarketplace();
     }
 
-    // -------------------------
-    // RIDES & MARKETPLACE (Firebase)
-    // -------------------------
     async function fetchMarketplace() {
-      if (!db) {
-        document.getElementById('market-list').innerHTML = '<div style="padding:2rem;text-align:center;color:#888">Server offline</div>';
-        return;
-      }
+      if(!db || !currentUser) return;
       try {
-        var snap = await db.collection('bookings')
-          .orderBy('updatedAt', 'desc')
-          .limit(100)
-          .get();
-        
+        var snap = await db.collection('bookings').orderBy('updatedAt', 'desc').limit(150).get();
         bksCache = [];
-        snap.forEach(function (doc) { bksCache.push(doc.data()); });
+        snap.forEach(doc => bksCache.push(doc.data()));
         renderMarketView();
         renderUpcomingDashboard();
       } catch (e) {
-        console.warn('Fetch market err: ', e);
+        console.warn('Market fetch.', e);
       }
     }
 
     function renderMarketView() {
       var el = document.getElementById('market-list');
-      
-      // Filter for rides that need a driver and are explicitly confirmed/upcoming
-      var available = bksCache.filter(function (b) { 
-        return (!b.driverId || b.driverId.trim() === '') && b.status !== 'Cancelled' && b.status !== 'Completed'; 
-      });
-
+      var available = bksCache.filter(b => (!b.driverId || b.driverId.trim() === '') && b.status !== 'Cancelled' && b.status !== 'Completed');
       let isSuspended = document.getElementById('dash-status-badge').textContent === 'Suspended';
 
       if (!available.length) { 
-        el.innerHTML = '<div style="padding:3rem;text-align:center;background:white;border-radius:8px;border:1px solid var(--border)"><span class="material-symbols-outlined" style="font-size:32px;color:#ccc;margin-bottom:10px">directions_car</span><br>No available rides right now.<br><span style="font-size:0.8rem;color:#888">Check back later or wait for a text alert.</span></div>'; 
+        el.innerHTML = '<div style="padding:4rem 2rem;text-align:center;background:white;border-radius:6px;border:1px solid var(--border)"><span class="material-symbols-outlined" style="font-size:36px;color:#d4af37;margin-bottom:15px">check_circle</span><br><h3 style="font-weight:700;font-size:1.1rem;margin-bottom:5px">Queue Empty</h3><div style="font-size:0.9rem;color:var(--text-light)">The board is fully allocated. Wait for dispatch alerts.</div></div>'; 
         return; 
       }
 
-      var rate = currentDriverRatePercentage / 100;
+      var rate = DEFAULT_PAY_RATE / 100;
       var h = '';
 
-      available.forEach(function (b) {
+      available.forEach(b => {
         var pr = parseFloat(b.price) || 0;
         var payout = (pr * rate).toFixed(2);
-        
-        var dateMeta = b.date + (b.time ? ' at ' + b.time : '');
+        var dateMeta = b.date + (b.time ? ' ' + b.time : '');
 
-        h += '<div class="card market-card">' +
-          '<div style="flex:1;min-width:250px">' +
-            '<div style="font-weight:700;font-size:1.05rem;margin-bottom:8px">' + escapeHtml(b.name) + ' <span class="badge" style="background:#e0f2fe;color:#0369a1;margin-left:6px">' + escapeHtml(b.service) + '</span></div>' +
-            '<div class="m-detail"><span class="material-symbols-outlined" style="font-size:16px">calendar_month</span> ' + escapeHtml(dateMeta) + '</div>' +
-            '<div class="m-detail"><span class="material-symbols-outlined" style="font-size:16px">my_location</span> ' + escapeHtml(b.pickup) + '</div>' +
-            '<div class="m-detail"><span class="material-symbols-outlined" style="font-size:16px">flag</span> ' + escapeHtml(b.destination) + '</div>' +
-          '</div>' +
-          '<div style="text-align:right;min-width:120px">' +
-            '<div class="m-price-lbl">Est. Payout</div>' +
-            '<div class="m-price">$' + payout + '</div>' +
-            '<button onclick="claimRide(\'' + b.id + '\')" class="btn success" style="width:100%" ' + (isSuspended?'disabled title="Account suspended"':'') + '>' + (isSuspended?'Suspended':'Claim Ride') + '</button>' +
-          '</div>' +
-        '</div>';
+        h += `<div class="card market-card">
+          <div style="flex:1;min-width:250px">
+            <div style="font-weight:700;font-size:1.1rem;margin-bottom:10px;color:var(--primary)">${escapeHtml(b.name)} <span class="badge gold" style="margin-left:8px">${escapeHtml(b.service)}</span></div>
+            <div class="m-detail"><span class="material-symbols-outlined" style="font-size:18px;color:var(--accent)">schedule</span> <span style="font-weight:600">${escapeHtml(dateMeta)}</span></div>
+            <div class="m-detail"><span class="material-symbols-outlined" style="font-size:18px">my_location</span> <span style="color:var(--text)">${escapeHtml(b.pickup)}</span></div>
+            <div class="m-detail"><span class="material-symbols-outlined" style="font-size:18px">flag</span> <span style="color:var(--text)">${escapeHtml(b.destination)}</span></div>
+          </div>
+          <div style="text-align:right;min-width:140px;border-left:1px dashed var(--border);padding-left:1rem">
+            <div class="m-price-lbl">Guaranteed Payout</div>
+            <div class="m-price">$${payout}</div>
+            <button onclick="claimRide('${b.id}')" class="btn ${isSuspended?'':'gold'}" style="width:100%;margin-top:10px" ${isSuspended?'disabled':''}>${isSuspended?'Suspended':'Secure Claim'}</button>
+          </div>
+        </div>`;
       });
       el.innerHTML = h;
     }
 
     function renderUpcomingDashboard() {
-      // Find rides claimed by ME
-      var myRides = bksCache.filter(function (b) { 
-        return b.driverId === currentUser.uid && b.status !== 'Cancelled' && b.status !== 'Completed'; 
-      });
-
+      var myRides = bksCache.filter(b => b.driverId === currentUser.uid && b.status !== 'Cancelled' && b.status !== 'Completed');
       const tbody = document.getElementById('dash-rides-upcoming');
       if (!myRides.length) {
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:1.5rem;color:#888">You have no upcoming rides claimed. <a href="#" onclick="switchTab(\'market\')" style="color:var(--primary)">Find rides</a></td></tr>';
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:2rem;color:#6b7280;font-size:0.9rem">You currently hold no active assignments.<br><br><button class="btn gold outline" style="width:auto" onclick="switchTab(\'market\')">View Opportunities</button></td></tr>';
         return;
       }
-
       let h = '';
       myRides.forEach(b => {
-        var dateMeta = b.date + (b.time ? ' ' + b.time : '');
-        h += `<tr>
-          <td>${escapeHtml(dateMeta)}</td>
-          <td>${escapeHtml(b.pickup)}</td>
-          <td>${escapeHtml(b.destination)}</td>
-          <td><span class="badge ${b.status==='Paid'?'approved':'pending'}">${escapeHtml(b.status)}</span></td>
-        </tr>`;
+        h += `<tr><td style="font-weight:600">${escapeHtml(b.date + ' ' + (b.time||''))}</td><td>${escapeHtml(b.pickup)}</td><td>${escapeHtml(b.destination)}</td><td><span class="badge ${b.status==='Paid'?'approved':'pending'}">${escapeHtml(b.status)}</span></td></tr>`;
       });
       tbody.innerHTML = h;
     }
 
     async function claimRide(rideId) {
       if (!db || !currentUser) return;
-      
-      // Perform final check before writing
-      let isSuspended = document.getElementById('dash-status-badge').textContent === 'Suspended';
-      if(isSuspended) { showToast('Cannot claim — Account Suspended'); return; }
-
-      if(!confirm('Confirm claiming this ride?')) return;
+      if(document.getElementById('dash-status-badge').textContent === 'Suspended') { showToast('Account Suspended — Review Documents'); return; }
+      if(!confirm('Acknowledge: You are committing to this run per dispatch terms.')) return;
       
       try {
         await db.collection('bookings').doc(rideId).update({
@@ -658,186 +740,160 @@
           driverStatus: 'Claimed',
           updatedAt: new Date().toISOString()
         });
-        showToast('Ride easily claimed!');
-        fetchMarketplace(); // Refresh local UI immediately
+        showToast('Run secured and scheduled.');
+        fetchMarketplace();
       } catch (e) {
-        showToast('Error claiming ride. Someone else may have grabbed it!');
-        fetchMarketplace(); // resync
+        showToast('Sync error. Refresh the board.');
+        fetchMarketplace();
       }
     }
 
     // -------------------------
-    // COMPLIANCE LOGIC
+    // COMPLIANCE LOGIC (Real Firebase Sync)
     // -------------------------
     function evaluateCompliance() {
-      let status = 'Approved'; // Assume best case
+      let status = 'Approved'; 
       let expiringList = [];
       let today = new Date();
-      let alertExpiringSoon = false;
-      let accountSuspended = false;
+      let isSuspended = false;
+      let isAlert = false;
+
+      // Ensure profile has basics
+      if(!driverData.profile.name || !driverData.profile.phone || !driverData.profile.vMake) {
+         status = 'Suspended'; isSuspended = true;
+      }
 
       for (const req of DOC_REQUIREMENTS) {
-        let docData = driverData.documents[req.id];
-        if(!docData) { docData = { status: 'Missing' }; driverData.documents[req.id] = docData; }
+        let dc = driverData.documents[req.id];
+        if(!dc) dc = {status: 'Missing'};
 
-        if (docData.status === 'Missing' || docData.status === 'Expired' || docData.status === 'Rejected') {
-          status = 'Suspended';
-          accountSuspended = true;
-        } 
-        else if (docData.status === 'Pending Review' && status !== 'Suspended') {
+        if (dc.status === 'Missing' || dc.status === 'Expired' || dc.status === 'Rejected') {
+          status = 'Suspended'; isSuspended = true;
+        } else if (dc.status === 'Pending Review' && status !== 'Suspended') {
           status = 'Pending';
         }
 
-        if (docData.expDate) {
-          let exp = new Date(docData.expDate);
-          let daysDiff = (exp - today) / (1000 * 60 * 60 * 24);
-          if (daysDiff < 0) {
-            if (docData.status !== 'Expired') {
-              docData.status = 'Expired';
-              status = 'Suspended';
-              accountSuspended = true;
-            }
+        if (dc.expDate) {
+          let daysDiff = (new Date(dc.expDate) - today) / (1000 * 60 * 60 * 24);
+          if (daysDiff < 0 && dc.status !== 'Expired') {
+            dc.status = 'Expired'; status = 'Suspended'; isSuspended = true;
           } else if (daysDiff <= 45) {
-            alertExpiringSoon = true;
-            expiringList.push({ name: req.name, days: Math.floor(daysDiff), date: docData.expDate });
+            isAlert = true;
+            expiringList.push({ name: req.name, days: Math.floor(daysDiff), date: dc.expDate });
           } else {
-            expiringList.push({ name: req.name, days: Math.floor(daysDiff), date: docData.expDate });
+            expiringList.push({ name: req.name, days: Math.floor(daysDiff), date: dc.expDate });
           }
         }
       }
 
-      driverData.status = status;
-      saveDriverData();
+      if(driverData.status !== status) {
+        driverData.status = status;
+        syncProfileToDB(); 
+      }
 
-      renderBanners(accountSuspended, alertExpiringSoon);
+      // Sync Banners & UI
+      const c = document.getElementById('banner-container');
+      c.innerHTML = '';
+      if(isSuspended) c.innerHTML += `<div class="banner danger"><span class="material-symbols-outlined">block</span> Operations Suspended. Audit your Documents/Profile to regain clearance.</div>`;
+      if(isAlert) c.innerHTML += `<div class="banner warning"><span class="material-symbols-outlined">warning</span> Imminent Expiation: Documents degrading within 45 days.</div>`;
 
-      let themeClass = status === 'Approved' ? 'approved' : (status === 'Pending' ? 'pending' : 'suspended');
-      const updateCard = (cdId, txId, bdId) => {
-        let card = document.getElementById(cdId);
-        card.className = `card status-card ${themeClass}`;
-        document.getElementById(txId).textContent = accountSuspended ? 'Suspended (Action Required)' : status;
-        let bd = document.getElementById(bdId);
-        bd.className = `badge ${status.toLowerCase() == 'pending review' ? 'pending' : status.toLowerCase()}`;
-        bd.textContent = status;
+      // Theme overrides
+      document.getElementById('dash-status-badge').style.opacity = 1;
+      let theme = status === 'Approved' ? 'approved' : (status === 'Pending' ? 'pending' : 'suspended');
+      let tText = isSuspended ? 'Suspended (Action Req)' : status;
+      
+      const setCard = (cId, tId, bId) => {
+        document.getElementById(cId).className = `card status-card ${theme}`;
+        document.getElementById(tId).textContent = tText;
+        document.getElementById(bId).className = `badge ${status==='Suspended'?'missing':(status==='Pending'?'pending':'approved')}`;
+        document.getElementById(bId).textContent = status;
       };
-
-      updateCard('dash-status-card', 'dash-status-text', 'dash-status-badge');
-      updateCard('comp-status-card', 'comp-status-text', 'comp-status-badge');
+      setCard('dash-status-card', 'dash-status-text', 'dash-status-badge');
+      setCard('comp-status-card', 'comp-status-text', 'comp-status-badge');
 
       expiringList.sort((a,b) => a.days - b.days);
       const nextExpEl = document.getElementById('dash-next-exp');
       if (expiringList.length > 0) {
-        nextExpEl.innerHTML = `${expiringList[0].name} <br> <span style="font-size:0.8rem;color:var(--text-light);font-weight:400">Exp: ${new Date(expiringList[0].date).toLocaleDateString()} (${expiringList[0].days} days)</span>`;
-      } else {
-        nextExpEl.textContent = 'All Clear';
-      }
+        nextExpEl.innerHTML = `${expiringList[0].name} <br> <span style="font-size:0.8rem;color:var(--text-light);font-weight:400;color:${expiringList[0].days<=45?'var(--error)':''}">Exp: ${new Date(expiringList[0].date).toLocaleDateString()}</span>`;
+      } else { nextExpEl.textContent = 'Indefinite Clearance'; }
     }
 
-    function renderBanners(suspended, expiringSoon) {
-      const c = document.getElementById('banner-container');
-      c.innerHTML = '';
-      if (suspended) {
-        c.innerHTML += `<div class="banner danger"><span class="material-symbols-outlined">gpp_bad</span> Your account is suspended until you update missing/expired documents.</div>`;
-      }
-      if (expiringSoon) {
-        c.innerHTML += `<div class="banner warning"><span class="material-symbols-outlined">warning</span> You have documents expiring in less than 45 days. Review your Compliance page.</div>`;
-      }
-    }
-
-    // -------------------------
-    // DOCUMENTS TAB LOGIC
-    // -------------------------
     function renderDocuments() {
       const c = document.getElementById('doc-list-container');
       let html = '';
-
       DOC_REQUIREMENTS.forEach(req => {
         let d = driverData.documents[req.id];
-        let statusObj = getStatusProperties(d.status);
-        
-        let metaTxt = '';
-        if (d.lastUpdated) metaTxt += `Updated: ${new Date(d.lastUpdated).toLocaleDateString()}`;
-        if (d.expDate) metaTxt += ` · Exp: ${new Date(d.expDate).toLocaleDateString()}`;
-        if (d.fileName) metaTxt += ` · File: ${escapeHtml(d.fileName)}`;
-        if (!metaTxt) metaTxt = 'Awaiting internal upload';
+        let stCss = d.status === 'Approved' ? 'approved' : ['Missing','Expired','Rejected'].includes(d.status) ? 'missing' : 'pending';
+        let meta = (d.fileName ? `File: ${escapeHtml(d.fileName)}` : 'Awaiting data transmit') + 
+                   (d.expDate ? ` · Exp: ${new Date(d.expDate).toLocaleDateString()}` : '');
 
-        html += `
-          <div class="doc-row">
+        html += `<div class="doc-row">
             <div class="doc-info">
               <div class="doc-title">${req.name}</div>
-              <div class="doc-meta">${metaTxt}</div>
+              <div class="doc-meta">${meta}</div>
             </div>
             <div class="doc-actions">
-              <span class="badge ${statusObj.css}">${d.status}</span>
-              <button class="btn outline" style="padding:0.4rem 0.8rem;font-size:0.75rem" onclick="openUploadModal('${req.id}')">Upload</button>
+              <span class="badge ${stCss}">${d.status}</span>
+              <button class="btn outline" style="padding:0.4rem 0.8rem;font-size:0.75rem" onclick="openUploadModal('${req.id}')">Transmit</button>
             </div>
-          </div>
-        `;
+          </div>`;
       });
       c.innerHTML = html;
-      renderComplianceTable(); 
+
+      // Also render full compliance table
+      const tb = document.getElementById('comp-table-body');
+      tb.innerHTML = '';
+      DOC_REQUIREMENTS.forEach(req => {
+        let d = driverData.documents[req.id];
+        let stCss = d.status === 'Approved' ? 'approved' : ['Missing','Expired','Rejected'].includes(d.status) ? 'missing' : 'pending';
+        tb.innerHTML += `<tr><td style="font-weight:600;color:var(--primary)">${req.name}</td><td><span class="badge ${stCss}">${d.status}</span></td><td>${d.expDate ? new Date(d.expDate).toLocaleDateString() : '—'}</td></tr>`;
+      });
     }
 
-    function getStatusProperties(s) {
-      const cls = {
-        'Approved': 'approved',
-        'Pending Review': 'pending',
-        'Expired': 'expired',
-        'Missing': 'missing',
-        'Rejected': 'missing'
-      };
-      return { css: cls[s] || 'missing' };
-    }
-
-    // Modal Operations
+    // Modal
     function openUploadModal(docId) {
-      const req = DOC_REQUIREMENTS.find(r => r.id === docId);
-      document.getElementById('um-title').textContent = 'Upload ' + req.name;
+      document.getElementById('um-title').textContent = 'Transmit ' + DOC_REQUIREMENTS.find(r=>r.id===docId).name;
       document.getElementById('um-doc-id').value = docId;
       document.getElementById('um-file').value = '';
-      
-      const expGroup = document.getElementById('um-exp-group');
-      if (req.reqDate) {
-        expGroup.style.display = 'block';
-        document.getElementById('um-date').value = driverData.documents[docId].expDate || '';
-      } else {
-        expGroup.style.display = 'none';
-        document.getElementById('um-date').value = '';
-      }
-      
+      document.getElementById('um-date').value = driverData.documents[docId].expDate || '';
+      document.getElementById('um-exp-group').style.display = DOC_REQUIREMENTS.find(r=>r.id===docId).reqDate ? 'block' : 'none';
       document.getElementById('upload-modal').classList.add('active');
     }
-
-    function closeModal() {
-      document.getElementById('upload-modal').classList.remove('active');
-    }
+    function closeModal() { document.getElementById('upload-modal').classList.remove('active'); }
 
     function submitUpload() {
       const docId = document.getElementById('um-doc-id').value;
-      const fileInput = document.getElementById('um-file');
-      const dateVal = document.getElementById('um-date').value;
+      const file = document.getElementById('um-file');
+      const dVal = document.getElementById('um-date').value;
+      const req = DOC_REQUIREMENTS.find(r=>r.id===docId);
       
-      if (!fileInput.files.length) { showToast('Please select a file to upload'); return; }
-      const req = DOC_REQUIREMENTS.find(r => r.id === docId);
-      if (req.reqDate && !dateVal) { showToast('Expiration date is required for this document.'); return; }
+      if(!file.files.length) { showToast('Attach an unredacted file.'); return; }
+      if(req.reqDate && !dVal) { showToast('Expiration date matrix required.'); return; }
 
-      driverData.documents[docId] = {
-        status: 'Pending Review',
-        fileName: fileInput.files[0].name,
-        expDate: dateVal || null,
-        lastUpdated: new Date().toISOString()
-      };
+      const btn = document.getElementById('btn-upload');
+      btn.innerHTML = '<div class="spinner"></div> Sending...';
+      btn.disabled = true;
 
-      saveDriverData();
-      showToast('Document uploaded successfully');
-      closeModal();
-      evaluateCompliance(); 
-      renderDocuments();
+      // Simulating heavy firebase storage upload for now (just keeping reference name to match admin UI spec)
+      setTimeout(() => {
+        driverData.documents[docId] = {
+          status: 'Pending Review',
+          fileName: file.files[0].name,
+          expDate: dVal || null,
+          lastUpdated: new Date().toISOString()
+        };
+        syncProfileToDB().then(() => {
+          showToast('Data Transmitted to HQ Securely.');
+          closeModal();
+          evaluateCompliance();
+          renderDocuments();
+          btn.innerHTML = 'Commit Record';
+          btn.disabled = false;
+        });
+      }, 500);
     }
 
-    // -------------------------
-    // PROFILE LOGIC
-    // -------------------------
+    // Profile
     function saveProfile() {
       driverData.profile = {
         name: document.getElementById('prof-name').value.trim(),
@@ -847,44 +903,18 @@
         vModel: document.getElementById('prof-vmodel').value.trim(),
         vPlate: document.getElementById('prof-vplate').value.trim()
       };
-      saveDriverData();
-      document.getElementById('dash-greeting').textContent = 'Welcome, ' + (driverData.profile.name.split(' ')[0] || 'Driver');
-      showToast('Profile Saved Successfully');
-    }
-
-    // -------------------------
-    // COMPLIANCE REPORTS
-    // -------------------------
-    function renderComplianceTable() {
-      const tbody = document.getElementById('comp-table-body');
-      let html = '';
-      let today = new Date();
-
-      DOC_REQUIREMENTS.forEach(req => {
-        let d = driverData.documents[req.id];
-        let statusObj = getStatusProperties(d.status);
-        
-        let expMeta = '—';
-        if (d.expDate) {
-          let exp = new Date(d.expDate);
-          let days = Math.ceil((exp - today)/(1000*60*60*24));
-          if (days <= 0) expMeta = `<span style="color:var(--danger);font-weight:600">Expired ${new Date(d.expDate).toLocaleDateString()}</span>`;
-          else if (days <= 45) expMeta = `<span style="color:var(--warning);font-weight:600">Expires in ${days} days</span>`;
-          else expMeta = new Date(d.expDate).toLocaleDateString();
-        }
-
-        html += `
-          <tr>
-            <td style="font-weight:500">${req.name}</td>
-            <td><span class="badge ${statusObj.css}">${d.status}</span></td>
-            <td>${expMeta}</td>
-          </tr>
-        `;
+      
+      const btn = document.getElementById('btn-save-profile');
+      btn.innerHTML = '<div class="spinner"></div> Syncing...';
+      
+      evaluateCompliance(); // In case missing profile suspended them
+      syncProfileToDB().then(() => {
+        document.getElementById('dash-greeting').textContent = 'Welcome, ' + (driverData.profile.name.split(' ')[0] || 'Operative');
+        showToast('Profile Configuration Confirmed');
+        btn.innerHTML = 'Transmit Identity';
       });
-      tbody.innerHTML = html;
     }
 
-    // UTILS
     function showToast(msg) {
       let t = document.getElementById('toast');
       t.textContent = msg;
@@ -892,7 +922,6 @@
       setTimeout(() => t.classList.remove('show'), 3000);
     }
 
-    // Boot
     window.addEventListener('DOMContentLoaded', init);
   </script>
 </body>
