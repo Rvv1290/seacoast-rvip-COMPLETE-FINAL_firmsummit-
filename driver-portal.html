@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Driver Portal | Seacoast RVIP LLC</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+  <!-- Firebase Config (Marketplace) -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <style>
+    :root {
+      --primary: #1d4ed8;
+      --primary-dark: #1e3a8a;
+      --surface: #ffffff;
+      --bg: #f3f4f6;
+      --text: #111827;
+      --text-light: #6b7280;
+      --border: #e5e7eb;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', sans-serif; background-color: var(--bg); color: var(--text); }
+    
+    /* Login Screen */
+    #login-screen { display: flex; align-items: center; justify-content: center; min-height: 100vh; background: var(--bg); }
+    .login-box { background: var(--surface); padding: 2.5rem; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
+    .login-box h1 { font-size: 1.5rem; font-weight: 700; color: var(--primary); margin-bottom: 0.5rem; }
+    .login-box p { color: var(--text-light); font-size: 0.875rem; margin-bottom: 2rem; }
+    
+    /* Input Shared */
+    .form-group { margin-bottom: 1.25rem; text-align: left; }
+    .form-label { display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-light); margin-bottom: 0.35rem; }
+    .form-input { width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 6px; font-family: 'Inter'; font-size: 0.95rem; outline: none; transition: border-color 0.2s; }
+    .form-input:focus { border-color: var(--primary); }
+    .form-input[readonly] { background: #f9fafb; color: #9ca3af; }
+    
+    /* Button */
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.75rem 1.5rem; background: var(--primary); color: white; border: none; border-radius: 6px; font-family: 'Inter'; font-weight: 600; font-size: 0.9rem; cursor: pointer; transition: opacity 0.2s; text-decoration: none; width: 100%; }
+    .btn:hover { opacity: 0.9; }
+    .btn.outline { background: transparent; color: var(--primary); border: 1px solid var(--primary); }
+    .btn.success { background: var(--success); }
+    .btn:disabled { background: #9ca3af; border-color: #9ca3af; cursor: not-allowed; opacity: 0.7; }
+
+    /* Main App */
+    #app-screen { display: none; }
+    .navbar { background: var(--primary-dark); color: white; padding: 1rem 1.5rem; position: sticky; top: 0; z-index: 100; }
+    .nav-container { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+    .brand { font-size: 1.25rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; }
+    .nav-links { display: flex; gap: 1.5rem; overflow-x: auto; padding-bottom: 4px; }
+    .nav-btn { color: #d1d5db; background: none; border: none; font-size: 0.9rem; font-family: 'Inter'; font-weight: 500; cursor: pointer; transition: color 0.2s; white-space: nowrap; }
+    .nav-btn:hover, .nav-btn.active { color: white; border-bottom: 2px solid white; padding-bottom: 2px; }
+    
+    @media (max-width: 768px) {
+      .nav-links { position: fixed; bottom: 0; left: 0; right: 0; background: var(--primary-dark); padding: 0.5rem; gap: 0.5rem; display: flex; justify-content: space-around; border-top: 1px solid rgba(255,255,255,0.1); overflow: hidden; }
+      .nav-btn { font-size: 0.7rem; display: flex; flex-direction: column; align-items: center; gap: 2px; border-bottom: none!important; }
+      .nav-btn .material-symbols-outlined { font-size: 20px; }
+      .main-content { padding-bottom: 80px !important; }
+    }
+
+    /* Banners */
+    #banner-container { max-width: 1200px; margin: 1rem auto 0; padding: 0 1.5rem; }
+    .banner { display: flex; align-items: center; gap: 0.75rem; padding: 1rem; border-radius: 6px; margin-bottom: 1rem; font-size: 0.9rem; font-weight: 500; }
+    .banner.warning { background: #fef3c7; border: 1px solid #fde68a; color: #92400e; }
+    .banner.danger { background: #fee2e2; border: 1px solid #fecaca; color: #991b1b; }
+
+    /* Content Area */
+    .main-content { max-width: 1200px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .section { display: none; animation: fadeIn 0.3s ease; }
+    .section.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+    .page-header { margin-bottom: 1.5rem; }
+    .page-title { font-size: 1.5rem; font-weight: 700; color: var(--text); }
+    .page-subtitle { font-size: 0.9rem; color: var(--text-light); margin-top: 0.25rem; }
+
+    /* Cards */
+    .card { background: var(--surface); border-radius: 8px; border: 1px solid var(--border); padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    
+    /* Market Card */
+    .market-card { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1rem; padding: 1.5rem; transition: transform 0.2s; border-left: 4px solid var(--success); }
+    .market-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+    .m-detail { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: var(--text-light); margin-bottom: 0.4rem; }
+    .m-price { font-size: 1.8rem; font-weight: 700; color: var(--success); font-family: 'Times New Roman', serif; }
+    .m-price-lbl { font-size: 0.7rem; text-transform: uppercase; color: var(--text-light); letter-spacing: 0.05em; margin-bottom: 0.2rem; }
+
+    /* Badges Status */
+    .badge { display: inline-flex; align-items: center; padding: 0.25rem 0.6rem; border-radius: 999px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+    .badge.approved { background: #d1fae5; color: #065f46; }
+    .badge.pending { background: #fef3c7; color: #92400e; }
+    .badge.missing { background: #fee2e2; color: #991b1b; }
+    .badge.expired { background: #fee2e2; color: #991b1b; }
+
+    /* Status Header Card */
+    .status-card { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; border-left: 4px solid var(--primary); }
+    .status-card.suspended { border-left-color: var(--danger); }
+    .status-card.approved { border-left-color: var(--success); }
+    .status-card.pending { border-left-color: var(--warning); }
+
+    /* Tables/Lists */
+    .data-table { width: 100%; border-collapse: collapse; }
+    .data-table th, .data-table td { padding: 1rem; text-align: left; border-bottom: 1px solid var(--border); }
+    .data-table th { font-size: 0.8rem; font-weight: 600; color: var(--text-light); text-transform: uppercase; background: #f9fafb; }
+    .data-table tr:last-child td { border-bottom: none; }
+    
+    /* Doc Checklist Row */
+    .doc-row { display: flex; justify-content: space-between; align-items: center; padding: 1rem 0; border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 1rem; }
+    .doc-row:last-child { border-bottom: none; }
+    .doc-info { flex: 1; min-width: 250px; }
+    .doc-title { font-weight: 600; font-size: 0.95rem; margin-bottom: 0.25rem; }
+    .doc-meta { font-size: 0.8rem; color: var(--text-light); }
+    .doc-actions { display: flex; align-items: center; gap: 1rem; }
+
+    /* Form Grid */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    @media (max-width: 600px) { .grid-2 { grid-template-columns: 1fr; } }
+
+    /* Modal */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; display: none; align-items: center; justify-content: center; padding: 1rem; }
+    .modal-overlay.active { display: flex; }
+    .modal { background: var(--surface); width: 100%; max-width: 500px; border-radius: 8px; display: flex; flex-direction: column; max-height: 90vh; }
+    .modal-header { padding: 1.25rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+    .modal-header h3 { font-size: 1.1rem; font-weight: 600; }
+    .modal-close { background: none; border: none; font-size: 1.5rem; color: var(--text-light); cursor: pointer; }
+    .modal-body { padding: 1.5rem; overflow-y: auto; }
+    .modal-footer { padding: 1.25rem; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 1rem; }
+
+    /* Toast */
+    #toast { position: fixed; bottom: 2rem; right: 2rem; background: var(--text); color: white; padding: 1rem 1.5rem; border-radius: 6px; font-weight: 500; font-size: 0.9rem; z-index: 300; transition: transform 0.3s, opacity 0.3s; transform: translateY(20px); opacity: 0; pointer-events: none; }
+    #toast.show { transform: translateY(0); opacity: 1; }
+  </style>
+</head>
+<body>
+
+  <!-- Toast Notification -->
+  <div id="toast">Message saved</div>
+
+  <!-- Banners Container -->
+  <div id="banner-area" style="position: absolute; width: 100%; top: 60px; z-index: 90;">
+    <div id="banner-container"></div>
+  </div>
+
+  <!-- AUTH SCREEN -->
+  <div id="login-screen">
+    <div class="login-box">
+      <h1>Seacoast RVIP LLC</h1>
+      <p>Driver Onboarding Portal</p>
+      <div class="form-group">
+        <label class="form-label">Email Address</label>
+        <input type="email" id="login-email" class="form-input" placeholder="driver@example.com" value="test@driver.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input type="password" id="login-pwd" class="form-input" placeholder="Enter any password" value="password">
+      </div>
+      <button class="btn" onclick="handleLogin()">Secure Login</button>
+      <div style="margin-top: 1rem; font-size: 0.8rem; color: var(--text-light)">
+        Demo: Click "Secure Login" to enter the system.
+      </div>
+    </div>
+  </div>
+
+  <!-- DASHBOARD APP -->
+  <div id="app-screen">
+    <nav class="navbar">
+      <div class="nav-container">
+        <div class="brand">
+          <span class="material-symbols-outlined">directions_car</span>
+          Seacoast RVIP
+        </div>
+        <div class="nav-links">
+          <button class="nav-btn active" onclick="switchTab('dashboard')">
+            <span class="material-symbols-outlined" style="display:none">dashboard</span>
+            Dashboard
+          </button>
+          <button class="nav-btn" onclick="switchTab('market')">
+            <span class="material-symbols-outlined" style="display:none">work</span>
+            Marketplace
+          </button>
+          <button class="nav-btn" onclick="switchTab('documents')">
+            <span class="material-symbols-outlined" style="display:none">folder_open</span>
+            Documents
+          </button>
+          <button class="nav-btn" onclick="switchTab('profile')">
+            <span class="material-symbols-outlined" style="display:none">person</span>
+            Profile
+          </button>
+          <button class="nav-btn" onclick="switchTab('compliance')">
+            <span class="material-symbols-outlined" style="display:none">verified_user</span>
+            Compliance
+          </button>
+          <button class="nav-btn" onclick="handleLogout()">
+            <span class="material-symbols-outlined" style="display:none">logout</span>
+            Logout
+          </button>
+        </div>
+      </div>
+    </nav>
+
+    <div class="main-content">
+      
+      <!-- DASHBOARD TAB -->
+      <div id="sec-dashboard" class="section active">
+        <div class="page-header">
+          <h2 class="page-title" id="dash-greeting">Welcome, Driver</h2>
+          <p class="page-subtitle">Here's your current performance and compliance summary.</p>
+        </div>
+
+        <div class="card status-card" id="dash-status-card">
+          <div>
+            <div style="font-size:0.8rem;color:var(--text-light);text-transform:uppercase;font-weight:600;margin-bottom:4px">Compliance Status</div>
+            <div style="font-size:1.5rem;font-weight:700;display:flex;align-items:center;gap:8px">
+              <span id="dash-status-text">Pending Background</span>
+              <span id="dash-status-badge" class="badge pending">Pending</span>
+            </div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:0.8rem;color:var(--text-light);font-weight:600;margin-bottom:4px">Next Expiring Document</div>
+            <div style="font-size:1.1rem;font-weight:600" id="dash-next-exp">None Initialized</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+            <h3 style="font-size: 1.1rem;">Your Claimed Rides</h3>
+            <button class="btn outline" style="padding:0.4rem 0.8rem;font-size:0.75rem" onclick="switchTab('market')">Find More Rides</button>
+          </div>
+          <div style="overflow-x:auto;">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Date & Time</th>
+                  <th>Pickup</th>
+                  <th>Destination</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="dash-rides-upcoming">
+                <tr><td colspan="4" style="text-align:center;color:#888;">Fetching your rides...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- MARKETPLACE TAB -->
+      <div id="sec-market" class="section">
+        <div class="page-header" style="display:flex; justify-content: space-between; align-items:flex-start">
+          <div>
+            <h2 class="page-title">Available Rides</h2>
+            <p class="page-subtitle">Browse and claim open reservations.</p>
+          </div>
+          <button class="btn outline" style="width:auto" onclick="fetchMarketplace()">↻ Refresh</button>
+        </div>
+        
+        <!-- Render Marketplace here -->
+        <div id="market-list">
+          <div style="padding:3rem;text-align:center;color:var(--text-light)">Loading Firebase configuration...</div>
+        </div>
+      </div>
+
+      <!-- DOCUMENTS TAB -->
+      <div id="sec-documents" class="section">
+        <div class="page-header">
+          <h2 class="page-title">Required Documents</h2>
+          <p class="page-subtitle">Upload and maintain your operational documents.</p>
+        </div>
+        <div class="card" id="doc-list-container">
+          <!-- Documents generated via JS -->
+        </div>
+      </div>
+
+      <!-- PROFILE TAB -->
+      <div id="sec-profile" class="section">
+        <div class="page-header">
+          <h2 class="page-title">Personal Profile</h2>
+          <p class="page-subtitle">Manage your contact and vehicle information.</p>
+        </div>
+        
+        <form class="card" id="profile-form" onsubmit="event.preventDefault(); saveProfile();">
+          <h3 style="margin-bottom:1rem;font-size:1rem;padding-bottom:0.5rem;border-bottom:1px solid var(--border)">Driver Details</h3>
+          <div class="grid-2">
+            <div class="form-group">
+              <label class="form-label">Full Name *</label>
+              <input type="text" id="prof-name" class="form-input" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Email Address (Read-only)</label>
+              <input type="email" id="prof-email" class="form-input" readonly>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Phone Number *</label>
+              <input type="tel" id="prof-phone" class="form-input" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Address (City, State) *</label>
+              <input type="text" id="prof-address" class="form-input" placeholder="e.g. Portsmouth, NH" required>
+            </div>
+          </div>
+
+          <h3 style="margin-top:1rem;margin-bottom:1rem;font-size:1rem;padding-bottom:0.5rem;border-bottom:1px solid var(--border)">Vehicle Details</h3>
+          <div class="grid-2">
+            <div class="form-group">
+              <label class="form-label">Vehicle Year & Make *</label>
+              <input type="text" id="prof-vmake" class="form-input" placeholder="e.g. 2022 Chevrolet" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Model *</label>
+              <input type="text" id="prof-vmodel" class="form-input" placeholder="e.g. Suburban" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">License Plate *</label>
+              <input type="text" id="prof-vplate" class="form-input" placeholder="e.g. NH-LIV123" required>
+            </div>
+          </div>
+          
+          <div style="margin-top:1rem;text-align:right">
+            <button type="submit" class="btn" style="width:auto">Save Profile</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- COMPLIANCE TAB -->
+      <div id="sec-compliance" class="section">
+        <div class="page-header">
+          <h2 class="page-title">Compliance Summary</h2>
+          <p class="page-subtitle">Your real-time record of operational compliance.</p>
+        </div>
+
+        <div class="card status-card" id="comp-status-card">
+          <div>
+            <div style="font-size:0.8rem;color:var(--text-light);text-transform:uppercase;font-weight:600;margin-bottom:4px">System Assessment</div>
+            <div style="font-size:1.5rem;font-weight:700;display:flex;align-items:center;gap:8px">
+              <span id="comp-status-text">Pending</span>
+              <span id="comp-status-badge" class="badge pending">Pending</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+            <h3 style="font-size:1.1rem">Document Audit</h3>
+            <button onclick="switchTab('documents')" class="btn outline" style="padding:0.4rem 0.8rem;font-size:0.8rem;width:auto">Go Upload</button>
+          </div>
+          <div style="overflow-x:auto;">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Requirement</th>
+                  <th>Status</th>
+                  <th>Expiration</th>
+                </tr>
+              </thead>
+              <tbody id="comp-table-body">
+                <!-- Generated by JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- UPLOAD MODAL -->
+  <div class="modal-overlay" id="upload-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="um-title">Upload Document</h3>
+        <button class="modal-close" onclick="closeModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="um-doc-id">
+        
+        <div class="form-group">
+          <label class="form-label">File to Upload</label>
+          <input type="file" id="um-file" class="form-input" accept=".pdf,.jpg,.jpeg,.png">
+          <p style="font-size:0.75rem;color:var(--text-light);margin-top:4px">Supported: PDF, JPG, PNG.</p>
+        </div>
+
+        <div class="form-group" id="um-exp-group">
+          <label class="form-label">Expiration Date</label>
+          <input type="date" id="um-date" class="form-input">
+          <p style="font-size:0.75rem;color:var(--text-light);margin-top:4px">Required to keep compliance active.</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn outline" style="width:auto" onclick="closeModal()">Cancel</button>
+        <button class="btn" style="width:auto" onclick="submitUpload()">Upload & Save</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // -------------------------
+    // FIREBASE INITIALIZATION
+    // -------------------------
+    let db = null;
+    let bksCache = []; // Internal memory caching for rides
+
+    function initFirebase() {
+      try {
+        if (!firebase.apps.length) {
+          firebase.initializeApp({
+            apiKey: 'AIzaSyDGel0ktZDQYcdlOuoZo4bAqZWCuGvOVbc',
+            authDomain: 'seacoast-rip.firebaseapp.com',
+            projectId: 'seacoast-rip',
+            storageBucket: 'seacoast-rip.firebasestorage.app',
+          });
+        }
+        db = firebase.firestore();
+        console.log('Firebase ready');
+      } catch (e) {
+        console.warn('Firebase error:', e.message);
+      }
+    }
+
+    // -------------------------
+    // SYSTEM STATE & CONFIG
+    // -------------------------
+    const DOC_REQUIREMENTS = [
+      { id: 'dl', name: 'Driver’s License', reqDate: true },
+      { id: 'reg', name: 'Vehicle Registration', reqDate: true },
+      { id: 'ins', name: 'Livery Insurance (Dec Page)', reqDate: true },
+      { id: 'photo', name: 'Livery Plate Photo', reqDate: false },
+      { id: 'port', name: 'Massport Permit', reqDate: true },
+      { id: 'w9', name: 'W-9 Form', reqDate: false },
+      { id: 'contract', name: 'Independent Contractor Agreement', reqDate: false }
+    ];
+
+    let currentUser = null;
+    // Driver compliance data structure
+    let driverData = {
+      profile: {},
+      documents: {} 
+    };
+
+    // Global settings for payout calculation
+    const currentDriverRatePercentage = 75; // 75% for driver, from previous iteration
+
+    // -------------------------
+    // INITIALIZATION
+    // -------------------------
+    function init() {
+      initFirebase();
+      const storedAuth = localStorage.getItem('drv_auth');
+      if (storedAuth) {
+        currentUser = JSON.parse(storedAuth);
+        loadDriverData();
+        showApp();
+      } else {
+        document.getElementById('login-screen').style.display = 'flex';
+        document.getElementById('app-screen').style.display = 'none';
+      }
+    }
+
+    function handleLogin() {
+      const email = document.getElementById('login-email').value;
+      if (!email || !email.includes('@')) { showToast('Please enter a valid email'); return; }
+      
+      // Use email as unique identifier
+      currentUser = { email: email, uid: email };
+      localStorage.setItem('drv_auth', JSON.stringify(currentUser));
+      loadDriverData();
+      showApp();
+      showToast('Logged in successfully');
+    }
+
+    function handleLogout() {
+      localStorage.removeItem('drv_auth');
+      window.location.reload();
+    }
+
+    function showApp() {
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('app-screen').style.display = 'block';
+      
+      const isMobile = window.innerWidth <= 768;
+      document.querySelectorAll('.nav-btn .material-symbols-outlined').forEach(icon => {
+        icon.style.display = isMobile ? 'block' : 'none';
+      });
+
+      // Hydrate forms
+      document.getElementById('prof-email').value = currentUser.email;
+      if (driverData.profile.name) document.getElementById('prof-name').value = driverData.profile.name;
+      if (driverData.profile.phone) document.getElementById('prof-phone').value = driverData.profile.phone;
+      if (driverData.profile.address) document.getElementById('prof-address').value = driverData.profile.address;
+      if (driverData.profile.vMake) document.getElementById('prof-vmake').value = driverData.profile.vMake;
+      if (driverData.profile.vModel) document.getElementById('prof-vmodel').value = driverData.profile.vModel;
+      if (driverData.profile.vPlate) document.getElementById('prof-vplate').value = driverData.profile.vPlate;
+      
+      document.getElementById('dash-greeting').textContent = 'Welcome, ' + (driverData.profile.name ? driverData.profile.name.split(' ')[0] : 'Driver');
+
+      evaluateCompliance();
+      renderDocuments();
+      renderComplianceTable();
+      fetchMarketplace(); // Kick-off the load
+    }
+
+    // -------------------------
+    // DATA LAYER (Simulating specific items)
+    // -------------------------
+    function loadDriverData() {
+      let allDrivers = JSON.parse(localStorage.getItem('rv_all_drivers') || '{}');
+      if (allDrivers[currentUser.uid]) {
+        driverData = allDrivers[currentUser.uid];
+      } else {
+        DOC_REQUIREMENTS.forEach(doc => {
+          driverData.documents[doc.id] = { status: 'Missing', expDate: null, lastUpdated: null, fileName: null };
+        });
+        saveDriverData();
+      }
+    }
+
+    window.addEventListener('focus', () => {
+      if(currentUser && document.getElementById('app-screen').style.display === 'block') {
+         loadDriverData();
+         evaluateCompliance();
+         renderDocuments();
+         renderComplianceTable();
+         fetchMarketplace(); // Silently refresh rides
+      }
+    });
+
+    function saveDriverData() {
+      let allDrivers = JSON.parse(localStorage.getItem('rv_all_drivers') || '{}');
+      allDrivers[currentUser.uid] = { email: currentUser.email, ...driverData };
+      localStorage.setItem('rv_all_drivers', JSON.stringify(allDrivers));
+    }
+
+    function escapeHtml(unsafe) {
+      if(!unsafe) return '';
+      return (unsafe||'').toString()
+        .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    }
+
+    // -------------------------
+    // NAVIGATION
+    // -------------------------
+    function switchTab(tabId) {
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      
+      document.getElementById('sec-' + tabId).classList.add('active');
+      const btn = Array.from(document.querySelectorAll('.nav-btn')).find(b => b.textContent.toLowerCase().includes(tabId));
+      if(btn) btn.classList.add('active');
+      
+      if(tabId === 'dashboard' || tabId === 'compliance') evaluateCompliance();
+      if(tabId === 'documents') renderDocuments();
+      if(tabId === 'market' || tabId === 'dashboard') fetchMarketplace();
+    }
+
+    // -------------------------
+    // RIDES & MARKETPLACE (Firebase)
+    // -------------------------
+    async function fetchMarketplace() {
+      if (!db) {
+        document.getElementById('market-list').innerHTML = '<div style="padding:2rem;text-align:center;color:#888">Server offline</div>';
+        return;
+      }
+      try {
+        var snap = await db.collection('bookings')
+          .orderBy('updatedAt', 'desc')
+          .limit(100)
+          .get();
+        
+        bksCache = [];
+        snap.forEach(function (doc) { bksCache.push(doc.data()); });
+        renderMarketView();
+        renderUpcomingDashboard();
+      } catch (e) {
+        console.warn('Fetch market err: ', e);
+      }
+    }
+
+    function renderMarketView() {
+      var el = document.getElementById('market-list');
+      
+      // Filter for rides that need a driver and are explicitly confirmed/upcoming
+      var available = bksCache.filter(function (b) { 
+        return (!b.driverId || b.driverId.trim() === '') && b.status !== 'Cancelled' && b.status !== 'Completed'; 
+      });
+
+      let isSuspended = document.getElementById('dash-status-badge').textContent === 'Suspended';
+
+      if (!available.length) { 
+        el.innerHTML = '<div style="padding:3rem;text-align:center;background:white;border-radius:8px;border:1px solid var(--border)"><span class="material-symbols-outlined" style="font-size:32px;color:#ccc;margin-bottom:10px">directions_car</span><br>No available rides right now.<br><span style="font-size:0.8rem;color:#888">Check back later or wait for a text alert.</span></div>'; 
+        return; 
+      }
+
+      var rate = currentDriverRatePercentage / 100;
+      var h = '';
+
+      available.forEach(function (b) {
+        var pr = parseFloat(b.price) || 0;
+        var payout = (pr * rate).toFixed(2);
+        
+        var dateMeta = b.date + (b.time ? ' at ' + b.time : '');
+
+        h += '<div class="card market-card">' +
+          '<div style="flex:1;min-width:250px">' +
+            '<div style="font-weight:700;font-size:1.05rem;margin-bottom:8px">' + escapeHtml(b.name) + ' <span class="badge" style="background:#e0f2fe;color:#0369a1;margin-left:6px">' + escapeHtml(b.service) + '</span></div>' +
+            '<div class="m-detail"><span class="material-symbols-outlined" style="font-size:16px">calendar_month</span> ' + escapeHtml(dateMeta) + '</div>' +
+            '<div class="m-detail"><span class="material-symbols-outlined" style="font-size:16px">my_location</span> ' + escapeHtml(b.pickup) + '</div>' +
+            '<div class="m-detail"><span class="material-symbols-outlined" style="font-size:16px">flag</span> ' + escapeHtml(b.destination) + '</div>' +
+          '</div>' +
+          '<div style="text-align:right;min-width:120px">' +
+            '<div class="m-price-lbl">Est. Payout</div>' +
+            '<div class="m-price">$' + payout + '</div>' +
+            '<button onclick="claimRide(\'' + b.id + '\')" class="btn success" style="width:100%" ' + (isSuspended?'disabled title="Account suspended"':'') + '>' + (isSuspended?'Suspended':'Claim Ride') + '</button>' +
+          '</div>' +
+        '</div>';
+      });
+      el.innerHTML = h;
+    }
+
+    function renderUpcomingDashboard() {
+      // Find rides claimed by ME
+      var myRides = bksCache.filter(function (b) { 
+        return b.driverId === currentUser.uid && b.status !== 'Cancelled' && b.status !== 'Completed'; 
+      });
+
+      const tbody = document.getElementById('dash-rides-upcoming');
+      if (!myRides.length) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:1.5rem;color:#888">You have no upcoming rides claimed. <a href="#" onclick="switchTab(\'market\')" style="color:var(--primary)">Find rides</a></td></tr>';
+        return;
+      }
+
+      let h = '';
+      myRides.forEach(b => {
+        var dateMeta = b.date + (b.time ? ' ' + b.time : '');
+        h += `<tr>
+          <td>${escapeHtml(dateMeta)}</td>
+          <td>${escapeHtml(b.pickup)}</td>
+          <td>${escapeHtml(b.destination)}</td>
+          <td><span class="badge ${b.status==='Paid'?'approved':'pending'}">${escapeHtml(b.status)}</span></td>
+        </tr>`;
+      });
+      tbody.innerHTML = h;
+    }
+
+    async function claimRide(rideId) {
+      if (!db || !currentUser) return;
+      
+      // Perform final check before writing
+      let isSuspended = document.getElementById('dash-status-badge').textContent === 'Suspended';
+      if(isSuspended) { showToast('Cannot claim — Account Suspended'); return; }
+
+      if(!confirm('Confirm claiming this ride?')) return;
+      
+      try {
+        await db.collection('bookings').doc(rideId).update({
+          driverId: currentUser.uid,
+          driverStatus: 'Claimed',
+          updatedAt: new Date().toISOString()
+        });
+        showToast('Ride easily claimed!');
+        fetchMarketplace(); // Refresh local UI immediately
+      } catch (e) {
+        showToast('Error claiming ride. Someone else may have grabbed it!');
+        fetchMarketplace(); // resync
+      }
+    }
+
+    // -------------------------
+    // COMPLIANCE LOGIC
+    // -------------------------
+    function evaluateCompliance() {
+      let status = 'Approved'; // Assume best case
+      let expiringList = [];
+      let today = new Date();
+      let alertExpiringSoon = false;
+      let accountSuspended = false;
+
+      for (const req of DOC_REQUIREMENTS) {
+        let docData = driverData.documents[req.id];
+        if(!docData) { docData = { status: 'Missing' }; driverData.documents[req.id] = docData; }
+
+        if (docData.status === 'Missing' || docData.status === 'Expired' || docData.status === 'Rejected') {
+          status = 'Suspended';
+          accountSuspended = true;
+        } 
+        else if (docData.status === 'Pending Review' && status !== 'Suspended') {
+          status = 'Pending';
+        }
+
+        if (docData.expDate) {
+          let exp = new Date(docData.expDate);
+          let daysDiff = (exp - today) / (1000 * 60 * 60 * 24);
+          if (daysDiff < 0) {
+            if (docData.status !== 'Expired') {
+              docData.status = 'Expired';
+              status = 'Suspended';
+              accountSuspended = true;
+            }
+          } else if (daysDiff <= 45) {
+            alertExpiringSoon = true;
+            expiringList.push({ name: req.name, days: Math.floor(daysDiff), date: docData.expDate });
+          } else {
+            expiringList.push({ name: req.name, days: Math.floor(daysDiff), date: docData.expDate });
+          }
+        }
+      }
+
+      driverData.status = status;
+      saveDriverData();
+
+      renderBanners(accountSuspended, alertExpiringSoon);
+
+      let themeClass = status === 'Approved' ? 'approved' : (status === 'Pending' ? 'pending' : 'suspended');
+      const updateCard = (cdId, txId, bdId) => {
+        let card = document.getElementById(cdId);
+        card.className = `card status-card ${themeClass}`;
+        document.getElementById(txId).textContent = accountSuspended ? 'Suspended (Action Required)' : status;
+        let bd = document.getElementById(bdId);
+        bd.className = `badge ${status.toLowerCase() == 'pending review' ? 'pending' : status.toLowerCase()}`;
+        bd.textContent = status;
+      };
+
+      updateCard('dash-status-card', 'dash-status-text', 'dash-status-badge');
+      updateCard('comp-status-card', 'comp-status-text', 'comp-status-badge');
+
+      expiringList.sort((a,b) => a.days - b.days);
+      const nextExpEl = document.getElementById('dash-next-exp');
+      if (expiringList.length > 0) {
+        nextExpEl.innerHTML = `${expiringList[0].name} <br> <span style="font-size:0.8rem;color:var(--text-light);font-weight:400">Exp: ${new Date(expiringList[0].date).toLocaleDateString()} (${expiringList[0].days} days)</span>`;
+      } else {
+        nextExpEl.textContent = 'All Clear';
+      }
+    }
+
+    function renderBanners(suspended, expiringSoon) {
+      const c = document.getElementById('banner-container');
+      c.innerHTML = '';
+      if (suspended) {
+        c.innerHTML += `<div class="banner danger"><span class="material-symbols-outlined">gpp_bad</span> Your account is suspended until you update missing/expired documents.</div>`;
+      }
+      if (expiringSoon) {
+        c.innerHTML += `<div class="banner warning"><span class="material-symbols-outlined">warning</span> You have documents expiring in less than 45 days. Review your Compliance page.</div>`;
+      }
+    }
+
+    // -------------------------
+    // DOCUMENTS TAB LOGIC
+    // -------------------------
+    function renderDocuments() {
+      const c = document.getElementById('doc-list-container');
+      let html = '';
+
+      DOC_REQUIREMENTS.forEach(req => {
+        let d = driverData.documents[req.id];
+        let statusObj = getStatusProperties(d.status);
+        
+        let metaTxt = '';
+        if (d.lastUpdated) metaTxt += `Updated: ${new Date(d.lastUpdated).toLocaleDateString()}`;
+        if (d.expDate) metaTxt += ` · Exp: ${new Date(d.expDate).toLocaleDateString()}`;
+        if (d.fileName) metaTxt += ` · File: ${escapeHtml(d.fileName)}`;
+        if (!metaTxt) metaTxt = 'Awaiting internal upload';
+
+        html += `
+          <div class="doc-row">
+            <div class="doc-info">
+              <div class="doc-title">${req.name}</div>
+              <div class="doc-meta">${metaTxt}</div>
+            </div>
+            <div class="doc-actions">
+              <span class="badge ${statusObj.css}">${d.status}</span>
+              <button class="btn outline" style="padding:0.4rem 0.8rem;font-size:0.75rem" onclick="openUploadModal('${req.id}')">Upload</button>
+            </div>
+          </div>
+        `;
+      });
+      c.innerHTML = html;
+      renderComplianceTable(); 
+    }
+
+    function getStatusProperties(s) {
+      const cls = {
+        'Approved': 'approved',
+        'Pending Review': 'pending',
+        'Expired': 'expired',
+        'Missing': 'missing',
+        'Rejected': 'missing'
+      };
+      return { css: cls[s] || 'missing' };
+    }
+
+    // Modal Operations
+    function openUploadModal(docId) {
+      const req = DOC_REQUIREMENTS.find(r => r.id === docId);
+      document.getElementById('um-title').textContent = 'Upload ' + req.name;
+      document.getElementById('um-doc-id').value = docId;
+      document.getElementById('um-file').value = '';
+      
+      const expGroup = document.getElementById('um-exp-group');
+      if (req.reqDate) {
+        expGroup.style.display = 'block';
+        document.getElementById('um-date').value = driverData.documents[docId].expDate || '';
+      } else {
+        expGroup.style.display = 'none';
+        document.getElementById('um-date').value = '';
+      }
+      
+      document.getElementById('upload-modal').classList.add('active');
+    }
+
+    function closeModal() {
+      document.getElementById('upload-modal').classList.remove('active');
+    }
+
+    function submitUpload() {
+      const docId = document.getElementById('um-doc-id').value;
+      const fileInput = document.getElementById('um-file');
+      const dateVal = document.getElementById('um-date').value;
+      
+      if (!fileInput.files.length) { showToast('Please select a file to upload'); return; }
+      const req = DOC_REQUIREMENTS.find(r => r.id === docId);
+      if (req.reqDate && !dateVal) { showToast('Expiration date is required for this document.'); return; }
+
+      driverData.documents[docId] = {
+        status: 'Pending Review',
+        fileName: fileInput.files[0].name,
+        expDate: dateVal || null,
+        lastUpdated: new Date().toISOString()
+      };
+
+      saveDriverData();
+      showToast('Document uploaded successfully');
+      closeModal();
+      evaluateCompliance(); 
+      renderDocuments();
+    }
+
+    // -------------------------
+    // PROFILE LOGIC
+    // -------------------------
+    function saveProfile() {
+      driverData.profile = {
+        name: document.getElementById('prof-name').value.trim(),
+        phone: document.getElementById('prof-phone').value.trim(),
+        address: document.getElementById('prof-address').value.trim(),
+        vMake: document.getElementById('prof-vmake').value.trim(),
+        vModel: document.getElementById('prof-vmodel').value.trim(),
+        vPlate: document.getElementById('prof-vplate').value.trim()
+      };
+      saveDriverData();
+      document.getElementById('dash-greeting').textContent = 'Welcome, ' + (driverData.profile.name.split(' ')[0] || 'Driver');
+      showToast('Profile Saved Successfully');
+    }
+
+    // -------------------------
+    // COMPLIANCE REPORTS
+    // -------------------------
+    function renderComplianceTable() {
+      const tbody = document.getElementById('comp-table-body');
+      let html = '';
+      let today = new Date();
+
+      DOC_REQUIREMENTS.forEach(req => {
+        let d = driverData.documents[req.id];
+        let statusObj = getStatusProperties(d.status);
+        
+        let expMeta = '—';
+        if (d.expDate) {
+          let exp = new Date(d.expDate);
+          let days = Math.ceil((exp - today)/(1000*60*60*24));
+          if (days <= 0) expMeta = `<span style="color:var(--danger);font-weight:600">Expired ${new Date(d.expDate).toLocaleDateString()}</span>`;
+          else if (days <= 45) expMeta = `<span style="color:var(--warning);font-weight:600">Expires in ${days} days</span>`;
+          else expMeta = new Date(d.expDate).toLocaleDateString();
+        }
+
+        html += `
+          <tr>
+            <td style="font-weight:500">${req.name}</td>
+            <td><span class="badge ${statusObj.css}">${d.status}</span></td>
+            <td>${expMeta}</td>
+          </tr>
+        `;
+      });
+      tbody.innerHTML = html;
+    }
+
+    // UTILS
+    function showToast(msg) {
+      let t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 3000);
+    }
+
+    // Boot
+    window.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>

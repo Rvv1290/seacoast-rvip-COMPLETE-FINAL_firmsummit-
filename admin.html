@@ -570,10 +570,8 @@
         <button class="tab" onclick="goTab('clients',this)" style="color:#7c3aed;font-weight:700">Clients ●</button>
         <button class="tab" onclick="goTab('quotes',this)" style="color:#16a34a;font-weight:700">Quotes ●</button>
         <button class="tab" onclick="goTab('messages',this)" style="color:#1d4ed8;font-weight:700">Messages ✉</button>
-        <button class="tab" onclick="goTab('driver',this)" style="color:#16a34a;font-weight:700">Driver ⊕</button>
-        <button class="tab" onclick="goTab('market',this)" style="color:#1d4ed8;font-weight:700">Marketplace 🛒</button>
-        <button class="tab" onclick="goTab('manage-drivers',this)" style="color:#775a19;font-weight:700">Drivers
-          ⚙</button>
+        <button class="tab" onclick="goTab('compliance',this)" style="color:#f59e0b;font-weight:700">Onboarding 📋</button>
+        <button class="tab" onclick="goTab('manage-drivers',this)" style="color:#775a19;font-weight:700">Active Drivers ⚙</button>
       </div>
 
       <div id="sec-all">
@@ -649,6 +647,23 @@
           <button onclick="broadcastToDrivers()" class="btn bg">📢 Broadcast</button>
         </div>
         <div id="market-list"></div>
+      </div>
+
+      <!-- COMPLIANCE REVIEW -->
+      <div id="sec-compliance" style="display:none">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem">
+          <div style="font-family:'Times New Roman',serif;font-size:1.1rem;font-weight:700">Driver Onboarding & Compliance</div>
+          <div style="font-size:0.8rem;color:#666">Manage Document Approvals</div>
+        </div>
+        
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-bottom:1.5rem">
+          <div class="sbox" style="border-bottom:3px solid #10b981;text-align:center;padding:1rem"><div id="comp-cnt-ok" style="font-size:1.5rem;font-weight:700;color:#10b981">0</div><div style="font-size:.7rem">Approved</div></div>
+          <div class="sbox" style="border-bottom:3px solid #f59e0b;text-align:center;padding:1rem"><div id="comp-cnt-pen" style="font-size:1.5rem;font-weight:700;color:#f59e0b">0</div><div style="font-size:.7rem">Pending</div></div>
+          <div class="sbox" style="border-bottom:3px solid #ef4444;text-align:center;padding:1rem"><div id="comp-cnt-sus" style="font-size:1.5rem;font-weight:700;color:#ef4444">0</div><div style="font-size:.7rem">Suspended</div></div>
+          <div class="sbox" style="border-bottom:3px solid #3b82f6;text-align:center;padding:1rem"><div id="comp-cnt-tot" style="font-size:1.5rem;font-weight:700;color:#3b82f6">0</div><div style="font-size:.7rem">Total Drivers</div></div>
+        </div>
+
+        <div id="comp-list"></div>
       </div>
 
       <!-- MANAGE DRIVERS -->
@@ -1181,15 +1196,15 @@
       curTab = tab;
       document.querySelectorAll('.tab').forEach(function (b) { b.classList.remove('on'); });
       if (btn) btn.classList.add('on');
-      ['sec-all', 'sec-clients', 'sec-quotes', 'sec-messages', 'sec-manage-drivers', 'sec-market', 'sec-driver'].forEach(function (id) {
+      ['sec-all', 'sec-clients', 'sec-quotes', 'sec-messages', 'sec-compliance', 'sec-manage-drivers', 'sec-driver'].forEach(function (id) {
         var el = document.getElementById(id);
         if (el) el.style.display = 'none';
       });
       if (tab === 'clients') { document.getElementById('sec-clients').style.display = 'block'; loadClients(); }
       else if (tab === 'quotes') { document.getElementById('sec-quotes').style.display = 'block'; loadQuotes(); }
       else if (tab === 'messages') { document.getElementById('sec-messages').style.display = 'block'; buildMsgs(); loadBcCount(); }
+      else if (tab === 'compliance') { document.getElementById('sec-compliance').style.display = 'block'; renderCompliance(); }
       else if (tab === 'manage-drivers') { document.getElementById('sec-manage-drivers').style.display = 'block'; renderDrivers(); }
-      else if (tab === 'market') { document.getElementById('sec-market').style.display = 'block'; renderMarket(); }
       else if (tab === 'driver') { document.getElementById('sec-driver').style.display = 'block'; loadDriverRides(); }
       else { document.getElementById('sec-all').style.display = 'block'; renderBks(); }
     }
@@ -2089,42 +2104,103 @@
       renderDrivers(); toast('Deleted');
     }
 
-    function renderMarket() {
-      var bks = getBks().filter(function (b) { return (!b.driverId || b.driverId === '') && b.status !== 'Cancelled' && b.status !== 'Completed'; });
-      var el = document.getElementById('market-list');
-      if (!bks.length) { el.innerHTML = '<div class="empty">No available rides in marketplace</div>'; return; }
+    // ─────────────────────────────────────────────
+    //  COMPLIANCE REVIEW LOGIC (Linked to driver-portal.html)
+    // ─────────────────────────────────────────────
+    function renderCompliance() {
+      var allDrv = JSON.parse(localStorage.getItem('rv_all_drivers') || '{}');
+      var el = document.getElementById('comp-list');
+      var keys = Object.keys(allDrv);
+      
+      if (!keys.length) { 
+        el.innerHTML = '<div class="empty">No active driver onboarding profiles found.</div>'; 
+        return; 
+      }
 
-      var rate = getDrRate() / 100;
+      var cOk = 0, cPen = 0, cSus = 0;
+      var h = '';
 
-      el.innerHTML = bks.map(function (b) {
-        var pr = parseFloat(b.price) || 0;
-        var payout = (pr * rate).toFixed(2);
+      keys.forEach(function(k) {
+        var d = allDrv[k];
+        var st = d.status || 'Pending';
+        if(st === 'Approved') cOk++;
+        else if (st === 'Pending') cPen++;
+        else cSus++;
 
-        return '<div class="card market-card">' +
-          '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px">' +
-          '<div style="flex:1;min-width:200px">' +
-          '<div class="cname">' + e(b.name) + '</div>' +
-          '<div class="crow"><span class="material-symbols-outlined" style="font-size:14px">calendar_today</span> ' + e(b.date) + ' at ' + fT(b.time) + '</div>' +
-          '<div class="crow"><span class="material-symbols-outlined" style="font-size:14px">near_me</span> Pickup: ' + e(b.pickup) + '</div>' +
-          '<div class="crow"><span class="material-symbols-outlined" style="font-size:14px">flag</span> Drop-off: ' + e(b.destination) + '</div>' +
+        var bdg = st === 'Approved' ? 'bgr' : (st === 'Pending' ? 'byw' : 'brd');
+        var nm = (d.profile && d.profile.name) ? d.profile.name : (d.email || d.uid || 'Unknown Driver');
+
+        h += '<div class="card" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">' +
+          '<div>' +
+            '<div style="font-weight:700;margin-bottom:4px">' + e(nm) + ' <span class="bdg ' + bdg + '" style="margin-left:8px">' + st + '</span></div>' +
+            '<div style="font-size:0.8rem;color:#666">' + e(d.email) + (d.profile && d.profile.phone ? ' · ' + e(d.profile.phone) : '') + '</div>' +
           '</div>' +
-          '<div style="text-align:right">' +
-          '<div style="font-size:.75rem;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px">Your Payout</div>' +
-          '<div style="font-family:\'Times New Roman\',serif;font-size:1.8rem;font-weight:700;color:#16a34a;margin-bottom:10px">$' + payout + '</div>' +
-          '<button onclick="claimRide(\'' + b.id + '\')" class="btn bgn" style="width:100%;justify-content:center">Claim Ride</button>' +
-          '</div>' +
-          '</div>' +
-          '</div>';
-      }).join('');
+          '<button onclick="openCompRev(\'' + k + '\')" class="btn bo" style="font-size:.7rem;padding:.4rem .8rem">Review Docs</button>' +
+        '</div>';
+      });
+
+      document.getElementById('comp-cnt-ok').textContent = cOk;
+      document.getElementById('comp-cnt-pen').textContent = cPen;
+      document.getElementById('comp-cnt-sus').textContent = cSus;
+      document.getElementById('comp-cnt-tot').textContent = keys.length;
+
+      el.innerHTML = h;
     }
 
-    function claimRide(id) {
-      if (!curUser) return;
-      var bks = getBks(), b = bks.find(function (x) { return x.id === id; });
-      if (b) {
-        b.driverId = (curUser.role === 'admin') ? 'admin' : curUser.id;
-        setBks(bks); fbSync(b); renderMarket(); toast('Ride claimed!');
-      }
+    function openCompRev(uid) {
+      curCompUid = uid;
+      var allDrv = JSON.parse(localStorage.getItem('rv_all_drivers') || '{}');
+      var d = allDrv[uid];
+      if(!d) return;
+
+      var nm = (d.profile && d.profile.name) ? d.profile.name : (d.email || uid);
+      document.getElementById('cr-title').textContent = 'Review: ' + nm;
+
+      var tbody = document.getElementById('cr-docs-body');
+      var h = '';
+      
+      var docs = d.documents || {};
+      ['dl', 'reg', 'ins', 'photo', 'port', 'w9', 'contract'].forEach(function(docId) {
+        var docObj = docs[docId] || { status: 'Missing' };
+        var st = docObj.status;
+        var bdg = 'brd';
+        if(st==='Approved') bdg='bgr'; else if(st==='Pending Review') bdg='byw';
+
+        var typeMap = { dl:'Driver License', reg:'Vehicle Reg', ins:'Livery Insurance', photo:'Plate Photo', port:'Massport', w9:'W-9 Form', contract:'Agreement'};
+        
+        var actBtns = '';
+        if (docObj.fileName) {
+          actBtns = '<button onclick="compUpdate(\''+docId+'\',\'Approved\')" class="btn bgr" style="padding:.2rem .4rem;font-size:10px">Approve</button>' +
+                    '<button onclick="compUpdate(\''+docId+'\',\'Rejected\')" class="btn brd" style="padding:.2rem .4rem;font-size:10px;margin-left:4px">Reject</button>';
+        } else {
+          actBtns = '<span style="font-size:.7rem;color:#aaa">Awaiting Upload</span>';
+        }
+
+        h += '<tr>' +
+          '<td style="font-weight:600;font-size:.8rem">' + typeMap[docId] + '</td>' +
+          '<td>' + (docObj.fileName ? '<a href="#" style="color:#1d4ed8;font-size:.8rem">'+e(docObj.fileName)+'</a>' : '—') + '</td>' +
+          '<td style="font-size:.8rem">' + (docObj.expDate || '—') + '</td>' +
+          '<td><span class="bdg '+bdg+'">' + st + '</span></td>' +
+          '<td>' + actBtns + '</td>' +
+        '</tr>';
+      });
+
+      tbody.innerHTML = h;
+      openM('m-comp-review');
+    }
+
+    function compUpdate(docId, newSt) {
+      if(!curCompUid) return;
+      var allDrv = JSON.parse(localStorage.getItem('rv_all_drivers') || '{}');
+      if(!allDrv[curCompUid]) return;
+
+      allDrv[curCompUid].documents[docId].status = newSt;
+      allDrv[curCompUid].documents[docId].lastUpdated = new Date().toISOString();
+      
+      localStorage.setItem('rv_all_drivers', JSON.stringify(allDrv));
+      toast('Document marked ' + newSt);
+      openCompRev(curCompUid); // Re-render modal
+      renderCompliance(); // Re-render table in background
     }
 
     function broadcastToDrivers() {
@@ -2253,6 +2329,33 @@
     </div>
   </div>
 
-</body>
+  <!-- MODAL: COMPLIANCE REVIEW -->
+  <div class="ov" id="m-comp-review">
+    <div class="modal" style="max-width:700px">
+      <div class="mhd">
+        <h3 id="cr-title">Review Documents</h3><button class="mx" onclick="closeM('m-comp-review')">✕</button>
+      </div>
+      <div class="mbdy" style="padding:0">
+        <table class="data-table" style="width:100%;text-align:left;border-collapse:collapse;margin:0">
+          <thead>
+            <tr style="background:#f9fafb;border-bottom:1px solid #ddd">
+              <th style="padding:10px;font-size:.7rem;color:#555">REQUIREMENT</th>
+              <th style="padding:10px;font-size:.7rem;color:#555">FILE</th>
+              <th style="padding:10px;font-size:.7rem;color:#555">EXPIRATION</th>
+              <th style="padding:10px;font-size:.7rem;color:#555">STATUS</th>
+              <th style="padding:10px;font-size:.7rem;color:#555">ACTION</th>
+            </tr>
+          </thead>
+          <tbody id="cr-docs-body">
+            <!-- Driven by JS -->
+          </tbody>
+        </table>
+      </div>
+      <div class="mft" style="display:flex;justify-content:flex-end;padding:15px;border-top:1px solid #ddd;">
+        <button onclick="closeM('m-comp-review')" class="btn bg">Done Reviewing</button>
+      </div>
+    </div>
+  </div>
 
+</body>
 </html>
