@@ -1141,6 +1141,7 @@
           '<div style="font-family:\'Times New Roman\',serif;font-size:1.6rem;font-weight:700;color:#775a19">$' + (b.price || '—') + '</div>' +
           '<div style="display:flex;gap:.375rem;flex-wrap:wrap;justify-content:flex-end">' +
           payDriverBtnHtml +
+          (b.status === 'Pending' ? '<button onclick="quickConfirm(\'' + b.id + '\')" class="btn bg" style="font-size:.62rem;background:#16a34a;color:#fff;border-color:#15803d"><span class="material-symbols-outlined" style="font-size:13px">check_circle</span>Confirm</button>' : '') +
           '<button onclick="addToCalendar(\'' + b.id + '\')" class="btn bo" title="Add to Calendar"><span class="material-symbols-outlined" style="font-size:13px">calendar_add_on</span></button>' +
           '<button onclick="openPay(\'' + b.id + '\')" class="btn bk"><span class="material-symbols-outlined" style="font-size:13px">send</span>Send</button>' +
           '<button onclick="openEdit(\'' + b.id + '\')" class="btn bo"><span class="material-symbols-outlined" style="font-size:13px">edit</span></button>' +
@@ -1377,7 +1378,7 @@
       var msg = 'Hi ' + ((b.name || '').split(' ')[0] || 'there') + '! Your Seacoast RVIP ride is confirmed for ' +
         (b.date || '—') + ' at ' + fT(b.time) +
         '.\n\nFare: $' + b.price + '\nPay here: ' + link +
-        '\n\nCode: ' + (b.code || '—') + '\n— Ramon (987) 416-3283';
+        '\n\nCode: ' + (b.code || '—') + '\n— Ramon (978) 255-3140';
 
       document.getElementById('pay-info').innerHTML =
         '<strong>' + e(b.name) + '</strong><br>' +
@@ -1414,6 +1415,19 @@
       var bks = getBks(), b = bks.find(function (x) { return x.id === curPayBk.id; });
       if (b) { b.status = 'Paid'; setBks(bks); fbSync(b); }
       closeM('m-pay'); renderBks(); toast('✅ Marked as Paid!');
+    }
+
+    function quickConfirm(id) {
+      if (!confirm('Quick confirm this booking?')) return;
+      var bks = getBks();
+      var b = bks.find(function (x) { return x.id === id; });
+      if (b) {
+        b.status = 'Confirmed';
+        setBks(bks);
+        if (typeof fbSync === 'function') fbSync(b);
+        renderBks();
+        toast('✅ Booking Confirmed!');
+      }
     }
 
     // ─────────────────────────────────────────────
@@ -1589,7 +1603,7 @@
     }
     function replyQ(docId) {
       var q = QMAP[docId]; if (!q) return;
-      var msg = 'Hi ' + (q.name || 'there').split(' ')[0] + '! Thank you for your quote request for ' + (q.service || 'your trip') + '.\n\nMy quote: $[ADD PRICE HERE]\n\nReady to confirm? Book here:\n' + SITE + '/schedule.html\n\n— Ramon (987) 416-3283';
+      var msg = 'Hi ' + (q.name || 'there').split(' ')[0] + '! Thank you for your quote request for ' + (q.service || 'your trip') + '.\n\nMy quote: $[ADD PRICE HERE]\n\nReady to confirm? Book here:\n' + SITE + '/schedule.html\n\n— Ramon (978) 255-3140';
       document.getElementById('msg-title').textContent = 'Reply to ' + (q.name || 'Client');
       document.getElementById('msg-txt').value = msg;
       document.getElementById('msg-phone').value = q.phone || '';
@@ -1608,32 +1622,32 @@
     var MSGS = [
       {
         cat: 'After the Ride', color: '#16a34a', items: [
-          { t: 'Thank You', d: 'Right after the ride', m: 'Hi [Name]! Thank you for choosing Seacoast RVIP today!\n\nWhenever you need a ride, just text me.\n\n— Ramon\n(987) 416-3283' },
-          { t: 'Thank You + Google Review', d: 'Best for building reviews', m: 'Hi [Name]! Thank you for riding with Seacoast RVIP!\n\nA quick Google review means the world:\n\n' + GREVIEW + '\n\nThank you! — Ramon (987) 416-3283' },
-          { t: 'Safe Flight', d: 'After airport drop-off', m: 'Hi [Name]! Hope you made it through security! ✈️\n\nHave a safe trip. I\'ll be ready when you return.\n\n— Ramon (987) 416-3283' }
+          { t: 'Thank You', d: 'Right after the ride', m: 'Hi [Name]! Thank you for choosing Seacoast RVIP today!\n\nWhenever you need a ride, just text me.\n\n— Ramon\n(978) 255-3140' },
+          { t: 'Thank You + Google Review', d: 'Best for building reviews', m: 'Hi [Name]! Thank you for riding with Seacoast RVIP!\n\nA quick Google review means the world:\n\n' + GREVIEW + '\n\nThank you! — Ramon (978) 255-3140' },
+          { t: 'Safe Flight', d: 'After airport drop-off', m: 'Hi [Name]! Hope you made it through security! ✈️\n\nHave a safe trip. I\'ll be ready when you return.\n\n— Ramon (978) 255-3140' }
         ]
       },
       {
         cat: 'Ride Reminders', color: '#1d4ed8', items: [
-          { t: 'Day Before Reminder', d: 'Night before', m: 'Hi [Name]! Reminder — your Seacoast RVIP ride is tomorrow [Date] at [Time].\n\nI\'ll be at [Pickup] 5 minutes early in the black SUV.\n\n— Ramon (987) 416-3283' },
-          { t: 'Morning of Ride', d: '1–2 hrs before pickup', m: 'Good morning [Name]! Your ride is today at [Time].\n\nI\'ll be at [Pickup] a few minutes early!\n\n— Ramon (987) 416-3283' },
+          { t: 'Day Before Reminder', d: 'Night before', m: 'Hi [Name]! Reminder — your Seacoast RVIP ride is tomorrow [Date] at [Time].\n\nI\'ll be at [Pickup] 5 minutes early in the black SUV.\n\n— Ramon (978) 255-3140' },
+          { t: 'Morning of Ride', d: '1–2 hrs before pickup', m: 'Good morning [Name]! Your ride is today at [Time].\n\nI\'ll be at [Pickup] a few minutes early!\n\n— Ramon (978) 255-3140' },
           { t: 'On My Way', d: 'When leaving to pick up', m: 'Hi [Name]! On my way — arriving at [Pickup] in about [X] minutes. 🚗\n\n— Ramon' },
           { t: 'I Have Arrived', d: 'Waiting outside', m: 'Hi [Name]! I\'m outside at [Pickup] — black SUV, ready when you are!\n\n— Ramon' }
         ]
       },
       {
         cat: 'Holidays & Events', color: '#775a19', items: [
-          { t: 'New Year\'s Eve', d: 'Dec 28–30', m: 'Hi [Name]! Happy almost New Year! 🥂\n\nNeed a safe ride to celebrate? Seacoast RVIP has you covered.\n\n— Ramon (987) 416-3283' },
-          { t: '4th of July', d: 'July 1–3', m: 'Hi [Name]! Happy 4th! 🇺🇸\n\nHeading to fireworks? I have a safe ride for you!\n\n— Ramon (987) 416-3283' },
-          { t: 'Casino Night', d: 'Casino weekends', m: 'Hi [Name]! Feeling lucky? 🎰\n\nSeacoast RVIP runs to Foxwoods & Mohegan Sun!\n\n— Ramon (987) 416-3283' },
-          { t: 'Christmas Holidays', d: 'Dec 15–20', m: 'Hi [Name]! Happy Holidays! 🎄\n\nNeed airport rides or party transportation? I\'m here.\n\n— Ramon (987) 416-3283' }
+          { t: 'New Year\'s Eve', d: 'Dec 28–30', m: 'Hi [Name]! Happy almost New Year! 🥂\n\nNeed a safe ride to celebrate? Seacoast RVIP has you covered.\n\n— Ramon (978) 255-3140' },
+          { t: '4th of July', d: 'July 1–3', m: 'Hi [Name]! Happy 4th! 🇺🇸\n\nHeading to fireworks? I have a safe ride for you!\n\n— Ramon (978) 255-3140' },
+          { t: 'Casino Night', d: 'Casino weekends', m: 'Hi [Name]! Feeling lucky? 🎰\n\nSeacoast RVIP runs to Foxwoods & Mohegan Sun!\n\n— Ramon (978) 255-3140' },
+          { t: 'Christmas Holidays', d: 'Dec 15–20', m: 'Hi [Name]! Happy Holidays! 🎄\n\nNeed airport rides or party transportation? I\'m here.\n\n— Ramon (978) 255-3140' }
         ]
       },
       {
         cat: 'Business Growth', color: '#7c3aed', items: [
-          { t: 'Referral Program', d: 'Ask for referrals', m: 'Hi [Name]! Know anyone who needs reliable transportation?\n\nRefer a friend who books and I\'ll give you $10 off your next trip!\n\n— Ramon (987) 416-3283' },
-          { t: 'Re-engagement', d: 'Clients quiet 60+ days', m: 'Hi [Name]! It\'s been a while — just checking in! 👋\n\nSeacoast RVIP is here whenever you need a ride.\n\n— Ramon (987) 416-3283' },
-          { t: 'Corporate Offer', d: 'For business clients', m: 'Hi [Name]! Does your company need professional transportation?\n\nSeacoast RVIP offers reliable corporate service with priority booking.\n\n— Ramon (987) 416-3283' }
+          { t: 'Referral Program', d: 'Ask for referrals', m: 'Hi [Name]! Know anyone who needs reliable transportation?\n\nRefer a friend who books and I\'ll give you $10 off your next trip!\n\n— Ramon (978) 255-3140' },
+          { t: 'Re-engagement', d: 'Clients quiet 60+ days', m: 'Hi [Name]! It\'s been a while — just checking in! 👋\n\nSeacoast RVIP is here whenever you need a ride.\n\n— Ramon (978) 255-3140' },
+          { t: 'Corporate Offer', d: 'For business clients', m: 'Hi [Name]! Does your company need professional transportation?\n\nSeacoast RVIP offers reliable corporate service with priority booking.\n\n— Ramon (978) 255-3140' }
         ]
       }
     ];
