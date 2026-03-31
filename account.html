@@ -248,9 +248,9 @@ body{font-family:'Inter',sans-serif;background:#f4f4f4;min-height:100vh}
                 <span class="material-symbols-outlined" style="color:#775a19;font-size:20px">manage_accounts</span>
                 <div><div style="font-size:.83rem;font-weight:600">Edit Profile</div><div style="font-size:.72rem;color:#888">Update name, email, address</div></div>
               </button>
-              <a href="tel:+19782553140" style="display:flex;align-items:center;gap:.75rem;padding:.75rem;border:1px solid #eee;text-decoration:none;transition:background .15s" onmouseover="this.style.background='#f7f7f7'" onmouseout="this.style.background='#fff'">
+              <a href="tel:+19874163283" style="display:flex;align-items:center;gap:.75rem;padding:.75rem;border:1px solid #eee;text-decoration:none;transition:background .15s" onmouseover="this.style.background='#f7f7f7'" onmouseout="this.style.background='#fff'">
                 <span class="material-symbols-outlined" style="color:#775a19;font-size:20px">call</span>
-                <div><div style="font-size:.83rem;font-weight:600;color:#000">Call Ramon</div><div style="font-size:.72rem;color:#888">(978) 255-3140</div></div>
+                <div><div style="font-size:.83rem;font-weight:600;color:#000">Call Ramon</div><div style="font-size:.72rem;color:#888">(987) 416-3283</div></div>
               </a>
             </div>
           </div>
@@ -319,7 +319,7 @@ body{font-family:'Inter',sans-serif;background:#f4f4f4;min-height:100vh}
               </div>
               <div style="display:flex;gap:.625rem;flex-wrap:wrap">
                 <a href="schedule.html" class="btn btn-g">Book Online →</a>
-                <a href="tel:+19782553140" style="display:inline-flex;align-items:center;gap:4px;color:rgba(255,255,255,.5);font-family:'Work Sans',sans-serif;font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;text-decoration:none">(978) 255-3140</a>
+                <a href="tel:+19874163283" style="display:inline-flex;align-items:center;gap:4px;color:rgba(255,255,255,.5);font-family:'Work Sans',sans-serif;font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;text-decoration:none">(987) 416-3283</a>
               </div>
             </div>
           </div>
@@ -704,7 +704,8 @@ function renderTrips() {
         '</div>' +
         '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:.5rem">' +
           (t.price?'<div style="font-family:\'Times New Roman\',serif;font-size:1.4rem;font-weight:700;color:#775a19">$'+t.price+'</div>':'') +
-          '<button onclick="openRebook('+JSON.stringify(t)+')" class="btn btn-o" style="font-size:.62rem;padding:.375rem .75rem"><span class="material-symbols-outlined" style="font-size:12px">replay</span>Rebook</button>' +
+          (t.code && (sc==='ts-u' || sc==='ts-c' || (t.status||'').toLowerCase()==='pending') ? '<a href="payment.html?code='+t.code+'" class="btn btn-k" style="font-size:.62rem;padding:.375rem .75rem"><span class="material-symbols-outlined" style="font-size:12px">payments</span>Pay Now</a>' : '') +
+          '<button onclick="openRebook(\''+t.id+'\')" class="btn btn-o" style="font-size:.62rem;padding:.375rem .75rem"><span class="material-symbols-outlined" style="font-size:12px">replay</span>Rebook</button>' +
         '</div>' +
       '</div>' +
     '</div>';
@@ -736,7 +737,9 @@ function filterTrips(filter, btn) {
 // ══════════════════════════════════
 // REBOOK
 // ══════════════════════════════════
-function openRebook(trip) {
+function openRebook(tripId) {
+  var trip = allTrips.find(function(t){ return t.id === tripId; });
+  if (!trip) return;
   rebookTrip = trip;
   var dateStr = trip.date ? new Date(trip.date+'T12:00:00').toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}) : '—';
   document.getElementById('rebook-info').innerHTML =
