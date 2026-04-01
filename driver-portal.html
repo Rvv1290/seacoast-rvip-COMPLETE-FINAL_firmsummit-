@@ -907,7 +907,7 @@
             </div>
             <div class="form-group">
               <label class="form-label">Classification / Plate Type *</label>
-              <select id="prof-type" class="form-input" required onchange="saveProfile()">
+              <select id="prof-type" class="form-input" required>
                 <option value="">Select Registration Protocol...</option>
                 <option value="Livery">Livery Plates ($1M+ Commercial)</option>
                 <option value="Standard">Standard Plates (Airport Drop-offs ONLY)</option>
@@ -1252,21 +1252,60 @@
         var payout = (pr * rate).toFixed(2);
         var dateMeta = b.date + (b.time ? ' ' + b.time : '');
 
-        h += `<div class="card market-card">
-          <div style="flex:1;min-width:250px">
-            <div style="font-weight:700;font-size:1.1rem;margin-bottom:10px;color:var(--primary)">${escapeHtml(b.name)} <span class="badge gold" style="margin-left:8px">${escapeHtml(b.service)}</span></div>
-            <div class="m-detail"><span class="material-symbols-outlined" style="font-size:18px;color:var(--accent)">schedule</span> <span style="font-weight:600">${escapeHtml(dateMeta)}</span></div>
-            <div class="m-detail"><span class="material-symbols-outlined" style="font-size:18px">my_location</span> <span style="color:var(--text)">${escapeHtml(b.pickup)}</span></div>
-            <div class="m-detail"><span class="material-symbols-outlined" style="font-size:18px">flag</span> <span style="color:var(--text)">${escapeHtml(b.destination)}</span></div>
+        h += `<div class="card market-card" style="flex-direction:column;align-items:stretch">
+          <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:1rem;margin-bottom:1rem">
+            <div style="flex:1;min-width:250px">
+              <div style="font-weight:700;font-size:1.1rem;margin-bottom:10px;color:var(--primary)">${escapeHtml(b.name)} <span class="badge gold" style="margin-left:8px">${escapeHtml(b.service)}</span></div>
+              <div class="m-detail"><span class="material-symbols-outlined" style="font-size:18px;color:var(--accent)">schedule</span> <span style="font-weight:600">${escapeHtml(dateMeta)}</span></div>
+              <div class="m-detail"><span class="material-symbols-outlined" style="font-size:18px">my_location</span> <span style="color:var(--text)">${escapeHtml(b.pickup)}</span></div>
+              <div class="m-detail"><span class="material-symbols-outlined" style="font-size:18px">flag</span> <span style="color:var(--text)">${escapeHtml(b.destination)}</span></div>
+            </div>
+            <div style="text-align:right;min-width:140px;border-left:1px dashed var(--border);padding-left:1rem">
+              <div class="m-price-lbl">Guaranteed Payout</div>
+              <div class="m-price">$${payout}</div>
+              <button onclick="claimRide('${b.id}')" class="btn ${isSuspended ? '' : 'gold'}" style="width:100%;margin-top:10px" ${isSuspended ? 'disabled' : ''}>${isSuspended ? 'Not Active' : 'Secure Claim'}</button>
+            </div>
           </div>
-          <div style="text-align:right;min-width:140px;border-left:1px dashed var(--border);padding-left:1rem">
-            <div class="m-price-lbl">Guaranteed Payout</div>
-            <div class="m-price">$${payout}</div>
-            <button onclick="claimRide('${b.id}')" class="btn ${isSuspended ? '' : 'gold'}" style="width:100%;margin-top:10px" ${isSuspended ? 'disabled' : ''}>${isSuspended ? 'Not Active' : 'Secure Claim'}</button>
-          </div>
+          <div id="map-market-${b.id}" style="width:100%;height:150px;border-radius:6px;background:#f3f4f6;overflow:hidden;border:1px solid var(--border)"></div>
         </div>`;
       });
       el.innerHTML = h;
+
+      // Render static Google Maps for each item
+      setTimeout(() => {
+        if (typeof google === 'undefined' || !google.maps) return;
+        available.forEach(b => {
+          var mapEl = document.getElementById('map-market-' + b.id);
+          if (!mapEl) return;
+          
+          var m = new google.maps.Map(mapEl, {
+            zoom: 13,
+            disableDefaultUI: true,
+            gestureHandling: 'none',
+            clickableIcons: false
+          });
+
+          if (b.pickup && b.destination) {
+            var ds = new google.maps.DirectionsService();
+            var dr = new google.maps.DirectionsRenderer({
+              map: m, suppressMarkers: false, polylineOptions: { strokeColor: '#d4af37', strokeWeight: 5 }
+            });
+            ds.route({
+              origin: b.pickup, destination: b.destination, travelMode: 'DRIVING'
+            }, function(res, status) {
+              if (status === 'OK') dr.setDirections(res);
+            });
+          } else if (b.pickup) {
+            var geocoder = new google.maps.Geocoder();
+            geocoder.geocode({ address: b.pickup }, function(results, status) {
+              if (status === 'OK' && results[0]) {
+                m.setCenter(results[0].geometry.location);
+                new google.maps.Marker({ map: m, position: results[0].geometry.location });
+              }
+            });
+          }
+        });
+      }, 50);
     }
 
     function renderUpcomingDashboard() {
@@ -1359,6 +1398,7 @@
 
       const setCard = (cId, tId, bId) => {
         let card = document.getElementById(cId);
+        if (!card) return;
         let theme = status === 'Approved' ? 'approved' : (status === 'Pending' ? 'pending' : 'not-active');
         card.className = `card status-card ${theme}`;
         
@@ -1496,12 +1536,19 @@
 
       const btn = document.getElementById('btn-save-profile');
       btn.innerHTML = '<div class="spinner"></div> Syncing...';
+      btn.disabled = true;
 
       evaluateCompliance(); // In case missing profile suspended them
+      
       syncProfileToDB().then(() => {
-        document.getElementById('dash-greeting').textContent = 'Welcome, ' + (driverData.profile.name.split(' ')[0] || 'Operative');
+        let n = driverData.profile.name || 'Operative';
+        document.getElementById('dash-greeting').textContent = 'Welcome, ' + (n.split(' ')[0] || 'Operative');
         showToast('Profile Configuration Confirmed');
+      }).catch(err => {
+        showToast('Sync Error: ' + err.message);
+      }).finally(() => {
         btn.innerHTML = 'Submit Identity';
+        btn.disabled = false;
       });
     }
 
