@@ -983,15 +983,21 @@
     function setDrivers(a) {} // Deprecated, managed by Firebase
     function getDrRate() { return parseFloat(localStorage.getItem(DR_RATE_KEY)) || 75; }
 
-    function getStaticMapUrl(pickup, dest) {
+    function getMapEmbedHtml(pickup, dest, height) {
       if(!pickup) return '';
-      let url = 'https://maps.googleapis.com/maps/api/staticmap?size=600x300&scale=2&maptype=roadmap&markers=color:green|label:A|' + encodeURIComponent(pickup);
-      if(dest) {
-        url += '&markers=color:red|label:B|' + encodeURIComponent(dest);
-        url += '&path=color:0xd4af37|weight:4|' + encodeURIComponent(pickup) + '|' + encodeURIComponent(dest);
+      var h = height || '120px';
+      var key = 'AIzaSyDGel0ktZDQYcdlOuoZo4bAqZWCuGvOVbc';
+      var src;
+      if(dest && dest.trim()) {
+        src = 'https://www.google.com/maps/embed/v1/directions?key=' + key +
+              '&origin=' + encodeURIComponent(pickup) +
+              '&destination=' + encodeURIComponent(dest) +
+              '&mode=driving';
+      } else {
+        src = 'https://www.google.com/maps/embed/v1/place?key=' + key +
+              '&q=' + encodeURIComponent(pickup);
       }
-      url += '&key=AIzaSyDGel0ktZDQYcdlOuoZo4bAqZWCuGvOVbc';
-      return url;
+      return '<div style="margin-top:1rem;height:' + h + ';border-radius:6px;overflow:hidden;border:1px solid #ddd"><iframe src="' + src + '" width="100%" height="100%" style="border:0;display:block" allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe></div>';
     }
 
     // ─────────────────────────────────────────────
@@ -1160,7 +1166,7 @@
           '</div>' +
           '</div>' +
           '</div>' +
-          (b.pickup ? '<div style="margin-top:1rem;height:120px;border-radius:6px;overflow:hidden;border:1px solid #ddd"><img src="' + getStaticMapUrl(b.pickup, b.destination) + '" style="width:100%;height:100%;object-fit:cover" alt="Route Map"></div>' : '') +
+          (b.pickup ? getMapEmbedHtml(b.pickup, b.destination, '140px') : '') +
           '</div>';
       }).join('');
     }
@@ -1894,7 +1900,7 @@
           '</div>' +
           '</div>' +
           '</div>' +
-          (b.pickup ? '<div style="margin-top:1rem;height:120px;border-radius:6px;overflow:hidden;border:1px solid #ddd"><img src="' + getStaticMapUrl(b.pickup, b.destination) + '" style="width:100%;height:100%;object-fit:cover" alt="Route Map"></div>' : '') +
+          (b.pickup ? getMapEmbedHtml(b.pickup, b.destination, '140px') : '') +
           '</div>';
       }).join('');
     }
@@ -2304,9 +2310,3 @@
         </table>
       </div>
       <div class="mft" style="display:flex;justify-content:space-between;align-items:center;padding:15px;border-top:1px solid #ddd;">
-        <button onclick="manualActivateDriver()" class="btn bgr"><span class="material-symbols-outlined" style="font-size:16px;margin-right:4px;vertical-align:middle">verified_user</span> Force Activate Profile</button>
-        <button onclick="closeM('m-comp-review')" class="btn bo">Done Reviewing</button>
-      </div>
-      </div>
-    </div>
-  </div>
