@@ -1019,16 +1019,14 @@
     function getMapEmbedHtml(pickup, dest, height) {
       if(!pickup) return '';
       var h = height || '150px';
-      var key = 'AIzaSyDGel0ktZDQYcdlOuoZo4bAqZWCuGvOVbc';
       var src;
       if(dest && dest.trim()) {
-        src = 'https://www.google.com/maps/embed/v1/directions?key=' + key +
-              '&origin=' + encodeURIComponent(pickup) +
-              '&destination=' + encodeURIComponent(dest) +
-              '&mode=driving';
+        // Free Google Maps directions embed — no API key required
+        src = 'https://maps.google.com/maps?saddr=' + encodeURIComponent(pickup) +
+              '&daddr=' + encodeURIComponent(dest) +
+              '&output=embed';
       } else {
-        src = 'https://www.google.com/maps/embed/v1/place?key=' + key +
-              '&q=' + encodeURIComponent(pickup);
+        src = 'https://maps.google.com/maps?q=' + encodeURIComponent(pickup) + '&output=embed';
       }
       return '<iframe src="' + src + '" width="100%" height="' + h + '" style="border:0;display:block" allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>';
     }
