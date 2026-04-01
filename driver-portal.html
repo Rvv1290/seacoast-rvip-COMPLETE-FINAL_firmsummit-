@@ -1027,9 +1027,9 @@
     function initRecaptcha() {
       if (!window.recaptchaVerifier) {
         window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
-          'size': 'normal',
+          'size': 'invisible',
           'callback': (response) => {
-            // reCAPTCHA solved
+            // reCAPTCHA solved automatically
           }
         });
       }
