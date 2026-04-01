@@ -874,6 +874,13 @@
           <h3
             style="margin-bottom:1.5rem;font-size:1.1rem;padding-bottom:0.75rem;border-bottom:2px solid var(--border)">
             Operative Details</h3>
+          <div style="display:flex; justify-content:center; margin-bottom: 2rem;">
+            <div style="position:relative; width: 100px; height: 100px;">
+              <img id="profile-avatar-img" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%239ca3af'><path d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/></svg>" style="width:100%;height:100%;border-radius:50%;object-fit:cover;border:2px solid var(--border);background:#f9fafb;">
+              <label for="prof-avatar-file" style="position:absolute; bottom:0; right:0; background:var(--primary); color:white; border-radius:50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center; cursor:pointer;box-shadow:0 2px 5px rgba(0,0,0,0.2); border:2px solid #fff;"><span class="material-symbols-outlined" style="font-size:16px;">photo_camera</span></label>
+              <input type="file" id="prof-avatar-file" style="display:none" accept="image/*" onchange="uploadAvatar(this)">
+            </div>
+          </div>
           <div class="grid-2">
             <div class="form-group">
               <label class="form-label">Full Legal Name *</label>
@@ -939,7 +946,7 @@
 
         <div class="form-group" id="um-file-group">
           <label class="form-label">File to Upload</label>
-          <input type="file" id="um-file" class="form-input" accept=".pdf,.jpg,.jpeg,.png">
+          <input type="file" id="um-file" class="form-input" accept="image/*,application/pdf">
           <p style="font-size:0.75rem;color:var(--text-light);margin-top:6px;line-height:1.4">Select an unredacted scan
             (PDF/JPG/PNG). Image must be completely legible.</p>
         </div>
@@ -981,8 +988,8 @@
       { id: 'dl', name: 'Driver’s License', reqDate: true },
       { id: 'reg', name: 'Vehicle Registration', reqDate: true },
       { id: 'ins', name: 'Commercial Insurance Policy', reqDate: true },
-      { id: 'photo', name: 'Livery Plate Configuration', reqDate: false, liveryOnly: true },
-      { id: 'port', name: 'Massport Clearance', reqDate: true, liveryOnly: true },
+      { id: 'photo', name: 'Livery Plate Configuration', reqDate: false, liveryOnly: true, optional: true },
+      { id: 'port', name: 'Massport Clearance', reqDate: true, liveryOnly: true, optional: true },
       { id: 'w9', name: 'W-9 Form', reqDate: false },
       { id: 'contract', name: 'Driver Service Agreement', reqDate: false }
     ];
@@ -1164,6 +1171,9 @@
       if (driverData.profile.vModel) document.getElementById('prof-vmodel').value = driverData.profile.vModel;
       if (driverData.profile.vPlate) document.getElementById('prof-vplate').value = driverData.profile.vPlate;
       if (driverData.profile.plateType) document.getElementById('prof-type').value = driverData.profile.plateType;
+      if (driverData.profile.avatar) {
+        document.getElementById('profile-avatar-img').src = driverData.profile.avatar;
+      }
 
       document.getElementById('dash-greeting').textContent = 'Welcome, ' + (driverData.profile.name ? driverData.profile.name.split(' ')[0] : 'Driver');
 
@@ -1364,10 +1374,12 @@
         let dc = driverData.documents[req.id];
         if (!dc) dc = { status: 'Missing' };
 
-        if (dc.status === 'Missing' || dc.status === 'Expired' || dc.status === 'Rejected') {
-          status = 'Not Active'; isSuspended = true;
-        } else if (dc.status === 'Pending Review' && status !== 'Not Active') {
-          status = 'Pending';
+        if (!req.optional) {
+          if (dc.status === 'Missing' || dc.status === 'Expired' || dc.status === 'Rejected') {
+            status = 'Not Active'; isSuspended = true;
+          } else if (dc.status === 'Pending Review' && status !== 'Not Active') {
+            status = 'Pending';
+          }
         }
 
         if (dc.expDate) {
@@ -1529,6 +1541,19 @@
       reader.readAsDataURL(file.files[0]);
     }
 
+    function uploadAvatar(input) {
+      if (input.files && input.files[0]) {
+        if(input.files[0].size > 2000000) { showToast('Image must be under 2MB'); return; }
+        const r = new FileReader();
+        r.onload = e => {
+          document.getElementById('profile-avatar-img').src = e.target.result;
+          driverData.profile.avatar = e.target.result;
+          showToast('Avatar ready to submit');
+        };
+        r.readAsDataURL(input.files[0]);
+      }
+    }
+
     // Profile
     function saveProfile() {
       driverData.profile = {
@@ -1617,29 +1642,4 @@
       if(!currentActiveRideId) return;
       if(!confirm('Acknowledge: Are you sure this run is fully completed? This will execute pending operations at HQ.')) return;
       
-      const btn = document.getElementById('btn-complete-trip');
-      btn.innerHTML = '<div class="spinner"></div> Syncing...';
-      btn.disabled = true;
-
-      try {
-        await db.collection('bookings').doc(currentActiveRideId).update({
-          status: 'Completed',
-          driverStatus: 'Completed',
-          completedAt: new Date().toISOString()
-        });
-        showToast('Run Authorized as Complete. Syncing...');
-        switchTab('dashboard');
-      } catch(e) {
-        showToast('Error syncing complete: ' + e.message);
-      } finally {
-        btn.innerHTML = '<span class="material-symbols-outlined">check_circle</span> Complete Trip';
-        btn.disabled = false;
-        currentActiveRideId = null;
-      }
-    }
-
-    window.addEventListener('DOMContentLoaded', init);
-  </script>
-</body>
-
-</html>
+      c
