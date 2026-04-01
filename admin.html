@@ -2140,7 +2140,7 @@
         var bdg = 'brd';
         if(st==='Approved') bdg='bgr'; else if(st==='Pending Review') bdg='byw';
 
-        var typeMap = { dl:'Driver License', reg:'Vehicle Reg', ins:'Commercial Insurance Policy', photo:'Plate Photo', port:'Massport', w9:'W-9 Form', contract:'Driver Service Agreement'};
+        var typeMap = { dl:'Driver License', reg:'Vehicle Reg', ins:'Commercial Insurance Policy', photo:'Plate Photo (Optional)', port:'Massport (Optional)', w9:'W-9 Form', contract:'Driver Service Agreement (Optional)'};
         
         var actBtns = '';
         if (docObj.fileName) {
@@ -2179,6 +2179,17 @@
       });
     }
 
+    function manualActivateDriver() {
+      if(!curCompUid || !db) return;
+      if (!confirm('Force activate this driver? They will gain full access to the Marketplace.')) return;
+      db.collection('drivers').doc(curCompUid).update({
+        status: 'Approved'
+      }).then(function() {
+        toast('Driver profile formally Activated!');
+        closeM('m-comp-review');
+      });
+    }
+
     function broadcastToDrivers() {
       var drs = getDrivers();
       if (!drs.length) { toast('No drivers to notify'); return; }
@@ -2200,9 +2211,9 @@
       
       var viewer = document.getElementById('doc-viewer-content');
       if(isPdf) {
-        viewer.innerHTML = '<iframe src="' + fileData + '" width="100%" height="80vh" frameborder="0"></iframe>';
+        viewer.innerHTML = '<iframe src="' + fileData + '" style="width:100%; height:100%; border:none;" frameborder="0"></iframe>';
       } else {
-        viewer.innerHTML = '<img src="' + fileData + '" style="max-width:100%;max-height:80vh;object-fit:contain;">';
+        viewer.innerHTML = '<img src="' + fileData + '" style="max-width:100%;max-height:100%;object-fit:contain;">';
       }
       
       openM('m-doc-view');
@@ -2279,8 +2290,9 @@
           </tbody>
         </table>
       </div>
-      <div class="mft" style="display:flex;justify-content:flex-end;padding:15px;border-top:1px solid #ddd;">
-        <button onclick="closeM('m-comp-review')" class="btn bg">Done Reviewing</button>
+      <div class="mft" style="display:flex;justify-content:space-between;align-items:center;padding:15px;border-top:1px solid #ddd;">
+        <button onclick="manualActivateDriver()" class="btn bgr"><span class="material-symbols-outlined" style="font-size:16px;margin-right:4px;vertical-align:middle">verified_user</span> Force Activate Profile</button>
+        <button onclick="closeM('m-comp-review')" class="btn bo">Done Reviewing</button>
       </div>
       </div>
     </div>
