@@ -917,6 +917,82 @@
           </div>
         </form>
       </div>
+
+      <!-- ACTIVE RIDE TAB -->
+      <div id="sec-active-ride" class="section">
+        <div class="page-header" style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <h2 class="page-title">Active Run</h2>
+            <p class="page-subtitle">Your current assignment details & navigation.</p>
+          </div>
+          <button class="btn outline" style="width:auto;font-size:0.8rem" onclick="switchTab('dashboard')">
+            <span class="material-symbols-outlined" style="font-size:16px">arrow_back</span> Back
+          </button>
+        </div>
+
+        <!-- Map -->
+        <div class="card" style="padding:0;overflow:hidden;border-left:4px solid var(--accent);margin-bottom:1.25rem">
+          <div id="ride-map" style="height:240px;background:#f3f4f6;"></div>
+        </div>
+
+        <!-- Navigate Button -->
+        <a id="ar-nav-link" href="#" target="_blank"
+          style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;background:#000;color:#fff;padding:0.9rem;border-radius:6px;font-weight:700;font-size:1rem;text-decoration:none;letter-spacing:0.03em;margin-bottom:1.25rem;box-sizing:border-box">
+          <span class="material-symbols-outlined" style="font-size:22px;color:var(--accent)">navigation</span>
+          Navigate: Pickup → Dropoff
+        </a>
+
+        <!-- Client Details -->
+        <div class="card" style="margin-bottom:1.25rem">
+          <h3 style="font-size:1rem;font-weight:700;margin-bottom:1rem;padding-bottom:0.75rem;border-bottom:1px solid var(--border)">Assignment Details</h3>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+            <div>
+              <div style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-light);font-weight:600;margin-bottom:3px">Client</div>
+              <div style="font-weight:600" id="ar-name">—</div>
+            </div>
+            <div>
+              <div style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-light);font-weight:600;margin-bottom:3px">Service</div>
+              <div style="font-weight:600" id="ar-service">—</div>
+            </div>
+            <div>
+              <div style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-light);font-weight:600;margin-bottom:3px">Phone</div>
+              <a id="ar-phone-link" href="#" style="font-weight:600;color:var(--primary);text-decoration:none" id="ar-phone-link"><span id="ar-phone">—</span></a>
+            </div>
+            <div></div>
+            <div style="grid-column:1/-1">
+              <div style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-light);font-weight:600;margin-bottom:3px">Pickup</div>
+              <div style="font-weight:600;display:flex;align-items:center;gap:6px"><span class="material-symbols-outlined" style="font-size:16px;color:#10b981">trip_origin</span><span id="ar-pickup">—</span></div>
+            </div>
+            <div style="grid-column:1/-1">
+              <div style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-light);font-weight:600;margin-bottom:3px">Drop-off</div>
+              <div style="font-weight:600;display:flex;align-items:center;gap:6px"><span class="material-symbols-outlined" style="font-size:16px;color:#ef4444">flag</span><span id="ar-dest">—</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SMS Presets -->
+        <div class="card" style="margin-bottom:1.25rem">
+          <h3 style="font-size:1rem;font-weight:700;margin-bottom:0.75rem">Quick Client Communication</h3>
+          <div style="display:flex;gap:0.75rem;flex-wrap:wrap">
+            <a id="sms-omw" href="#"
+              style="flex:1;min-width:140px;display:inline-flex;align-items:center;justify-content:center;gap:6px;background:#f9fafb;border:1px solid var(--border);color:var(--primary);padding:0.75rem;border-radius:6px;font-weight:600;font-size:0.85rem;text-decoration:none">
+              <span class="material-symbols-outlined" style="font-size:18px;color:var(--accent)">sms</span>
+              On My Way
+            </a>
+            <a id="sms-arr" href="#"
+              style="flex:1;min-width:140px;display:inline-flex;align-items:center;justify-content:center;gap:6px;background:#f9fafb;border:1px solid var(--border);color:var(--primary);padding:0.75rem;border-radius:6px;font-weight:600;font-size:0.85rem;text-decoration:none">
+              <span class="material-symbols-outlined" style="font-size:18px;color:var(--accent)">where_to_vote</span>
+              Arrived
+            </a>
+          </div>
+        </div>
+
+        <!-- Complete Trip -->
+        <button id="btn-complete-trip" class="btn gold" style="width:100%;padding:1rem;font-size:1rem;font-weight:700" onclick="completeTrip()">
+          <span class="material-symbols-outlined">check_circle</span> Complete Trip
+        </button>
+      </div>
+
     </div>
   </div>
 
@@ -1304,8 +1380,13 @@
 
       let h = '';
       myRides.forEach(b => {
-        const navUrl = 'https://maps.google.com/maps?daddr=' + encodeURIComponent(b.pickup) + '&dirflg=d';
+        // Full Google Maps route: pickup (origin) → dropoff (destination)
+        const navUrl = 'https://www.google.com/maps/dir/?api=1' +
+          '&origin=' + encodeURIComponent(b.pickup) +
+          (b.destination ? '&destination=' + encodeURIComponent(b.destination) : '') +
+          '&travelmode=driving';
         const statusCss = b.status === 'Paid' ? 'approved' : 'pending';
+        const timeDisplay = b.time ? format12h(b.time) : '';
         const mapSrc = (b.pickup && b.destination)
           ? 'https://maps.google.com/maps?saddr=' + encodeURIComponent(b.pickup) + '&daddr=' + encodeURIComponent(b.destination) + '&output=embed'
           : (b.pickup ? 'https://maps.google.com/maps?q=' + encodeURIComponent(b.pickup) + '&output=embed' : '');
@@ -1321,7 +1402,7 @@
                   <div style="font-weight:700;font-size:1rem;color:var(--primary);margin-bottom:4px">${escapeHtml(b.service || 'Ride')}</div>
                   <div style="font-size:0.8rem;color:var(--text-light);display:flex;align-items:center;gap:5px">
                     <span class="material-symbols-outlined" style="font-size:15px;color:var(--accent)">schedule</span>
-                    <strong>${escapeHtml(b.date + (b.time ? ' · ' + b.time : ''))}</strong>
+                    <strong>${escapeHtml(b.date + (timeDisplay ? ' · ' + timeDisplay : ''))}</strong>
                   </div>
                 </div>
                 <span class="badge ${statusCss}">${escapeHtml(b.status)}</span>
@@ -1338,8 +1419,8 @@
               <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
                 <a href="${navUrl}" target="_blank"
                   style="flex:1;min-width:160px;display:inline-flex;align-items:center;justify-content:center;gap:6px;background:#000;color:#fff;padding:0.65rem 1rem;border-radius:4px;font-weight:700;font-size:0.82rem;text-decoration:none;letter-spacing:0.03em">
-                  <span class="material-symbols-outlined" style="font-size:17px">navigation</span>
-                  Navigate to Pickup
+                  <span class="material-symbols-outlined" style="font-size:17px;color:var(--accent)">navigation</span>
+                  Navigate Full Route
                 </a>
                 <button onclick="openActiveRide('${b.id}')" class="btn outline"
                   style="flex:1;min-width:120px;border:1px solid var(--border);color:var(--primary);background:#fff;font-size:0.82rem">
@@ -1573,6 +1654,8 @@
 
     // Profile
     function saveProfile() {
+      // Preserve avatar — must carry over before overwriting the profile object
+      const existingAvatar = driverData.profile ? driverData.profile.avatar : null;
       driverData.profile = {
         name: document.getElementById('prof-name').value.trim(),
         phone: document.getElementById('prof-phone').value.trim(),
@@ -1580,7 +1663,8 @@
         vMake: document.getElementById('prof-vmake').value.trim(),
         vModel: document.getElementById('prof-vmodel').value.trim(),
         vPlate: document.getElementById('prof-vplate').value.trim(),
-        plateType: document.getElementById('prof-type').value.trim()
+        plateType: document.getElementById('prof-type').value.trim(),
+        avatar: existingAvatar || null  // carry avatar forward, never wipe it
       };
 
       const btn = document.getElementById('btn-save-profile');
@@ -1601,6 +1685,19 @@
       });
     }
 
+    // -------------------------
+    // TIME FORMAT HELPERS
+    // -------------------------
+    function format12h(timeStr) {
+      if (!timeStr) return '';
+      const [hStr, mStr] = timeStr.split(':');
+      let h = parseInt(hStr, 10);
+      const m = mStr || '00';
+      const ampm = h >= 12 ? 'PM' : 'AM';
+      h = h % 12 || 12;
+      return h + ':' + m + ' ' + ampm;
+    }
+
     function showToast(msg) {
       let t = document.getElementById('toast');
       t.textContent = msg;
@@ -1612,15 +1709,23 @@
     let currentActiveRideId = null;
     function openActiveRide(rideId) {
       const b = bksCache.find(x => x.id === rideId);
-      if(!b) return;
+      if(!b) { showToast('Ride not found. Try refreshing.'); return; }
       currentActiveRideId = rideId;
-      document.getElementById('ar-name').textContent = b.name;
-      document.getElementById('ar-service').textContent = b.service;
+
+      document.getElementById('ar-name').textContent = b.name || 'N/A';
+      document.getElementById('ar-service').textContent = b.service || 'N/A';
       document.getElementById('ar-phone').textContent = b.phone || 'N/A';
       document.getElementById('ar-phone-link').href = b.phone ? 'tel:' + b.phone.replace(/\D/g,'') : '#';
-      document.getElementById('ar-pickup').textContent = b.pickup;
-      document.getElementById('ar-dest').textContent = b.destination;
-      
+      document.getElementById('ar-pickup').textContent = b.pickup || 'N/A';
+      document.getElementById('ar-dest').textContent = b.destination || 'N/A';
+
+      // Full route navigate link: opens Google Maps with pickup as origin, dropoff as destination
+      const navUrl = 'https://www.google.com/maps/dir/?api=1' +
+        '&origin=' + encodeURIComponent(b.pickup || '') +
+        (b.destination ? '&destination=' + encodeURIComponent(b.destination) : '') +
+        '&travelmode=driving';
+      document.getElementById('ar-nav-link').href = navUrl;
+
       const pName = driverData.profile.name ? driverData.profile.name.split(' ')[0] : 'Driver';
       const omw = encodeURIComponent(`Hi ${b.name}, your Seacoast RVIP driver ${pName} is on the way.`);
       const arr = encodeURIComponent(`Hi ${b.name}, your Seacoast RVIP driver ${pName} has arrived at the pickup location.`);
@@ -1629,7 +1734,7 @@
 
       switchTab('active-ride');
 
-      // Draw route using Google Maps Embed API (free, no billing required)
+      // Draw embedded route map
       document.getElementById('ride-map').innerHTML = getMapEmbedHtml(b.pickup, b.destination, '100%');
     }
 
