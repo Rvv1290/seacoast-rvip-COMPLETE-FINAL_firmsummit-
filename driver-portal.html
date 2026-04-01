@@ -1426,12 +1426,19 @@
       }
 
       getActiveDocs().forEach(req => {
-        let d = driverData.documents[req.id];
+        let d = driverData.documents[req.id] || { status: 'Missing' };
         let stCss = d.status === 'Approved' ? 'approved' : ['Missing', 'Expired', 'Rejected'].includes(d.status) ? 'missing' : 'pending';
         let actBtn = '';
+        
+        let meta = 'Action Required';
+        if (d.status !== 'Missing' && d.fileName) {
+          meta = escapeHtml(d.fileName);
+          if (d.expDate) meta += ' | Exp: ' + escapeHtml(d.expDate);
+        }
+
         if (req.id === 'contract') {
           // DocuSign integration button for Agreement
-          if (d.status === 'Approved') {
+          if (d.status === 'Approved' || d.status === 'Pending Review') {
             actBtn = '<a href="https://docusign.com" target="_blank" class="btn success" style="padding:0.4rem 0.8rem;text-decoration:none;font-size:0.75rem;width:auto"><span class="material-symbols-outlined" style="font-size:14px">check</span> Signed</a>';
           } else {
             actBtn = '<button class="btn gold" style="padding:0.4rem 0.8rem;font-size:0.75rem;box-shadow:none" onclick="signDocuSign()">Sign Agreement</button>';
