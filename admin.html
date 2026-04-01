@@ -1109,10 +1109,10 @@
         var dTag = '', payDriverBtnHtml = '';
         if (b.driverId) {
           var dStatus = b.driverStatus === 'Completed' ? '<span class="bdg bgn">Driver Completed</span>' : '';
-          if (b.driverId === 'admin') dTag = '<span class="bdg bpp">Driver: Admin</span>' + dStatus;
+          if (b.driverId === 'admin') dTag = '<span class="bdg bpp">Claimed by: Admin</span>' + dStatus;
           else {
             var dr = drs.find(function (x) { return x.id === b.driverId; });
-            dTag = '<span class="bdg bpp">Driver: ' + e(dr ? dr.name : 'Unknown') + '</span>' + dStatus;
+            dTag = '<span class="bdg bpp">Claimed by: ' + e(dr ? dr.name : 'Unknown') + '</span>' + dStatus;
             if (b.driverPaid) {
               payDriverBtnHtml = '<span class="bdg bgn" style="background:#047857;color:#fff;font-size:10px;padding:3px 6px"><span class="material-symbols-outlined" style="font-size:11px;vertical-align:middle;margin-right:2px">verified</span>Driver Paid</span>';
             } else if (b.driverStatus === 'Completed') {
