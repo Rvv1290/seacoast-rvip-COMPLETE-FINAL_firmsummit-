@@ -9,8 +9,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
     rel="stylesheet">
   <!-- Firebase Config -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDGel0ktZDQYcdlOuoZo4bAqZWCuGvOVbc&libraries=places&callback=initGoogleMap" async defer></script>
   <style>
     :root {
       /* Seacoast RVIP Official Theme */
@@ -387,7 +389,7 @@
       border-left: 4px solid var(--primary);
     }
 
-    .status-card.suspended {
+    .status-card.not-active {
       border-left-color: var(--error);
     }
 
@@ -684,35 +686,26 @@
       <h1>Seacoast <span class="brand-accent">RVIP</span></h1>
       <p>Driver Operations Portal</p>
 
-      <!-- Login Form -->
-      <div id="form-login">
+      <!-- Phone Auth Flow -->
+      <div id="form-phone">
+        <p style="margin-bottom:1.5rem;font-size:0.9rem;color:var(--text-light)">Enter your mobile number to access or create your Operative profile.</p>
         <div class="form-group">
-          <label class="form-label">Email Address</label>
-          <input type="email" id="log-email" class="form-input" placeholder="Enter your email">
+          <label class="form-label" style="text-align:left">Mobile Phone Number</label>
+          <input type="tel" id="auth-phone" class="form-input" placeholder="+1 (555) 555-5555">
         </div>
-        <div class="form-group">
-          <label class="form-label">Password</label>
-          <input type="password" id="log-pwd" class="form-input" placeholder="Enter your password">
-        </div>
-        <button class="btn gold" id="btn-login" onclick="login()">Log In securely</button>
-        <div class="auth-toggle">
-          Don't have a profile yet? <a onclick="toggleAuth('signup')">Sign Up here</a>
-        </div>
+        <div id="recaptcha-container" style="margin-bottom:1rem;display:flex;justify-content:center"></div>
+        <button class="btn gold" id="btn-send-sms" onclick="sendAuthSms()">Send Secure Code</button>
       </div>
 
-      <!-- Sign Up Form -->
-      <div id="form-signup" style="display:none">
+      <div id="form-otp" style="display:none">
+        <p style="margin-bottom:1.5rem;font-size:0.9rem;color:var(--text-light)">Enter the 6-digit verification code sent to your phone.</p>
         <div class="form-group">
-          <label class="form-label">Email Address</label>
-          <input type="email" id="reg-email" class="form-input" placeholder="name@example.com">
+          <label class="form-label" style="text-align:left">Verification Code</label>
+          <input type="number" id="auth-otp" class="form-input" placeholder="000000" style="letter-spacing:0.25em;font-size:1.25rem;text-align:center">
         </div>
-        <div class="form-group">
-          <label class="form-label">Create Password</label>
-          <input type="password" id="reg-pwd" class="form-input" placeholder="Create a strong password">
-        </div>
-        <button class="btn gold" id="btn-signup" onclick="signup()">Create My Profile</button>
+        <button class="btn gold" id="btn-verify-otp" onclick="verifySmsCode()">Verify & Access</button>
         <div class="auth-toggle">
-          Already approved/registered? <a onclick="toggleAuth('login')">Log In here</a>
+          Didn't receive it? <a onclick="resetPhoneAuth()">Go back</a>
         </div>
       </div>
     </div>
@@ -913,6 +906,14 @@
               <input type="text" id="prof-vmodel" class="form-input" placeholder="e.g. Suburban LT" required>
             </div>
             <div class="form-group">
+              <label class="form-label">Classification / Plate Type *</label>
+              <select id="prof-type" class="form-input" required onchange="saveProfile()">
+                <option value="">Select Registration Protocol...</option>
+                <option value="Livery">Livery Plates ($1M+ Commercial)</option>
+                <option value="Standard">Standard Plates (Airport Drop-offs ONLY)</option>
+              </select>
+            </div>
+            <div class="form-group">
               <label class="form-label">Commercial Plate Tag *</label>
               <input type="text" id="prof-vplate" class="form-input" placeholder="e.g. NH-LIV123" required>
             </div>
@@ -964,17 +965,34 @@
     let db = null;
     let bksCache = [];
 
+    // Map Engine
+    let map, directionsService, directionsRenderer;
+    function initGoogleMap() {
+      directionsService = new google.maps.DirectionsService();
+      directionsRenderer = new google.maps.DirectionsRenderer({
+        suppressMarkers: false,
+        polylineOptions: { strokeColor: '#d4af37', strokeWeight: 5 }
+      });
+    }
+
     // Constants
     const DEFAULT_PAY_RATE = 75; // 75% Payout to drivers
     const DOC_REQUIREMENTS = [
       { id: 'dl', name: 'Driver’s License', reqDate: true },
       { id: 'reg', name: 'Vehicle Registration', reqDate: true },
-      { id: 'ins', name: 'Livery Insurance', reqDate: true },
-      { id: 'photo', name: 'Livery Plate Configuration', reqDate: false },
-      { id: 'port', name: 'Massport Clearance', reqDate: true },
+      { id: 'ins', name: 'Livery Insurance', reqDate: true, liveryOnly: true },
+      { id: 'photo', name: 'Livery Plate Configuration', reqDate: false, liveryOnly: true },
+      { id: 'port', name: 'Massport Clearance', reqDate: true, liveryOnly: true },
       { id: 'w9', name: 'W-9 Form', reqDate: false },
       { id: 'contract', name: 'Vendor Agreement', reqDate: false }
     ];
+
+    function getActiveDocs() {
+      if(!driverData.profile || driverData.profile.plateType !== 'Livery') {
+        return DOC_REQUIREMENTS.filter(r => !r.liveryOnly);
+      }
+      return DOC_REQUIREMENTS;
+    }
 
     let currentUser = null; // { email, uid }
     let driverData = { profile: {}, documents: {}, status: 'Pending' };
@@ -994,28 +1012,80 @@
     // -------------------------
     // AUTHENTICATION LOGIC
     // -------------------------
-    function toggleAuth(type) {
-      document.getElementById('form-login').style.display = type === 'login' ? 'block' : 'none';
-      document.getElementById('form-signup').style.display = type === 'signup' ? 'block' : 'none';
+
+
+    function resetPhoneAuth() {
+      document.getElementById('form-otp').style.display = 'none';
+      document.getElementById('form-phone').style.display = 'block';
+      if (window.recaptchaVerifier) {
+        window.recaptchaVerifier.clear();
+        window.recaptchaVerifier = null;
+      }
+      initRecaptcha();
     }
 
-    async function signup() {
-      const em = document.getElementById('reg-email').value.trim().toLowerCase();
-      const pw = document.getElementById('reg-pwd').value.trim();
-      if (!em || !em.includes('@') || pw.length < 5) { showToast('Valid email and 5+ char password required'); return; }
+    function initRecaptcha() {
+      if (!window.recaptchaVerifier) {
+        window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
+          'size': 'normal',
+          'callback': (response) => {
+            // reCAPTCHA solved
+          }
+        });
+      }
+    }
 
-      const btn = document.getElementById('btn-signup');
-      btn.innerHTML = '<div class="spinner"></div> Creating...';
+    async function sendAuthSms() {
+      const ph = document.getElementById('auth-phone').value.trim();
+      if (!ph || ph.length < 10) { showToast('Enter a valid mobile number with country code'); return; }
+
+      const btn = document.getElementById('btn-send-sms');
+      btn.innerHTML = '<div class="spinner"></div> Sending...';
       btn.disabled = true;
 
       try {
-        const docRef = db.collection('drivers').doc(em);
+        let fmtPhone = ph.startsWith('+') ? ph : '+1' + ph.replace(/\D/g, '');
+        const confirmationResult = await firebase.auth().signInWithPhoneNumber(fmtPhone, window.recaptchaVerifier);
+        window.confirmationResult = confirmationResult;
+        document.getElementById('form-phone').style.display = 'none';
+        document.getElementById('form-otp').style.display = 'block';
+        showToast('SMS Code sent!');
+      } catch (e) {
+        showToast('Error: ' + e.message);
+        resetPhoneAuth();
+      } finally {
+        btn.innerHTML = 'Send Secure Code';
+        btn.disabled = false;
+      }
+    }
+
+    async function verifySmsCode() {
+      const code = document.getElementById('auth-otp').value.trim();
+      if (!code || code.length < 6) { showToast('Enter the 6 digit code'); return; }
+
+      const btn = document.getElementById('btn-verify-otp');
+      btn.innerHTML = '<div class="spinner"></div> Verifying...';
+      btn.disabled = true;
+
+      try {
+        const result = await window.confirmationResult.confirm(code);
+        const user = result.user;
+        await resolveDriverProfile(user.phoneNumber);
+      } catch (e) {
+        showToast('Invalid code. Try again.');
+      } finally {
+        btn.innerHTML = 'Verify & Access';
+        btn.disabled = false;
+      }
+    }
+
+    async function resolveDriverProfile(phoneId) {
+      if (!db) initFirebase();
+      try {
+        const docRef = db.collection('drivers').doc(phoneId);
         const snap = await docRef.get();
-        if (snap.exists) {
-          showToast('Email is already registered. Please log in.');
-          toggleAuth('login');
-          document.getElementById('log-email').value = em;
-        } else {
+
+        if (!snap.exists) {
           // Initialize strict new database schema for driver
           let docsInitial = {};
           DOC_REQUIREMENTS.forEach(req => {
@@ -1023,70 +1093,37 @@
           });
 
           driverData = {
-            email: em,
-            pwd: pw, // Stacking simple auth to match admin requests securely within db
-            status: 'Suspended', // Requires docs
-            profile: { name: '', phone: '', address: '', vMake: '', vModel: '', vPlate: '' },
+            id: phoneId,
+            phone: phoneId, 
+            status: 'Not Active',
+            profile: { name: '', phone: phoneId, address: '', vMake: '', vModel: '', vPlate: '', plateType: '' },
             documents: docsInitial,
             createdAt: new Date().toISOString()
           };
-
           await docRef.set(driverData);
-          currentUser = { uid: em, email: em };
-          localStorage.setItem('sr_drv_uid', em);
           showToast('Identity Securely Generated');
-          showApp();
-        }
-      } catch (e) {
-        showToast('Error: ' + e.message);
-      } finally {
-        btn.innerHTML = 'Create My Profile';
-        btn.disabled = false;
-      }
-    }
-
-    async function login() {
-      const em = document.getElementById('log-email').value.trim().toLowerCase();
-      const pw = document.getElementById('log-pwd').value.trim();
-      if (!em || !pw) { showToast('Credentials required'); return; }
-
-      const btn = document.getElementById('btn-login');
-      btn.innerHTML = '<div class="spinner"></div> Authenticating...';
-      btn.disabled = true;
-
-      try {
-        const docRef = db.collection('drivers').doc(em);
-        const snap = await docRef.get();
-        if (!snap.exists) {
-          showToast('Identity not found. Sign Up first.');
         } else {
-          let dbData = snap.data();
-          if (dbData.pwd !== pw) {
-            showToast('Incorrect password.');
-          } else {
-            currentUser = { uid: em, email: em };
-            localStorage.setItem('sr_drv_uid', em);
-            driverData = dbData;
-
-            // Patch in any missing documents due to schema updates
-            DOC_REQUIREMENTS.forEach(req => {
-              if (!driverData.documents[req.id]) { driverData.documents[req.id] = { status: 'Missing' }; }
-            });
-
-            showToast('Authentication Successful');
-            showApp();
-          }
+          driverData = snap.data();
+          // Patch schema
+          DOC_REQUIREMENTS.forEach(req => {
+            if (!driverData.documents[req.id]) { driverData.documents[req.id] = { status: 'Missing' }; }
+          });
+          if(!driverData.profile.plateType) driverData.profile.plateType = '';
+          showToast('Authentication Successful');
         }
-      } catch (e) { showToast('Auth error: ' + e.message); }
-      finally {
-        btn.innerHTML = 'Log In securely';
-        btn.disabled = false;
+        
+        currentUser = { uid: phoneId, phone: phoneId };
+        showApp();
+
+      } catch (e) {
+        showToast('Database Error: ' + e.message);
       }
     }
 
     function logout() {
-      localStorage.removeItem('sr_drv_uid');
-      window.location.reload();
+      firebase.auth().signOut().then(() => {
+        window.location.reload();
+      });
     }
 
     // -------------------------
@@ -1094,24 +1131,16 @@
     // -------------------------
     async function init() {
       initFirebase();
-      const savedUid = localStorage.getItem('sr_drv_uid');
-      if (savedUid) {
-        try {
-          // Auto login wrapper
-          const docRef = db.collection('drivers').doc(savedUid);
-          const snap = await docRef.get();
-          if (snap.exists) {
-            currentUser = { uid: savedUid, email: savedUid };
-            driverData = snap.data();
-            showApp();
-          } else {
-            localStorage.removeItem('sr_drv_uid');
-            document.getElementById('auth-screen').style.display = 'flex';
-          }
-        } catch (e) { document.getElementById('auth-screen').style.display = 'flex'; }
-      } else {
-        document.getElementById('auth-screen').style.display = 'flex';
-      }
+      
+      firebase.auth().onAuthStateChanged((user) => {
+        if (user) {
+          resolveDriverProfile(user.phoneNumber);
+        } else {
+          document.getElementById('app-screen').style.display = 'none';
+          document.getElementById('auth-screen').style.display = 'flex';
+          initRecaptcha();
+        }
+      });
     }
 
     function showApp() {
@@ -1131,6 +1160,7 @@
       if (driverData.profile.vMake) document.getElementById('prof-vmake').value = driverData.profile.vMake;
       if (driverData.profile.vModel) document.getElementById('prof-vmodel').value = driverData.profile.vModel;
       if (driverData.profile.vPlate) document.getElementById('prof-vplate').value = driverData.profile.vPlate;
+      if (driverData.profile.plateType) document.getElementById('prof-type').value = driverData.profile.plateType;
 
       document.getElementById('dash-greeting').textContent = 'Welcome, ' + (driverData.profile.name ? driverData.profile.name.split(' ')[0] : 'Driver');
 
@@ -1151,7 +1181,7 @@
           driverData.documents = updated.documents;
           driverData.status = updated.status;
 
-          let prevSusp = document.getElementById('dash-status-badge').textContent === 'Suspended';
+          let prevSusp = document.getElementById('dash-status-badge').textContent === 'Not Active';
           evaluateCompliance(); // Updates UI internally
           renderDocuments(); // Updates tables
         }
@@ -1204,7 +1234,7 @@
     function renderMarketView() {
       var el = document.getElementById('market-list');
       var available = bksCache.filter(b => (!b.driverId || b.driverId.trim() === '') && b.status !== 'Cancelled' && b.status !== 'Completed');
-      let isSuspended = document.getElementById('dash-status-badge').textContent === 'Suspended';
+      let isSuspended = document.getElementById('dash-status-badge').textContent === 'Not Active';
 
       if (!available.length) {
         el.innerHTML = '<div style="padding:4rem 2rem;text-align:center;background:white;border-radius:6px;border:1px solid var(--border)"><span class="material-symbols-outlined" style="font-size:36px;color:#d4af37;margin-bottom:15px">check_circle</span><br><h3 style="font-weight:700;font-size:1.1rem;margin-bottom:5px">Queue Empty</h3><div style="font-size:0.9rem;color:var(--text-light)">The board is fully allocated. Wait for dispatch alerts.</div></div>';
@@ -1229,7 +1259,7 @@
           <div style="text-align:right;min-width:140px;border-left:1px dashed var(--border);padding-left:1rem">
             <div class="m-price-lbl">Guaranteed Payout</div>
             <div class="m-price">$${payout}</div>
-            <button onclick="claimRide('${b.id}')" class="btn ${isSuspended ? '' : 'gold'}" style="width:100%;margin-top:10px" ${isSuspended ? 'disabled' : ''}>${isSuspended ? 'Suspended' : 'Secure Claim'}</button>
+            <button onclick="claimRide('${b.id}')" class="btn ${isSuspended ? '' : 'gold'}" style="width:100%;margin-top:10px" ${isSuspended ? 'disabled' : ''}>${isSuspended ? 'Not Active' : 'Secure Claim'}</button>
           </div>
         </div>`;
       });
@@ -1245,14 +1275,18 @@
       }
       let h = '';
       myRides.forEach(b => {
-        h += `<tr><td style="font-weight:600">${escapeHtml(b.date + ' ' + (b.time || ''))}</td><td>${escapeHtml(b.pickup)}</td><td>${escapeHtml(b.destination)}</td><td><span class="badge ${b.status === 'Paid' ? 'approved' : 'pending'}">${escapeHtml(b.status)}</span></td></tr>`;
+        h += `<tr style="cursor:pointer" onclick="openActiveRide('${b.id}')" title="Click to view Active Run map and details">
+          <td style="font-weight:600">${escapeHtml(b.date + ' ' + (b.time || ''))}</td>
+          <td>${escapeHtml(b.pickup)}</td>
+          <td>${escapeHtml(b.destination)}</td>
+          <td><span class="badge ${b.status === 'Paid' ? 'approved' : 'pending'}">${escapeHtml(b.status)}</span></td></tr>`;
       });
       tbody.innerHTML = h;
     }
 
     async function claimRide(rideId) {
       if (!db || !currentUser) return;
-      if (document.getElementById('dash-status-badge').textContent === 'Suspended') { showToast('Account Suspended — Review Documents'); return; }
+      if (document.getElementById('dash-status-badge').textContent === 'Not Active') { showToast('Status Not Active — Review Documents'); return; }
       if (!confirm('Acknowledge: You are committing to this run per dispatch terms.')) return;
 
       try {
@@ -1280,24 +1314,24 @@
       let isAlert = false;
 
       // Ensure profile has basics
-      if (!driverData.profile.name || !driverData.profile.phone || !driverData.profile.vMake) {
-        status = 'Suspended'; isSuspended = true;
+      if (!driverData.profile.name || !driverData.profile.phone || !driverData.profile.vMake || !driverData.profile.plateType) {
+        status = 'Not Active'; isSuspended = true;
       }
 
-      for (const req of DOC_REQUIREMENTS) {
+      for (const req of getActiveDocs()) {
         let dc = driverData.documents[req.id];
         if (!dc) dc = { status: 'Missing' };
 
         if (dc.status === 'Missing' || dc.status === 'Expired' || dc.status === 'Rejected') {
-          status = 'Suspended'; isSuspended = true;
-        } else if (dc.status === 'Pending Review' && status !== 'Suspended') {
+          status = 'Not Active'; isSuspended = true;
+        } else if (dc.status === 'Pending Review' && status !== 'Not Active') {
           status = 'Pending';
         }
 
         if (dc.expDate) {
           let daysDiff = (new Date(dc.expDate) - today) / (1000 * 60 * 60 * 24);
           if (daysDiff < 0 && dc.status !== 'Expired') {
-            dc.status = 'Expired'; status = 'Suspended'; isSuspended = true;
+            dc.status = 'Expired'; status = 'Not Active'; isSuspended = true;
           } else if (daysDiff <= 45) {
             isAlert = true;
             expiringList.push({ name: req.name, days: Math.floor(daysDiff), date: dc.expDate });
@@ -1315,18 +1349,18 @@
       // Sync Banners & UI
       const c = document.getElementById('banner-container');
       c.innerHTML = '';
-      if (isSuspended) c.innerHTML += `<div class="banner danger"><span class="material-symbols-outlined">block</span> Operations Suspended. Audit your Documents/Profile to regain clearance.</div>`;
       if (isAlert) c.innerHTML += `<div class="banner warning"><span class="material-symbols-outlined">warning</span> Imminent Expiation: Documents degrading within 45 days.</div>`;
 
       // Theme overrides
       document.getElementById('dash-status-badge').style.opacity = 1;
-      let theme = status === 'Approved' ? 'approved' : (status === 'Pending' ? 'pending' : 'suspended');
-      let tText = isSuspended ? 'Suspended (Action Req)' : status;
 
       const setCard = (cId, tId, bId) => {
-        document.getElementById(cId).className = `card status-card ${theme}`;
-        document.getElementById(tId).textContent = tText;
-        document.getElementById(bId).className = `badge ${status === 'Suspended' ? 'missing' : (status === 'Pending' ? 'pending' : 'approved')}`;
+        let card = document.getElementById(cId);
+        let theme = status === 'Approved' ? 'approved' : (status === 'Pending' ? 'pending' : 'not-active');
+        card.className = `card status-card ${theme}`;
+        
+        document.getElementById(tId).innerHTML = (isSuspended ? 'Profile / Document Review Required' : (status === 'Pending' ? 'Identity Under Review' : 'Operational Clearance Activated')) + (isAlert ? `<br><span style="color:var(--error);font-size:0.75rem;font-weight:600">ACTION REQUIRED</span>` : '');
+        document.getElementById(bId).className = `badge ${status === 'Not Active' ? 'missing' : (status === 'Pending' ? 'pending' : 'approved')}`;
         document.getElementById(bId).textContent = status;
       };
       setCard('dash-status-card', 'dash-status-text', 'dash-status-badge');
@@ -1342,7 +1376,13 @@
     function renderDocuments() {
       const c = document.getElementById('doc-list-container');
       let html = '';
-      DOC_REQUIREMENTS.forEach(req => {
+      
+      if (!driverData.profile.plateType) {
+        c.innerHTML = '<div style="padding:2rem;text-align:center;color:var(--text-light)">Please complete your <b>Identity & Vehicle</b> profile (including Plate Classification) to unlock document requirements.</div>';
+        return;
+      }
+
+      getActiveDocs().forEach(req => {
         let d = driverData.documents[req.id];
         let stCss = d.status === 'Approved' ? 'approved' : ['Missing', 'Expired', 'Rejected'].includes(d.status) ? 'missing' : 'pending';
         let actBtn = '';
@@ -1417,11 +1457,13 @@
       btn.innerHTML = '<div class="spinner"></div> Sending...';
       btn.disabled = true;
 
-      // Simulating heavy firebase storage upload for now (just keeping reference name to match admin UI spec)
-      setTimeout(() => {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const base64Data = e.target.result;
         driverData.documents[docId] = {
           status: 'Pending Review',
           fileName: file.files[0].name,
+          fileData: base64Data,
           expDate: dVal || null,
           lastUpdated: new Date().toISOString()
         };
@@ -1433,7 +1475,8 @@
           btn.innerHTML = 'Commit Record';
           btn.disabled = false;
         });
-      }, 500);
+      };
+      reader.readAsDataURL(file.files[0]);
     }
 
     // Profile
@@ -1444,7 +1487,8 @@
         address: document.getElementById('prof-address').value.trim(),
         vMake: document.getElementById('prof-vmake').value.trim(),
         vModel: document.getElementById('prof-vmodel').value.trim(),
-        vPlate: document.getElementById('prof-vplate').value.trim()
+        vPlate: document.getElementById('prof-vplate').value.trim(),
+        plateType: document.getElementById('prof-type').value.trim()
       };
 
       const btn = document.getElementById('btn-save-profile');
@@ -1463,6 +1507,78 @@
       t.textContent = msg;
       t.classList.add('show');
       setTimeout(() => t.classList.remove('show'), 3000);
+    }
+
+    // Active Ride Map & Completion
+    let currentActiveRideId = null;
+    function openActiveRide(rideId) {
+      const b = bksCache.find(x => x.id === rideId);
+      if(!b) return;
+      currentActiveRideId = rideId;
+      document.getElementById('ar-name').textContent = b.name;
+      document.getElementById('ar-service').textContent = b.service;
+      document.getElementById('ar-phone').textContent = b.phone || 'N/A';
+      document.getElementById('ar-phone-link').href = b.phone ? 'tel:' + b.phone.replace(/\D/g,'') : '#';
+      document.getElementById('ar-pickup').textContent = b.pickup;
+      document.getElementById('ar-dest').textContent = b.destination;
+      
+      const pName = driverData.profile.name ? driverData.profile.name.split(' ')[0] : 'Driver';
+      const omw = encodeURIComponent(`Hi ${b.name}, your Seacoast RVIP driver ${pName} is on the way.`);
+      const arr = encodeURIComponent(`Hi ${b.name}, your Seacoast RVIP driver ${pName} has arrived at the pickup location.`);
+      document.getElementById('sms-omw').href = b.phone ? `sms:${b.phone.replace(/\D/g,'')}?&body=${omw}` : '#';
+      document.getElementById('sms-arr').href = b.phone ? `sms:${b.phone.replace(/\D/g,'')}?&body=${arr}` : '#';
+
+      switchTab('active-ride');
+
+      // Draw route
+      if(!map) {
+         map = new google.maps.Map(document.getElementById('ride-map'), {
+            zoom: 12,
+            disableDefaultUI: true,
+            zoomControl: true,
+            center: { lat: 43.0718, lng: -70.7626 } // Portsmouth NH fallback
+         });
+         if(directionsRenderer) directionsRenderer.setMap(map);
+      }
+      
+      if(directionsService) {
+        directionsService.route({
+          origin: b.pickup,
+          destination: b.destination,
+          travelMode: google.maps.TravelMode.DRIVING
+        }, (result, status) => {
+          if(status === 'OK') {
+             directionsRenderer.setDirections(result);
+          } else {
+             document.getElementById('ride-map').innerHTML = 'Map route unavailable.';
+          }
+        });
+      }
+    }
+
+    async function completeTrip() {
+      if(!currentActiveRideId) return;
+      if(!confirm('Acknowledge: Are you sure this run is fully completed? This will execute pending operations at HQ.')) return;
+      
+      const btn = document.getElementById('btn-complete-trip');
+      btn.innerHTML = '<div class="spinner"></div> Syncing...';
+      btn.disabled = true;
+
+      try {
+        await db.collection('bookings').doc(currentActiveRideId).update({
+          status: 'Completed',
+          driverStatus: 'Completed',
+          completedAt: new Date().toISOString()
+        });
+        showToast('Run Authorized as Complete. Syncing...');
+        switchTab('dashboard');
+      } catch(e) {
+        showToast('Error syncing complete: ' + e.message);
+      } finally {
+        btn.innerHTML = '<span class="material-symbols-outlined">check_circle</span> Complete Trip';
+        btn.disabled = false;
+        currentActiveRideId = null;
+      }
     }
 
     window.addEventListener('DOMContentLoaded', init);
