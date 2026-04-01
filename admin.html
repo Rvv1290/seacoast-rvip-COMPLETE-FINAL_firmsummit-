@@ -2140,11 +2140,11 @@
         var bdg = 'brd';
         if(st==='Approved') bdg='bgr'; else if(st==='Pending Review') bdg='byw';
 
-        var typeMap = { dl:'Driver License', reg:'Vehicle Reg', ins:'Livery Insurance', photo:'Plate Photo', port:'Massport', w9:'W-9 Form', contract:'Agreement'};
+        var typeMap = { dl:'Driver License', reg:'Vehicle Reg', ins:'Commercial Insurance Policy', photo:'Plate Photo', port:'Massport', w9:'W-9 Form', contract:'Driver Service Agreement'};
         
         var actBtns = '';
         if (docObj.fileName) {
-          actBtns = '<button onclick="compUpdate(\''+docId+'\',\'Approved\')" class="btn bgr" style="padding:.2rem .4rem;font-size:10px">Approve</button>' +
+          actBtns = '<button onclick="compUpdate(\''+docId+'\',\'Approved\')" class="btn bgr" style="padding:.2rem .4rem;font-size:10px">Verify</button>' +
                     '<button onclick="compUpdate(\''+docId+'\',\'Rejected\')" class="btn brd" style="padding:.2rem .4rem;font-size:10px;margin-left:4px">Reject</button>';
         } else {
           actBtns = '<span style="font-size:.7rem;color:#aaa">Awaiting Upload</span>';
