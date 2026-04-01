@@ -989,9 +989,9 @@
       { id: 'reg', name: 'Vehicle Registration', reqDate: true },
       { id: 'ins', name: 'Commercial Insurance Policy', reqDate: true },
       { id: 'photo', name: 'Livery Plate Configuration', reqDate: false, liveryOnly: true, optional: true },
-      { id: 'port', name: 'Massport Clearance', reqDate: true, liveryOnly: true, optional: true },
+      { id: 'port', name: 'Massport Clearance', reqDate: true, optional: true },
       { id: 'w9', name: 'W-9 Form', reqDate: false },
-      { id: 'contract', name: 'Driver Service Agreement', reqDate: false }
+      { id: 'contract', name: 'Driver Service Agreement', reqDate: false, optional: true }
     ];
 
     function getActiveDocs() {
@@ -1455,7 +1455,7 @@
         if (req.id === 'contract') {
           // DocuSign integration button for Agreement
           if (d.status === 'Approved' || d.status === 'Pending Review') {
-            actBtn = '<a href="https://docusign.com" target="_blank" class="btn success" style="padding:0.4rem 0.8rem;text-decoration:none;font-size:0.75rem;width:auto"><span class="material-symbols-outlined" style="font-size:14px">check</span> Signed</a>';
+            actBtn = '<a href="https://www.docusign.net/Member/PowerFormSigning.aspx?PowerFormId=d10707c4-cc59-8ee5-813f-e7715695ad09" target="_blank" class="btn success" style="padding:0.4rem 0.8rem;text-decoration:none;font-size:0.75rem;width:auto"><span class="material-symbols-outlined" style="font-size:14px">check</span> Signed</a>';
           } else {
             actBtn = '<button class="btn gold" style="padding:0.4rem 0.8rem;font-size:0.75rem;box-shadow:none" onclick="signDocuSign()">Sign Agreement</button>';
           }
@@ -1481,7 +1481,7 @@
     function signDocuSign() {
       // Logic for the driver signing their agreement via a DocuSign URL.
       // We simulate that DocuSign immediately reports completion to Firebase for demonstration to the admin
-      window.open("https://docusign.com/seacoast-rvip-driver-service-agreement", "_blank");
+      window.open("https://www.docusign.net/Member/PowerFormSigning.aspx?PowerFormId=d10707c4-cc59-8ee5-813f-e7715695ad09", "_blank");
 
       // We simulate that DocuSign immediately reports completion to Firebase for demonstration to the admin
       if (confirm("Did you complete the DocuSign agreement in the new tab? Clicking OK will send your signature record to Admin.")) {
