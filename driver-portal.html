@@ -785,24 +785,10 @@
               style="padding:0.4rem 0.8rem;font-size:0.75rem;width:auto;border-color:var(--accent);color:var(--primary)"
               onclick="switchTab('market')">Browse Open Market</button>
           </div>
-          <div style="overflow-x:auto;">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Date & Time</th>
-                  <th>Pickup</th>
-                  <th>Destination</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody id="dash-rides-upcoming">
-                <tr>
-                  <td colspan="4" style="text-align:center;color:#888;padding:2rem">
-                    <div class="spinner"></div> Synchronizing with dispatch...
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+          <div id="dash-rides-upcoming" style="display:flex;flex-direction:column;gap:1rem;">
+            <div style="text-align:center;color:#888;padding:2rem">
+              <div class="spinner"></div> Synchronizing with dispatch...
+            </div>
           </div>
         </div>
       </div>
@@ -1306,20 +1292,65 @@
 
     function renderUpcomingDashboard() {
       var myRides = bksCache.filter(b => b.driverId === currentUser.uid && b.status !== 'Cancelled' && b.status !== 'Completed');
-      const tbody = document.getElementById('dash-rides-upcoming');
+      const container = document.getElementById('dash-rides-upcoming');
+
       if (!myRides.length) {
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:2rem;color:#6b7280;font-size:0.9rem">You currently hold no active assignments.<br><br><button class="btn gold outline" style="width:auto" onclick="switchTab(\'market\')">View Opportunities</button></td></tr>';
+        container.innerHTML = '<div style="padding:2.5rem;text-align:center;color:#6b7280;font-size:0.9rem;background:#f9fafb;border-radius:6px;border:1px dashed var(--border)"><span class="material-symbols-outlined" style="font-size:2.5rem;color:#d4af37;display:block;margin-bottom:12px">event_available</span>You currently hold no active assignments.<br><br><button class="btn gold outline" style="width:auto" onclick="switchTab(\'market\')">View Opportunities</button></div>';
         return;
       }
+
+      // Sort by date ascending (soonest first)
+      myRides.sort((a, b) => new Date(a.date + ' ' + (a.time||'')) - new Date(b.date + ' ' + (b.time||'')));
+
       let h = '';
       myRides.forEach(b => {
-        h += `<tr style="cursor:pointer" onclick="openActiveRide('${b.id}')" title="Click to view Active Run map and details">
-          <td style="font-weight:600">${escapeHtml(b.date + ' ' + (b.time || ''))}</td>
-          <td>${escapeHtml(b.pickup)}</td>
-          <td>${escapeHtml(b.destination)}</td>
-          <td><span class="badge ${b.status === 'Paid' ? 'approved' : 'pending'}">${escapeHtml(b.status)}</span></td></tr>`;
+        const navUrl = 'https://maps.google.com/maps?daddr=' + encodeURIComponent(b.pickup) + '&dirflg=d';
+        const statusCss = b.status === 'Paid' ? 'approved' : 'pending';
+        const mapSrc = (b.pickup && b.destination)
+          ? 'https://maps.google.com/maps?saddr=' + encodeURIComponent(b.pickup) + '&daddr=' + encodeURIComponent(b.destination) + '&output=embed'
+          : (b.pickup ? 'https://maps.google.com/maps?q=' + encodeURIComponent(b.pickup) + '&output=embed' : '');
+
+        h += `
+          <div class="card" style="padding:0;overflow:hidden;border-left:4px solid var(--accent);margin-bottom:0">
+            <!-- Map at top -->
+            ${mapSrc ? `<div style="height:170px;overflow:hidden;border-bottom:1px solid var(--border)"><iframe src="${mapSrc}" width="100%" height="100%" style="border:0;display:block;pointer-events:none" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe></div>` : ''}
+            <!-- Ride Info -->
+            <div style="padding:1rem">
+              <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:0.5rem;margin-bottom:0.75rem">
+                <div>
+                  <div style="font-weight:700;font-size:1rem;color:var(--primary);margin-bottom:4px">${escapeHtml(b.service || 'Ride')}</div>
+                  <div style="font-size:0.8rem;color:var(--text-light);display:flex;align-items:center;gap:5px">
+                    <span class="material-symbols-outlined" style="font-size:15px;color:var(--accent)">schedule</span>
+                    <strong>${escapeHtml(b.date + (b.time ? ' · ' + b.time : ''))}</strong>
+                  </div>
+                </div>
+                <span class="badge ${statusCss}">${escapeHtml(b.status)}</span>
+              </div>
+              <div style="font-size:0.82rem;color:var(--text);margin-bottom:0.35rem;display:flex;align-items:center;gap:6px">
+                <span class="material-symbols-outlined" style="font-size:16px;color:#10b981">trip_origin</span>
+                <span>${escapeHtml(b.pickup)}</span>
+              </div>
+              <div style="font-size:0.82rem;color:var(--text);margin-bottom:1rem;display:flex;align-items:center;gap:6px">
+                <span class="material-symbols-outlined" style="font-size:16px;color:#ef4444">flag</span>
+                <span>${escapeHtml(b.destination)}</span>
+              </div>
+              <!-- Action Buttons -->
+              <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+                <a href="${navUrl}" target="_blank"
+                  style="flex:1;min-width:160px;display:inline-flex;align-items:center;justify-content:center;gap:6px;background:#000;color:#fff;padding:0.65rem 1rem;border-radius:4px;font-weight:700;font-size:0.82rem;text-decoration:none;letter-spacing:0.03em">
+                  <span class="material-symbols-outlined" style="font-size:17px">navigation</span>
+                  Navigate to Pickup
+                </a>
+                <button onclick="openActiveRide('${b.id}')" class="btn outline"
+                  style="flex:1;min-width:120px;border:1px solid var(--border);color:var(--primary);background:#fff;font-size:0.82rem">
+                  <span class="material-symbols-outlined" style="font-size:16px">open_in_full</span>
+                  Full Run Details
+                </button>
+              </div>
+            </div>
+          </div>`;
       });
-      tbody.innerHTML = h;
+      container.innerHTML = h;
     }
 
     async function claimRide(rideId) {
