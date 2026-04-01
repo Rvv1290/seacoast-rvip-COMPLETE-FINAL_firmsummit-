@@ -1016,15 +1016,21 @@
       db = firebase.firestore();
     }
 
-    function getStaticMapUrl(pickup, dest) {
+    function getMapEmbedHtml(pickup, dest, height) {
       if(!pickup) return '';
-      let url = 'https://maps.googleapis.com/maps/api/staticmap?size=600x300&scale=2&maptype=roadmap&markers=color:green|label:A|' + encodeURIComponent(pickup);
-      if(dest) {
-        url += '&markers=color:red|label:B|' + encodeURIComponent(dest);
-        url += '&path=color:0xd4af37|weight:4|' + encodeURIComponent(pickup) + '|' + encodeURIComponent(dest);
+      var h = height || '150px';
+      var key = 'AIzaSyDGel0ktZDQYcdlOuoZo4bAqZWCuGvOVbc';
+      var src;
+      if(dest && dest.trim()) {
+        src = 'https://www.google.com/maps/embed/v1/directions?key=' + key +
+              '&origin=' + encodeURIComponent(pickup) +
+              '&destination=' + encodeURIComponent(dest) +
+              '&mode=driving';
+      } else {
+        src = 'https://www.google.com/maps/embed/v1/place?key=' + key +
+              '&q=' + encodeURIComponent(pickup);
       }
-      url += '&key=AIzaSyDGel0ktZDQYcdlOuoZo4bAqZWCuGvOVbc';
-      return url;
+      return '<iframe src="' + src + '" width="100%" height="' + h + '" style="border:0;display:block" allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>';
     }
 
     // -------------------------
@@ -1291,8 +1297,8 @@
               <button onclick="claimRide('${b.id}')" class="btn ${isSuspended ? '' : 'gold'}" style="width:100%;margin-top:10px" ${isSuspended ? 'disabled' : ''}>${isSuspended ? 'Not Active' : 'Secure Claim'}</button>
             </div>
           </div>
-          <div style="width:100%;height:150px;border-radius:6px;background:#f3f4f6;overflow:hidden;border:1px solid var(--border)">
-             <img src="${getStaticMapUrl(b.pickup, b.destination)}" style="width:100%;height:100%;object-fit:cover" alt="Map Route View">
+          <div style="width:100%;height:160px;border-radius:6px;background:#f3f4f6;overflow:hidden;border:1px solid var(--border)">
+             ${getMapEmbedHtml(b.pickup, b.destination, '160px')}
           </div>
         </div>`;
       });
@@ -1594,8 +1600,8 @@
 
       switchTab('active-ride');
 
-      // Draw route with simple flawless static Map Renderer
-      document.getElementById('ride-map').innerHTML = `<img src="${getStaticMapUrl(b.pickup, b.destination)}" style="width:100%;height:100%;object-fit:cover" alt="Map Route View">`;
+      // Draw route using Google Maps Embed API (free, no billing required)
+      document.getElementById('ride-map').innerHTML = getMapEmbedHtml(b.pickup, b.destination, '100%');
     }
 
     async function completeTrip() {
