@@ -952,8 +952,8 @@
         </div>
       </div>
       <div class="modal-footer">
-        <button class="btn outline" style="width:auto" onclick="closeModal()">Abort</button>
-        <button class="btn gold" style="width:auto" id="btn-upload" onclick="submitUpload()">Commit Record</button>
+        <button class="btn outline" style="width:auto" onclick="closeModal()">Cancel</button>
+        <button class="btn gold" style="width:auto" id="btn-upload" onclick="submitUpload()">Submit</button>
       </div>
     </div>
   </div>
@@ -980,11 +980,11 @@
     const DOC_REQUIREMENTS = [
       { id: 'dl', name: 'Driver’s License', reqDate: true },
       { id: 'reg', name: 'Vehicle Registration', reqDate: true },
-      { id: 'ins', name: 'Livery Insurance', reqDate: true, liveryOnly: true },
+      { id: 'ins', name: 'Commercial Insurance Policy', reqDate: true },
       { id: 'photo', name: 'Livery Plate Configuration', reqDate: false, liveryOnly: true },
       { id: 'port', name: 'Massport Clearance', reqDate: true, liveryOnly: true },
       { id: 'w9', name: 'W-9 Form', reqDate: false },
-      { id: 'contract', name: 'Vendor Agreement', reqDate: false }
+      { id: 'contract', name: 'Driver Service Agreement', reqDate: false }
     ];
 
     function getActiveDocs() {
@@ -1522,7 +1522,7 @@
           closeModal();
           evaluateCompliance();
           renderDocuments();
-          btn.innerHTML = 'Commit Record';
+          btn.innerHTML = 'Submit';
           btn.disabled = false;
         });
       };
