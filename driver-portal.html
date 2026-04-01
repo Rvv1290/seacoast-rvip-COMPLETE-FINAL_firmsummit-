@@ -1114,7 +1114,11 @@
           showToast('Identity Securely Generated');
         } else {
           driverData = snap.data();
-          // Patch schema
+          
+          // Patch schema for older legacy accounts
+          if (!driverData.profile) driverData.profile = { name: driverData.name || '', phone: phoneId, address: '', vMake: '', vModel: '', vPlate: '', plateType: '' };
+          if (!driverData.documents) driverData.documents = {};
+
           DOC_REQUIREMENTS.forEach(req => {
             if (!driverData.documents[req.id]) { driverData.documents[req.id] = { status: 'Missing' }; }
           });
@@ -1642,4 +1646,29 @@
       if(!currentActiveRideId) return;
       if(!confirm('Acknowledge: Are you sure this run is fully completed? This will execute pending operations at HQ.')) return;
       
-      c
+      const btn = document.getElementById('btn-complete-trip');
+      btn.innerHTML = '<div class="spinner"></div> Syncing...';
+      btn.disabled = true;
+
+      try {
+        await db.collection('bookings').doc(currentActiveRideId).update({
+          status: 'Completed',
+          driverStatus: 'Completed',
+          completedAt: new Date().toISOString()
+        });
+        showToast('Run Authorized as Complete. Syncing...');
+        switchTab('dashboard');
+      } catch(e) {
+        showToast('Error syncing complete: ' + e.message);
+      } finally {
+        btn.innerHTML = '<span class="material-symbols-outlined">check_circle</span> Complete Trip';
+        btn.disabled = false;
+        currentActiveRideId = null;
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+
+</html>
