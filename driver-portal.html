@@ -1016,6 +1016,17 @@
       db = firebase.firestore();
     }
 
+    function getStaticMapUrl(pickup, dest) {
+      if(!pickup) return '';
+      let url = 'https://maps.googleapis.com/maps/api/staticmap?size=600x300&scale=2&maptype=roadmap&markers=color:green|label:A|' + encodeURIComponent(pickup);
+      if(dest) {
+        url += '&markers=color:red|label:B|' + encodeURIComponent(dest);
+        url += '&path=color:0xd4af37|weight:4|' + encodeURIComponent(pickup) + '|' + encodeURIComponent(dest);
+      }
+      url += '&key=AIzaSyDGel0ktZDQYcdlOuoZo4bAqZWCuGvOVbc';
+      return url;
+    }
+
     // -------------------------
     // AUTHENTICATION LOGIC
     // -------------------------
@@ -1280,46 +1291,13 @@
               <button onclick="claimRide('${b.id}')" class="btn ${isSuspended ? '' : 'gold'}" style="width:100%;margin-top:10px" ${isSuspended ? 'disabled' : ''}>${isSuspended ? 'Not Active' : 'Secure Claim'}</button>
             </div>
           </div>
-          <div id="map-market-${b.id}" style="width:100%;height:150px;border-radius:6px;background:#f3f4f6;overflow:hidden;border:1px solid var(--border)"></div>
+          <div style="width:100%;height:150px;border-radius:6px;background:#f3f4f6;overflow:hidden;border:1px solid var(--border)">
+             <img src="${getStaticMapUrl(b.pickup, b.destination)}" style="width:100%;height:100%;object-fit:cover" alt="Map Route View">
+          </div>
         </div>`;
       });
       el.innerHTML = h;
 
-      // Render static Google Maps for each item
-      setTimeout(() => {
-        if (typeof google === 'undefined' || !google.maps) return;
-        available.forEach(b => {
-          var mapEl = document.getElementById('map-market-' + b.id);
-          if (!mapEl) return;
-          
-          var m = new google.maps.Map(mapEl, {
-            zoom: 13,
-            disableDefaultUI: true,
-            gestureHandling: 'none',
-            clickableIcons: false
-          });
-
-          if (b.pickup && b.destination) {
-            var ds = new google.maps.DirectionsService();
-            var dr = new google.maps.DirectionsRenderer({
-              map: m, suppressMarkers: false, polylineOptions: { strokeColor: '#d4af37', strokeWeight: 5 }
-            });
-            ds.route({
-              origin: b.pickup, destination: b.destination, travelMode: 'DRIVING'
-            }, function(res, status) {
-              if (status === 'OK') dr.setDirections(res);
-            });
-          } else if (b.pickup) {
-            var geocoder = new google.maps.Geocoder();
-            geocoder.geocode({ address: b.pickup }, function(results, status) {
-              if (status === 'OK' && results[0]) {
-                m.setCenter(results[0].geometry.location);
-                new google.maps.Marker({ map: m, position: results[0].geometry.location });
-              }
-            });
-          }
-        });
-      }, 200);
     }
 
     function renderUpcomingDashboard() {
@@ -1616,30 +1594,8 @@
 
       switchTab('active-ride');
 
-      // Draw route
-      if(!map) {
-         map = new google.maps.Map(document.getElementById('ride-map'), {
-            zoom: 12,
-            disableDefaultUI: true,
-            zoomControl: true,
-            center: { lat: 43.0718, lng: -70.7626 } // Portsmouth NH fallback
-         });
-         if(directionsRenderer) directionsRenderer.setMap(map);
-      }
-      
-      if(directionsService) {
-        directionsService.route({
-          origin: b.pickup,
-          destination: b.destination,
-          travelMode: google.maps.TravelMode.DRIVING
-        }, (result, status) => {
-          if(status === 'OK') {
-             directionsRenderer.setDirections(result);
-          } else {
-             document.getElementById('ride-map').innerHTML = 'Map route unavailable.';
-          }
-        });
-      }
+      // Draw route with simple flawless static Map Renderer
+      document.getElementById('ride-map').innerHTML = `<img src="${getStaticMapUrl(b.pickup, b.destination)}" style="width:100%;height:100%;object-fit:cover" alt="Map Route View">`;
     }
 
     async function completeTrip() {
