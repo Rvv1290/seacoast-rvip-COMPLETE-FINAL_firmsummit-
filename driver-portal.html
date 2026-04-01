@@ -1018,20 +1018,23 @@
       document.getElementById('form-otp').style.display = 'none';
       document.getElementById('form-phone').style.display = 'block';
       if (window.recaptchaVerifier) {
-        window.recaptchaVerifier.clear();
+        try { window.recaptchaVerifier.clear(); } catch(e) {}
         window.recaptchaVerifier = null;
       }
+      document.getElementById('recaptcha-container').innerHTML = '';
       initRecaptcha();
     }
 
     function initRecaptcha() {
       if (!window.recaptchaVerifier) {
-        window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
+        document.getElementById('recaptcha-container').innerHTML = '<div id="rc-widget"></div>';
+        window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('rc-widget', {
           'size': 'invisible',
           'callback': (response) => {
             // reCAPTCHA solved automatically
           }
         });
+        window.recaptchaVerifier.render().catch(err => console.log('Recaptcha render error', err));
       }
     }
 
