@@ -521,18 +521,50 @@ function goTab(id, el){
 // ─── LOAD TRIPS ───
 function loadTrips(){
   if(!db||!sess) return;
-  db.collection('bookings').where('corporateAccountId','==',sess.accountId).orderBy('date','desc').get().then(function(snap){
+  var accountId = sess.accountId || '';
+  var company = sess.company || '';
+
+  function processSnap(snap){
     _trips=[];
-    snap.forEach(function(d){_trips.push(d.data());});
+    snap.forEach(function(d){
+      var td = d.data();
+      td._docId = d.id;
+      _trips.push(td);
+    });
+    // Remove duplicates by id
+    var seen = {};
+    _trips = _trips.filter(function(t){
+      var key = t.id || t._docId;
+      if(seen[key]) return false;
+      seen[key] = true;
+      return true;
+    });
+    _trips.sort(function(a,b){ return new Date(b.date) - new Date(a.date); });
     renderDashUpcoming();
     renderTrips();
     renderPayments();
     calcStats();
     buildCal();
-  }).catch(function(e){
-    // Fallback: no data
-    renderDashUpcoming();
-  });
+  }
+
+  if(accountId){
+    db.collection('bookings').where('corporateAccountId','==',accountId).orderBy('date','desc').get()
+      .then(function(snap){
+        if(!snap.empty){ processSnap(snap); }
+        else if(company){
+          // Fallback: query by company name
+          db.collection('bookings').where('corporateCompany','==',company).orderBy('date','desc').get()
+            .then(processSnap).catch(function(){ renderDashUpcoming(); });
+        }
+      }).catch(function(err){
+        // Index may be missing — try without orderBy
+        db.collection('bookings').where('corporateAccountId','==',accountId).get()
+          .then(processSnap).catch(function(){ renderDashUpcoming(); });
+      });
+  } else if(company){
+    db.collection('bookings').where('corporateCompany','==',company).get()
+      .then(processSnap).catch(function(){ renderDashUpcoming(); });
+  }
 }
 
 function calcStats(){

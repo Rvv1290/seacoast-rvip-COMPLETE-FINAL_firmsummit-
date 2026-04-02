@@ -243,8 +243,17 @@ function sendCode(){
   db.collection('corporate_accounts').where('status','in',['Approved','Active']).get().then(function(snap){
     var found=null;
     snap.forEach(function(d){
-      var a=d.data(),p=(a.contactPhone||'').replace(/\D/g,'');
-      if(p===raw||p.slice(-10)===raw)found=a;
+      var a=d.data();
+      a.id = a.id || d.id; // always ensure id is set
+      var p=(a.contactPhone||'').replace(/\D/g,'');
+      // Check primary contact phone
+      if(p===raw||p.slice(-10)===raw){found=a;return;}
+      // Also check members array
+      var members=a.members||[];
+      for(var i=0;i<members.length;i++){
+        var mp=(members[i].phone||'').replace(/\D/g,'');
+        if(mp===raw||mp.slice(-10)===raw){found=a;return;}
+      }
     });
     btn.textContent='Send Verification Code →';btn.disabled=false;
     if(!found){
@@ -308,7 +317,13 @@ function verifyCode(){
     if(Date.now()>d.expiry){fail('Code expired. Please request a new one.');return;}
     db.collection('corp_auth_codes').doc(_ph).delete();
     db.collection('corporate_accounts').doc(d.accountId).get().then(function(ad){
-      grantAccess(ad.exists?ad.data():_acc);
+      if(ad.exists){
+        var accData=ad.data();
+        accData.id = accData.id || ad.id; // ensure id is always set
+        grantAccess(accData);
+      } else {
+        grantAccess(_acc);
+      }
     }).catch(function(){grantAccess(_acc);});
   }).catch(function(){tryLocal();});
 }
