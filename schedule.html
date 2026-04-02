@@ -146,7 +146,8 @@ function saveBookingToFirebase(data) {
     notes:       data.notes       || '',
     status:      'Pending',
     source:      'website-form',
-    createdAt:   new Date().toISOString()
+    createdAt:   new Date().toISOString(),
+    tosAcceptedAt: data.tosAcceptedAt || null
   };
   window._db.collection('bookings').doc(id).set(doc)
     .then(function(){ console.log('Booking saved to Firebase:', doc.code); })
@@ -184,6 +185,7 @@ function saveBookingToFirebase(data) {
     <a href="contact.html" style="font-family:Inter,sans-serif;font-size:0.8rem;letter-spacing:0.05em;text-transform:uppercase;color:#888;text-decoration:none;font-weight:500;transition:color 0.2s" onmouseover="this.style.color='#775a19'" onmouseout="this.style.color='#888'">Contact</a>
     <a href="quote.html" style="font-family:Inter,sans-serif;font-size:0.8rem;letter-spacing:0.05em;text-transform:uppercase;color:#775a19;text-decoration:none;font-weight:600;transition:color 0.2s;border:1px solid #775a19;padding:0.4rem 0.875rem" onmouseover="this.style.background='#775a19';this.style.color='white'" onmouseout="this.style.background='transparent';this.style.color='#775a19'">Get Quote</a>
     <a href="account.html" style="font-family:Inter,sans-serif;font-size:0.8rem;letter-spacing:0.05em;text-transform:uppercase;color:#888;text-decoration:none;font-weight:500;transition:color 0.2s;display:inline-flex;align-items:center;gap:4px" onmouseover="this.style.color='#775a19'" onmouseout="this.style.color='#888'"><span class="material-symbols-outlined" style="font-size:16px">person</span>My Account</a>
+    <a href="corporate.html" style="font-family:Inter,sans-serif;font-size:0.8rem;letter-spacing:0.05em;text-transform:uppercase;color:#888;text-decoration:none;font-weight:500;transition:color 0.2s;display:inline-flex;align-items:center;gap:4px" onmouseover="this.style.color='#775a19'" onmouseout="this.style.color='#888'"><span class="material-symbols-outlined" style="font-size:16px">corporate_fare</span>Corporate</a>
     <a href="schedule.html" style="background:#000;color:white;padding:0.625rem 1.5rem;font-family:Inter,sans-serif;font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;text-decoration:none;border-bottom:2px solid #775a19;transition:opacity 0.2s" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">Book Now</a>
   </div>
 
@@ -207,6 +209,7 @@ function saveBookingToFirebase(data) {
   <a href="about.html" onclick="toggleMenu()" style="font-family:Inter,sans-serif;font-size:1.1rem;font-weight:600;color:white;text-decoration:none;padding:0.875rem 0;border-bottom:1px solid rgba(255,255,255,0.08);display:block;text-transform:uppercase;letter-spacing:0.08em" onmouseover="this.style.color='#775a19'" onmouseout="this.style.color='white'">About</a>
   <a href="contact.html" onclick="toggleMenu()" style="font-family:Inter,sans-serif;font-size:1.1rem;font-weight:600;color:white;text-decoration:none;padding:0.875rem 0;border-bottom:1px solid rgba(255,255,255,0.08);display:block;text-transform:uppercase;letter-spacing:0.08em" onmouseover="this.style.color='#775a19'" onmouseout="this.style.color='white'">Contact</a>
   <a href="account.html" onclick="toggleMenu()" style="font-family:Inter,sans-serif;font-size:1.1rem;font-weight:600;color:white;text-decoration:none;padding:0.875rem 0;border-bottom:1px solid rgba(255,255,255,0.08);display:block;text-transform:uppercase;letter-spacing:0.08em" onmouseover="this.style.color='#775a19'" onmouseout="this.style.color='white'">My Account</a>
+  <a href="corporate.html" onclick="toggleMenu()" style="font-family:Inter,sans-serif;font-size:1.1rem;font-weight:600;color:white;text-decoration:none;padding:0.875rem 0;border-bottom:1px solid rgba(255,255,255,0.08);display:block;text-transform:uppercase;letter-spacing:0.08em" onmouseover="this.style.color='#775a19'" onmouseout="this.style.color='white'">Corporate</a>
   <a href="quote.html" onclick="toggleMenu()" style="font-family:Inter,sans-serif;font-size:1.1rem;font-weight:600;color:white;text-decoration:none;padding:0.875rem 0;border-bottom:1px solid rgba(255,255,255,0.08);display:block;text-transform:uppercase;letter-spacing:0.08em" onmouseover="this.style.color='#775a19'" onmouseout="this.style.color='white'">Get a Quote</a>
   
   <div style="margin-top:2rem">
@@ -306,6 +309,15 @@ CONFIDENTIALITY NOTICE: This communication is intended solely for the named reci
       <input type="hidden" name="Estimated Duration" id="hid-duration"/>
       <input type="hidden" name="Passengers" id="hid-pass" value="1"/>
       <input type="hidden" name="Luggage" id="hid-lug" value="0"/>
+
+      <!-- Corporate Account Banner -->
+      <div style="background:#fdfaf4;border:1px solid #e8c97a;border-left:4px solid #775a19;padding:1rem 1.25rem;margin-bottom:2rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap">
+        <div>
+          <div style="font-family:'Work Sans',sans-serif;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#775a19;margin-bottom:4px">💼 Booking for a Business?</div>
+          <div style="font-family:Inter,sans-serif;font-size:0.82rem;color:#444748">Corporate accounts get NET-30 invoicing, priority dispatch &amp; monthly statements.</div>
+        </div>
+        <a href="corporate.html" style="background:#000;color:white;padding:0.5rem 1.25rem;font-family:'Work Sans',sans-serif;font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;text-decoration:none;border-bottom:2px solid #775a19;white-space:nowrap;flex-shrink:0">Apply →</a>
+      </div>
 
       <!-- STEP 01 -->
       <div class="mb-10">
@@ -513,6 +525,80 @@ CONFIDENTIALITY NOTICE: This communication is intended solely for the named reci
       <!-- ERROR -->
       <div id="err-msg" class="hidden mb-4 p-4 bg-red-50 border border-red-200 text-red-700 text-sm rounded">
         Something went wrong. Please call us at <strong>(978) 255-3140</strong>
+      </div>
+
+      <!-- TERMS OF SERVICE ACCORDION -->
+      <div style="margin-bottom:1.5rem;border:1px solid #e2e2e2">
+        <button type="button" id="tos-toggle" onclick="toggleTos()"
+          style="width:100%;background:#f3f3f3;border:0;padding:1rem 1.25rem;font-family:'Work Sans',sans-serif;font-size:0.73rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;text-align:left;cursor:pointer;display:flex;justify-content:space-between;align-items:center;color:#1a1c1c">
+          <span style="display:flex;align-items:center;gap:8px"><span style="font-size:1rem">📋</span> Terms of Service &amp; Cancellation Policy</span>
+          <span id="tos-arrow" style="font-size:0.72rem;color:#775a19;white-space:nowrap">▼ Read &amp; Accept</span>
+        </button>
+        <div id="tos-content" style="display:none;background:#fff;border-top:2px solid #775a19;padding:1.25rem 1.5rem;max-height:280px;overflow-y:auto;font-family:Inter,sans-serif;font-size:0.78rem;line-height:1.75;color:#444748">
+          <p style="font-family:'Times New Roman',serif;font-size:1rem;font-weight:700;color:#1a1c1c;margin-bottom:0.25rem">Seacoast RVIP LLC — Terms of Service</p>
+          <p style="font-size:0.7rem;color:#888;margin-bottom:1.25rem">Last updated: April 2, 2025</p>
+
+          <p style="font-weight:700;color:#1a1c1c;margin-bottom:0.35rem">1. Acceptance of Terms</p>
+          <p style="margin-bottom:1rem">By submitting a booking request through this website, you agree to be bound by these Terms of Service. If you do not agree, do not submit a booking. These Terms apply to all clients, passengers, and visitors of seacoastrvip.com.</p>
+
+          <p style="font-weight:700;color:#1a1c1c;margin-bottom:0.35rem">2. Our Service</p>
+          <p style="margin-bottom:1rem">Seacoast RVIP LLC provides pre-arranged, reservation-only black car transportation in the NH Seacoast area and surrounding regions, including airport transfers, evening outings, and casino runs. All rides must be booked in advance. We do not offer on-demand or street-hail transportation.</p>
+
+          <p style="font-weight:700;color:#1a1c1c;margin-bottom:0.35rem">3. Reservations and Confirmation</p>
+          <p style="margin-bottom:1rem">A reservation is not confirmed until you receive written confirmation by email or text. You are responsible for ensuring all booking details are accurate. Change requests must be made at least 24 hours before pickup and are subject to availability.</p>
+
+          <p style="font-weight:700;color:#1a1c1c;margin-bottom:0.35rem">4. Pricing and Payment</p>
+          <p style="margin-bottom:1rem">All fares are flat-rate and confirmed at the time of booking. We do not charge surge pricing. Payment is accepted by credit card (Square) and Venmo. Full payment is due at or before the time of service. Additional charges may apply for extended wait times, vehicle cleaning, or tolls and airport fees not included in your quoted fare.</p>
+
+          <p style="font-weight:700;color:#1a1c1c;margin-bottom:0.35rem">5. Cancellation &amp; Refund Policy</p>
+          <div style="background:#f9f9f9;border-left:3px solid #775a19;padding:0.75rem 1rem;margin-bottom:1rem">
+            <p style="margin-bottom:0.35rem">✅ <strong>24+ hours before pickup</strong> — Full refund of any deposit paid.</p>
+            <p style="margin-bottom:0.35rem">⚠️ <strong>12–24 hours before pickup</strong> — 50% of the confirmed fare is due as a cancellation fee.</p>
+            <p style="margin-bottom:0.35rem">❌ <strong>Less than 12 hours before pickup</strong> — 100% of the confirmed fare is due. No refund.</p>
+            <p style="margin-bottom:0.35rem">❌ <strong>No-show</strong> — If you are not at the pickup location within 15 minutes of your scheduled time and we have not been notified, 100% of the fare is due.</p>
+            <p style="margin-bottom:0">✅ <strong>Cancellation by Seacoast RVIP LLC</strong> — Full refund of any amount paid.</p>
+          </div>
+
+          <p style="font-weight:700;color:#1a1c1c;margin-bottom:0.35rem">6. Passenger Conduct</p>
+          <ul style="margin-bottom:1rem;padding-left:1.25rem">
+            <li style="margin-bottom:0.25rem">Passenger count may not exceed vehicle seating capacity.</li>
+            <li style="margin-bottom:0.25rem">Smoking, vaping, and tobacco use are strictly prohibited.</li>
+            <li style="margin-bottom:0.25rem">Open containers of alcohol are not permitted unless expressly allowed by law.</li>
+            <li style="margin-bottom:0.25rem">No illegal substances or hazardous materials are permitted.</li>
+            <li style="margin-bottom:0.25rem">You are responsible for the conduct of all passengers in your party. Any vehicle damage will be billed to you.</li>
+            <li style="margin-bottom:0.25rem">Our driver may end a ride at any time if passenger behavior poses a safety concern. No refund will be issued.</li>
+          </ul>
+
+          <p style="font-weight:700;color:#1a1c1c;margin-bottom:0.35rem">7. Timeliness</p>
+          <p style="margin-bottom:1rem">We make every effort to arrive on time. We are not liable for delays caused by traffic, weather, road conditions, or circumstances beyond our control. We are not responsible for missed flights resulting from such delays.</p>
+
+          <p style="font-weight:700;color:#1a1c1c;margin-bottom:0.35rem">8. Lost or Damaged Property</p>
+          <p style="margin-bottom:1rem">We are not responsible for personal items left in our vehicles. Damage to our vehicle caused by you or your guests will be assessed and billed directly to you.</p>
+
+          <p style="font-weight:700;color:#1a1c1c;margin-bottom:0.35rem">9. Limitation of Liability</p>
+          <p style="margin-bottom:1rem">To the maximum extent permitted by law, Seacoast RVIP LLC's total liability shall not exceed the fare paid for that specific ride. Drivers are independent contractors, not employees of Seacoast RVIP LLC.</p>
+
+          <p style="font-weight:700;color:#1a1c1c;margin-bottom:0.35rem">10. Privacy</p>
+          <p style="margin-bottom:1rem">We collect your name, phone, email, and ride details solely to provide our services. We do not sell your information to third parties. Booking data is retained for accounting and tax compliance.</p>
+
+          <p style="font-weight:700;color:#1a1c1c;margin-bottom:0.35rem">11. Governing Law</p>
+          <p style="margin-bottom:1rem">These Terms are governed by the laws of the State of New Hampshire. Disputes shall be resolved in the courts of Rockingham County, New Hampshire.</p>
+
+          <p style="font-weight:700;color:#1a1c1c;margin-bottom:0.35rem">12. Updates to These Terms</p>
+          <p style="margin-bottom:0">We may update these Terms at any time. Continued use of our services after any update constitutes acceptance. <a href="terms.html" target="_blank" style="color:#775a19;text-decoration:underline">View full Terms page →</a></p>
+        </div>
+      </div>
+
+      <!-- Required ToS Checkbox -->
+      <div style="margin-bottom:1.75rem;padding:1rem 1.25rem;background:#fdfaf4;border:1.5px solid #775a19">
+        <label style="display:flex;align-items:flex-start;gap:0.875rem;cursor:pointer">
+          <input type="checkbox" id="tos-check" name="Terms Accepted" value="yes" required
+            style="margin-top:3px;width:18px;height:18px;accent-color:#775a19;flex-shrink:0;cursor:pointer">
+          <span style="font-family:Inter,sans-serif;font-size:0.875rem;color:#1a1c1c;line-height:1.55">
+            I have read and agree to <a href="terms.html" target="_blank" style="color:#775a19;font-weight:600;text-decoration:underline">Seacoast RVIP LLC's Terms of Service</a> and <strong>Cancellation Policy</strong>.
+          </span>
+        </label>
+        <input type="hidden" id="tos-timestamp" name="ToS Accepted At" value="">
       </div>
 
       <!-- SUBMIT -->
@@ -865,6 +951,15 @@ document.querySelectorAll('input[name="Payment Method"]').forEach(function(r){
   });
 });
 
+// ToS accordion toggle
+function toggleTos() {
+  var content = document.getElementById('tos-content');
+  var arrow = document.getElementById('tos-arrow');
+  var isOpen = content.style.display === 'block';
+  content.style.display = isOpen ? 'none' : 'block';
+  arrow.textContent = isOpen ? '\u25bc Read & Accept' : '\u25b2 Close';
+}
+
 // Form submit
 function handleSubmit(e) {
   e.preventDefault();
@@ -884,6 +979,10 @@ function handleSubmit(e) {
     btn.disabled = false;
     return;
   }
+
+  // Stamp ToS acceptance timestamp at submission moment
+  var tosTs = document.getElementById('tos-timestamp');
+  if (tosTs) tosTs.value = new Date().toISOString();
 
   btn.textContent = 'Sending...';
   btn.disabled = true;
@@ -958,6 +1057,7 @@ function saveBookingToStorage(code) {
     vehicle: document.querySelector('[name="Vehicle Class"]:checked') ? document.querySelector('[name="Vehicle Class"]:checked').value : 'Black SUV Luxury',
     passengers: document.getElementById('hid-pass') ? document.getElementById('hid-pass').value : '1',
     amount: getEstimatedAmount(),
+    tosAcceptedAt: (document.getElementById('tos-timestamp') && document.getElementById('tos-timestamp').value) ? document.getElementById('tos-timestamp').value : new Date().toISOString(),
     submittedAt: new Date().toISOString()
   };
   localStorage.setItem('booking_' + code, JSON.stringify(data));
