@@ -2308,3 +2308,268 @@
       var bks = getBks().filter(function (b) { return b.driverId === drId && b.status === 'Completed'; });
       var year = prompt('Enter year for ' + d.name + '\'s 1099 Report (e.g., 2026):', new Date().getFullYear());
       if (!year) return;
+
+      bks = bks.filter(function (b) { return (b.date || '').startsWith(year.toString()); });
+      if (!bks.length) { toast('No completed rides found for year ' + year); return; }
+
+      var rate = getDrRate() / 100;
+      var totalPay = 0, totalTips = 0;
+      var rows = [['Date', 'Client', 'Service', 'Fare', 'Driver Commission (' + (rate * 100) + '%)', 'Tips (100%)', 'Total Payout']];
+
+      bks.forEach(function (b) {
+        var pr = parseFloat(b.price) || 0;
+        var tip = parseFloat(b.tip) || 0;
+        var comm = pr * rate;
+        totalPay += comm;
+        totalTips += tip;
+        rows.push([
+          b.date || '', b.name || '', b.service || '',
+          pr.toFixed(2), comm.toFixed(2), tip.toFixed(2), (comm + tip).toFixed(2)
+        ]);
+      });
+
+      rows.push(['', '', '', 'TOTALS', totalPay.toFixed(2), totalTips.toFixed(2), (totalPay + totalTips).toFixed(2)]);
+
+      var csv = rows.map(function (r) { return r.map(function (c) { return '"' + String(c).replace(/"/g, '""') + '"'; }).join(','); }).join('\n');
+      var blob = new Blob([csv], { type: 'text/csv' });
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = '1099-Report-' + d.name.replace(/\s+/g, '-') + '-' + year + '.csv';
+      a.click();
+      toast('1099 Report downloaded!');
+    }
+
+    function delDriver(id) {
+      if (!confirm('Permanently remove this driver from the network?')) return;
+      if (db) db.collection('drivers').doc(id).delete();
+      toast('Driver profile deleted permanently');
+    }
+
+    // ─────────────────────────────────────────────
+    //  COMPLIANCE REVIEW LOGIC (Linked to driver-portal.html)
+    // ─────────────────────────────────────────────
+    function renderCompliance() {
+      var activeDrivers = window.allDriversCache || [];
+      var el = document.getElementById('comp-list');
+      
+      if (!activeDrivers.length) { 
+        el.innerHTML = '<div class="empty">No active driver onboarding profiles found. Wait for a driver to sign up using the portal link.</div>'; 
+        return; 
+      }
+
+      var cOk = 0, cPen = 0, cSus = 0;
+      var h = '';
+
+      activeDrivers.forEach(function(d) {
+        var st = d.status || 'Pending';
+        if(st === 'Approved') cOk++;
+        else if (st === 'Pending') cPen++;
+        else cSus++;
+
+        var bdg = st === 'Approved' ? 'bgr' : (st === 'Pending' ? 'byw' : 'brd');
+
+        h += '<div class="card" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">' +
+          '<div>' +
+            '<div style="font-weight:700;margin-bottom:4px;font-size:1.1rem">' + e(d.name) + ' <span class="bdg ' + bdg + '" style="margin-left:8px">' + st + '</span></div>' +
+            '<div style="font-size:0.8rem;color:#666">' + e(d.email) + (d.phone ? ' · ' + e(d.phone) : '') + '</div>' +
+          '</div>' +
+          '<button onclick="openCompRev(\'' + d.id + '\')" class="btn bo" style="font-size:.75rem;padding:.5rem 1rem">Review Docs</button>' +
+        '</div>';
+      });
+
+      document.getElementById('comp-cnt-ok').textContent = cOk;
+      document.getElementById('comp-cnt-pen').textContent = cPen;
+      document.getElementById('comp-cnt-sus').textContent = cSus;
+      document.getElementById('comp-cnt-tot').textContent = activeDrivers.length;
+
+      el.innerHTML = h;
+    }
+
+    function openCompRev(uid) {
+      curCompUid = uid;
+      var d = (window.allDriversCache || []).find(function(x){return x.id === uid;});
+      if(!d) return;
+
+      document.getElementById('cr-title').textContent = 'Review: ' + e(d.name);
+
+      var tbody = document.getElementById('cr-docs-body');
+      var h = '';
+      
+      var docs = d.documents || {};
+      ['dl', 'reg', 'ins', 'photo', 'port', 'w9', 'contract'].forEach(function(docId) {
+        var docObj = docs[docId] || { status: 'Missing' };
+        var st = docObj.status;
+        var bdg = 'brd';
+        if(st==='Approved') bdg='bgr'; else if(st==='Pending Review') bdg='byw';
+
+        var typeMap = { dl:'Driver License', reg:'Vehicle Reg', ins:'Commercial Insurance Policy', photo:'Plate Photo (Optional)', port:'Massport (Optional)', w9:'W-9 Form', contract:'Driver Service Agreement (Optional)'};
+        
+        var actBtns = '';
+        if (docObj.fileName) {
+          actBtns = '<button onclick="compUpdate(\''+docId+'\',\'Approved\')" class="btn bgr" style="padding:.2rem .4rem;font-size:10px">Verify</button>' +
+                    '<button onclick="compUpdate(\''+docId+'\',\'Rejected\')" class="btn brd" style="padding:.2rem .4rem;font-size:10px;margin-left:4px">Reject</button>';
+        } else {
+          actBtns = '<span style="font-size:.7rem;color:#aaa">Awaiting Upload</span>';
+        }
+
+        h += '<tr>' +
+          '<td style="font-weight:600;font-size:.8rem">' + typeMap[docId] + '</td>' +
+          '<td>' + (docObj.fileName ? '<a href="#" onclick="viewDoc(\''+docId+'\');return false;" style="color:#1d4ed8;font-size:.8rem">'+e(docObj.fileName)+'</a>' : '—') + '</td>' +
+          '<td style="font-size:.8rem">' + (docObj.expDate || '—') + '</td>' +
+          '<td><span class="bdg '+bdg+'">' + st + '</span></td>' +
+          '<td>' + actBtns + '</td>' +
+        '</tr>';
+      });
+
+      tbody.innerHTML = h;
+      openM('m-comp-review');
+    }
+
+    function compUpdate(docId, newSt) {
+      if(!curCompUid || !db) return;
+      var d = (window.allDriversCache || []).find(function(x){return x.id === curCompUid;});
+      if(!d || !d.documents) return;
+
+      d.documents[docId].status = newSt;
+      d.documents[docId].lastUpdated = new Date().toISOString();
+      
+      db.collection('drivers').doc(curCompUid).update({
+        documents: d.documents
+      }).then(function() {
+        toast('Document marked ' + newSt);
+        openCompRev(curCompUid);
+      });
+    }
+
+    function manualActivateDriver() {
+      if(!curCompUid || !db) return;
+      if (!confirm('Force activate this driver? They will gain full access to the Marketplace.')) return;
+      db.collection('drivers').doc(curCompUid).update({
+        status: 'Approved'
+      }).then(function() {
+        toast('Driver profile formally Activated!');
+        closeM('m-comp-review');
+      });
+    }
+
+    function broadcastToDrivers() {
+      var drs = getDrivers();
+      if (!drs.length) { toast('No drivers to notify'); return; }
+      var nums = drs.map(function (d) { return d.phone.replace(/\D/g, ''); }).join(',');
+      var msg = "New rides available in the Seacoast RVIP Marketplace! Log in to claim them now.";
+      window.open('sms:' + nums + '&body=' + encodeURIComponent(msg));
+    }
+
+    function viewDoc(docId) {
+      if(!curCompUid || !window.allDriversCache) return;
+      var d = window.allDriversCache.find(function(x) { return x.id === curCompUid; });
+      if(!d || !d.documents || !d.documents[docId] || !d.documents[docId].fileData) {
+        toast('No image data found for this document');
+        return;
+      }
+      
+      var fileData = d.documents[docId].fileData;
+      var isPdf = fileData.startsWith('data:application/pdf');
+      
+      var viewer = document.getElementById('doc-viewer-content');
+      if(isPdf) {
+        viewer.innerHTML = '<iframe src="' + fileData + '" style="width:100%; height:100%; border:none;" frameborder="0"></iframe>';
+      } else {
+        viewer.innerHTML = '<img src="' + fileData + '" style="max-width:100%;max-height:100%;object-fit:contain;">';
+      }
+      
+      openM('m-doc-view');
+    }
+
+    // ─────────────────────────────────────────────
+    //  BOOT
+    // ─────────────────────────────────────────────
+    window.addEventListener('DOMContentLoaded', function () {
+      document.querySelectorAll('.ov').forEach(function (el) {
+        el.addEventListener('click', function (ev) { if (ev.target === this) closeM(this.id); });
+      });
+      if (localStorage.getItem('rv-auth') === '1') {
+        try {
+          curUser = JSON.parse(localStorage.getItem('rv-user'));
+        } catch (e) {
+          curUser = { name: 'Admin', role: 'admin' };
+        }
+        showDash();
+      } else {
+        setTimeout(function () { document.getElementById('pwd').focus(); }, 100);
+      }
+    });
+  </script>
+
+  <!-- MODAL ADD DRIVER REMOVED (Handled via driver-portal.html) -->
+
+  <!-- MODAL: PAY DRIVER -->
+  <div class="ov" id="m-paydr">
+    <div class="modal" style="max-width:400px;text-align:center">
+      <div class="mhd">
+        <h3 style="color:#10b981">Bank Transfer Details</h3><button class="mx" onclick="closeM('m-paydr')">✕</button>
+      </div>
+      <div class="mbdy">
+        <div style="font-size:.9rem;color:#555;margin-bottom:10px">Securely process the exact payout amount inside your
+          business banking portal using the details below.</div>
+        <div style="font-size:2rem;font-weight:700;color:#111;margin-bottom:15px;font-family:'Times New Roman',serif"
+          id="paydr-amt"></div>
+        <div
+          style="background:#f4f4f5;padding:15px;border-radius:8px;border:1px dashed #ccc;margin-bottom:20px;text-align:left">
+          <div style="font-weight:600;margin-bottom:5px;display:flex;justify-content:space-between"><span
+              id="paydr-meth">Method</span></div>
+          <div id="paydr-det"
+            style="font-family:monospace;font-size:1.1rem;word-break:break-all;padding:8px 0;color:#333;font-weight:bold">
+          </div>
+        </div>
+        <div style="font-size:.85rem;color:#888;margin-bottom:15px">Once completed, close this window and mark the ride
+          as "Paid" to complete the cycle.</div>
+        <button onclick="closeM('m-paydr')" class="btn bg"
+          style="width:100%;justify-content:center;padding:.8rem;background:#10b981">Understood</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: COMPLIANCE REVIEW -->
+  <div class="ov" id="m-comp-review">
+    <div class="modal" style="max-width:1000px">
+      <div class="mhd">
+        <h3 id="cr-title">Review Documents</h3><button class="mx" onclick="closeM('m-comp-review')">✕</button>
+      </div>
+      <div class="mbdy" style="padding:0">
+        <table class="data-table" style="width:100%;text-align:left;border-collapse:collapse;margin:0">
+          <thead>
+            <tr style="background:#f9fafb;border-bottom:1px solid #ddd">
+              <th style="padding:10px;font-size:.7rem;color:#555">REQUIREMENT</th>
+              <th style="padding:10px;font-size:.7rem;color:#555">FILE</th>
+              <th style="padding:10px;font-size:.7rem;color:#555">EXPIRATION</th>
+              <th style="padding:10px;font-size:.7rem;color:#555">STATUS</th>
+              <th style="padding:10px;font-size:.7rem;color:#555">ACTION</th>
+            </tr>
+          </thead>
+          <tbody id="cr-docs-body">
+            <!-- Driven by JS -->
+          </tbody>
+        </table>
+      </div>
+      <div class="mft" style="display:flex;justify-content:space-between;align-items:center;padding:15px;border-top:1px solid #ddd;">
+        <button onclick="manualActivateDriver()" class="btn bgr"><span class="material-symbols-outlined" style="font-size:16px;margin-right:4px;vertical-align:middle">verified_user</span> Force Activate Profile</button>
+        <button onclick="closeM('m-comp-review')" class="btn bo">Done Reviewing</button>
+      </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: DOC VIEWER -->
+  <div class="ov" id="m-doc-view" style="z-index: 9999;">
+    <div class="modal" style="max-width:90vw; width:90vw; height:90vh; display:flex; flex-direction:column; padding:0;">
+      <div class="mhd" style="padding:15px; border-bottom:1px solid #ddd;">
+        <h3 id="doc-view-title">Document Viewer</h3><button class="mx" onclick="closeM('m-doc-view')">✕</button>
+      </div>
+      <div class="mbdy" id="doc-viewer-content" style="flex:1; padding:0; display:flex; align-items:center; justify-content:center; background:#111; overflow:hidden;">
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
