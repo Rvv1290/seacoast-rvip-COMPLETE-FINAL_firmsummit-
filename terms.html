@@ -2,31 +2,236 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>Terms of Service | Seacoast RVIP</title>
+<meta name="description" content="Seacoast RVIP LLC Terms of Service — reservation policies, cancellation policy, passenger conduct, and governing law."/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Serif:wght@400;700;900&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <style>
-body{font-family:Georgia,"Times New Roman",serif;max-width:800px;margin:0 auto;padding:2rem;line-height:1.8;color:#1a1a1a}
-h1{font-size:2rem;margin-bottom:0.5rem}
-h2{font-size:1.25rem;margin-top:2rem}
-.back{display:inline-block;margin-bottom:2rem;color:#775a19;text-decoration:none;font-family:sans-serif;font-size:0.875rem}
+  *{box-sizing:border-box;margin:0;padding:0}
+  .material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 300,'GRAD' 0,'opsz' 24}
+  body{font-family:'Inter',sans-serif;background:#f9f9f9;color:#1a1c1c}
+  h1,h2,h3,.serif{font-family:'Times New Roman',Times,Georgia,serif}
+
+  /* NAV */
+  nav{position:fixed;top:0;width:100%;z-index:48;background:rgba(255,255,255,0.97);backdrop-filter:blur(12px);border-bottom:1px solid rgba(0,0,0,0.06)}
+  .nav-in{display:flex;justify-content:space-between;align-items:center;max-width:100%;padding:0 2rem;height:68px}
+
+  /* HERO */
+  .hero{background:#000;color:white;padding:7rem 2rem 4rem;border-bottom:3px solid #775a19}
+  .hero-inner{max-width:820px;margin:0 auto}
+
+  /* CONTENT */
+  .content{max-width:820px;margin:0 auto;padding:3rem 2rem 5rem}
+
+  .section-block{margin-bottom:2.5rem;padding-bottom:2.5rem;border-bottom:1px solid #e8e8e8}
+  .section-block:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+  .section-num{font-family:'Work Sans',sans-serif;font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.15em;color:#775a19;margin-bottom:0.4rem}
+  .section-title{font-family:'Times New Roman',serif;font-size:1.25rem;font-weight:700;color:#000;margin-bottom:0.875rem}
+  .section-body{font-size:0.9rem;line-height:1.8;color:#444748}
+  .section-body p{margin-bottom:0.75rem}
+  .section-body p:last-child{margin-bottom:0}
+  .section-body ul{padding-left:1.35rem;margin-bottom:0.75rem}
+  .section-body li{margin-bottom:0.4rem}
+
+  .cancel-box{background:#f9f9f9;border-left:4px solid #775a19;padding:1rem 1.25rem;margin:1rem 0;font-size:0.88rem;line-height:1.75}
+  .cancel-row{display:flex;gap:0.75rem;align-items:flex-start;margin-bottom:0.5rem}
+  .cancel-row:last-child{margin-bottom:0}
+  .cancel-icon{font-size:1rem;flex-shrink:0;margin-top:2px}
+
+  .contact-box{background:#000;color:white;padding:2rem 2.5rem;border-left:4px solid #775a19;margin-top:3rem}
+  .contact-box a{color:#e8c97a;text-decoration:none}
+  .contact-box a:hover{text-decoration:underline}
+
+  /* FOOTER */
+  footer{background:#0a0a0a;color:white;padding:2.5rem 2rem;border-top:1px solid rgba(255,255,255,0.06)}
+  .foot-in{max-width:820px;margin:0 auto;display:flex;flex-wrap:wrap;justify-content:space-between;gap:1rem;align-items:center}
+
+  @media(max-width:640px){
+    .hero{padding:6rem 1.5rem 3rem}
+    .content{padding:2rem 1.5rem 4rem}
+  }
 </style>
 </head>
 <body>
-<a href="index.html" class="back">← Back to Seacoast RVIP</a>
-<h1>Terms of Service</h1>
-<p><em>Effective Date: January 1, 2025</em></p>
-<h2>Service Agreement</h2>
-<p>By booking a ride with Seacoast RVIP LLC, you agree to these terms. All rides are pre-booked and confirmed by the driver before payment is collected.</p>
-<h2>Reservations & Confirmations</h2>
-<p>All reservations are subject to driver availability and must be confirmed by Seacoast RVIP. A booking request is not a confirmed reservation until you receive a confirmation code and payment link from us.</p>
-<h2>Payment</h2>
-<p>Payment is due upon receiving your confirmation link. We accept Cash, Venmo, Cash App, Apple Pay, and all major debit and credit cards. Prices are confirmed at booking and are final.</p>
-<h2>Cancellations</h2>
-<p>Cancellations made more than 24 hours before your scheduled ride will receive a full refund. Cancellations within 24 hours may be subject to a cancellation fee. No-shows will be charged in full.</p>
-<h2>Conduct</h2>
-<p>Passengers are expected to treat our drivers with respect. Seacoast RVIP reserves the right to refuse or terminate service for disruptive, unsafe, or disrespectful behavior without refund.</p>
-<h2>Liability</h2>
-<p>Seacoast RVIP carries commercial auto insurance. We are not liable for delays caused by traffic, weather, or circumstances beyond our control. We will always communicate proactively if any issue arises.</p>
-<h2>Contact</h2>
-<p>Phone: (978) 255-3140<br/>
-Email: <a href="mailto:info@seacoastrvip.com" class="__cf_email__" data-cfemail="7301121e1c1d050541434145424b33
+
+<!-- NAV -->
+<nav>
+  <div class="nav-in">
+    <a href="index.html" style="font-family:'Times New Roman',Times,serif;font-size:1.35rem;font-weight:700;color:#000;text-decoration:none">Seacoast RVIP</a>
+    <div style="display:flex;gap:1rem;align-items:center">
+      <a href="schedule.html" style="background:#000;color:white;padding:0.5rem 1.25rem;font-family:Inter,sans-serif;font-size:0.72rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;text-decoration:none;border-bottom:2px solid #775a19">Book Now</a>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-inner">
+    <div style="font-family:'Work Sans',sans-serif;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.15em;color:#775a19;margin-bottom:0.75rem">Legal</div>
+    <h1 style="font-size:clamp(2rem,5vw,3rem);font-weight:900;line-height:1.1;margin-bottom:1rem">Terms of Service</h1>
+    <p style="font-size:0.9rem;color:rgba(255,255,255,0.55);font-family:Inter,sans-serif">Seacoast RVIP LLC &nbsp;·&nbsp; Last updated: April 2, 2025</p>
+  </div>
+</div>
+
+<!-- CONTENT -->
+<div class="content">
+
+  <div style="background:#fdfaf4;border:1px solid #e8c97a;border-left:4px solid #775a19;padding:1rem 1.25rem;margin-bottom:2.5rem;font-family:Inter,sans-serif;font-size:0.85rem;color:#444748;line-height:1.65">
+    <strong style="color:#000">Summary:</strong> By booking with Seacoast RVIP LLC, you agree to these terms. Key points: all rides are pre-arranged (no on-demand); cancellations within 12 hours of pickup are non-refundable; no smoking or illegal substances in vehicles; passengers are responsible for vehicle damage.
+  </div>
+
+  <!-- 1 -->
+  <div class="section-block">
+    <div class="section-num">Section 01</div>
+    <div class="section-title">Acceptance of Terms</div>
+    <div class="section-body">
+      <p>By submitting a booking request through this website, you agree to be bound by these Terms of Service ("Terms"). If you do not agree, do not submit a booking. These Terms apply to all clients, passengers, and visitors of seacoastrvip.com.</p>
+    </div>
+  </div>
+
+  <!-- 2 -->
+  <div class="section-block">
+    <div class="section-num">Section 02</div>
+    <div class="section-title">Our Service</div>
+    <div class="section-body">
+      <p>Seacoast RVIP LLC provides pre-arranged, reservation-only black car transportation in the NH Seacoast area and surrounding regions, including airport transfers, evening outings, and casino runs. All rides must be booked in advance. We do not offer on-demand or street-hail transportation.</p>
+    </div>
+  </div>
+
+  <!-- 3 -->
+  <div class="section-block">
+    <div class="section-num">Section 03</div>
+    <div class="section-title">Reservations and Confirmation</div>
+    <div class="section-body">
+      <p>A reservation is not confirmed until you receive a written confirmation from us by email or text. You are responsible for ensuring all booking details — pickup time, location, destination, and passenger count — are accurate at the time of submission.</p>
+      <p>Change requests must be made at least 24 hours before your scheduled pickup and are subject to availability.</p>
+    </div>
+  </div>
+
+  <!-- 4 -->
+  <div class="section-block">
+    <div class="section-num">Section 04</div>
+    <div class="section-title">Pricing and Payment</div>
+    <div class="section-body">
+      <p>All fares are flat-rate and confirmed at the time of booking. We do not charge surge pricing. Payment is accepted by credit card (Square) and Venmo. Full payment is due at or before the time of service unless a deposit arrangement has been agreed upon in writing.</p>
+      <p>Additional charges may apply for extended wait times, vehicle cleaning caused by a passenger, or tolls and airport fees not included in your quoted fare.</p>
+    </div>
+  </div>
+
+  <!-- 5 -->
+  <div class="section-block">
+    <div class="section-num">Section 05</div>
+    <div class="section-title">Cancellation and Refund Policy</div>
+    <div class="section-body">
+      <div class="cancel-box">
+        <div class="cancel-row"><span class="cancel-icon">✅</span><div><strong>24 or more hours before pickup</strong> — Full refund of any deposit paid.</div></div>
+        <div class="cancel-row"><span class="cancel-icon">⚠️</span><div><strong>12 to 24 hours before pickup</strong> — 50% of the confirmed fare is due as a cancellation fee.</div></div>
+        <div class="cancel-row"><span class="cancel-icon">❌</span><div><strong>Less than 12 hours before pickup</strong> — 100% of the confirmed fare is due. No refund.</div></div>
+        <div class="cancel-row"><span class="cancel-icon">❌</span><div><strong>No-show</strong> — If you are not at the pickup location within 15 minutes of your scheduled time and we have not been notified, the ride is considered a no-show and 100% of the fare is due.</div></div>
+        <div class="cancel-row"><span class="cancel-icon">✅</span><div><strong>Cancellation by Seacoast RVIP LLC</strong> — If we must cancel your confirmed booking, you will receive a full refund of any amount paid.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6 -->
+  <div class="section-block">
+    <div class="section-num">Section 06</div>
+    <div class="section-title">Passenger Conduct</div>
+    <div class="section-body">
+      <p>All passengers agree to behave in a safe, respectful, and lawful manner. The following apply to every ride:</p>
+      <ul>
+        <li>Passenger count may not exceed the vehicle's seating capacity.</li>
+        <li>Smoking, vaping, and tobacco use are strictly prohibited in all vehicles.</li>
+        <li>Open containers of alcohol are not permitted unless expressly allowed under applicable law.</li>
+        <li>No illegal substances or hazardous materials are permitted in the vehicle.</li>
+        <li>You are responsible for the conduct of all passengers in your party. Any damage to the vehicle caused by you or your guests will be charged to you.</li>
+        <li>Our driver has the right to end a ride at any time if any passenger's behavior poses a safety concern. No refund will be issued in that event.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 7 -->
+  <div class="section-block">
+    <div class="section-num">Section 07</div>
+    <div class="section-title">Timeliness</div>
+    <div class="section-body">
+      <p>We make every effort to arrive on time. However, we are not liable for delays caused by traffic, weather, road conditions, vehicle issues, or other circumstances beyond our control. We strongly recommend booking airport rides with sufficient lead time. We are not responsible for missed flights or other time-sensitive engagements resulting from delays outside our control.</p>
+    </div>
+  </div>
+
+  <!-- 8 -->
+  <div class="section-block">
+    <div class="section-num">Section 08</div>
+    <div class="section-title">Lost or Damaged Property</div>
+    <div class="section-body">
+      <p>We are not responsible for personal items left in our vehicles. If you believe you left an item, contact us promptly and we will make reasonable efforts to recover it. We provide no guarantee of recovery. Any damage to our vehicle caused by you or your guests will be assessed and billed to you directly.</p>
+    </div>
+  </div>
+
+  <!-- 9 -->
+  <div class="section-block">
+    <div class="section-num">Section 09</div>
+    <div class="section-title">Limitation of Liability</div>
+    <div class="section-body">
+      <p>To the maximum extent permitted by law, Seacoast RVIP LLC's total liability for any claim related to your ride shall not exceed the fare paid for that specific ride. We are not liable for indirect, consequential, or incidental damages. Drivers are independent contractors, not employees of Seacoast RVIP LLC.</p>
+    </div>
+  </div>
+
+  <!-- 10 -->
+  <div class="section-block">
+    <div class="section-num">Section 10</div>
+    <div class="section-title">Privacy</div>
+    <div class="section-body">
+      <p>We collect your name, phone number, email address, and ride details solely to provide our services and communicate with you. We do not sell your information to third parties. Booking data is retained for accounting and tax compliance purposes.</p>
+    </div>
+  </div>
+
+  <!-- 11 -->
+  <div class="section-block">
+    <div class="section-num">Section 11</div>
+    <div class="section-title">Governing Law</div>
+    <div class="section-body">
+      <p>These Terms are governed by the laws of the State of New Hampshire. Any disputes shall be resolved in the courts of Rockingham County, New Hampshire.</p>
+    </div>
+  </div>
+
+  <!-- 12 -->
+  <div class="section-block">
+    <div class="section-num">Section 12</div>
+    <div class="section-title">Updates to These Terms</div>
+    <div class="section-body">
+      <p>We may update these Terms at any time. The current version will always be posted at seacoastrvip.com. Continued use of our services after any update constitutes your acceptance of the revised Terms.</p>
+    </div>
+  </div>
+
+  <!-- Contact -->
+  <div class="contact-box">
+    <div style="font-family:'Work Sans',sans-serif;font-size:0.62rem;text-transform:uppercase;letter-spacing:0.15em;color:#775a19;margin-bottom:0.75rem">Questions?</div>
+    <div style="font-family:'Times New Roman',serif;font-size:1.25rem;font-weight:700;margin-bottom:0.75rem">Seacoast RVIP LLC</div>
+    <div style="font-family:Inter,sans-serif;font-size:0.85rem;color:rgba(255,255,255,0.7);display:flex;flex-direction:column;gap:0.4rem">
+      <a href="tel:+19782553140">(978) 255-3140</a>
+      <a href="mailto:info@seacoastrvip.com">info@seacoastrvip.com</a>
+      <a href="https://www.seacoastrvip.com">seacoastrvip.com</a>
+    </div>
+    <div style="margin-top:1.5rem;display:flex;gap:0.875rem;flex-wrap:wrap">
+      <a href="schedule.html" style="background:#775a19;color:white;padding:0.625rem 1.5rem;font-family:'Work Sans',sans-serif;font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;text-decoration:none;border-bottom:2px solid #5d4201">Book a Ride</a>
+      <a href="index.html" style="background:rgba(255,255,255,0.08);color:white;padding:0.625rem 1.5rem;font-family:'Work Sans',sans-serif;font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;text-decoration:none;border:1px solid rgba(255,255,255,0.15)">← Home</a>
+    </div>
+  </div>
+
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="foot-in">
+    <p style="font-family:Inter,sans-serif;font-size:0.7rem;color:rgba(255,255,255,0.25)">© 2025 Seacoast RVIP LLC. All rights reserved.</p>
+    <div style="display:flex;gap:1.5rem">
+      <a href="privacy.html" style="font-family:Inter,sans-serif;font-size:0.7rem;color:rgba(255,255,255,0.3);text-decoration:none">Privacy Policy</a>
+      <a href="terms.html" style="font-family:Inter,sans-serif;font-size:0.7rem;color:#775a19;text-decoration:none">Terms of Service</a>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

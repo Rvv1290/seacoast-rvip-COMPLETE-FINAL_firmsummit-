@@ -572,6 +572,7 @@
         <button class="tab" onclick="goTab('messages',this)" style="color:#1d4ed8;font-weight:700">Messages ✉</button>
         <button class="tab" onclick="goTab('compliance',this)" style="color:#f59e0b;font-weight:700">Onboarding 📋</button>
         <button class="tab" onclick="goTab('manage-drivers',this)" style="color:#775a19;font-weight:700">Active Drivers ⚙</button>
+        <button class="tab" onclick="goTab('corporate',this)" style="color:#7c3aed;font-weight:700">Corporate ⭐</button>
       </div>
 
       <div id="sec-all">
@@ -673,6 +674,51 @@
           <div style="font-size:0.8rem;color:#666">Drivers self-register via Portal Link</div>
         </div>
         <div id="dr-list"></div>
+      </div>
+
+      <!-- CORPORATE ACCOUNTS -->
+      <div id="sec-corporate" style="display:none">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;flex-wrap:wrap;gap:0.75rem">
+          <div>
+            <div style="font-family:'Times New Roman',serif;font-size:1.1rem;font-weight:700">💼 Corporate Account Management</div>
+            <div style="font-size:0.75rem;color:#888;margin-top:3px">Approve accounts · Manage members · View corporate bookings</div>
+          </div>
+          <div style="display:flex;gap:0.5rem">
+            <button onclick="loadCorporate()" class="btn bo"><span class="material-symbols-outlined" style="font-size:14px">refresh</span>Refresh</button>
+            <a href="corporate.html" target="_blank" class="btn bg" style="text-decoration:none"><span class="material-symbols-outlined" style="font-size:14px">open_in_new</span>View Page</a>
+          </div>
+        </div>
+        <!-- Stats Row -->
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:1.25rem">
+          <div class="sbox" style="border-bottom:3px solid #7c3aed;text-align:center;padding:1rem;cursor:pointer" onclick="corpFilter('all')"><div id="corp-cnt-tot" style="font-size:1.5rem;font-weight:700;color:#7c3aed">0</div><div style="font-size:.7rem">Total</div></div>
+          <div class="sbox" style="border-bottom:3px solid #f59e0b;text-align:center;padding:1rem;cursor:pointer" onclick="corpFilter('Pending')"><div id="corp-cnt-pen" style="font-size:1.5rem;font-weight:700;color:#f59e0b">0</div><div style="font-size:.7rem">Pending</div></div>
+          <div class="sbox" style="border-bottom:3px solid #10b981;text-align:center;padding:1rem;cursor:pointer" onclick="corpFilter('Approved')"><div id="corp-cnt-app" style="font-size:1.5rem;font-weight:700;color:#10b981">0</div><div style="font-size:.7rem">Approved</div></div>
+          <div class="sbox" style="border-bottom:3px solid #3b82f6;text-align:center;padding:1rem;cursor:pointer" onclick="corpFilter('Active')"><div id="corp-cnt-act" style="font-size:1.5rem;font-weight:700;color:#3b82f6">0</div><div style="font-size:.7rem">Active</div></div>
+          <div class="sbox" style="border-bottom:3px solid #ef4444;text-align:center;padding:1rem;cursor:pointer" onclick="corpFilter('Rejected')"><div id="corp-cnt-rej" style="font-size:1.5rem;font-weight:700;color:#ef4444">0</div><div style="font-size:.7rem">Rejected</div></div>
+        </div>
+        <!-- Corp Account List -->
+        <div id="corp-list">
+          <div class="empty"><span class="material-symbols-outlined">business</span><div style="font-size:.8rem">Click Refresh to load corporate applications</div></div>
+        </div>
+        <!-- Member Management Modal -->
+        <div id="corp-member-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:999;display:none;align-items:center;justify-content:center">
+          <div style="background:#fff;padding:2rem;max-width:560px;width:90%;max-height:80vh;overflow-y:auto;position:relative">
+            <button onclick="closeMemberModal()" style="position:absolute;top:1rem;right:1rem;background:none;border:none;font-size:1.5rem;cursor:pointer;color:#888">&times;</button>
+            <div style="font-family:'Times New Roman',serif;font-size:1.1rem;font-weight:700;margin-bottom:0.25rem">Company Members</div>
+            <div style="font-size:0.75rem;color:#888;margin-bottom:1.25rem" id="modal-corp-name"></div>
+            <div id="modal-members-list" style="margin-bottom:1.25rem"></div>
+            <div style="border-top:1px solid #eee;padding-top:1rem">
+              <div style="font-family:'Work Sans',sans-serif;font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#775a19;margin-bottom:0.75rem">Add New Member</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:0.75rem">
+                <input id="mm-name" type="text" placeholder="Full Name" style="padding:0.6rem;border:1.5px solid #e5e5e5;font-family:Inter,sans-serif;font-size:0.85rem;outline:none"/>
+                <input id="mm-phone" type="tel" placeholder="Phone (603) 555-0000" style="padding:0.6rem;border:1.5px solid #e5e5e5;font-family:Inter,sans-serif;font-size:0.85rem;outline:none"/>
+                <input id="mm-email" type="email" placeholder="Email" style="padding:0.6rem;border:1.5px solid #e5e5e5;font-family:Inter,sans-serif;font-size:0.85rem;outline:none"/>
+                <input id="mm-role" type="text" placeholder="Role / Title" style="padding:0.6rem;border:1.5px solid #e5e5e5;font-family:Inter,sans-serif;font-size:0.85rem;outline:none"/>
+              </div>
+              <button onclick="addCorpMember()" class="btn bg" style="width:100%"><span class="material-symbols-outlined" style="font-size:14px">person_add</span>Add Member</button>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div id="sec-driver" style="display:none">
@@ -1145,6 +1191,7 @@
           '<span class="bdg ' + (SC[b.status] || 'byw') + '">' + e(b.status) + '</span>' +
           (b.code ? '<span class="ctag">' + e(b.code) + '</span>' : '') +
           (b.source === 'website-form' ? '<span class="bdg bpu">Web</span>' : '') +
+          (b.corporateAccountId ? '<span class="bdg" style="background:#7c3aed20;color:#7c3aed;border:1px solid #7c3aed40">💼 ' + e(b.corporateCompany || 'Corporate') + '</span>' : '') +
           dTag +
           '</div>' +
           '<div class="crow"><span class="material-symbols-outlined">calendar_today</span>' + e(b.date || '—') + ' at ' + fT(b.time) + '</div>' +
@@ -1230,7 +1277,7 @@
       curTab = tab;
       document.querySelectorAll('.tab').forEach(function (b) { b.classList.remove('on'); });
       if (btn) btn.classList.add('on');
-      ['sec-all', 'sec-clients', 'sec-quotes', 'sec-messages', 'sec-compliance', 'sec-manage-drivers', 'sec-driver'].forEach(function (id) {
+      ['sec-all', 'sec-clients', 'sec-quotes', 'sec-messages', 'sec-compliance', 'sec-manage-drivers', 'sec-driver', 'sec-corporate'].forEach(function (id) {
         var el = document.getElementById(id);
         if (el) el.style.display = 'none';
       });
@@ -1240,6 +1287,7 @@
       else if (tab === 'compliance') { document.getElementById('sec-compliance').style.display = 'block'; renderCompliance(); }
       else if (tab === 'manage-drivers') { document.getElementById('sec-manage-drivers').style.display = 'block'; renderDrivers(); }
       else if (tab === 'driver') { document.getElementById('sec-driver').style.display = 'block'; loadDriverRides(); }
+      else if (tab === 'corporate') { document.getElementById('sec-corporate').style.display = 'block'; loadCorporate(); }
       else { document.getElementById('sec-all').style.display = 'block'; renderBks(); }
     }
 
@@ -2027,7 +2075,204 @@
       if (el) el.innerHTML = html;
     }
 
+    // ─────────────────────────────────────────────
+    //  CORPORATE ACCOUNTS
+    // ─────────────────────────────────────────────
+    function loadCorporate() {
+      var el = document.getElementById('corp-list');
+      el.innerHTML = '<div class="empty"><span class="material-symbols-outlined">sync</span><div style="font-size:.8rem">Loading...</div></div>';
+      if (!db) { el.innerHTML = '<div class="empty">Firebase not connected</div>'; return; }
+      db.collection('corporate_accounts').orderBy('createdAt','desc').get().then(function(snap) {
+        var accounts = [];
+        snap.forEach(function(d){ accounts.push(d.data()); });
+        renderCorporate(accounts);
+      }).catch(function(e){
+        el.innerHTML = '<div class="empty">Error: ' + e.message + '</div>';
+      });
+    }
+
+    var _corpAccounts = [];
+    var _corpFilterStatus = 'all';
+
+    function renderCorporate(accounts) {
+      _corpAccounts = accounts;
+      var el = document.getElementById('corp-list');
+      var tot = accounts.length;
+      var pen = accounts.filter(function(a){ return a.status === 'Pending'; }).length;
+      var app = accounts.filter(function(a){ return a.status === 'Approved'; }).length;
+      var act = accounts.filter(function(a){ return a.status === 'Active'; }).length;
+      var rej = accounts.filter(function(a){ return a.status === 'Rejected'; }).length;
+      document.getElementById('corp-cnt-tot').textContent = tot;
+      document.getElementById('corp-cnt-pen').textContent = pen;
+      document.getElementById('corp-cnt-app').textContent = app;
+      document.getElementById('corp-cnt-act').textContent = act;
+      document.getElementById('corp-cnt-rej').textContent = rej;
+
+      var filtered = _corpFilterStatus === 'all' ? accounts : accounts.filter(function(a){ return a.status === _corpFilterStatus; });
+
+      if (!filtered.length) {
+        el.innerHTML = '<div class="empty"><span class="material-symbols-outlined">business</span><div style="font-size:.8rem">' + (_corpFilterStatus === 'all' ? 'No corporate applications yet.' : 'No ' + _corpFilterStatus + ' accounts.') + '</div></div>';
+        return;
+      }
+      var statusColor = { 'Pending': '#f59e0b', 'Approved': '#10b981', 'Active': '#3b82f6', 'Rejected': '#ef4444' };
+      el.innerHTML = filtered.map(function(a) {
+        var sc = statusColor[a.status] || '#888';
+        var dt = a.createdAt ? new Date(a.createdAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—';
+        var members = a.members || [];
+        var memberCount = members.length;
+        return '<div class="sbox" style="margin-bottom:1rem;border-left:4px solid ' + sc + '">' +
+          '<div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:0.5rem;margin-bottom:0.875rem">' +
+            '<div>' +
+              '<div style="font-family:\'Times New Roman\',serif;font-size:1.05rem;font-weight:700">' + escH(a.company) + '</div>' +
+              '<div style="font-size:0.75rem;color:#666;margin-top:3px">' + escH(a.industry||'') + (a.ein ? ' &nbsp;·&nbsp; EIN: ' + escH(a.ein) : '') + '</div>' +
+            '</div>' +
+            '<div style="display:flex;gap:0.5rem;align-items:center">' +
+              '<span style="background:' + sc + '20;color:' + sc + ';padding:3px 10px;border-radius:20px;font-size:0.72rem;font-weight:700;font-family:\'Work Sans\',sans-serif;text-transform:uppercase;letter-spacing:0.06em">' + escH(a.status) + '</span>' +
+              (memberCount ? '<span style="background:#f3f4f6;padding:3px 8px;border-radius:12px;font-size:0.68rem;font-weight:600;color:#555">' + memberCount + ' member' + (memberCount>1?'s':'') + '</span>' : '') +
+            '</div>' +
+          '</div>' +
+          '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:0.75rem;margin-bottom:0.875rem;font-size:0.8rem">' +
+            '<div><span style="color:#888;font-size:0.68rem;text-transform:uppercase;letter-spacing:0.06em">Contact</span><br><strong>' + escH(a.contactName||'—') + '</strong>' + (a.contactTitle ? ' · ' + escH(a.contactTitle) : '') + '</div>' +
+            '<div><span style="color:#888;font-size:0.68rem;text-transform:uppercase;letter-spacing:0.06em">Phone</span><br><a href="tel:' + escH((a.contactPhone||'').replace(/\D/g,'')) + '" style="color:#000;font-weight:600">' + escH(a.contactPhone||'—') + '</a></div>' +
+            '<div><span style="color:#888;font-size:0.68rem;text-transform:uppercase;letter-spacing:0.06em">Email</span><br><a href="mailto:' + escH(a.contactEmail||'') + '" style="color:#775a19;font-weight:600">' + escH(a.contactEmail||'—') + '</a></div>' +
+            '<div><span style="color:#888;font-size:0.68rem;text-transform:uppercase;letter-spacing:0.06em">Billing</span><br>' + escH(a.billingCycle||'—') + (a.poRequired === 'Yes' ? ' · PO Req' : '') + '</div>' +
+            '<div><span style="color:#888;font-size:0.68rem;text-transform:uppercase;letter-spacing:0.06em">Est. Rides</span><br><strong>' + escH(a.monthlyRides||'—') + '</strong>/mo</div>' +
+            '<div><span style="color:#888;font-size:0.68rem;text-transform:uppercase;letter-spacing:0.06em">Applied</span><br>' + dt + '</div>' +
+          '</div>' +
+          (a.typicalRoutes ? '<div style="font-size:0.78rem;color:#444;margin-bottom:0.5rem"><strong>Routes:</strong> ' + escH(a.typicalRoutes) + '</div>' : '') +
+          (a.billingAddress ? '<div style="font-size:0.78rem;color:#444;margin-bottom:0.5rem"><strong>Address:</strong> ' + escH(a.billingAddress) + '</div>' : '') +
+          (a.notes ? '<div style="font-size:0.78rem;color:#888;margin-bottom:0.75rem;background:#f9f9f9;padding:0.5rem 0.75rem;border-left:2px solid #e2e2e2"><strong>Notes:</strong> ' + escH(a.notes) + '</div>' : '') +
+          '<div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center">' +
+            (a.status !== 'Approved' && a.status !== 'Active' ? '<button onclick="corpAction(\'' + escH(a.id) + '\',\'Approved\')" class="btn bg" style="background:#10b981;font-size:0.72rem"><span class="material-symbols-outlined" style="font-size:13px">check_circle</span>Approve</button>' : '') +
+            (a.status === 'Approved' ? '<button onclick="corpAction(\'' + escH(a.id) + '\',\'Active\')" class="btn bg" style="background:#3b82f6;font-size:0.72rem"><span class="material-symbols-outlined" style="font-size:13px">star</span>Activate</button>' : '') +
+            (a.status !== 'Rejected' ? '<button onclick="corpAction(\'' + escH(a.id) + '\',\'Rejected\')" class="btn brd" style="font-size:0.72rem"><span class="material-symbols-outlined" style="font-size:13px">cancel</span>Reject</button>' : '') +
+            (a.status === 'Rejected' ? '<button onclick="corpAction(\'' + escH(a.id) + '\',\'Pending\')" class="btn bo" style="font-size:0.72rem"><span class="material-symbols-outlined" style="font-size:13px">undo</span>Reopen</button>' : '') +
+            '<button onclick="openMemberModal(\'' + escH(a.id) + '\')" class="btn bo" style="font-size:0.72rem;border-color:#7c3aed;color:#7c3aed"><span class="material-symbols-outlined" style="font-size:13px">group</span>Members (' + memberCount + ')</button>' +
+            '<button onclick="viewCorpBookings(\'' + escH(a.id) + '\')" class="btn bo" style="font-size:0.72rem"><span class="material-symbols-outlined" style="font-size:13px">directions_car</span>Bookings</button>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+    }
+
+    function corpFilter(status) {
+      _corpFilterStatus = status;
+      renderCorporate(_corpAccounts);
+    }
+
+    function corpAction(id, newStatus) {
+      if (!db) return;
+      db.collection('corporate_accounts').doc(id).update({ status: newStatus, updatedAt: new Date().toISOString() }).then(function(){
+        showToast('Account status updated: ' + newStatus);
+        if (newStatus === 'Approved' || newStatus === 'Active') {
+          db.collection('corporate_accounts').doc(id).get().then(function(doc) {
+            if (!doc.exists) return;
+            var acc = doc.data();
+            var fd = new FormData();
+            fd.append('_subject', '[CORP APPROVED] Welcome to Seacoast RVIP Corporate — ' + (acc.company || ''));
+            fd.append('_captcha', 'false');
+            fd.append('_template', 'box');
+            fd.append('Company', acc.company || '');
+            fd.append('Contact Name', acc.contactName || '');
+            fd.append('Status', newStatus);
+            fd.append('Portal Link', window.location.origin + '/corporate.html');
+            fd.append('Login Phone', acc.contactPhone || '');
+            fd.append('Message', 'Your Seacoast RVIP corporate account is now ' + newStatus.toLowerCase() + '! Log in at corporate.html using your registered phone number. Questions: (978) 255-3140');
+            fetch('https://formsubmit.co/ajax/info@seacoastrvip.com', {
+              method: 'POST', body: fd, headers: { 'Accept': 'application/json' }
+            }).then(function() {
+              showToast('Notification email sent!');
+            }).catch(function() {});
+          });
+        }
+        loadCorporate();
+      }).catch(function(e){ showToast('Error: ' + e.message); });
+    }
+
+    // ── Corporate Member Management ──
+    var _modalCorpId = '';
+    function openMemberModal(corpId) {
+      _modalCorpId = corpId;
+      var modal = document.getElementById('corp-member-modal');
+      modal.style.display = 'flex';
+      var acc = _corpAccounts.find(function(a){ return a.id === corpId; });
+      document.getElementById('modal-corp-name').textContent = acc ? acc.company + ' — Members & Authorized Travelers' : '';
+      renderMembersList(acc);
+    }
+    function closeMemberModal() {
+      document.getElementById('corp-member-modal').style.display = 'none';
+      _modalCorpId = '';
+    }
+    function renderMembersList(acc) {
+      var el = document.getElementById('modal-members-list');
+      var members = (acc && acc.members) ? acc.members : [];
+      if (!members.length) {
+        el.innerHTML = '<div style="text-align:center;padding:1.5rem;color:#aaa;font-size:0.82rem">No members added yet. Add the first member below.</div>';
+        return;
+      }
+      el.innerHTML = members.map(function(m, i) {
+        return '<div style="display:flex;align-items:center;justify-content:space-between;padding:0.75rem;border-bottom:1px solid #f3f3f3;gap:0.75rem">' +
+          '<div style="flex:1">' +
+            '<div style="font-weight:600;font-size:0.88rem">' + escH(m.name) + (m.role ? ' <span style="color:#888;font-weight:400;font-size:0.75rem">· ' + escH(m.role) + '</span>' : '') + '</div>' +
+            '<div style="font-size:0.75rem;color:#666;margin-top:2px">' + escH(m.phone||'') + (m.email ? ' · ' + escH(m.email) : '') + '</div>' +
+          '</div>' +
+          '<button onclick="removeCorpMember(\'' + escH(acc.id) + '\',' + i + ')" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:0.75rem;display:flex;align-items:center;gap:2px"><span class="material-symbols-outlined" style="font-size:16px">delete</span></button>' +
+        '</div>';
+      }).join('');
+    }
+    function addCorpMember() {
+      var name = document.getElementById('mm-name').value.trim();
+      var phone = document.getElementById('mm-phone').value.trim();
+      var email = document.getElementById('mm-email').value.trim();
+      var role = document.getElementById('mm-role').value.trim();
+      if (!name || !phone) { showToast('Name and phone are required'); return; }
+      if (!db || !_modalCorpId) return;
+      var member = { name: name, phone: phone, email: email, role: role, addedAt: new Date().toISOString() };
+      db.collection('corporate_accounts').doc(_modalCorpId).get().then(function(doc) {
+        var data = doc.data();
+        var members = data.members || [];
+        members.push(member);
+        return db.collection('corporate_accounts').doc(_modalCorpId).update({ members: members });
+      }).then(function() {
+        showToast(name + ' added as member!');
+        document.getElementById('mm-name').value = '';
+        document.getElementById('mm-phone').value = '';
+        document.getElementById('mm-email').value = '';
+        document.getElementById('mm-role').value = '';
+        loadCorporate();
+        setTimeout(function(){ openMemberModal(_modalCorpId); }, 500);
+      }).catch(function(e) { showToast('Error: ' + e.message); });
+    }
+    function removeCorpMember(corpId, idx) {
+      if (!confirm('Remove this member?')) return;
+      if (!db) return;
+      db.collection('corporate_accounts').doc(corpId).get().then(function(doc) {
+        var data = doc.data();
+        var members = data.members || [];
+        members.splice(idx, 1);
+        return db.collection('corporate_accounts').doc(corpId).update({ members: members });
+      }).then(function() {
+        showToast('Member removed');
+        loadCorporate();
+        setTimeout(function(){ openMemberModal(corpId); }, 500);
+      });
+    }
+    function viewCorpBookings(corpId) {
+      var acc = _corpAccounts.find(function(a){ return a.id === corpId; });
+      var company = acc ? acc.company : corpId;
+      goTab('bookings');
+      setTimeout(function() {
+        var corpBookings = getBks().filter(function(b) { return b.corporateAccountId === corpId || b.corporateCompany === company; });
+        var el = document.getElementById('bk-list');
+        if (!corpBookings.length) {
+          el.innerHTML = '<div class="empty"><span class="material-symbols-outlined">directions_car</span><div style="font-size:.8rem">No bookings for ' + escH(company) + ' yet.</div></div>';
+          return;
+        }
+        showToast('Showing ' + corpBookings.length + ' booking(s) for ' + company);
+      }, 300);
+    }
+
     function renderDrivers() {
+
       var drs = getDrivers();
       var el = document.getElementById('dr-list');
       if (!drs.length) { el.innerHTML = '<div class="empty">No drivers added yet</div>'; return; }
@@ -2308,3 +2553,23 @@
         </table>
       </div>
       <div class="mft" style="display:flex;justify-content:space-between;align-items:center;padding:15px;border-top:1px solid #ddd;">
+        <button onclick="manualActivateDriver()" class="btn bgr"><span class="material-symbols-outlined" style="font-size:16px;margin-right:4px;vertical-align:middle">verified_user</span> Force Activate Profile</button>
+        <button onclick="closeM('m-comp-review')" class="btn bo">Done Reviewing</button>
+      </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: DOC VIEWER -->
+  <div class="ov" id="m-doc-view" style="z-index: 9999;">
+    <div class="modal" style="max-width:90vw; width:90vw; height:90vh; display:flex; flex-direction:column; padding:0;">
+      <div class="mhd" style="padding:15px; border-bottom:1px solid #ddd;">
+        <h3 id="doc-view-title">Document Viewer</h3><button class="mx" onclick="closeM('m-doc-view')">✕</button>
+      </div>
+      <div class="mbdy" id="doc-viewer-content" style="flex:1; padding:0; display:flex; align-items:center; justify-content:center; background:#111; overflow:hidden;">
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

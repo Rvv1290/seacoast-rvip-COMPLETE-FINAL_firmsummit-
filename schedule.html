@@ -157,6 +157,39 @@ function saveBookingToFirebase(data) {
     bks.push(doc);
     localStorage.setItem('rv-bks', JSON.stringify(bks));
   } catch(le) {}
+
+  // Auto-detect corporate member — link booking to corporate account
+  var rawPhone = (data.phone || '').replace(/\D/g, '').slice(-10);
+  if (rawPhone.length === 10 && window._db) {
+    window._db.collection('corporate_accounts').where('status', 'in', ['Approved', 'Active']).get().then(function(snap) {
+      snap.forEach(function(d) {
+        var acc = d.data();
+        // Check contact phone
+        var contactPh = (acc.contactPhone || '').replace(/\D/g, '').slice(-10);
+        if (contactPh === rawPhone) {
+          window._db.collection('bookings').doc(id).update({
+            corporateAccountId: acc.id,
+            corporateCompany: acc.company
+          });
+          console.log('Booking auto-linked to corporate:', acc.company);
+          return;
+        }
+        // Check members array
+        var members = acc.members || [];
+        for (var i = 0; i < members.length; i++) {
+          var mPh = (members[i].phone || '').replace(/\D/g, '').slice(-10);
+          if (mPh === rawPhone) {
+            window._db.collection('bookings').doc(id).update({
+              corporateAccountId: acc.id,
+              corporateCompany: acc.company
+            });
+            console.log('Booking auto-linked to corporate member:', members[i].name, 'at', acc.company);
+            return;
+          }
+        }
+      });
+    }).catch(function(e) { console.warn('Corp member check error:', e.message); });
+  }
 }
 </script>
 <body class="text-on-background antialiased">

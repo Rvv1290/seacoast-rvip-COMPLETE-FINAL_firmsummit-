@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Corporate Portal | Seacoast RVIP</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+(function(){
+  var c={apiKey:"AIzaSyDGel0ktZDQYcdlOuoZo4bAqZWCuGvOVbc",authDomain:"seacoast-rip.firebaseapp.com",projectId:"seacoast-rip",storageBucket:"seacoast-rip.firebasestorage.app",messagingSenderId:"684535453116",appId:"1:684535453116:web:922c843b5bad3b81ad47b9"};
+  try{if(!firebase.apps.length)firebase.initializeApp(c);window._db=firebase.firestore();}catch(e){window._db=null;}
+})();
+</script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+.material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 300,'GRAD' 0,'opsz' 24}
+body{font-family:'Inter',sans-serif;background:#f7f7f7;color:#1a1c1c;min-height:100vh;display:flex;flex-direction:column}
+/* ─── LAYOUT ─── */
+.portal{display:flex;min-height:100vh}
+.sidebar{width:240px;min-height:100vh;background:#000;display:flex;flex-direction:column;position:fixed;left:0;top:0;bottom:0;z-index:40;padding:0 0 1.5rem}
+.main{margin-left:240px;flex:1;display:flex;flex-direction:column;min-height:100vh}
+/* ─── SIDEBAR ─── */
+.sb-brand{padding:1.75rem 1.5rem 1rem;border-bottom:1px solid rgba(255,255,255,0.08)}
+.sb-logo{font-family:'Times New Roman',serif;font-size:1.25rem;font-weight:700;color:#fff;display:block;text-decoration:none}
+.sb-tag{font-family:'Work Sans',sans-serif;font-size:0.55rem;font-weight:700;text-transform:uppercase;letter-spacing:0.18em;color:#775a19;margin-top:2px;display:block}
+.sb-company{padding:1rem 1.5rem;border-bottom:1px solid rgba(255,255,255,0.06)}
+.sb-company-name{font-family:'Work Sans',sans-serif;font-size:0.72rem;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb-company-user{font-family:Inter,sans-serif;font-size:0.65rem;color:rgba(255,255,255,0.4);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb-nav{flex:1;padding:1rem 0}
+.sb-link{display:flex;align-items:center;gap:0.75rem;padding:0.75rem 1.5rem;color:rgba(255,255,255,0.55);font-family:'Work Sans',sans-serif;font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;cursor:pointer;transition:all 0.15s;border-left:3px solid transparent;text-decoration:none}
+.sb-link:hover,.sb-link.on{color:#fff;background:rgba(255,255,255,0.05);border-left-color:#775a19}
+.sb-link .material-symbols-outlined{font-size:18px;flex-shrink:0}
+.sb-bottom{padding:1rem 1.5rem}
+.sb-logout{display:flex;align-items:center;gap:0.5rem;color:rgba(255,255,255,0.3);font-family:Inter,sans-serif;font-size:0.72rem;cursor:pointer;transition:color 0.15s;padding:0.5rem 0}
+.sb-logout:hover{color:#ef4444}
+/* ─── TOP BAR ─── */
+.topbar{background:#fff;border-bottom:1px solid #eee;padding:1rem 2rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
+.topbar-title{font-family:'Times New Roman',serif;font-size:1.25rem;font-weight:700;color:#000}
+.topbar-right{display:flex;align-items:center;gap:1rem}
+.tb-badge{background:#f3f3f3;padding:0.375rem 0.875rem;font-family:'Work Sans',sans-serif;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#555}
+/* ─── CONTENT ─── */
+.content{padding:2rem;flex:1}
+.tab-panel{display:none}
+.tab-panel.on{display:block}
+/* ─── CARDS / STATS ─── */
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:2rem}
+.stat-card{background:#fff;padding:1.25rem;border-left:3px solid #e2e2e2}
+.stat-val{font-family:'Work Sans',sans-serif;font-size:1.5rem;font-weight:700;color:#000}
+.stat-lbl{font-family:Inter,sans-serif;font-size:0.68rem;color:#888;margin-top:2px;text-transform:uppercase;letter-spacing:0.06em}
+.stat-card.gold{border-left-color:#775a19}
+.stat-card.green{border-left-color:#22c55e}
+.stat-card.amber{border-left-color:#f59e0b}
+/* ─── SECTION HEADER ─── */
+.sec-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem}
+.sec-title{font-family:'Times New Roman',serif;font-size:1.1rem;font-weight:700;color:#000}
+.sec-sub{font-family:Inter,sans-serif;font-size:0.75rem;color:#888;margin-top:2px}
+/* ─── TRIP CARDS ─── */
+.trip-card{background:#fff;border-left:3px solid #e2e2e2;padding:1.1rem 1.25rem;margin-bottom:0.75rem;display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.trip-card.pending{border-left-color:#f59e0b}
+.trip-card.confirmed{border-left-color:#22c55e}
+.trip-card.completed{border-left-color:#888}
+.trip-date{font-family:'Work Sans',sans-serif;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#775a19;margin-bottom:3px}
+.trip-route{font-family:Inter,sans-serif;font-size:0.88rem;font-weight:600;color:#000;margin-bottom:2px}
+.trip-meta{font-family:Inter,sans-serif;font-size:0.75rem;color:#888}
+.bdg{display:inline-block;padding:2px 8px;border-radius:12px;font-family:'Work Sans',sans-serif;font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em}
+.bdg-pen{background:#fef3c7;color:#92400e}
+.bdg-con{background:#dcfce7;color:#166534}
+.bdg-com{background:#f3f4f6;color:#6b7280}
+.empty-state{text-align:center;padding:3rem 1rem;color:#bbb;font-family:Inter,sans-serif;font-size:0.85rem}
+.empty-state .material-symbols-outlined{font-size:2.5rem;display:block;margin-bottom:0.75rem;opacity:0.4}
+/* ─── BOOKING FORM ─── */
+.book-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem}
+.book-full{grid-column:1/-1}
+.f-label{font-family:'Work Sans',sans-serif;font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#555;display:block;margin-bottom:0.4rem}
+.f-input{width:100%;padding:0.75rem 0;background:transparent;border:0;border-bottom:2px solid #e5e5e5;font-family:Inter,sans-serif;font-size:0.9rem;color:#000;transition:border-color 0.2s;outline:none}
+.f-input:focus{border-bottom-color:#775a19}
+.f-input::placeholder{color:#bbb}
+.f-group{margin-bottom:1.25rem}
+.book-card{background:#fff;padding:2rem;max-width:760px}
+.btn-blk{background:#000;color:#fff;border:none;padding:0.875rem 2rem;font-family:'Work Sans',sans-serif;font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;cursor:pointer;border-bottom:3px solid #775a19;transition:opacity 0.2s}
+.btn-blk:hover{opacity:0.85}
+.btn-blk:disabled{opacity:0.4;cursor:not-allowed}
+.btn-blk.full{width:100%}
+.btn-out{background:transparent;color:#555;border:1.5px solid #ddd;padding:0.75rem 1.75rem;font-family:'Work Sans',sans-serif;font-size:0.72rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;cursor:pointer;transition:all 0.2s;margin-left:0.75rem}
+.btn-out:hover{border-color:#000;color:#000}
+/* ─── VEHICLE SELECTOR ─── */
+.veh-row{display:flex;gap:0.75rem;flex-wrap:wrap;margin-top:0.25rem}
+.veh-btn{padding:0.5rem 1rem;border:2px solid #e5e5e5;background:#fff;font-family:'Work Sans',sans-serif;font-size:0.7rem;font-weight:600;cursor:pointer;transition:all 0.15s}
+.veh-btn.on{border-color:#000;background:#000;color:#fff}
+/* ─── CALENDAR ─── */
+.cal-wrap{background:#fff;padding:2rem}
+.cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem}
+.cal-month{font-family:'Times New Roman',serif;font-size:1.25rem;font-weight:700}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.cal-hdr{font-family:'Work Sans',sans-serif;font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#888;padding:0.5rem 0;text-align:center}
+.cal-day{min-height:80px;background:#f9f9f9;padding:0.5rem;position:relative;cursor:default;border:1px solid transparent;transition:border-color 0.15s}
+.cal-day.today{background:#fdfaf4;border-color:#e8c97a}
+.cal-day.has-trip{cursor:pointer}
+.cal-day.has-trip:hover{border-color:#775a19}
+.cal-day.other-month{opacity:0.3}
+.cal-day-num{font-family:'Work Sans',sans-serif;font-size:0.75rem;font-weight:600;color:#333;margin-bottom:4px}
+.cal-dot{width:18px;height:18px;background:#775a19;border-radius:2px;font-size:0.55rem;color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Work Sans',sans-serif;font-weight:700;margin-bottom:2px}
+.cal-nav-btn{background:#f3f3f3;border:0;width:34px;height:34px;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;transition:background 0.15s}
+.cal-nav-btn:hover{background:#000;color:#fff}
+/* ─── PAYMENTS ─── */
+.pay-summary{background:#000;color:#fff;padding:2rem;margin-bottom:1.5rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;border-left:4px solid #775a19}
+.pay-bal-lbl{font-family:'Work Sans',sans-serif;font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:#775a19;margin-bottom:4px}
+.pay-bal-amt{font-family:'Times New Roman',serif;font-size:2.5rem;font-weight:700;color:#fff}
+.pay-table{background:#fff;width:100%;border-collapse:collapse}
+.pay-table th{background:#f3f3f3;font-family:'Work Sans',sans-serif;font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#555;padding:0.75rem 1rem;text-align:left;border-bottom:1px solid #eee}
+.pay-table td{font-family:Inter,sans-serif;font-size:0.82rem;color:#333;padding:0.875rem 1rem;border-bottom:1px solid #f3f3f3}
+.pay-table tr:last-child td{border-bottom:none}
+/* ─── ACCOUNT ─── */
+.acct-card{background:#fff;padding:2rem;margin-bottom:1.25rem;max-width:680px}
+.acct-title{font-family:'Times New Roman',serif;font-size:1rem;font-weight:700;color:#000;margin-bottom:1.25rem;border-bottom:1px solid #eee;padding-bottom:0.75rem}
+.acct-row{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.875rem;gap:1rem}
+.acct-key{font-family:'Work Sans',sans-serif;font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#888;flex-shrink:0;min-width:120px}
+.acct-val{font-family:Inter,sans-serif;font-size:0.85rem;color:#222;text-align:right}
+/* ─── ALERTS ─── */
+.alert-ok{background:#f0fdf4;border-left:3px solid #22c55e;padding:0.75rem 1rem;font-family:Inter,sans-serif;font-size:0.82rem;color:#15803d;margin-bottom:1.25rem}
+.alert-err{background:#fef2f2;border-left:3px solid #ef4444;padding:0.75rem 1rem;font-family:Inter,sans-serif;font-size:0.82rem;color:#b91c1c;margin-bottom:1.25rem}
+/* ─── MOBILE ─── */
+@media(max-width:900px){
+  .sidebar{display:none}
+  .main{margin-left:0}
+  .mob-nav{display:flex;position:fixed;bottom:0;left:0;right:0;background:#000;z-index:40;border-top:2px solid #775a19}
+  .mob-nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;padding:0.625rem 0;cursor:pointer;color:rgba(255,255,255,0.45);transition:color 0.15s;border:none;background:none;font-family:'Work Sans',sans-serif;font-size:0.5rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;gap:2px}
+  .mob-nav-btn .material-symbols-outlined{font-size:20px}
+  .mob-nav-btn.on,.mob-nav-btn:hover{color:#e8c97a}
+  .content{padding:1.25rem;padding-bottom:5rem}
+  .stat-row{grid-template-columns:1fr 1fr}
+  .book-grid{grid-template-columns:1fr}
+  .book-full{grid-column:1}
+}
+@media(min-width:901px){.mob-nav{display:none}}
+</style>
+</head>
+<body>
+
+<!-- AUTH GATE: redirect if no session -->
+<script>
+var _sess = null;
+(function(){
+  var s = JSON.parse(localStorage.getItem('corp_session')||'null');
+  if(!s || s.expiresAt < Date.now()){
+    localStorage.removeItem('corp_session');
+    window.location.href='corporate.html';
+  } else { _sess = s; }
+})();
+</script>
+
+<div class="portal">
+<!-- ─── SIDEBAR ─── -->
+<aside class="sidebar">
+  <div class="sb-brand">
+    <a href="index.html" class="sb-logo">Seacoast RVIP</a>
+    <span class="sb-tag">Corporate Portal</span>
+  </div>
+  <div class="sb-company">
+    <div class="sb-company-name" id="sb-company">Loading…</div>
+    <div class="sb-company-user" id="sb-user"></div>
+  </div>
+  <nav class="sb-nav">
+    <a class="sb-link on" onclick="goTab('dash',this)"><span class="material-symbols-outlined">dashboard</span>Dashboard</a>
+    <a class="sb-link" onclick="goTab('book',this)"><span class="material-symbols-outlined">add_circle</span>Book a Ride</a>
+    <a class="sb-link" onclick="goTab('cal',this)"><span class="material-symbols-outlined">calendar_month</span>Calendar</a>
+    <a class="sb-link" onclick="goTab('trips',this)"><span class="material-symbols-outlined">directions_car</span>Trips</a>
+    <a class="sb-link" onclick="goTab('team',this)"><span class="material-symbols-outlined">group</span>Team</a>
+    <a class="sb-link" onclick="goTab('pay',this)"><span class="material-symbols-outlined">payments</span>Payments</a>
+    <a class="sb-link" onclick="goTab('acct',this)"><span class="material-symbols-outlined">business</span>Account</a>
+  </nav>
+  <div class="sb-bottom">
+    <div class="sb-logout" onclick="logout()">
+      <span class="material-symbols-outlined" style="font-size:16px">logout</span>
+      Sign Out
+    </div>
+  </div>
+</aside>
+
+<!-- ─── MAIN ─── -->
+<div class="main">
+  <!-- Top Bar -->
+  <div class="topbar">
+    <div class="topbar-title" id="tab-title">Dashboard</div>
+    <div class="topbar-right">
+      <span class="tb-badge" id="tb-billing">Monthly (NET-30)</span>
+      <a href="tel:+19782553140" style="font-family:Inter,sans-serif;font-size:0.75rem;color:#775a19;text-decoration:none;font-weight:600">(978) 255-3140</a>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ══════════ DASHBOARD ══════════ -->
+    <div id="tab-dash" class="tab-panel on">
+      <div class="stat-row">
+        <div class="stat-card gold">
+          <div class="stat-val" id="stat-next">—</div>
+          <div class="stat-lbl">Next Trip</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val" id="stat-month">0</div>
+          <div class="stat-lbl">Rides This Month</div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-val" id="stat-total">0</div>
+          <div class="stat-lbl">Total Rides</div>
+        </div>
+        <div class="stat-card amber">
+          <div class="stat-val" id="stat-bal">$0</div>
+          <div class="stat-lbl">Pending Balance</div>
+        </div>
+      </div>
+
+      <!-- Welcome Banner -->
+      <div style="background:#000;color:#fff;padding:1.75rem 2rem;margin-bottom:2rem;border-left:4px solid #775a19;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem">
+        <div>
+          <div style="font-family:'Work Sans',sans-serif;font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.14em;color:#775a19;margin-bottom:4px">Corporate Account</div>
+          <div style="font-family:'Times New Roman',serif;font-size:1.35rem;font-weight:700">Welcome back, <span id="dash-company">your company</span></div>
+          <div style="font-family:Inter,sans-serif;font-size:0.8rem;color:rgba(255,255,255,0.5);margin-top:4px">You have priority dispatch status · <span id="dash-billing">Monthly (NET-30)</span> billing</div>
+        </div>
+        <button class="btn-blk" style="border-bottom-color:#e8c97a" onclick="goTab('book',null)">+ Book a Ride</button>
+      </div>
+
+      <!-- Upcoming Trips -->
+      <div class="sec-hdr">
+        <div><div class="sec-title">Upcoming Trips</div><div class="sec-sub">Your next scheduled rides</div></div>
+        <button class="btn-out" style="margin-left:0" onclick="goTab('trips',null)">View All</button>
+      </div>
+      <div id="dash-upcoming"></div>
+    </div>
+
+    <!-- ══════════ BOOK A RIDE ══════════ -->
+    <div id="tab-book" class="tab-panel">
+      <div id="book-success" style="display:none;margin-bottom:1.5rem" class="alert-ok">
+        ✅ <strong>Ride booked!</strong> You'll receive confirmation shortly. Check your Trips tab to view details.
+      </div>
+      <div id="book-err" style="display:none;margin-bottom:1.5rem" class="alert-err"></div>
+      <div class="book-card">
+        <div style="margin-bottom:1.75rem">
+          <div style="font-family:'Work Sans',sans-serif;font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.14em;color:#775a19;margin-bottom:4px">Corporate Booking</div>
+          <h2 style="font-family:'Times New Roman',serif;font-size:1.5rem;font-weight:700">Request a Ride</h2>
+          <p style="font-family:Inter,sans-serif;font-size:0.82rem;color:#888;margin-top:4px">Booked under your corporate account — priority dispatch guaranteed.</p>
+        </div>
+        <div class="book-grid">
+          <div class="f-group book-full">
+            <label class="f-label">Passenger / Rider Name *</label>
+            <input class="f-input" id="b-name" type="text" placeholder="Full name of passenger"/>
+          </div>
+          <div class="f-group">
+            <label class="f-label">Contact Phone *</label>
+            <input class="f-input" id="b-phone" type="tel" placeholder="(603) 555-0000"/>
+          </div>
+          <div class="f-group">
+            <label class="f-label">Contact Email</label>
+            <input class="f-input" id="b-email" type="email" placeholder="passenger@company.com"/>
+          </div>
+          <div class="f-group">
+            <label class="f-label">Date *</label>
+            <input class="f-input" id="b-date" type="date"/>
+          </div>
+          <div class="f-group">
+            <label class="f-label">Pickup Time *</label>
+            <input class="f-input" id="b-time" type="time"/>
+          </div>
+          <div class="f-group book-full">
+            <label class="f-label">Pickup Location *</label>
+            <input class="f-input" id="b-pickup" type="text" placeholder="Full address or location name"/>
+          </div>
+          <div class="f-group book-full">
+            <label class="f-label">Destination *</label>
+            <input class="f-input" id="b-dest" type="text" placeholder="Full address or destination"/>
+          </div>
+          <div class="f-group book-full">
+            <label class="f-label">Service Type</label>
+            <select class="f-input" id="b-service">
+              <option value="Airport Transfer">✈ Airport Transfer</option>
+              <option value="Corporate Transfer">💼 Corporate Transfer</option>
+              <option value="Hotel Transfer">🏨 Hotel Transfer</option>
+              <option value="Evening / Event">🎭 Evening / Event</option>
+              <option value="Casino Run">🎰 Casino Run</option>
+              <option value="Medical Appointment">🏥 Medical Appointment</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="f-group book-full">
+            <label class="f-label">Vehicle Class</label>
+            <div class="veh-row" id="veh-btns">
+              <button type="button" class="veh-btn on" onclick="selVeh(this,'Black SUV Luxury')">Black SUV Luxury</button>
+              <button type="button" class="veh-btn" onclick="selVeh(this,'Black Sedan Executive')">Black Sedan Executive</button>
+              <button type="button" class="veh-btn" onclick="selVeh(this,'Stretch Limousine')">Stretch Limousine</button>
+            </div>
+            <input type="hidden" id="b-veh" value="Black SUV Luxury"/>
+          </div>
+          <div class="f-group">
+            <label class="f-label">Passengers</label>
+            <select class="f-input" id="b-pass">
+              <option>1</option><option>2</option><option>3</option><option>4</option>
+              <option>5</option><option>6</option><option>7</option>
+            </select>
+          </div>
+          <div class="f-group">
+            <label class="f-label">PO / Reference #</label>
+            <input class="f-input" id="b-po" type="text" placeholder="Optional PO number"/>
+          </div>
+          <div class="f-group book-full">
+            <label class="f-label">Special Instructions</label>
+            <textarea class="f-input" id="b-notes" rows="2" style="resize:vertical" placeholder="Flight number, special needs, VIP instructions…"></textarea>
+          </div>
+        </div>
+        <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid #f0f0f0;display:flex;align-items:center;flex-wrap:wrap;gap:0.75rem">
+          <button class="btn-blk" id="book-btn" onclick="submitBooking()">Request Ride →</button>
+          <span style="font-family:Inter,sans-serif;font-size:0.72rem;color:#aaa">Billed to <strong id="book-company-lbl"></strong> · <span id="book-billing-lbl"></span></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════ CALENDAR ══════════ -->
+    <div id="tab-cal" class="tab-panel">
+      <div class="cal-wrap">
+        <div class="cal-nav">
+          <button class="cal-nav-btn" onclick="calMove(-1)"><span class="material-symbols-outlined" style="font-size:18px">chevron_left</span></button>
+          <div class="cal-month" id="cal-label"></div>
+          <button class="cal-nav-btn" onclick="calMove(1)"><span class="material-symbols-outlined" style="font-size:18px">chevron_right</span></button>
+        </div>
+        <div class="cal-grid" id="cal-grid"></div>
+      </div>
+      <div style="margin-top:1rem;background:#fff;padding:1.25rem" id="cal-detail">
+        <div style="font-family:Inter,sans-serif;font-size:0.82rem;color:#aaa;text-align:center">Click a highlighted date to see trips for that day</div>
+      </div>
+    </div>
+
+    <!-- ══════════ TRIPS ══════════ -->
+    <div id="tab-trips" class="tab-panel">
+      <div class="sec-hdr">
+        <div><div class="sec-title">All Trips</div></div>
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap" id="trip-filters">
+          <button class="veh-btn on" onclick="filterTrips('all',this)">All</button>
+          <button class="veh-btn" onclick="filterTrips('upcoming',this)">Upcoming</button>
+          <button class="veh-btn" onclick="filterTrips('Completed',this)">Completed</button>
+          <button class="veh-btn" onclick="filterTrips('Pending',this)">Pending</button>
+        </div>
+      </div>
+      <div id="trips-list"></div>
+    </div>
+
+    <!-- ══════════ PAYMENTS ══════════ -->
+    <div id="tab-pay" class="tab-panel">
+      <div class="pay-summary">
+        <div>
+          <div class="pay-bal-lbl">Pending Balance</div>
+          <div class="pay-bal-amt" id="pay-balance">$0.00</div>
+          <div style="font-family:Inter,sans-serif;font-size:0.75rem;color:rgba(255,255,255,0.4);margin-top:4px" id="pay-cycle">Monthly (NET-30) billing</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:0.75rem">
+          <a id="pay-square-btn" href="https://square.link" target="_blank" style="background:#775a19;color:#fff;padding:0.75rem 1.75rem;font-family:'Work Sans',sans-serif;font-size:0.73rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;text-decoration:none;display:flex;align-items:center;gap:0.5rem;border-bottom:2px solid #5d4201"><span class="material-symbols-outlined" style="font-size:16px">credit_card</span>Pay Now (Square)</a>
+          <a href="venmo://paycharge?txn=pay&recipients=seacoastrvip" style="background:rgba(255,255,255,0.08);color:#fff;padding:0.75rem 1.75rem;font-family:'Work Sans',sans-serif;font-size:0.73rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;text-decoration:none;display:flex;align-items:center;gap:0.5rem;border:1px solid rgba(255,255,255,0.15)"><span class="material-symbols-outlined" style="font-size:16px">account_balance_wallet</span>Pay via Venmo</a>
+        </div>
+      </div>
+      <div class="sec-hdr">
+        <div><div class="sec-title">Invoice History</div></div>
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+          <button class="btn-out" style="margin-left:0" onclick="printNet30()">📄 NET-30 Statement</button>
+          <button class="btn-out" style="margin-left:0" onclick="printInvoice()">🖨 Print Invoice</button>
+        </div>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="pay-table" id="pay-table">
+          <thead><tr>
+            <th>Date</th><th>Confirmation</th><th>Service</th><th>Route</th><th>Amount</th><th>Status</th>
+          </tr></thead>
+          <tbody id="pay-tbody"></tbody>
+        </table>
+      </div>
+      <div id="pay-empty" style="display:none" class="empty-state">
+        <span class="material-symbols-outlined">receipt_long</span>No invoices yet.
+      </div>
+    </div>
+
+    <!-- ══════════ TEAM / MEMBERS ══════════ -->
+    <div id="tab-team" class="tab-panel">
+      <div style="background:#fff;padding:2rem;margin-bottom:1.5rem;max-width:760px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem">
+          <div>
+            <div style="font-family:'Work Sans',sans-serif;font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.14em;color:#775a19;margin-bottom:4px">Team Management</div>
+            <h2 style="font-family:'Times New Roman',serif;font-size:1.25rem;font-weight:700">Authorized Travelers</h2>
+            <p style="font-family:Inter,sans-serif;font-size:0.82rem;color:#888;margin-top:4px">Members added here can book personal rides that auto-link to your corporate account.</p>
+          </div>
+          <div class="stat-card gold" style="min-width:auto;padding:1rem 1.25rem"><div class="stat-val" id="team-count">0</div><div class="stat-lbl">Members</div></div>
+        </div>
+        <div id="team-list" style="margin-bottom:1.5rem"></div>
+        <div style="border-top:2px solid #f0f0f0;padding-top:1.25rem">
+          <div style="font-family:'Work Sans',sans-serif;font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#775a19;margin-bottom:0.875rem">Add New Member</div>
+          <div class="book-grid">
+            <div class="f-group"><label class="f-label">Full Name *</label><input class="f-input" id="tm-name" type="text" placeholder="John Smith"/></div>
+            <div class="f-group"><label class="f-label">Phone *</label><input class="f-input" id="tm-phone" type="tel" placeholder="(603) 555-0000"/></div>
+            <div class="f-group"><label class="f-label">Email</label><input class="f-input" id="tm-email" type="email" placeholder="john@company.com"/></div>
+            <div class="f-group"><label class="f-label">Role / Title</label><input class="f-input" id="tm-role" type="text" placeholder="VP Sales"/></div>
+          </div>
+          <button class="btn-blk" onclick="addMember()" style="margin-top:0.5rem"><span class="material-symbols-outlined" style="font-size:15px;vertical-align:middle;margin-right:4px">person_add</span>Add Team Member</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════ ACCOUNT ══════════ -->
+    <div id="tab-acct" class="tab-panel">
+      <div class="acct-card">
+        <div class="acct-title">Company Information</div>
+        <div class="acct-row"><span class="acct-key">Company</span><span class="acct-val" id="a-company"></span></div>
+        <div class="acct-row"><span class="acct-key">Industry</span><span class="acct-val" id="a-industry"></span></div>
+        <div class="acct-row"><span class="acct-key">Billing Cycle</span><span class="acct-val" id="a-billing"></span></div>
+        <div class="acct-row"><span class="acct-key">Billing Address</span><span class="acct-val" id="a-baddr"></span></div>
+      </div>
+      <div class="acct-card">
+        <div class="acct-title">Primary Contact</div>
+        <div class="acct-row"><span class="acct-key">Name</span><span class="acct-val" id="a-name"></span></div>
+        <div class="acct-row"><span class="acct-key">Phone</span><span class="acct-val" id="a-phone"></span></div>
+        <div class="acct-row"><span class="acct-key">Email</span><span class="acct-val" id="a-email"></span></div>
+      </div>
+      <div class="acct-card">
+        <div class="acct-title">Account Services</div>
+        <div class="acct-row"><span class="acct-key">Account Status</span><span class="acct-val"><span class="bdg bdg-con">Active</span></span></div>
+        <div class="acct-row"><span class="acct-key">Typical Routes</span><span class="acct-val" id="a-routes"></span></div>
+        <div class="acct-row"><span class="acct-key">Team Members</span><span class="acct-val" id="a-riders" style="white-space:pre-line"></span></div>
+      </div>
+      <div style="margin-top:1rem;display:flex;gap:0.75rem;flex-wrap:wrap">
+        <button class="btn-blk" onclick="goTab('book',null)">+ Book a Ride</button>
+        <button class="btn-out" style="margin-left:0" onclick="goTab('team',null)">👥 Manage Team</button>
+        <button class="btn-out" style="margin-left:0" onclick="logout()">Sign Out</button>
+        <a href="tel:+19782553140" style="background:#f3f3f3;color:#333;padding:0.75rem 1.5rem;font-family:'Work Sans',sans-serif;font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;text-decoration:none;display:inline-flex;align-items:center;gap:0.5rem"><span class="material-symbols-outlined" style="font-size:15px">phone</span>(978) 255-3140</a>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+</div><!-- /portal -->
+
+<!-- MOBILE BOTTOM NAV -->
+<nav class="mob-nav">
+  <button class="mob-nav-btn on" onclick="goTab('dash',this)"><span class="material-symbols-outlined">dashboard</span>Home</button>
+  <button class="mob-nav-btn" onclick="goTab('book',this)"><span class="material-symbols-outlined">add_circle</span>Book</button>
+  <button class="mob-nav-btn" onclick="goTab('cal',this)"><span class="material-symbols-outlined">calendar_month</span>Calendar</button>
+  <button class="mob-nav-btn" onclick="goTab('trips',this)"><span class="material-symbols-outlined">directions_car</span>Trips</button>
+  <button class="mob-nav-btn" onclick="goTab('team',this)"><span class="material-symbols-outlined">group</span>Team</button>
+  <button class="mob-nav-btn" onclick="goTab('pay',this)"><span class="material-symbols-outlined">payments</span>Pay</button>
+</nav>
+
+<script>
+var db = window._db;
+var sess = _sess;
+var _trips = [];
+var _tripFilter = 'all';
+var _calDate = new Date();
+var _veh = 'Black SUV Luxury';
+var tabTitles = {dash:'Dashboard',book:'Book a Ride',cal:'Calendar',trips:'Trips',team:'Team',pay:'Payments',acct:'Account'};
+var _allTabs = ['dash','book','cal','trips','team','pay','acct'];
+
+// ─── INIT ───
+window.addEventListener('DOMContentLoaded', function(){
+  if(!sess) return;
+  // Populate session info
+  document.getElementById('sb-company').textContent = sess.company || 'Corporate Account';
+  document.getElementById('sb-user').textContent = sess.contactName || sess.contactEmail || '';
+  document.getElementById('dash-company').textContent = sess.company || 'your company';
+  document.getElementById('dash-billing').textContent = sess.billingCycle || 'Monthly (NET-30)';
+  document.getElementById('tb-billing').textContent = sess.billingCycle || 'Monthly (NET-30)';
+  document.getElementById('book-company-lbl').textContent = sess.company;
+  document.getElementById('book-billing-lbl').textContent = sess.billingCycle || 'Monthly (NET-30)';
+  // Account tab
+  document.getElementById('a-company').textContent = sess.company || '—';
+  document.getElementById('a-industry').textContent = sess.industry || '—';
+  document.getElementById('a-billing').textContent = sess.billingCycle || '—';
+  document.getElementById('a-baddr').textContent = sess.billingAddress || '—';
+  document.getElementById('a-name').textContent = sess.contactName || '—';
+  document.getElementById('a-phone').textContent = sess.contactPhone || '—';
+  document.getElementById('a-email').textContent = sess.contactEmail || '—';
+  document.getElementById('a-routes').textContent = sess.typicalRoutes || '—';
+  document.getElementById('a-riders').textContent = sess.additionalRiders || 'None listed';
+  // Set default date for booking
+  var today = new Date();
+  document.getElementById('b-date').min = today.toISOString().split('T')[0];
+  document.getElementById('b-date').value = today.toISOString().split('T')[0];
+  // Load trips & members
+  loadTrips();
+  loadMembers();
+  // Build calendar
+  buildCal();
+});
+
+// ─── TAB SWITCHING ───
+function goTab(id, el){
+  // Sidebar
+  document.querySelectorAll('.sb-link').forEach(function(l){l.classList.remove('on');});
+  // Mobile
+  document.querySelectorAll('.mob-nav-btn').forEach(function(b){b.classList.remove('on');});
+  // Panels
+  document.querySelectorAll('.tab-panel').forEach(function(p){p.classList.remove('on');});
+  var panel = document.getElementById('tab-'+id);
+  if(panel) panel.classList.add('on');
+  document.getElementById('tab-title').textContent = tabTitles[id] || id;
+  if(el){
+    el.classList.add('on');
+    // Also highlight matching mobile btn or sidebar link
+    if(el.classList.contains('sb-link')){
+      document.querySelectorAll('.mob-nav-btn')[_allTabs.indexOf(id)]?.classList.add('on');
+    } else {
+      document.querySelectorAll('.sb-link')[_allTabs.indexOf(id)]?.classList.add('on');
+    }
+  } else {
+    var idx=_allTabs.indexOf(id);
+    if(idx>=0){
+      document.querySelectorAll('.sb-link')[idx]?.classList.add('on');
+      document.querySelectorAll('.mob-nav-btn')[idx]?.classList.add('on');
+    }
+  }
+  if(id==='cal') buildCal();
+}
+
+// ─── LOAD TRIPS ───
+function loadTrips(){
+  if(!db||!sess) return;
+  db.collection('bookings').where('corporateAccountId','==',sess.accountId).orderBy('date','desc').get().then(function(snap){
+    _trips=[];
+    snap.forEach(function(d){_trips.push(d.data());});
+    renderDashUpcoming();
+    renderTrips();
+    renderPayments();
+    calcStats();
+    buildCal();
+  }).catch(function(e){
+    // Fallback: no data
+    renderDashUpcoming();
+  });
+}
+
+function calcStats(){
+  var now=new Date();
+  var thisMonth=now.getMonth(),thisYear=now.getFullYear();
+  var monthCount=0,totalBal=0;
+  var upcoming=_trips.filter(function(t){return new Date(t.date+' '+(t.time||'00:00'))>=now;}).sort(function(a,b){return new Date(a.date)-new Date(b.date);});
+  _trips.forEach(function(t){
+    var d=new Date(t.date);
+    if(d.getMonth()===thisMonth&&d.getFullYear()===thisYear)monthCount++;
+    if(t.status!=='Completed'&&t.price){var p=parseFloat((t.price+'').replace(/[^0-9.]/g,''));if(!isNaN(p))totalBal+=p;}
+  });
+  document.getElementById('stat-month').textContent=monthCount;
+  document.getElementById('stat-total').textContent=_trips.length;
+  document.getElementById('stat-bal').textContent='$'+totalBal.toFixed(2);
+  document.getElementById('pay-balance').textContent='$'+totalBal.toFixed(2);
+  if(upcoming.length){
+    var nxt=upcoming[0];
+    var nd=new Date(nxt.date);
+    document.getElementById('stat-next').textContent=nd.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+  }else{
+    document.getElementById('stat-next').textContent='None';
+  }
+}
+
+function renderDashUpcoming(){
+  var el=document.getElementById('dash-upcoming');
+  var now=new Date();
+  var upcoming=_trips.filter(function(t){return new Date(t.date+' '+(t.time||'23:59'))>=now;}).sort(function(a,b){return new Date(a.date)-new Date(b.date);}).slice(0,3);
+  if(!upcoming.length){el.innerHTML='<div class="empty-state"><span class="material-symbols-outlined">event_available</span>No upcoming trips. <span style="color:#775a19;cursor:pointer" onclick="goTab(\'book\',null)">Book one now →</span></div>';return;}
+  el.innerHTML=upcoming.map(function(t){return tripCard(t);}).join('');
+}
+
+function tripCard(t){
+  var d=new Date(t.date);
+  var dateStr=d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'});
+  var bdg=t.status==='Confirmed'?'<span class="bdg bdg-con">Confirmed</span>':t.status==='Completed'?'<span class="bdg bdg-com">Completed</span>':'<span class="bdg bdg-pen">Pending</span>';
+  var cls=t.status==='Confirmed'?'confirmed':t.status==='Completed'?'completed':'pending';
+  var time12='';
+  if(t.time){var p=t.time.split(':'),h=parseInt(p[0]),m=p[1],ampm=h>=12?'PM':'AM';h=h%12||12;time12=h+':'+m+' '+ampm;}
+  return '<div class="trip-card '+cls+'">'+
+    '<div><div class="trip-date">'+dateStr+(time12?' · '+time12:'')+'</div>'+
+    '<div class="trip-route">'+escH(t.pickup||'—')+' → '+escH(t.destination||'—')+'</div>'+
+    '<div class="trip-meta">'+escH(t.name||'')+(t.service?' · '+escH(t.service):'')+(t.vehicle?' · '+escH(t.vehicle):'')+(t.price?' · <strong>'+escH(t.price+'')+'</strong>':'')+'</div></div>'+
+    '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.5rem;flex-shrink:0">'+bdg+
+    (t.status==='Completed'?'<span style="font-family:\'Work Sans\',sans-serif;font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#775a19;cursor:pointer" onclick="rebookTrip(\''+escH(t.pickup||'')+'\',\''+escH(t.destination||'')+'\',\''+escH(t.service||'')+'\',\''+escH(t.name||'')+'\',\''+escH(t.phone||'')+'\')">↻ Rebook</span>':'')+
+    (t.pickup?'<a href="https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(t.pickup||'')+'" target="_blank" style="font-family:\'Work Sans\',sans-serif;font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#775a19;text-decoration:none">Navigate</a>':'')+'</div></div>';
+}
+
+function renderTrips(){
+  var el=document.getElementById('trips-list');
+  var now=new Date();
+  var list=_trips;
+  if(_tripFilter==='upcoming') list=_trips.filter(function(t){return new Date(t.date+' '+(t.time||'23:59'))>=now;});
+  else if(_tripFilter!=='all') list=_trips.filter(function(t){return t.status===_tripFilter;});
+  list=list.slice().sort(function(a,b){return new Date(b.date)-new Date(a.date);});
+  if(!list.length){el.innerHTML='<div class="empty-state"><span class="material-symbols-outlined">directions_car</span>No trips found.</div>';return;}
+  el.innerHTML=list.map(function(t){return tripCard(t);}).join('');
+}
+
+function filterTrips(f,el){
+  _tripFilter=f;
+  document.querySelectorAll('#trip-filters .veh-btn').forEach(function(b){b.classList.remove('on');});
+  if(el)el.classList.add('on');
+  renderTrips();
+}
+
+function renderPayments(){
+  var tbody=document.getElementById('pay-tbody');
+  var empty=document.getElementById('pay-empty');
+  if(!_trips.length){tbody.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+  tbody.innerHTML=_trips.map(function(t){
+    var d=new Date(t.date);
+    var dateStr=d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+    var bdg=t.status==='Completed'?'<span class="bdg bdg-com">Paid</span>':'<span class="bdg bdg-pen">Due</span>';
+    return '<tr><td>'+dateStr+'</td><td style="font-weight:600;color:#775a19">'+(t.code||'—')+'</td><td>'+escH(t.service||'—')+'</td><td>'+escH((t.pickup||'—').substring(0,20))+'→'+escH((t.destination||'—').substring(0,20))+'</td><td><strong>'+(t.price||'—')+'</strong></td><td>'+bdg+'</td></tr>';
+  }).join('');
+  document.getElementById('pay-cycle').textContent=(sess.billingCycle||'Monthly (NET-30)')+' billing';
+}
+
+// ─── CALENDAR ───
+function buildCal(){
+  var label=document.getElementById('cal-label');
+  var grid=document.getElementById('cal-grid');
+  if(!label||!grid)return;
+  var year=_calDate.getFullYear(),month=_calDate.getMonth();
+  label.textContent=new Date(year,month,1).toLocaleDateString('en-US',{month:'long',year:'numeric'});
+  // Map trip dates
+  var tripMap={};
+  _trips.forEach(function(t){if(t.date){if(!tripMap[t.date])tripMap[t.date]=[];tripMap[t.date].push(t);}});
+  // Headers
+  var days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  var html=days.map(function(d){return '<div class="cal-hdr">'+d+'</div>';}).join('');
+  var first=new Date(year,month,1).getDay();
+  var last=new Date(year,month+1,0).getDate();
+  var today=new Date();
+  // Prev month padding
+  var prevLast=new Date(year,month,0).getDate();
+  for(var i=0;i<first;i++){
+    var pDay=prevLast-first+i+1;
+    html+='<div class="cal-day other-month"><div class="cal-day-num">'+pDay+'</div></div>';
+  }
+  for(var d=1;d<=last;d++){
+    var dateStr=year+'-'+(month+1<10?'0':'')+(month+1)+'-'+(d<10?'0':'')+d;
+    var isToday=today.getFullYear()===year&&today.getMonth()===month&&today.getDate()===d;
+    var hasTrip=!!tripMap[dateStr];
+    var dots=hasTrip?tripMap[dateStr].slice(0,3).map(function(t){return '<div class="cal-dot" title="'+escH(t.name||'')+'">'+(tripMap[dateStr].length>1?tripMap[dateStr].length:'✓')+'</div>';}).join(''):'';
+    html+='<div class="cal-day'+(isToday?' today':'')+(hasTrip?' has-trip':'')+'" '+(hasTrip?'onclick="showCalDay(\''+dateStr+'\')"':'')+'><div class="cal-day-num">'+d+'</div>'+dots+'</div>';
+  }
+  // Next month padding
+  var total=first+last;
+  var rem=(7-total%7)%7;
+  for(var n=1;n<=rem;n++) html+='<div class="cal-day other-month"><div class="cal-day-num">'+n+'</div></div>';
+  grid.innerHTML=html;
+}
+
+function calMove(dir){_calDate.setMonth(_calDate.getMonth()+dir);buildCal();}
+
+function showCalDay(dateStr){
+  var el=document.getElementById('cal-detail');
+  var dayTrips=_trips.filter(function(t){return t.date===dateStr;});
+  if(!dayTrips.length){el.innerHTML='<div style="font-family:Inter,sans-serif;font-size:0.82rem;color:#aaa;text-align:center">No trips on this date.</div>';return;}
+  var d=new Date(dateStr+'T12:00:00');
+  el.innerHTML='<div style="font-family:\'Work Sans\',sans-serif;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#775a19;margin-bottom:1rem">'+d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})+'</div>'+dayTrips.map(function(t){return tripCard(t);}).join('');
+}
+
+// ─── BOOKING FORM ───
+function selVeh(el,val){
+  document.querySelectorAll('#veh-btns .veh-btn').forEach(function(b){b.classList.remove('on');});
+  el.classList.add('on');
+  _veh=val;
+  document.getElementById('b-veh').value=val;
+}
+
+function submitBooking(){
+  var btn=document.getElementById('book-btn');
+  var err=document.getElementById('book-err');
+  var ok=document.getElementById('book-success');
+  err.style.display='none';ok.style.display='none';
+  var name=document.getElementById('b-name').value.trim();
+  var phone=document.getElementById('b-phone').value.trim();
+  var date=document.getElementById('b-date').value;
+  var time=document.getElementById('b-time').value;
+  var pickup=document.getElementById('b-pickup').value.trim();
+  var dest=document.getElementById('b-dest').value.trim();
+  if(!name||!phone||!date||!time||!pickup||!dest){
+    err.textContent='Please fill in all required fields.';err.style.display='block';return;
+  }
+  btn.textContent='Booking…';btn.disabled=true;
+  var code='CORP'+Math.floor(10000+Math.random()*90000);
+  var booking={
+    id:code.toLowerCase()+'_'+Date.now(),
+    code:code,
+    name:name,
+    phone:phone,
+    email:document.getElementById('b-email').value.trim(),
+    date:date,
+    time:time,
+    pickup:pickup,
+    destination:dest,
+    service:document.getElementById('b-service').value,
+    vehicle:_veh,
+    passengers:document.getElementById('b-pass').value,
+    notes:document.getElementById('b-notes').value.trim(),
+    poNumber:document.getElementById('b-po').value.trim(),
+    corporateAccountId:sess.accountId,
+    corporateCompany:sess.company,
+    status:'Pending',
+    source:'corporate-portal',
+    createdAt:new Date().toISOString()
+  };
+  function finish(success){
+    btn.textContent='Request Ride →';btn.disabled=false;
+    if(success){
+      ok.style.display='block';
+      ['b-name','b-phone','b-email','b-date','b-time','b-pickup','b-dest','b-notes','b-po'].forEach(function(id){document.getElementById(id).value='';});
+      _trips.unshift(booking);
+      renderDashUpcoming();calcStats();buildCal();
+      // Email admin
+      var fd=new FormData();
+      fd.append('_subject','[CORP BOOKING] '+name+' — '+sess.company);
+      fd.append('_captcha','false');fd.append('_template','table');
+      fd.append('Confirmation',code);fd.append('Company',sess.company);
+      fd.append('Passenger',name);fd.append('Phone',phone);
+      fd.append('Date',date);fd.append('Time',time);
+      fd.append('Pickup',pickup);fd.append('Destination',dest);
+      fd.append('Service',booking.service);fd.append('Vehicle',_veh);
+      fd.append('PO Number',booking.poNumber||'N/A');
+      fetch('https://formsubmit.co/ajax/info@seacoastrvip.com',{method:'POST',body:fd,headers:{'Accept':'application/json'}}).catch(function(){});
+    } else {
+      err.textContent='Booking failed. Please call (978) 255-3140.';err.style.display='block';
+    }
+  }
+  if(db){
+    db.collection('bookings').doc(booking.id).set(booking).then(function(){finish(true);}).catch(function(){
+      // Still show success to user, admin gets email
+      finish(true);
+    });
+  } else { finish(true); }
+}
+
+// ─── PRINT INVOICE ───
+function printInvoice(){
+  var rows=_trips.map(function(t){
+    return '<tr><td>'+t.date+'</td><td>'+escH(t.code||'')+'</td><td>'+escH(t.service||'')+'</td><td>'+escH(t.pickup||'')+'</td><td>'+escH(t.destination||'')+'</td><td>'+(t.price||'—')+'</td><td>'+t.status+'</td></tr>';
+  }).join('');
+  var w=window.open('','_blank');
+  w.document.write('<html><head><title>Invoice — '+escH(sess.company)+'</title><style>body{font-family:Arial,sans-serif;padding:2rem}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ddd;padding:8px;text-align:left}th{background:#f3f3f3}h1{margin-bottom:0.25rem}p{color:#666;font-size:0.85rem;margin-bottom:1.5rem}</style></head><body>');
+  w.document.write('<h1>Seacoast RVIP — Corporate Invoice</h1>');
+  w.document.write('<p>Company: <strong>'+escH(sess.company)+'</strong> &nbsp;|&nbsp; Billing: '+escH(sess.billingCycle||'Monthly')+'&nbsp;|&nbsp; Generated: '+new Date().toLocaleDateString('en-US')+'</p>');
+  w.document.write('<table><thead><tr><th>Date</th><th>Conf#</th><th>Service</th><th>Pickup</th><th>Destination</th><th>Amount</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table>');
+  w.document.write('<p style="margin-top:2rem">Questions: info@seacoastrvip.com | (978) 255-3140 | seacoastrvip.com</p>');
+  w.document.write('</body></html>');
+  w.document.close();
+  w.print();
+}
+
+// ─── REBOOK ───
+function rebookTrip(pickup,dest,service,name,phone){
+  goTab('book',null);
+  setTimeout(function(){
+    if(pickup)document.getElementById('b-pickup').value=pickup;
+    if(dest)document.getElementById('b-dest').value=dest;
+    if(name)document.getElementById('b-name').value=name;
+    if(phone)document.getElementById('b-phone').value=phone;
+    if(service){
+      var sel=document.getElementById('b-service');
+      for(var i=0;i<sel.options.length;i++){if(sel.options[i].value===service){sel.selectedIndex=i;break;}}
+    }
+  },100);
+}
+
+// ─── NET-30 STATEMENT ───
+function printNet30(){
+  var now=new Date();
+  var thirtyAgo=new Date(now.getTime()-30*24*60*60*1000);
+  var recent=_trips.filter(function(t){return new Date(t.date)>=thirtyAgo;});
+  var total=recent.reduce(function(s,t){var p=parseFloat((t.price+'').replace(/[^0-9.]/g,''));return s+(isNaN(p)?0:p);},0);
+  var rows=recent.map(function(t){
+    return '<tr><td>'+t.date+'</td><td>'+escH(t.code||'')+'</td><td>'+escH(t.service||'')+'</td><td>'+escH(t.pickup||'')+'</td><td>'+escH(t.destination||'')+'</td><td style="text-align:right">$'+(parseFloat(t.price)||0).toFixed(2)+'</td><td>'+t.status+'</td></tr>';
+  }).join('');
+  var w=window.open('','_blank');
+  w.document.write('<html><head><title>NET-30 Statement — '+escH(sess.company)+'</title><style>body{font-family:Arial,sans-serif;padding:2.5rem;max-width:800px;margin:0 auto}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ddd;padding:8px;text-align:left;font-size:0.85rem}th{background:#f3f3f3}h1{font-size:1.5rem;margin-bottom:0.25rem}.total{font-size:1.25rem;font-weight:700;margin-top:1rem;text-align:right}p{color:#666;font-size:0.85rem;margin-bottom:0.5rem}.header{border-bottom:3px solid #000;padding-bottom:1rem;margin-bottom:1.5rem}@media print{body{padding:1rem}}</style></head><body>');
+  w.document.write('<div class="header"><h1>SEACOAST RVIP LLC</h1><p>Premium Ground Transportation</p><p style="color:#000;font-weight:600">NET-30 STATEMENT</p></div>');
+  w.document.write('<p><strong>Bill To:</strong> '+escH(sess.company)+'</p>');
+  w.document.write('<p><strong>Contact:</strong> '+escH(sess.contactName||'')+'</p>');
+  w.document.write('<p><strong>Address:</strong> '+escH(sess.billingAddress||'')+'</p>');
+  w.document.write('<p><strong>Period:</strong> '+thirtyAgo.toLocaleDateString('en-US')+' — '+now.toLocaleDateString('en-US')+'</p>');
+  w.document.write('<p><strong>Payment Due:</strong> '+new Date(now.getTime()+30*24*60*60*1000).toLocaleDateString('en-US')+'</p><br>');
+  w.document.write('<table><thead><tr><th>Date</th><th>Conf#</th><th>Service</th><th>Pickup</th><th>Destination</th><th style="text-align:right">Amount</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table>');
+  w.document.write('<div class="total">Total Due: $'+total.toFixed(2)+'</div>');
+  w.document.write('<p style="margin-top:2rem;font-size:0.78rem;color:#888">Payment Terms: NET-30 from statement date. Make payments to Seacoast RVIP LLC.<br>Questions: info@seacoastrvip.com | (978) 255-3140 | seacoastrvip.com</p>');
+  w.document.write('</body></html>');
+  w.document.close();
+  w.print();
+}
+
+// ─── TEAM MEMBERS ───
+var _members = [];
+function loadMembers(){
+  if(!db||!sess) return;
+  db.collection('corporate_accounts').doc(sess.accountId).get().then(function(doc){
+    if(!doc.exists) return;
+    _members = doc.data().members || [];
+    renderMembers();
+  }).catch(function(){});
+}
+function renderMembers(){
+  var el=document.getElementById('team-list');
+  var cnt=document.getElementById('team-count');
+  if(cnt) cnt.textContent=_members.length;
+  if(!_members.length){
+    el.innerHTML='<div style="text-align:center;padding:2rem;color:#aaa;font-size:0.85rem"><span class="material-symbols-outlined" style="font-size:2rem;display:block;margin-bottom:0.5rem;opacity:0.3">group_add</span>No team members added yet.<br>Add your first traveler below.</div>';
+    return;
+  }
+  el.innerHTML=_members.map(function(m,i){
+    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:0.875rem 1rem;background:#f9f9f9;margin-bottom:0.5rem;border-left:3px solid #775a19">' +
+      '<div style="flex:1">' +
+        '<div style="font-weight:600;font-size:0.9rem">'+escH(m.name)+(m.role?' <span style="color:#888;font-weight:400;font-size:0.75rem">· '+escH(m.role)+'</span>':'')+'</div>' +
+        '<div style="font-size:0.78rem;color:#666;margin-top:3px">'+escH(m.phone||'')+(m.email?' · '+escH(m.email):'')+'</div>' +
+      '</div>' +
+      '<div style="display:flex;gap:0.5rem;align-items:center">' +
+        '<button onclick="bookForMember('+i+')" style="background:#000;color:#fff;border:none;padding:0.375rem 0.75rem;font-family:\'Work Sans\',sans-serif;font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;cursor:pointer;border-bottom:2px solid #775a19">Book</button>' +
+        '<button onclick="removeMember('+i+')" style="background:none;border:none;color:#ef4444;cursor:pointer"><span class="material-symbols-outlined" style="font-size:18px">delete</span></button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+function addMember(){
+  var name=document.getElementById('tm-name').value.trim();
+  var phone=document.getElementById('tm-phone').value.trim();
+  var email=document.getElementById('tm-email').value.trim();
+  var role=document.getElementById('tm-role').value.trim();
+  if(!name||!phone){alert('Name and phone are required.');return;}
+  var member={name:name,phone:phone,email:email,role:role,addedAt:new Date().toISOString()};
+  _members.push(member);
+  if(db&&sess){
+    db.collection('corporate_accounts').doc(sess.accountId).update({members:_members}).then(function(){
+      renderMembers();
+      ['tm-name','tm-phone','tm-email','tm-role'].forEach(function(id){document.getElementById(id).value='';});
+    }).catch(function(e){alert('Error: '+e.message);});
+  }
+}
+function removeMember(idx){
+  if(!confirm('Remove '+_members[idx].name+' from team?'))return;
+  _members.splice(idx,1);
+  if(db&&sess){
+    db.collection('corporate_accounts').doc(sess.accountId).update({members:_members}).then(function(){
+      renderMembers();
+    });
+  }
+}
+function bookForMember(idx){
+  var m=_members[idx];
+  goTab('book',null);
+  setTimeout(function(){
+    document.getElementById('b-name').value=m.name||'';
+    document.getElementById('b-phone').value=m.phone||'';
+    document.getElementById('b-email').value=m.email||'';
+  },100);
+}
+
+// ─── UTILS ───
+function escH(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function logout(){localStorage.removeItem('corp_session');window.location.href='corporate.html';}
+</script>
+</body>
+</html>
