@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Corporate Accounts | Seacoast RVIP</title>
+<meta name="description" content="Seacoast RVIP Corporate Account Program — NET-30 invoicing, priority dispatch, monthly statements, and dedicated support for business clients."/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Serif:wght@400;700;900&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+(function(){
+  var cfg={
+    apiKey:"AIzaSyDGel0ktZDQYcdlOuoZo4bAqZWCuGvOVbc",
+    authDomain:"seacoast-rip.firebaseapp.com",
+    projectId:"seacoast-rip",
+    storageBucket:"seacoast-rip.firebasestorage.app",
+    messagingSenderId:"684535453116",
+    appId:"1:684535453116:web:922c843b5bad3b81ad47b9"
+  };
+  try{
+    if(!firebase.apps.length) firebase.initializeApp(cfg);
+    window._db = firebase.firestore();
+  }catch(e){ window._db = null; }
+})();
+</script>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  .material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 300,'GRAD' 0,'opsz' 24}
+  body{font-family:'Inter',sans-serif;background:#f9f9f9;color:#1a1c1c}
+  h1,h2,h3,.serif{font-family:'Times New Roman',Times,Georgia,serif}
+
+  nav{position:fixed;top:0;width:100%;z-index:48;background:rgba(255,255,255,0.97);backdrop-filter:blur(12px);border-bottom:1px solid rgba(0,0,0,0.06)}
+  .nav-in{display:flex;justify-content:space-between;align-items:center;max-width:100%;padding:0 2rem;height:68px}
+
+  /* HERO */
+  .hero{background:#000;color:white;padding:7rem 2rem 5rem;border-bottom:3px solid #775a19}
+  .hero-inner{max-width:1000px;margin:0 auto}
+
+  /* BENEFITS GRID */
+  .benefits{background:#111;padding:3rem 2rem}
+  .benefits-inner{max-width:1000px;margin:0 auto}
+  .ben-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;margin-top:2rem}
+  .ben-card{background:#1a1a1a;border-left:3px solid #775a19;padding:1.25rem}
+  @media(max-width:640px){.ben-grid{grid-template-columns:1fr 1fr}}
+
+  /* FORM */
+  .form-wrap{max-width:760px;margin:0 auto;padding:3rem 2rem 5rem}
+
+  /* Inputs */
+  .f-input{width:100%;background:#f3f3f3;border:0;border-bottom:2px solid #c4c7c7;padding:0.75rem 0;font-family:'Inter',sans-serif;font-size:0.95rem;transition:all 0.2s;outline:none}
+  .f-input:focus{border-bottom-color:#000}
+  .f-label{font-family:'Work Sans',sans-serif;font-size:0.63rem;text-transform:uppercase;letter-spacing:0.1em;color:#444748;margin-bottom:0.4rem;display:block}
+
+  /* Step headers */
+  .step-header{display:flex;align-items:baseline;gap:0.75rem;margin-bottom:1.5rem}
+  .step-num{font-family:'Work Sans',sans-serif;font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:#775a19}
+  .step-title{font-family:'Times New Roman',serif;font-size:1.5rem;font-weight:700;color:#000}
+
+  .step-block{background:white;border-left:3px solid #e2e2e2;padding:1.75rem 1.75rem 1.75rem 2rem;margin-bottom:1.5rem;transition:border-color 0.2s}
+  .step-block:focus-within{border-left-color:#775a19}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem}
+  .full{grid-column:1/-1}
+  @media(max-width:580px){.grid2{grid-template-columns:1fr}.full{grid-column:1}}
+
+  .space-y > *+*{margin-top:1.25rem}
+
+  .submit-btn{width:100%;background:#000;color:white;padding:1.25rem;font-family:'Times New Roman',serif;font-size:1.1rem;font-weight:700;letter-spacing:0.02em;border:none;border-bottom:3px solid #775a19;cursor:pointer;transition:opacity 0.2s}
+  .submit-btn:hover{opacity:0.85}
+  .submit-btn:disabled{opacity:0.5;cursor:not-allowed}
+
+  /* Privacy notice */
+  .privacy-note{font-size:0.75rem;color:#888;text-align:center;margin-top:1rem;line-height:1.6}
+
+  /* ToS Checkbox */
+  .tos-box{background:#fdfaf4;border:1.5px solid #775a19;padding:1rem 1.25rem}
+
+  /* Success */
+  #success-screen{display:none;text-align:center;padding:4rem 2rem;background:white;border-left:3px solid #775a19;margin-bottom:2rem}
+
+  /* Monthly rides selector */
+  .r-btn{padding:0.5rem 1rem;border:1.5px solid #c4c7c7;background:white;font-family:'Work Sans',sans-serif;font-size:0.72rem;font-weight:600;cursor:pointer;transition:all 0.15s}
+  .r-btn.sel{background:#000;color:white;border-color:#000}
+
+  footer{background:#0a0a0a;color:white;padding:2.5rem 2rem;margin-top:4rem}
+  .foot-in{max-width:1000px;margin:0 auto;display:flex;flex-wrap:wrap;justify-content:space-between;gap:1rem;align-items:center}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-in">
+    <a href="index.html" style="font-family:'Times New Roman',Times,serif;font-size:1.35rem;font-weight:700;color:#000;text-decoration:none">Seacoast RVIP</a>
+    <div style="display:flex;gap:0.75rem;align-items:center">
+      <a href="schedule.html" style="font-family:Inter,sans-serif;font-size:0.75rem;color:#888;text-decoration:none;font-weight:500">Personal Booking</a>
+      <a href="schedule.html" style="background:#000;color:white;padding:0.5rem 1.25rem;font-family:Inter,sans-serif;font-size:0.72rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;text-decoration:none;border-bottom:2px solid #775a19">Book a Ride</a>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-inner">
+    <div style="font-family:'Work Sans',sans-serif;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.15em;color:#775a19;margin-bottom:0.75rem">For Business</div>
+    <h1 style="font-family:'Times New Roman',serif;font-size:clamp(2.5rem,6vw,4rem);font-weight:900;line-height:1.05;margin-bottom:1.25rem">Corporate<br>Account Program</h1>
+    <p style="font-family:Inter,sans-serif;font-size:1rem;color:rgba(255,255,255,0.6);max-width:540px;line-height:1.7;margin-bottom:2rem">Streamline your company's ground transportation. One account, NET-30 invoicing, priority dispatch, and zero per-ride payment friction for your team.</p>
+    <a href="#apply" style="background:#775a19;color:white;padding:0.875rem 2rem;font-family:'Work Sans',sans-serif;font-size:0.8rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;text-decoration:none;display:inline-block;border-bottom:3px solid #5d4201">Apply for an Account →</a>
+  </div>
+</div>
+
+<!-- BENEFITS -->
+<div class="benefits">
+  <div class="benefits-inner">
+    <div style="font-family:'Work Sans',sans-serif;font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:#775a19;margin-bottom:0.5rem">Why Corporate?</div>
+    <h2 style="font-family:'Times New Roman',serif;font-size:1.75rem;font-weight:700;color:white">Built for businesses that move.</h2>
+    <div class="ben-grid">
+      <div class="ben-card">
+        <div style="font-size:1.5rem;margin-bottom:0.75rem">🧾</div>
+        <div style="font-family:'Work Sans',sans-serif;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#775a19;margin-bottom:0.4rem">NET-30 Invoicing</div>
+        <div style="font-family:Inter,sans-serif;font-size:0.8rem;color:rgba(255,255,255,0.55);line-height:1.6">Monthly invoices with itemized ride details. Pay once a month, not per ride.</div>
+      </div>
+      <div class="ben-card">
+        <div style="font-size:1.5rem;margin-bottom:0.75rem">⚡</div>
+        <div style="font-family:'Work Sans',sans-serif;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#775a19;margin-bottom:0.4rem">Priority Dispatch</div>
+        <div style="font-family:Inter,sans-serif;font-size:0.8rem;color:rgba(255,255,255,0.55);line-height:1.6">Corporate accounts receive first-priority driver assignment.</div>
+      </div>
+      <div class="ben-card">
+        <div style="font-size:1.5rem;margin-bottom:0.75rem">👥</div>
+        <div style="font-family:'Work Sans',sans-serif;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#775a19;margin-bottom:0.4rem">Multiple Riders</div>
+        <div style="font-family:Inter,sans-serif;font-size:0.8rem;color:rgba(255,255,255,0.55);line-height:1.6">Authorize multiple employees to book under a single company account.</div>
+      </div>
+      <div class="ben-card">
+        <div style="font-size:1.5rem;margin-bottom:0.75rem">📊</div>
+        <div style="font-family:'Work Sans',sans-serif;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#775a19;margin-bottom:0.4rem">Monthly Statements</div>
+        <div style="font-family:Inter,sans-serif;font-size:0.8rem;color:rgba(255,255,255,0.55);line-height:1.6">Detailed trip reports for expense tracking and accounting.</div>
+      </div>
+      <div class="ben-card">
+        <div style="font-size:1.5rem;margin-bottom:0.75rem">🤝</div>
+        <div style="font-family:'Work Sans',sans-serif;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#775a19;margin-bottom:0.4rem">Dedicated Support</div>
+        <div style="font-family:Inter,sans-serif;font-size:0.8rem;color:rgba(255,255,255,0.55);line-height:1.6">Direct line to dispatch. No hold times, no bots.</div>
+      </div>
+      <div class="ben-card">
+        <div style="font-size:1.5rem;margin-bottom:0.75rem">✈️</div>
+        <div style="font-family:'Work Sans',sans-serif;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#775a19;margin-bottom:0.4rem">Airport Specialists</div>
+        <div style="font-family:Inter,sans-serif;font-size:0.8rem;color:rgba(255,255,255,0.55);line-height:1.6">Logan & MHT expertise. Flight tracking, on-time guarantee policy.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- APPLICATION FORM -->
+<div class="form-wrap" id="apply">
+
+  <!-- Success -->
+  <div id="success-screen">
+    <span class="material-symbols-outlined" style="font-size:3.5rem;color:#22c55e;display:block;margin-bottom:1rem;font-variation-settings:'FILL' 1,'wght' 400">check_circle</span>
+    <h2 style="font-family:'Times New Roman',serif;font-size:1.75rem;font-weight:700;margin-bottom:0.75rem">Application Received!</h2>
+    <p style="font-family:Inter,sans-serif;font-size:0.9rem;color:#444748;margin-bottom:0.5rem">We'll review your application and contact you within <strong>1 business day</strong> to activate your corporate account.</p>
+    <p style="font-family:Inter,sans-serif;font-size:0.85rem;color:#888;margin-bottom:2rem">Questions? Call us at <a href="tel:+19782553140" style="color:#775a19;font-weight:600">(978) 255-3140</a></p>
+    <a href="index.html" style="background:#000;color:white;padding:0.75rem 2rem;font-family:'Work Sans',sans-serif;font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;text-decoration:none;border-bottom:2px solid #775a19;display:inline-block">← Back to Home</a>
+  </div>
+
+  <div id="app-form">
+    <div style="margin-bottom:2.5rem">
+      <div style="font-family:'Work Sans',sans-serif;font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.15em;color:#775a19;margin-bottom:0.5rem">Corporate Application</div>
+      <h2 style="font-family:'Times New Roman',serif;font-size:2rem;font-weight:700;margin-bottom:0.5rem">Apply for an Account</h2>
+      <p style="font-family:Inter,sans-serif;font-size:0.875rem;color:#444748">Fill out the form below. We'll review and contact you within 1 business day.</p>
+    </div>
+
+    <div id="err-msg" style="display:none;background:#fef2f2;border-left:3px solid #dc2626;padding:0.875rem 1rem;font-family:Inter,sans-serif;font-size:0.85rem;color:#dc2626;margin-bottom:1.5rem">
+      Please fill in all required fields and accept the Terms of Service.
+    </div>
+
+    <!-- Step 1 — Company -->
+    <div class="step-block">
+      <div class="step-header">
+        <span class="step-num">Step 01</span>
+        <span class="step-title">Company Information</span>
+      </div>
+      <div class="grid2 space-y">
+        <div class="full">
+          <label class="f-label">Legal Company Name *</label>
+          <input class="f-input" id="c-company" type="text" placeholder="Acme Corporation LLC" required/>
+        </div>
+        <div>
+          <label class="f-label">Industry / Business Type *</label>
+          <select class="f-input" id="c-industry" required>
+            <option value="">Select...</option>
+            <option>Healthcare / Medical</option>
+            <option>Legal / Law Firm</option>
+            <option>Finance / Banking</option>
+            <option>Real Estate</option>
+            <option>Hospitality / Hotel</option>
+            <option>Technology</option>
+            <option>Construction / Engineering</option>
+            <option>Entertainment / Media</option>
+            <option>Education</option>
+            <option>Government / Municipality</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div>
+          <label class="f-label">Tax ID / EIN <span style="font-weight:400;color:#888">(Optional)</span></label>
+          <input class="f-input" id="c-ein" type="text" placeholder="XX-XXXXXXX"/>
+        </div>
+        <div class="full">
+          <label class="f-label">Company Billing Address *</label>
+          <input class="f-input" id="c-address" type="text" placeholder="123 Main St, Portsmouth, NH 03801" required/>
+        </div>
+        <div>
+          <label class="f-label">PO Numbers Required for Invoices?</label>
+          <select class="f-input" id="c-po">
+            <option value="No">No</option>
+            <option value="Yes">Yes</option>
+          </select>
+        </div>
+        <div>
+          <label class="f-label">Preferred Billing Cycle</label>
+          <select class="f-input" id="c-billing">
+            <option value="Monthly">Monthly (NET-30)</option>
+            <option value="Bi-weekly">Bi-weekly</option>
+            <option value="Per-ride">Per-ride Invoicing</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 2 — Primary Contact -->
+    <div class="step-block">
+      <div class="step-header">
+        <span class="step-num">Step 02</span>
+        <span class="step-title">Primary Contact</span>
+      </div>
+      <div class="grid2 space-y">
+        <div>
+          <label class="f-label">Full Name *</label>
+          <input class="f-input" id="c-name" type="text" placeholder="Jane Smith" required/>
+        </div>
+        <div>
+          <label class="f-label">Title / Role</label>
+          <input class="f-input" id="c-title" type="text" placeholder="Office Manager"/>
+        </div>
+        <div>
+          <label class="f-label">Phone *</label>
+          <input class="f-input" id="c-phone" type="tel" placeholder="(603) 555-0100" required/>
+        </div>
+        <div>
+          <label class="f-label">Email *</label>
+          <input class="f-input" id="c-email" type="email" placeholder="jane@company.com" required/>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 3 — Account Details -->
+    <div class="step-block">
+      <div class="step-header">
+        <span class="step-num">Step 03</span>
+        <span class="step-title">Account Details</span>
+      </div>
+      <div class="space-y">
+        <div>
+          <label class="f-label">Estimated Monthly Rides *</label>
+          <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.25rem">
+            <button type="button" class="r-btn sel" onclick="selRides(this,'1–5')">1–5</button>
+            <button type="button" class="r-btn" onclick="selRides(this,'6–15')">6–15</button>
+            <button type="button" class="r-btn" onclick="selRides(this,'16–30')">16–30</button>
+            <button type="button" class="r-btn" onclick="selRides(this,'30+')">30+</button>
+          </div>
+          <input type="hidden" id="c-rides" value="1–5"/>
+        </div>
+        <div>
+          <label class="f-label">Typical Routes / Services Used</label>
+          <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.25rem" id="route-btns">
+            <button type="button" class="r-btn" onclick="toggleRoute(this)">✈ Airport — Boston Logan</button>
+            <button type="button" class="r-btn" onclick="toggleRoute(this)">✈ Airport — Manchester MHT</button>
+            <button type="button" class="r-btn" onclick="toggleRoute(this)">🏨 Hotel Transfers</button>
+            <button type="button" class="r-btn" onclick="toggleRoute(this)">🎰 Casino Runs</button>
+            <button type="button" class="r-btn" onclick="toggleRoute(this)">🏥 Medical Appointments</button>
+            <button type="button" class="r-btn" onclick="toggleRoute(this)">🎭 Special Events</button>
+            <button type="button" class="r-btn" onclick="toggleRoute(this)">🌙 Night Out / Entertainment</button>
+          </div>
+          <input type="hidden" id="c-routes" value=""/>
+        </div>
+        <div>
+          <label class="f-label">Additional Authorized Riders <span style="font-weight:400;color:#888">(Names &amp; Emails, one per line)</span></label>
+          <textarea class="f-input" id="c-riders" rows="3" style="resize:vertical" placeholder="John Doe — john@company.com&#10;Maria Garcia — maria@company.com"></textarea>
+        </div>
+        <div>
+          <label class="f-label">Additional Notes / Special Requirements</label>
+          <textarea class="f-input" id="c-notes" rows="3" style="resize:vertical" placeholder="Wheelchair accessibility, child seats, regular pickup locations, VIP clients..."></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 4 — Agreement -->
+    <div class="step-block">
+      <div class="step-header">
+        <span class="step-num">Step 04</span>
+        <span class="step-title">Agreement</span>
+      </div>
+      <div class="tos-box">
+        <label style="display:flex;align-items:flex-start;gap:0.875rem;cursor:pointer">
+          <input type="checkbox" id="c-tos" required style="margin-top:3px;width:18px;height:18px;accent-color:#775a19;flex-shrink:0;cursor:pointer">
+          <span style="font-family:Inter,sans-serif;font-size:0.875rem;color:#1a1c1c;line-height:1.6">
+            I have read and agree to <a href="terms.html" target="_blank" style="color:#775a19;font-weight:600;text-decoration:underline">Seacoast RVIP LLC's Terms of Service</a> and <strong>Cancellation Policy</strong>. I am authorized to submit this corporate account application on behalf of my company.
+          </span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Submit -->
+    <button type="button" id="sub-btn" class="submit-btn" onclick="submitApplication()">
+      Submit Corporate Application →
+    </button>
+    <p class="privacy-note">We will contact you within 1 business day. Your information is kept strictly confidential and never sold. <a href="terms.html" style="color:#775a19">Terms of Service</a></p>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="foot-in">
+    <div>
+      <div style="font-family:'Times New Roman',serif;font-size:1.1rem;font-weight:700;color:white;margin-bottom:0.25rem">Seacoast RVIP LLC</div>
+      <div style="font-family:Inter,sans-serif;font-size:0.75rem;color:rgba(255,255,255,0.4)">The Ride You Can Count On</div>
+    </div>
+    <div style="display:flex;gap:1.5rem;align-items:center;flex-wrap:wrap">
+      <a href="tel:+19782553140" style="font-family:Inter,sans-serif;font-size:0.8rem;color:#775a19;text-decoration:none">(978) 255-3140</a>
+      <a href="mailto:info@seacoastrvip.com" style="font-family:Inter,sans-serif;font-size:0.8rem;color:rgba(255,255,255,0.45);text-decoration:none">info@seacoastrvip.com</a>
+      <a href="schedule.html" style="background:#775a19;color:white;padding:0.5rem 1.25rem;font-family:'Work Sans',sans-serif;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;text-decoration:none;border-bottom:2px solid #5d4201">Book a Ride</a>
+    </div>
+  </div>
+  <div style="max-width:1000px;margin:1.5rem auto 0;padding-top:1.25rem;border-top:1px solid rgba(255,255,255,0.06);display:flex;flex-wrap:wrap;justify-content:space-between;gap:0.5rem">
+    <p style="font-family:Inter,sans-serif;font-size:0.68rem;color:rgba(255,255,255,0.2)">© 2025 Seacoast RVIP LLC. All rights reserved.</p>
+    <div style="display:flex;gap:1.25rem">
+      <a href="privacy.html" style="font-family:Inter,sans-serif;font-size:0.68rem;color:rgba(255,255,255,0.3);text-decoration:none">Privacy</a>
+      <a href="terms.html" style="font-family:Inter,sans-serif;font-size:0.68rem;color:rgba(255,255,255,0.3);text-decoration:none">Terms</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+function selRides(btn, val) {
+  document.querySelectorAll('#app-form .r-btn:not([onclick*="toggleRoute"])').forEach(function(b){ b.classList.remove('sel'); });
+  btn.classList.add('sel');
+  document.getElementById('c-rides').value = val;
+}
+
+function toggleRoute(btn) {
+  btn.classList.toggle('sel');
+  var selected = [];
+  document.querySelectorAll('#route-btns .r-btn.sel').forEach(function(b){ selected.push(b.textContent.trim()); });
+  document.getElementById('c-routes').value = selected.join(', ');
+}
+
+function submitApplication() {
+  var btn = document.getElementById('sub-btn');
+  var err = document.getElementById('err-msg');
+
+  // Validate
+  var required = ['c-company','c-industry','c-address','c-name','c-phone','c-email'];
+  var valid = true;
+  required.forEach(function(id){
+    var el = document.getElementById(id);
+    if (!el || !el.value.trim()) {
+      valid = false;
+      if (el) el.style.borderBottomColor = '#dc2626';
+    } else {
+      if (el) el.style.borderBottomColor = '#c4c7c7';
+    }
+  });
+
+  if (!document.getElementById('c-tos').checked) valid = false;
+
+  if (!valid) {
+    err.style.display = 'block';
+    window.scrollTo({top: err.getBoundingClientRect().top + window.scrollY - 100, behavior: 'smooth'});
+    return;
+  }
+
+  err.style.display = 'none';
+  btn.textContent = 'Submitting...';
+  btn.disabled = true;
+
+  var data = {
+    id: 'corp_' + Date.now(),
+    company:      document.getElementById('c-company').value.trim(),
+    industry:     document.getElementById('c-industry').value,
+    ein:          document.getElementById('c-ein').value.trim(),
+    billingAddress: document.getElementById('c-address').value.trim(),
+    poRequired:   document.getElementById('c-po').value,
+    billingCycle: document.getElementById('c-billing').value,
+    contactName:  document.getElementById('c-name').value.trim(),
+    contactTitle: document.getElementById('c-title').value.trim(),
+    contactPhone: document.getElementById('c-phone').value.trim(),
+    contactEmail: document.getElementById('c-email').value.trim(),
+    monthlyRides: document.getElementById('c-rides').value,
+    typicalRoutes: document.getElementById('c-routes').value,
+    additionalRiders: document.getElementById('c-riders').value.trim(),
+    notes:        document.getElementById('c-notes').value.trim(),
+    tosAcceptedAt: new Date().toISOString(),
+    status:       'Pending',
+    createdAt:    new Date().toISOString()
+  };
+
+  // Save to Firebase
+  var saved = false;
+  if (window._db) {
+    window._db.collection('corporate_accounts').doc(data.id).set(data)
+      .then(function(){
+        if (!saved) { saved = true; showSuccess(); }
+      })
+      .catch(function(e){
+        console.warn('Firebase error:', e);
+        if (!saved) { saved = true; showSuccess(); }
+      });
+  }
+
+  // Also email via FormSubmit
+  var fd = new FormData();
+  fd.append('Company Name', data.company);
+  fd.append('Industry', data.industry);
+  fd.append('EIN', data.ein || 'N/A');
+  fd.append('Billing Address', data.billingAddress);
+  fd.append('PO Required', data.poRequired);
+  fd.append('Billing Cycle', data.billingCycle);
+  fd.append('Contact Name', data.contactName);
+  fd.append('Contact Title', data.contactTitle || 'N/A');
+  fd.append('Contact Phone', data.contactPhone);
+  fd.append('Contact Email', data.contactEmail);
+  fd.append('Est. Monthly Rides', data.monthlyRides);
+  fd.append('Typical Routes', data.typicalRoutes || 'Not specified');
+  fd.append('Additional Riders', data.additionalRiders || 'None');
+  fd.append('Notes', data.notes || 'None');
+  fd.append('ToS Accepted At', data.tosAcceptedAt);
+  fd.append('_subject', '[CORPORATE APPLICATION] ' + data.company + ' — Seacoast RVIP');
+  fd.append('_captcha', 'false');
+  fd.append('_template', 'table');
+
+  fetch('https://formsubmit.co/info@seacoastrvip.com', { method: 'POST', body: fd })
+    .catch(function(e){ console.warn('FormSubmit:', e); })
+    .finally(function(){
+      if (!saved) { saved = true; showSuccess(); }
+      setTimeout(function(){ if (!saved) { saved = true; showSuccess(); } }, 3000);
+    });
+}
+
+function showSuccess() {
+  document.getElementById('app-form').style.display = 'none';
+  document.getElementById('success-screen').style.display = 'block';
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+</script>
+</body>
+</html>
