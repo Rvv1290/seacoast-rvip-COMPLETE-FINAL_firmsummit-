@@ -700,6 +700,109 @@
         <div id="corp-list">
           <div class="empty"><span class="material-symbols-outlined">business</span><div style="font-size:.8rem">Click Refresh to load corporate applications</div></div>
         </div>
+        <!-- ── Corporate Account Detail Modal ── -->
+        <div id="corp-detail-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:1000;overflow-y:auto">
+          <div style="background:#fff;max-width:860px;width:95%;margin:2rem auto;position:relative;padding-bottom:2rem">
+            <!-- Header -->
+            <div style="background:#000;color:#fff;padding:1.75rem 2rem;display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;border-left:5px solid #C9A84C">
+              <div>
+                <div style="font-family:'Work Sans',sans-serif;font-size:0.58rem;font-weight:700;text-transform:uppercase;letter-spacing:0.16em;color:#C9A84C;margin-bottom:4px">Corporate Account</div>
+                <div style="font-family:'Times New Roman',serif;font-size:1.5rem;font-weight:700" id="cd-company">—</div>
+                <div style="margin-top:0.5rem;display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap">
+                  <span id="cd-status-badge" style="padding:3px 12px;border-radius:20px;font-size:0.72rem;font-weight:700;font-family:'Work Sans',sans-serif;text-transform:uppercase;letter-spacing:0.06em"></span>
+                  <span id="cd-tier-badge" style="padding:3px 12px;border-radius:20px;font-size:0.72rem;font-weight:700;font-family:'Work Sans',sans-serif;text-transform:uppercase;letter-spacing:0.06em;background:#C9A84C;color:#000"></span>
+                </div>
+              </div>
+              <button onclick="closeCorpDetail()" style="background:rgba(255,255,255,0.1);border:none;color:#fff;width:34px;height:34px;cursor:pointer;font-size:1.25rem;display:flex;align-items:center;justify-content:center;flex-shrink:0">&times;</button>
+            </div>
+            <div style="padding:1.75rem 2rem">
+
+              <!-- Contact Info -->
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:0.75rem;margin-bottom:1.5rem;font-size:0.82rem">
+                <div><div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:0.08em;color:#888;margin-bottom:2px">Contact</div><strong id="cd-contact">—</strong></div>
+                <div><div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:0.08em;color:#888;margin-bottom:2px">Phone</div><a id="cd-phone" href="#" style="color:#000;font-weight:600;text-decoration:none"></a></div>
+                <div><div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:0.08em;color:#888;margin-bottom:2px">Email</div><a id="cd-email" href="#" style="color:#775a19;font-weight:600;text-decoration:none;word-break:break-all"></a></div>
+                <div><div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:0.08em;color:#888;margin-bottom:2px">Billing</div><span id="cd-billing"></span></div>
+                <div><div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:0.08em;color:#888;margin-bottom:2px">Industry</div><span id="cd-industry"></span></div>
+                <div><div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:0.08em;color:#888;margin-bottom:2px">Address</div><span id="cd-address" style="font-size:0.78rem"></span></div>
+              </div>
+
+              <!-- Stats -->
+              <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:0.75rem;margin-bottom:1.75rem">
+                <div class="sbox" style="border-bottom:3px solid #000;text-align:center;padding:0.875rem"><div id="cd-stat-total" style="font-size:1.4rem;font-weight:700">0</div><div style="font-size:0.65rem;color:#888;margin-top:2px">Total Trips</div></div>
+                <div class="sbox" style="border-bottom:3px solid #10b981;text-align:center;padding:0.875rem"><div id="cd-stat-done" style="font-size:1.4rem;font-weight:700;color:#10b981">0</div><div style="font-size:0.65rem;color:#888;margin-top:2px">Completed</div></div>
+                <div class="sbox" style="border-bottom:3px solid #f59e0b;text-align:center;padding:0.875rem"><div id="cd-stat-pend" style="font-size:1.4rem;font-weight:700;color:#f59e0b">0</div><div style="font-size:0.65rem;color:#888;margin-top:2px">Pending</div></div>
+                <div class="sbox" style="border-bottom:3px solid #C9A84C;text-align:center;padding:0.875rem"><div id="cd-stat-rev" style="font-size:1.4rem;font-weight:700;color:#775a19">$0</div><div style="font-size:0.65rem;color:#888;margin-top:2px">Total Revenue</div></div>
+                <div class="sbox" style="border-bottom:3px solid #C9A84C;text-align:center;padding:0.875rem"><div id="cd-stat-bal" style="font-size:1.4rem;font-weight:700;color:#ef4444">$0</div><div style="font-size:0.65rem;color:#888;margin-top:2px">Pending Balance</div></div>
+              </div>
+
+              <!-- Status Actions -->
+              <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1.75rem;padding-bottom:1.5rem;border-bottom:1px solid #f0f0f0">
+                <div style="font-family:'Work Sans',sans-serif;font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#888;width:100%;margin-bottom:0.25rem">Account Actions</div>
+                <button id="cd-btn-approve" onclick="cdAction('Approved')" class="btn bg" style="background:#10b981;font-size:0.72rem"><span class="material-symbols-outlined" style="font-size:13px">check_circle</span>Approve</button>
+                <button id="cd-btn-activate" onclick="cdAction('Active')" class="btn bg" style="background:#3b82f6;font-size:0.72rem"><span class="material-symbols-outlined" style="font-size:13px">star</span>Activate</button>
+                <button id="cd-btn-reject" onclick="cdAction('Rejected')" class="btn brd" style="font-size:0.72rem"><span class="material-symbols-outlined" style="font-size:13px">cancel</span>Reject</button>
+                <button id="cd-btn-reopen" onclick="cdAction('Pending')" class="btn bo" style="font-size:0.72rem"><span class="material-symbols-outlined" style="font-size:13px">undo</span>Reopen</button>
+              </div>
+
+              <!-- Rewards Management -->
+              <div style="margin-bottom:1.75rem;padding-bottom:1.5rem;border-bottom:1px solid #f0f0f0">
+                <div style="font-family:'Times New Roman',serif;font-size:1rem;font-weight:700;margin-bottom:1rem">⭐ Rewards &amp; Loyalty</div>
+                <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
+                  <div class="sbox" style="padding:0.875rem 1.25rem;border-bottom:3px solid #C9A84C;min-width:120px">
+                    <div style="font-size:1.3rem;font-weight:700" id="cd-reward-pts">0</div>
+                    <div style="font-size:0.65rem;color:#888">Total Points</div>
+                  </div>
+                  <div class="sbox" style="padding:0.875rem 1.25rem;min-width:120px">
+                    <div style="font-size:1rem;font-weight:700" id="cd-reward-tier">—</div>
+                    <div style="font-size:0.65rem;color:#888">Current Tier</div>
+                  </div>
+                  <div class="sbox" style="padding:0.875rem 1.25rem;min-width:120px">
+                    <div style="font-size:1rem;font-weight:700" id="cd-bonus-display">0</div>
+                    <div style="font-size:0.65rem;color:#888">Bonus Points</div>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:0.5rem;flex:1;min-width:200px">
+                    <input id="cd-bonus-input" type="number" min="0" placeholder="Add bonus points" style="padding:0.6rem 0.75rem;border:1.5px solid #e5e5e5;font-family:Inter,sans-serif;font-size:0.85rem;outline:none;flex:1"/>
+                    <button onclick="awardBonusPoints()" class="btn bg" style="font-size:0.72rem;white-space:nowrap"><span class="material-symbols-outlined" style="font-size:13px">add_circle</span>Award Points</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Trip History -->
+              <div style="margin-bottom:1.75rem">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.875rem;flex-wrap:wrap;gap:0.5rem">
+                  <div style="font-family:'Times New Roman',serif;font-size:1rem;font-weight:700">Trip History</div>
+                  <div id="cd-trips-loading" style="font-size:0.78rem;color:#888">Loading trips…</div>
+                </div>
+                <div style="overflow-x:auto">
+                  <table style="width:100%;border-collapse:collapse" id="cd-trips-table">
+                    <thead><tr style="background:#f3f3f3">
+                      <th style="padding:0.6rem 0.75rem;text-align:left;font-family:'Work Sans',sans-serif;font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#555;border-bottom:1px solid #eee">Date</th>
+                      <th style="padding:0.6rem 0.75rem;text-align:left;font-family:'Work Sans',sans-serif;font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#555;border-bottom:1px solid #eee">Passenger</th>
+                      <th style="padding:0.6rem 0.75rem;text-align:left;font-family:'Work Sans',sans-serif;font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#555;border-bottom:1px solid #eee">Service</th>
+                      <th style="padding:0.6rem 0.75rem;text-align:left;font-family:'Work Sans',sans-serif;font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#555;border-bottom:1px solid #eee">Route</th>
+                      <th style="padding:0.6rem 0.75rem;text-align:right;font-family:'Work Sans',sans-serif;font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#555;border-bottom:1px solid #eee">Amount</th>
+                      <th style="padding:0.6rem 0.75rem;text-align:left;font-family:'Work Sans',sans-serif;font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#555;border-bottom:1px solid #eee">Status</th>
+                    </tr></thead>
+                    <tbody id="cd-trips-body"></tbody>
+                  </table>
+                </div>
+                <div id="cd-trips-empty" style="display:none;text-align:center;padding:2rem;color:#aaa;font-size:0.82rem">No trips found for this account.</div>
+              </div>
+
+              <!-- Members -->
+              <div>
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.875rem;flex-wrap:wrap;gap:0.5rem">
+                  <div style="font-family:'Times New Roman',serif;font-size:1rem;font-weight:700">Team Members</div>
+                  <button onclick="openMemberModal(_cdCorpId)" class="btn bo" style="font-size:0.72rem;border-color:#7c3aed;color:#7c3aed"><span class="material-symbols-outlined" style="font-size:13px">group</span>Manage Members</button>
+                </div>
+                <div id="cd-members-list" style="font-size:0.82rem;color:#555"></div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
         <!-- Member Management Modal -->
         <div id="corp-member-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:999;display:none;align-items:center;justify-content:center">
           <div style="background:#fff;padding:2rem;max-width:560px;width:90%;max-height:80vh;overflow-y:auto;position:relative">
@@ -2123,7 +2226,7 @@
         return '<div class="sbox" style="margin-bottom:1rem;border-left:4px solid ' + sc + '">' +
           '<div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:0.5rem;margin-bottom:0.875rem">' +
             '<div>' +
-              '<div style="font-family:\'Times New Roman\',serif;font-size:1.05rem;font-weight:700">' + e(a.company) + '</div>' +
+              '<div style="font-family:\'Times New Roman\',serif;font-size:1.05rem;font-weight:700;cursor:pointer;text-decoration:underline;text-underline-offset:3px" onclick="openCorpDetail(\'' + e(a.id) + '\')">' + e(a.company) + '</div>' +
               '<div style="font-size:0.75rem;color:#666;margin-top:3px">' + e(a.industry||'') + (a.ein ? ' &nbsp;·&nbsp; EIN: ' + e(a.ein) : '') + '</div>' +
             '</div>' +
             '<div style="display:flex;gap:0.5rem;align-items:center">' +
@@ -2148,7 +2251,7 @@
             (a.status !== 'Rejected' ? '<button onclick="corpAction(\'' + e(a.id) + '\',\'Rejected\')" class="btn brd" style="font-size:0.72rem"><span class="material-symbols-outlined" style="font-size:13px">cancel</span>Reject</button>' : '') +
             (a.status === 'Rejected' ? '<button onclick="corpAction(\'' + e(a.id) + '\',\'Pending\')" class="btn bo" style="font-size:0.72rem"><span class="material-symbols-outlined" style="font-size:13px">undo</span>Reopen</button>' : '') +
             '<button onclick="openMemberModal(\'' + e(a.id) + '\')" class="btn bo" style="font-size:0.72rem;border-color:#7c3aed;color:#7c3aed"><span class="material-symbols-outlined" style="font-size:13px">group</span>Members (' + memberCount + ')</button>' +
-            '<button onclick="viewCorpBookings(\'' + e(a.id) + '\')" class="btn bo" style="font-size:0.72rem"><span class="material-symbols-outlined" style="font-size:13px">directions_car</span>Bookings</button>' +
+            '<button onclick="openCorpDetail(\'' + e(a.id) + '\')" class="btn bg" style="font-size:0.72rem;background:#000"><span class="material-symbols-outlined" style="font-size:13px">open_in_full</span>View Full Account</button>' +
           '</div>' +
         '</div>';
       }).join('');
@@ -2256,19 +2359,180 @@
         setTimeout(function(){ openMemberModal(corpId); }, 500);
       });
     }
-    function viewCorpBookings(corpId) {
-      var acc = _corpAccounts.find(function(a){ return a.id === corpId; });
-      var company = acc ? acc.company : corpId;
-      goTab('bookings');
-      setTimeout(function() {
-        var corpBookings = getBks().filter(function(b) { return b.corporateAccountId === corpId || b.corporateCompany === company; });
-        var el = document.getElementById('bk-list');
-        if (!corpBookings.length) {
-          el.innerHTML = '<div class="empty"><span class="material-symbols-outlined">directions_car</span><div style="font-size:.8rem">No bookings for ' + e(company) + ' yet.</div></div>';
-          return;
-        }
-        showToast('Showing ' + corpBookings.length + ' booking(s) for ' + company);
-      }, 300);
+    function viewCorpBookings(corpId) { openCorpDetail(corpId); }
+
+    // ── Corporate Detail Modal ──
+    var _cdCorpId = '';
+    var _cdAcc = null;
+    var ADMIN_TIERS = [
+      {name:'Bronze',  min:0,  icon:'🥉'},
+      {name:'Silver',  min:10, icon:'🥈'},
+      {name:'Gold',    min:25, icon:'🥇'},
+      {name:'Platinum',min:50, icon:'💎'}
+    ];
+    var STATUS_COLORS = {'Pending':'#f59e0b','Approved':'#10b981','Active':'#3b82f6','Rejected':'#ef4444'};
+
+    function getAdminTier(pts){
+      for(var i=ADMIN_TIERS.length-1;i>=0;i--){ if(pts>=ADMIN_TIERS[i].min) return ADMIN_TIERS[i]; }
+      return ADMIN_TIERS[0];
+    }
+
+    function openCorpDetail(corpId){
+      _cdCorpId = corpId;
+      _cdAcc = _corpAccounts.find(function(a){ return a.id === corpId; });
+      if(!_cdAcc) return;
+      var a = _cdAcc;
+
+      // Populate header & info
+      document.getElementById('cd-company').textContent = a.company || '—';
+      var sc = STATUS_COLORS[a.status] || '#888';
+      var sb = document.getElementById('cd-status-badge');
+      sb.textContent = a.status || '—';
+      sb.style.background = sc+'22'; sb.style.color = sc;
+
+      document.getElementById('cd-contact').textContent  = (a.contactName||'—') + (a.contactTitle?' · '+a.contactTitle:'');
+      var phoneEl = document.getElementById('cd-phone');
+      phoneEl.textContent = a.contactPhone||'—';
+      phoneEl.href = 'tel:'+((a.contactPhone||'').replace(/\D/g,''));
+      var emailEl = document.getElementById('cd-email');
+      emailEl.textContent = a.contactEmail||'—';
+      emailEl.href = 'mailto:'+(a.contactEmail||'');
+      document.getElementById('cd-billing').textContent  = a.billingCycle||'—';
+      document.getElementById('cd-industry').textContent = a.industry||'—';
+      document.getElementById('cd-address').textContent  = a.billingAddress||'—';
+
+      // Status action buttons visibility
+      document.getElementById('cd-btn-approve').style.display  = (a.status!=='Approved'&&a.status!=='Active') ? '' : 'none';
+      document.getElementById('cd-btn-activate').style.display = (a.status==='Approved') ? '' : 'none';
+      document.getElementById('cd-btn-reject').style.display   = (a.status!=='Rejected') ? '' : 'none';
+      document.getElementById('cd-btn-reopen').style.display   = (a.status==='Rejected') ? '' : 'none';
+
+      // Members
+      var members = a.members||[];
+      var ml = document.getElementById('cd-members-list');
+      ml.innerHTML = members.length ? members.map(function(m){
+        return '<div style="padding:0.6rem 0;border-bottom:1px solid #f3f3f3;display:flex;justify-content:space-between">' +
+          '<div><strong>'+e(m.name)+'</strong>'+(m.role?' <span style="color:#888;font-size:0.75rem">· '+e(m.role)+'</span>':'')+
+          '<br><span style="font-size:0.75rem;color:#888">'+e(m.phone||'')+(m.email?' · '+e(m.email):'')+'</span></div></div>';
+      }).join('') : '<div style="color:#aaa;font-size:0.82rem;padding:0.75rem 0">No members yet.</div>';
+
+      // Show modal
+      document.getElementById('corp-detail-modal').style.display = 'block';
+      document.body.style.overflow = 'hidden';
+
+      // Load bonus points + compute rewards
+      document.getElementById('cd-trips-loading').textContent = 'Loading trips…';
+      document.getElementById('cd-trips-body').innerHTML = '';
+      document.getElementById('cd-trips-empty').style.display = 'none';
+
+      if(!db){ loadCdTrips(a, 0); return; }
+      db.collection('corporate_accounts').doc(corpId).get().then(function(doc){
+        var bonus = doc.exists ? (doc.data().bonusPoints||0) : 0;
+        document.getElementById('cd-bonus-display').textContent = bonus;
+        document.getElementById('cd-bonus-input').value = '';
+        loadCdTrips(a, bonus);
+      }).catch(function(){ loadCdTrips(a, 0); });
+    }
+
+    function loadCdTrips(acc, bonusPoints){
+      if(!db){ renderCdTrips([], bonusPoints); return; }
+      var q1 = db.collection('bookings').where('corporateAccountId','==',acc.id).get();
+      var q2 = db.collection('bookings').where('corporateCompany','==',acc.company).get();
+      Promise.all([q1, q2]).then(function(results){
+        var seen = {}, trips = [];
+        results.forEach(function(snap){
+          snap.forEach(function(d){
+            if(!seen[d.id]){ seen[d.id]=true; var t=d.data(); t._docId=d.id; trips.push(t); }
+          });
+        });
+        trips.sort(function(a,b){ return new Date(b.date)-new Date(a.date); });
+        renderCdTrips(trips, bonusPoints);
+      }).catch(function(){ renderCdTrips([], bonusPoints); });
+    }
+
+    function renderCdTrips(trips, bonusPoints){
+      document.getElementById('cd-trips-loading').textContent = trips.length+' trip'+(trips.length!==1?'s':'')+' found';
+      var completed=0, revenue=0, pending=0, pendingBal=0;
+      trips.forEach(function(t){
+        var p=parseFloat((t.price+'').replace(/[^0-9.]/g,''))||0;
+        if(t.status==='Completed'){ completed++; revenue+=p; }
+        else { pending++; pendingBal+=p; }
+      });
+      document.getElementById('cd-stat-total').textContent = trips.length;
+      document.getElementById('cd-stat-done').textContent  = completed;
+      document.getElementById('cd-stat-pend').textContent  = pending;
+      document.getElementById('cd-stat-rev').textContent   = '$'+revenue.toFixed(2);
+      document.getElementById('cd-stat-bal').textContent   = '$'+pendingBal.toFixed(2);
+
+      // Rewards
+      var pts = completed + bonusPoints;
+      var tier = getAdminTier(pts);
+      document.getElementById('cd-reward-pts').textContent  = pts;
+      document.getElementById('cd-reward-tier').textContent = tier.icon+' '+tier.name;
+      document.getElementById('cd-tier-badge').textContent  = tier.icon+' '+tier.name;
+      document.getElementById('cd-bonus-display').textContent = bonusPoints;
+
+      // Trips table
+      var tbody = document.getElementById('cd-trips-body');
+      var empty = document.getElementById('cd-trips-empty');
+      if(!trips.length){ tbody.innerHTML=''; empty.style.display='block'; return; }
+      empty.style.display='none';
+      var statusColors={'Completed':'#10b981','Confirmed':'#3b82f6','Pending':'#f59e0b'};
+      tbody.innerHTML = trips.map(function(t){
+        var sc2 = statusColors[t.status]||'#aaa';
+        var d = new Date(t.date+'T12:00:00');
+        var ds = d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+        return '<tr style="border-bottom:1px solid #f3f3f3">'+
+          '<td style="padding:0.6rem 0.75rem;font-size:0.8rem">'+ds+'</td>'+
+          '<td style="padding:0.6rem 0.75rem;font-size:0.8rem">'+e(t.name||'—')+'</td>'+
+          '<td style="padding:0.6rem 0.75rem;font-size:0.8rem">'+e(t.service||'—')+'</td>'+
+          '<td style="padding:0.6rem 0.75rem;font-size:0.78rem;color:#666">'+e((t.pickup||'—').substring(0,20))+'<br>→ '+e((t.destination||'—').substring(0,20))+'</td>'+
+          '<td style="padding:0.6rem 0.75rem;font-size:0.82rem;text-align:right;font-weight:600">'+(t.price||'—')+'</td>'+
+          '<td style="padding:0.6rem 0.75rem"><span style="padding:2px 8px;border-radius:12px;font-size:0.68rem;font-weight:700;font-family:\'Work Sans\',sans-serif;background:'+sc2+'22;color:'+sc2+'">'+e(t.status||'—')+'</span></td>'+
+        '</tr>';
+      }).join('');
+    }
+
+    function closeCorpDetail(){
+      document.getElementById('corp-detail-modal').style.display='none';
+      document.body.style.overflow='';
+    }
+
+    function cdAction(newStatus){
+      if(!_cdCorpId||!db) return;
+      db.collection('corporate_accounts').doc(_cdCorpId).update({status:newStatus,updatedAt:new Date().toISOString()}).then(function(){
+        showToast('Status updated: '+newStatus);
+        // Update local account and refresh buttons
+        if(_cdAcc) _cdAcc.status=newStatus;
+        var sc=STATUS_COLORS[newStatus]||'#888';
+        var sb=document.getElementById('cd-status-badge');
+        sb.textContent=newStatus; sb.style.background=sc+'22'; sb.style.color=sc;
+        document.getElementById('cd-btn-approve').style.display  = (newStatus!=='Approved'&&newStatus!=='Active')?'':'none';
+        document.getElementById('cd-btn-activate').style.display = (newStatus==='Approved')?'':'none';
+        document.getElementById('cd-btn-reject').style.display   = (newStatus!=='Rejected')?'':'none';
+        document.getElementById('cd-btn-reopen').style.display   = (newStatus==='Rejected')?'':'none';
+        loadCorporate();
+      }).catch(function(err){ showToast('Error: '+err.message); });
+    }
+
+    function awardBonusPoints(){
+      if(!_cdCorpId||!db) return;
+      var val = parseInt(document.getElementById('cd-bonus-input').value)||0;
+      if(val<=0){ showToast('Enter a number of points to award'); return; }
+      var current = parseInt(document.getElementById('cd-bonus-display').textContent)||0;
+      var newTotal = current + val;
+      db.collection('corporate_accounts').doc(_cdCorpId).update({bonusPoints:newTotal}).then(function(){
+        showToast(val+' bonus point'+(val!==1?'s':'')+' awarded!');
+        document.getElementById('cd-bonus-display').textContent = newTotal;
+        document.getElementById('cd-bonus-input').value='';
+        // Recalculate tier display
+        var completed = parseInt(document.getElementById('cd-stat-done').textContent)||0;
+        var pts = completed+newTotal;
+        var tier=getAdminTier(pts);
+        document.getElementById('cd-reward-pts').textContent=pts;
+        document.getElementById('cd-reward-tier').textContent=tier.icon+' '+tier.name;
+        document.getElementById('cd-tier-badge').textContent=tier.icon+' '+tier.name;
+      }).catch(function(err){ showToast('Error: '+err.message); });
     }
 
     function renderDrivers() {
@@ -2571,5 +2835,20 @@
     </div>
   </div>
 
+<script>
+function initAdminAutocomplete(){
+  var opts={types:['geocode','establishment'],componentRestrictions:{country:'us'},fields:['formatted_address','name']};
+  // Booking modal pickup & destination
+  var puEl=document.getElementById('fpu');
+  var deEl=document.getElementById('fde');
+  var adEl=document.getElementById('cpr-ad');
+  if(puEl) new google.maps.places.Autocomplete(puEl,opts);
+  if(deEl) new google.maps.places.Autocomplete(deEl,opts);
+  if(adEl) new google.maps.places.Autocomplete(adEl,{types:['address'],componentRestrictions:{country:'us'},fields:['formatted_address']});
+}
+</script>
+<script async defer
+  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAtiBZ-MmvzTnOg3hDluVDCVy7mcersqe4&libraries=places&callback=initAdminAutocomplete">
+</script>
 </body>
 </html>

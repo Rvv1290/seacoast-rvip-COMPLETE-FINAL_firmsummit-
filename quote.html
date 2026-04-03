@@ -181,8 +181,8 @@ img{max-width:100%}
           </div>
           <div><label class="flbl">Date</label><input name="Date" class="finp" type="date"/></div>
           <div><label class="flbl">Pickup Time</label><input name="Time" class="finp" type="time"/></div>
-          <div class="fg-span"><label class="flbl">Pickup Address *</label><input name="Pickup" required class="finp" placeholder="Full pickup address"/></div>
-          <div class="fg-span"><label class="flbl">Destination *</label><input name="Destination" required class="finp" placeholder="Airport, venue, or address"/></div>
+          <div class="fg-span"><label class="flbl">Pickup Address *</label><input id="q-pickup" name="Pickup" required class="finp" placeholder="Start typing your address..." autocomplete="off"/></div>
+          <div class="fg-span"><label class="flbl">Destination *</label><input id="q-dest" name="Destination" required class="finp" placeholder="Airport, venue, or address..." autocomplete="off"/></div>
           <div><label class="flbl">Passengers</label><select name="Passengers" class="fsel"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6+</option></select></div>
           <div><label class="flbl">Notes</label><input name="Notes" class="finp" placeholder="Flight number, special requests"/></div>
         </div>
@@ -337,6 +337,16 @@ async function submitForm(e,fid,okid,btnid){
   f.reset();
   window.scrollTo(0,0);
 }
+</script>
+<script>
+function initQuoteAutocomplete(){
+  var opts={types:['geocode','establishment'],componentRestrictions:{country:'us'},fields:['formatted_address','name']};
+  new google.maps.places.Autocomplete(document.getElementById('q-pickup'),opts);
+  new google.maps.places.Autocomplete(document.getElementById('q-dest'),opts);
+}
+</script>
+<script async defer
+  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAtiBZ-MmvzTnOg3hDluVDCVy7mcersqe4&libraries=places&callback=initQuoteAutocomplete">
 </script>
 </body>
 </html>

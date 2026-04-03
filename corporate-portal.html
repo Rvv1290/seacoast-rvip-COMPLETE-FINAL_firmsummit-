@@ -122,6 +122,17 @@ body{font-family:'Inter',sans-serif;background:#f7f7f7;color:#1a1c1c;min-height:
 /* ─── ALERTS ─── */
 .alert-ok{background:#f0fdf4;border-left:3px solid #22c55e;padding:0.75rem 1rem;font-family:Inter,sans-serif;font-size:0.82rem;color:#15803d;margin-bottom:1.25rem}
 .alert-err{background:#fef2f2;border-left:3px solid #ef4444;padding:0.75rem 1rem;font-family:Inter,sans-serif;font-size:0.82rem;color:#b91c1c;margin-bottom:1.25rem}
+/* ─── REWARDS ─── */
+.reward-card{background:linear-gradient(135deg,#1a1a1a 0%,#2a2a1a 100%);color:#fff;padding:1.75rem 2rem;margin-bottom:2rem;border-left:4px solid #C9A84C;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1.5rem}
+.reward-tier-badge{display:inline-flex;align-items:center;gap:0.5rem;padding:0.3rem 0.875rem;border-radius:2px;font-family:'Work Sans',sans-serif;font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em}
+.tier-bronze{background:#cd7f32;color:#fff}
+.tier-silver{background:#aaa;color:#fff}
+.tier-gold{background:#C9A84C;color:#000}
+.tier-platinum{background:linear-gradient(90deg,#e5e4e2,#a0b2c6);color:#000}
+.reward-progress-wrap{flex:1;min-width:200px}
+.reward-progress-bar{height:6px;background:rgba(255,255,255,0.15);border-radius:3px;margin:0.5rem 0;overflow:hidden}
+.reward-progress-fill{height:100%;background:#C9A84C;border-radius:3px;transition:width 0.6s ease}
+.reward-perk{font-family:Inter,sans-serif;font-size:0.72rem;color:rgba(255,255,255,0.6);margin-top:3px}
 /* ─── MOBILE ─── */
 @media(max-width:900px){
   .sidebar{display:none}
@@ -170,6 +181,8 @@ var _sess = null;
     <a class="sb-link" onclick="goTab('trips',this)"><span class="material-symbols-outlined">directions_car</span>Trips</a>
     <a class="sb-link" onclick="goTab('team',this)"><span class="material-symbols-outlined">group</span>Team</a>
     <a class="sb-link" onclick="goTab('pay',this)"><span class="material-symbols-outlined">payments</span>Payments</a>
+    <a class="sb-link" onclick="goTab('stmt',this)"><span class="material-symbols-outlined">summarize</span>Statements</a>
+    <a class="sb-link" onclick="goTab('rewards',this)"><span class="material-symbols-outlined">workspace_premium</span>Rewards</a>
     <a class="sb-link" onclick="goTab('acct',this)"><span class="material-symbols-outlined">business</span>Account</a>
   </nav>
   <div class="sb-bottom">
@@ -195,7 +208,7 @@ var _sess = null;
 
     <!-- ══════════ DASHBOARD ══════════ -->
     <div id="tab-dash" class="tab-panel on">
-      <div class="stat-row">
+      <div class="stat-row" style="grid-template-columns:repeat(5,1fr)">
         <div class="stat-card gold">
           <div class="stat-val" id="stat-next">—</div>
           <div class="stat-lbl">Next Trip</div>
@@ -211,6 +224,10 @@ var _sess = null;
         <div class="stat-card amber">
           <div class="stat-val" id="stat-bal">$0</div>
           <div class="stat-lbl">Pending Balance</div>
+        </div>
+        <div class="stat-card" style="border-left-color:#C9A84C;cursor:pointer" onclick="goTab('rewards',null)">
+          <div class="stat-val" id="stat-tier-lbl" style="font-size:1rem">—</div>
+          <div class="stat-lbl">Loyalty Tier</div>
         </div>
       </div>
 
@@ -276,13 +293,20 @@ var _sess = null;
           <div class="f-group book-full">
             <label class="f-label">Service Type</label>
             <select class="f-input" id="b-service">
-              <option value="Airport Transfer">✈ Airport Transfer</option>
-              <option value="Corporate Transfer">💼 Corporate Transfer</option>
+              <option value="Airport Transfer — BOS Logan">✈ Airport Transfer — Boston Logan (BOS)</option>
+              <option value="Airport Transfer — MHT Manchester">✈ Airport Transfer — Manchester (MHT)</option>
               <option value="Hotel Transfer">🏨 Hotel Transfer</option>
-              <option value="Evening / Event">🎭 Evening / Event</option>
+              <option value="Downtown Boston Transfer">🏙 Downtown Boston Transfer</option>
+              <option value="Business Meeting Transfer">💼 Business Meeting Transfer</option>
+              <option value="Round Trip — Wait &amp; Return">🔄 Round Trip — Wait &amp; Return (Business Meeting)</option>
+              <option value="Client Meet &amp; Greet — Airport">🤝 Client Meet &amp; Greet (Airport)</option>
+              <option value="Executive Night Out">🌆 Executive Night Out / Entertainment</option>
               <option value="Casino Run">🎰 Casino Run</option>
+              <option value="Special Event / Gala">🎭 Special Event / Gala</option>
+              <option value="Conference &amp; Event Shuttle">🚌 Conference &amp; Event Shuttle</option>
               <option value="Medical Appointment">🏥 Medical Appointment</option>
-              <option value="Other">Other</option>
+              <option value="Multi-Stop Executive">📍 Multi-Stop Executive</option>
+              <option value="Other / Custom">⚙ Other / Custom</option>
             </select>
           </div>
           <div class="f-group book-full">
@@ -310,6 +334,17 @@ var _sess = null;
             <textarea class="f-input" id="b-notes" rows="2" style="resize:vertical" placeholder="Flight number, special needs, VIP instructions…"></textarea>
           </div>
         </div>
+          <!-- Map + Route Estimate -->
+          <div class="f-group book-full" id="corp-map-wrap" style="display:none">
+            <div id="corp-map" style="width:100%;height:260px;background:#1a1a1a;border:1px solid #e5e5e5"></div>
+            <div id="corp-route-bar" style="display:none;background:#f9f9f9;border:1px solid #e5e5e5;border-top:0;padding:0.75rem 1rem;display:flex;gap:1.5rem;flex-wrap:wrap;align-items:center">
+              <span style="font-family:'Work Sans',sans-serif;font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#775a19">Route</span>
+              <span id="corp-route-dist" style="font-family:Inter,sans-serif;font-size:0.82rem;color:#333"></span>
+              <span id="corp-route-dur" style="font-family:Inter,sans-serif;font-size:0.82rem;color:#888"></span>
+              <span id="corp-route-fare" style="font-family:'Work Sans',sans-serif;font-size:0.85rem;font-weight:700;color:#000;margin-left:auto"></span>
+            </div>
+          </div>
+
         <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid #f0f0f0;display:flex;align-items:center;flex-wrap:wrap;gap:0.75rem">
           <button class="btn-blk" id="book-btn" onclick="submitBooking()">Request Ride →</button>
           <span style="font-family:Inter,sans-serif;font-size:0.72rem;color:#aaa">Billed to <strong id="book-company-lbl"></strong> · <span id="book-billing-lbl"></span></span>
@@ -355,7 +390,7 @@ var _sess = null;
           <div style="font-family:Inter,sans-serif;font-size:0.75rem;color:rgba(255,255,255,0.4);margin-top:4px" id="pay-cycle">Monthly (NET-30) billing</div>
         </div>
         <div style="display:flex;flex-direction:column;gap:0.75rem">
-          <a id="pay-square-btn" href="https://square.link" target="_blank" style="background:#775a19;color:#fff;padding:0.75rem 1.75rem;font-family:'Work Sans',sans-serif;font-size:0.73rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;text-decoration:none;display:flex;align-items:center;gap:0.5rem;border-bottom:2px solid #5d4201"><span class="material-symbols-outlined" style="font-size:16px">credit_card</span>Pay Now (Square)</a>
+          <a id="pay-square-btn" href="https://checkout.square.site/merchant/MLXF7THRGCXJC/checkout/JPSFJKF4BYHK7TB6HWPVZIYP?src=sheet" target="_blank" style="background:#775a19;color:#fff;padding:0.75rem 1.75rem;font-family:'Work Sans',sans-serif;font-size:0.73rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;text-decoration:none;display:flex;align-items:center;gap:0.5rem;border-bottom:2px solid #5d4201"><span class="material-symbols-outlined" style="font-size:16px">credit_card</span>Pay Now (Square)</a>
           <a href="venmo://paycharge?txn=pay&recipients=seacoastrvip" style="background:rgba(255,255,255,0.08);color:#fff;padding:0.75rem 1.75rem;font-family:'Work Sans',sans-serif;font-size:0.73rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;text-decoration:none;display:flex;align-items:center;gap:0.5rem;border:1px solid rgba(255,255,255,0.15)"><span class="material-symbols-outlined" style="font-size:16px">account_balance_wallet</span>Pay via Venmo</a>
         </div>
       </div>
@@ -377,6 +412,98 @@ var _sess = null;
       <div id="pay-empty" style="display:none" class="empty-state">
         <span class="material-symbols-outlined">receipt_long</span>No invoices yet.
       </div>
+    </div>
+
+    <!-- ══════════ STATEMENTS ══════════ -->
+    <div id="tab-stmt" class="tab-panel">
+
+      <!-- Filter Controls -->
+      <div style="background:#fff;padding:1.75rem 2rem;margin-bottom:1.5rem;max-width:860px">
+        <div style="font-family:'Work Sans',sans-serif;font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.14em;color:#775a19;margin-bottom:4px">Filter Period</div>
+        <h2 style="font-family:'Times New Roman',serif;font-size:1.25rem;font-weight:700;margin-bottom:1.25rem">Generate Statement</h2>
+        <div style="display:flex;gap:0.75rem;margin-bottom:1.25rem;flex-wrap:wrap">
+          <button class="veh-btn on" id="stmt-mode-month" onclick="stmtMode('month')">By Month</button>
+          <button class="veh-btn" id="stmt-mode-custom" onclick="stmtMode('custom')">Custom Range</button>
+        </div>
+        <!-- By Month -->
+        <div id="stmt-month-fields" style="display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-end">
+          <div class="f-group" style="margin:0">
+            <label class="f-label">Month</label>
+            <select class="f-input" id="stmt-month" style="min-width:140px">
+              <option value="0">January</option><option value="1">February</option><option value="2">March</option>
+              <option value="3">April</option><option value="4">May</option><option value="5">June</option>
+              <option value="6">July</option><option value="7">August</option><option value="8">September</option>
+              <option value="9">October</option><option value="10">November</option><option value="11">December</option>
+            </select>
+          </div>
+          <div class="f-group" style="margin:0">
+            <label class="f-label">Year</label>
+            <input class="f-input" id="stmt-year-m" type="number" style="width:90px" min="2020" max="2099"/>
+          </div>
+        </div>
+        <!-- Custom Range -->
+        <div id="stmt-custom-fields" style="display:none;gap:1rem;flex-wrap:wrap;align-items:flex-end">
+          <div class="f-group" style="margin:0">
+            <label class="f-label">From</label>
+            <input class="f-input" id="stmt-from" type="date"/>
+          </div>
+          <div class="f-group" style="margin:0">
+            <label class="f-label">To</label>
+            <input class="f-input" id="stmt-to" type="date"/>
+          </div>
+        </div>
+        <div style="margin-top:1.25rem">
+          <button class="btn-blk" onclick="filterStmt()">Generate Statement →</button>
+        </div>
+      </div>
+
+      <!-- Results -->
+      <div id="stmt-results" style="display:none;max-width:860px">
+        <!-- Summary Bar -->
+        <div id="stmt-summary" style="background:#000;color:#fff;padding:1.25rem 1.75rem;margin-bottom:1rem;display:flex;gap:2rem;flex-wrap:wrap;align-items:center;border-left:4px solid #775a19">
+          <div><div style="font-family:'Work Sans',sans-serif;font-size:0.55rem;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:#775a19">Period</div><div id="stmt-period-lbl" style="font-family:Inter,sans-serif;font-size:0.85rem;color:#fff;margin-top:2px"></div></div>
+          <div><div style="font-family:'Work Sans',sans-serif;font-size:0.55rem;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:#775a19">Trips</div><div id="stmt-trip-count" style="font-family:'Times New Roman',serif;font-size:1.5rem;font-weight:700;color:#fff"></div></div>
+          <div><div style="font-family:'Work Sans',sans-serif;font-size:0.55rem;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:#775a19">Total</div><div id="stmt-total-amt" style="font-family:'Times New Roman',serif;font-size:1.5rem;font-weight:700;color:#fff"></div></div>
+          <div style="margin-left:auto;display:flex;flex-direction:column;gap:0.5rem">
+            <button class="btn-blk" style="border-bottom-color:#e8c97a;white-space:nowrap" onclick="printStmtPDF()">🖨 Print / Save as PDF</button>
+            <button class="btn-out" style="margin-left:0;white-space:nowrap" onclick="printNet30Filtered()">📄 NET-30 Statement</button>
+          </div>
+        </div>
+        <!-- Table -->
+        <div style="overflow-x:auto;background:#fff">
+          <table class="pay-table" id="stmt-table">
+            <thead><tr><th>Date</th><th>Confirmation</th><th>Passenger</th><th>Service</th><th>Route</th><th>Amount</th><th>Status</th></tr></thead>
+            <tbody id="stmt-tbody"></tbody>
+          </table>
+        </div>
+        <div id="stmt-empty" style="display:none" class="empty-state"><span class="material-symbols-outlined">receipt_long</span>No trips found for this period.</div>
+      </div>
+
+      <!-- Annual Expenses -->
+      <div style="background:#fff;padding:1.75rem 2rem;margin-top:1.5rem;max-width:860px">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-bottom:1.25rem">
+          <div>
+            <div style="font-family:'Work Sans',sans-serif;font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.14em;color:#775a19;margin-bottom:4px">Tax &amp; Year-End Accounting</div>
+            <h2 style="font-family:'Times New Roman',serif;font-size:1.25rem;font-weight:700">Annual Expense Summary</h2>
+          </div>
+          <div style="display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap">
+            <div class="f-group" style="margin:0">
+              <label class="f-label">Year</label>
+              <input class="f-input" id="stmt-annual-year" type="number" style="width:90px" min="2020" max="2099"/>
+            </div>
+            <button class="btn-blk" onclick="buildAnnual()" style="margin-top:1.1rem">View →</button>
+            <button class="btn-out" style="margin-left:0;margin-top:1.1rem;white-space:nowrap" onclick="printAnnualSummary()">📊 Export PDF</button>
+          </div>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="pay-table" id="annual-table">
+            <thead><tr><th>Month</th><th style="text-align:center">Trips</th><th style="text-align:right">Amount</th></tr></thead>
+            <tbody id="annual-tbody"></tbody>
+          </table>
+        </div>
+        <div id="annual-empty" style="display:none" class="empty-state"><span class="material-symbols-outlined">bar_chart</span>No trip data for this year.</div>
+      </div>
+
     </div>
 
     <!-- ══════════ TEAM / MEMBERS ══════════ -->
@@ -402,6 +529,81 @@ var _sess = null;
           <button class="btn-blk" onclick="addMember()" style="margin-top:0.5rem"><span class="material-symbols-outlined" style="font-size:15px;vertical-align:middle;margin-right:4px">person_add</span>Add Team Member</button>
         </div>
       </div>
+    </div>
+
+    <!-- ══════════ REWARDS ══════════ -->
+    <div id="tab-rewards" class="tab-panel">
+
+      <!-- Tier Hero Card -->
+      <div class="reward-card" id="reward-hero" style="margin-bottom:1.5rem">
+        <div>
+          <div style="font-family:'Work Sans',sans-serif;font-size:0.58rem;font-weight:700;text-transform:uppercase;letter-spacing:0.16em;color:#C9A84C;margin-bottom:6px">Loyalty Program</div>
+          <div style="font-family:'Times New Roman',serif;font-size:1.6rem;font-weight:700;margin-bottom:0.5rem">RVIP Rewards</div>
+          <div id="reward-tier-badge-hero" class="reward-tier-badge tier-bronze" style="margin-bottom:0.75rem">🥉 Bronze</div>
+          <div style="font-family:Inter,sans-serif;font-size:0.82rem;color:rgba(255,255,255,0.55)" id="reward-perk-line">Priority dispatch included with all corporate accounts</div>
+        </div>
+        <div class="reward-progress-wrap">
+          <div style="display:flex;justify-content:space-between;align-items:baseline">
+            <div style="font-family:'Times New Roman',serif;font-size:2rem;font-weight:700" id="reward-pts-display">0</div>
+            <div style="font-family:'Work Sans',sans-serif;font-size:0.62rem;color:rgba(255,255,255,0.4)" id="reward-next-label">trips to Silver</div>
+          </div>
+          <div class="reward-progress-bar"><div class="reward-progress-fill" id="reward-bar" style="width:0%"></div></div>
+          <div style="font-family:Inter,sans-serif;font-size:0.72rem;color:rgba(255,255,255,0.4);margin-top:4px" id="reward-progress-sub">Complete more trips to advance your tier</div>
+        </div>
+      </div>
+
+      <!-- Tiers Grid -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:2rem">
+        <!-- Bronze -->
+        <div id="tier-card-bronze" class="stat-card" style="border-left-color:#cd7f32;opacity:1">
+          <div style="font-size:1.5rem;margin-bottom:0.25rem">🥉</div>
+          <div style="font-family:'Work Sans',sans-serif;font-size:0.75rem;font-weight:700;color:#cd7f32;margin-bottom:0.5rem">BRONZE</div>
+          <div style="font-family:Inter,sans-serif;font-size:0.72rem;color:#555;line-height:1.6">0 – 9 trips<br>✔ Priority dispatch<br>✔ NET-30 invoicing<br>✔ Dedicated support line</div>
+        </div>
+        <!-- Silver -->
+        <div id="tier-card-silver" class="stat-card" style="border-left-color:#aaa;opacity:0.5">
+          <div style="font-size:1.5rem;margin-bottom:0.25rem">🥈</div>
+          <div style="font-family:'Work Sans',sans-serif;font-size:0.75rem;font-weight:700;color:#888;margin-bottom:0.5rem">SILVER</div>
+          <div style="font-family:Inter,sans-serif;font-size:0.72rem;color:#555;line-height:1.6">10 – 24 trips<br>✔ All Bronze perks<br>✔ 5% rate discount<br>✔ Free luggage handling</div>
+        </div>
+        <!-- Gold -->
+        <div id="tier-card-gold" class="stat-card" style="border-left-color:#C9A84C;opacity:0.5">
+          <div style="font-size:1.5rem;margin-bottom:0.25rem">🥇</div>
+          <div style="font-family:'Work Sans',sans-serif;font-size:0.75rem;font-weight:700;color:#775a19;margin-bottom:0.5rem">GOLD</div>
+          <div style="font-family:Inter,sans-serif;font-size:0.72rem;color:#555;line-height:1.6">25 – 49 trips<br>✔ All Silver perks<br>✔ 10% rate discount<br>✔ Preferred driver assignment</div>
+        </div>
+        <!-- Platinum -->
+        <div id="tier-card-platinum" class="stat-card" style="border-left-color:#a0b2c6;opacity:0.5">
+          <div style="font-size:1.5rem;margin-bottom:0.25rem">💎</div>
+          <div style="font-family:'Work Sans',sans-serif;font-size:0.75rem;font-weight:700;color:#a0b2c6;margin-bottom:0.5rem">PLATINUM</div>
+          <div style="font-family:Inter,sans-serif;font-size:0.72rem;color:#555;line-height:1.6">50+ trips<br>✔ All Gold perks<br>✔ 15% rate discount<br>✔ VIP meet &amp; greet service</div>
+        </div>
+      </div>
+
+      <!-- Trip History toward Rewards -->
+      <div style="background:#fff;padding:1.75rem 2rem;max-width:760px">
+        <div style="font-family:'Work Sans',sans-serif;font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.14em;color:#775a19;margin-bottom:4px">Your Progress</div>
+        <h2 style="font-family:'Times New Roman',serif;font-size:1.25rem;font-weight:700;margin-bottom:1.25rem">Trip History Toward Tier</h2>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.5rem">
+          <div class="stat-card" style="border-left-color:#C9A84C">
+            <div class="stat-val" id="rw-completed">0</div>
+            <div class="stat-lbl">Completed Trips</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-val" id="rw-total-spend">$0</div>
+            <div class="stat-lbl">Total Spend</div>
+          </div>
+          <div class="stat-card" style="border-left-color:#C9A84C">
+            <div class="stat-val" id="rw-bonus">0</div>
+            <div class="stat-lbl">Bonus Points</div>
+          </div>
+        </div>
+        <div style="font-family:Inter,sans-serif;font-size:0.78rem;color:#888;line-height:1.7">
+          Tier is calculated from your total completed trips plus any bonus points awarded by your account manager.<br>
+          Discounts apply automatically — contact us at <a href="tel:+19782553140" style="color:#775a19">(978) 255-3140</a> or <a href="mailto:info@seacoastrvip.com" style="color:#775a19">info@seacoastrvip.com</a> to apply your tier discount on your next booking.
+        </div>
+      </div>
+
     </div>
 
     <!-- ══════════ ACCOUNT ══════════ -->
@@ -445,6 +647,8 @@ var _sess = null;
   <button class="mob-nav-btn" onclick="goTab('trips',this)"><span class="material-symbols-outlined">directions_car</span>Trips</button>
   <button class="mob-nav-btn" onclick="goTab('team',this)"><span class="material-symbols-outlined">group</span>Team</button>
   <button class="mob-nav-btn" onclick="goTab('pay',this)"><span class="material-symbols-outlined">payments</span>Pay</button>
+  <button class="mob-nav-btn" onclick="goTab('stmt',this)"><span class="material-symbols-outlined">summarize</span>Statements</button>
+  <button class="mob-nav-btn" onclick="goTab('rewards',this)"><span class="material-symbols-outlined">workspace_premium</span>Rewards</button>
 </nav>
 
 <script>
@@ -454,8 +658,8 @@ var _trips = [];
 var _tripFilter = 'all';
 var _calDate = new Date();
 var _veh = 'Black SUV Luxury';
-var tabTitles = {dash:'Dashboard',book:'Book a Ride',cal:'Calendar',trips:'Trips',team:'Team',pay:'Payments',acct:'Account'};
-var _allTabs = ['dash','book','cal','trips','team','pay','acct'];
+var tabTitles = {dash:'Dashboard',book:'Book a Ride',cal:'Calendar',trips:'Trips',team:'Team',pay:'Payments',stmt:'Statements',rewards:'Rewards',acct:'Account'};
+var _allTabs = ['dash','book','cal','trips','team','pay','stmt','rewards','acct'];
 
 // ─── INIT ───
 window.addEventListener('DOMContentLoaded', function(){
@@ -567,15 +771,81 @@ function loadTrips(){
   }
 }
 
+// ─── REWARDS ───
+var _bonusPoints = 0;
+var TIERS = [
+  {name:'Bronze', min:0,  max:9,  next:10, icon:'🥉', cls:'tier-bronze', color:'#cd7f32',
+   perks:'Priority dispatch · NET-30 invoicing · Dedicated support'},
+  {name:'Silver', min:10, max:24, next:25, icon:'🥈', cls:'tier-silver', color:'#aaa',
+   perks:'All Bronze perks · 5% rate discount · Free luggage handling'},
+  {name:'Gold',   min:25, max:49, next:50, icon:'🥇', cls:'tier-gold',   color:'#C9A84C',
+   perks:'All Silver perks · 10% rate discount · Preferred driver assignment'},
+  {name:'Platinum',min:50,max:Infinity,next:null,icon:'💎',cls:'tier-platinum',color:'#a0b2c6',
+   perks:'All Gold perks · 15% rate discount · VIP meet & greet service'}
+];
+
+function getTier(pts){
+  for(var i=TIERS.length-1;i>=0;i--){ if(pts>=TIERS[i].min) return TIERS[i]; }
+  return TIERS[0];
+}
+
+function renderRewards(completedCount, totalSpend, bonusPoints){
+  var pts = completedCount + bonusPoints;
+  var tier = getTier(pts);
+
+  // Stat card on dashboard
+  document.getElementById('stat-tier-lbl').textContent = tier.icon+' '+tier.name;
+
+  // Hero badge
+  var badge = document.getElementById('reward-tier-badge-hero');
+  badge.className = 'reward-tier-badge '+tier.cls;
+  badge.textContent = tier.icon+' '+tier.name;
+
+  // Points display
+  document.getElementById('reward-pts-display').textContent = pts;
+
+  // Perk line
+  document.getElementById('reward-perk-lbl') && (document.getElementById('reward-perk-lbl').textContent = tier.perks);
+  document.getElementById('reward-perk-line').textContent = tier.perks;
+
+  // Progress bar
+  var bar = document.getElementById('reward-bar');
+  var nextLbl = document.getElementById('reward-next-label');
+  var sub = document.getElementById('reward-progress-sub');
+  if(tier.next){
+    var pct = Math.min(100, Math.round(((pts - tier.min)/(tier.next - tier.min))*100));
+    bar.style.width = pct+'%';
+    nextLbl.textContent = (tier.next - pts)+' trips to '+TIERS[TIERS.indexOf(tier)+1].name;
+    sub.textContent = pts+' of '+tier.next+' trips completed ('+pct+'%)';
+  } else {
+    bar.style.width = '100%';
+    nextLbl.textContent = 'Max tier reached';
+    sub.textContent = 'You\'ve reached Platinum — the highest tier!';
+  }
+
+  // Tier cards — highlight active, dim others
+  ['bronze','silver','gold','platinum'].forEach(function(t){
+    var card = document.getElementById('tier-card-'+t);
+    if(card) card.style.opacity = (tier.name.toLowerCase()===t) ? '1' : '0.4';
+  });
+
+  // Progress stats
+  document.getElementById('rw-completed').textContent = completedCount;
+  document.getElementById('rw-total-spend').textContent = '$'+totalSpend.toFixed(2);
+  document.getElementById('rw-bonus').textContent = bonusPoints;
+}
+
 function calcStats(){
   var now=new Date();
   var thisMonth=now.getMonth(),thisYear=now.getFullYear();
-  var monthCount=0,totalBal=0;
+  var monthCount=0,totalBal=0,completedCount=0,totalSpend=0;
   var upcoming=_trips.filter(function(t){return new Date(t.date+' '+(t.time||'00:00'))>=now;}).sort(function(a,b){return new Date(a.date)-new Date(b.date);});
   _trips.forEach(function(t){
     var d=new Date(t.date);
     if(d.getMonth()===thisMonth&&d.getFullYear()===thisYear)monthCount++;
-    if(t.status!=='Completed'&&t.price){var p=parseFloat((t.price+'').replace(/[^0-9.]/g,''));if(!isNaN(p))totalBal+=p;}
+    var p=parseFloat((t.price+'').replace(/[^0-9.]/g,''));
+    if(t.status==='Completed'){completedCount++;if(!isNaN(p))totalSpend+=p;}
+    else if(t.price&&!isNaN(p))totalBal+=p;
   });
   document.getElementById('stat-month').textContent=monthCount;
   document.getElementById('stat-total').textContent=_trips.length;
@@ -587,6 +857,15 @@ function calcStats(){
     document.getElementById('stat-next').textContent=nd.toLocaleDateString('en-US',{month:'short',day:'numeric'});
   }else{
     document.getElementById('stat-next').textContent='None';
+  }
+  // Load bonus points from Firebase then render rewards
+  if(db&&sess&&sess.accountId){
+    db.collection('corporate_accounts').doc(sess.accountId).get().then(function(doc){
+      _bonusPoints = doc.exists ? (doc.data().bonusPoints||0) : 0;
+      renderRewards(completedCount, totalSpend, _bonusPoints);
+    }).catch(function(){ renderRewards(completedCount, totalSpend, 0); });
+  } else {
+    renderRewards(completedCount, totalSpend, 0);
   }
 }
 
@@ -888,9 +1167,224 @@ function bookForMember(idx){
   },100);
 }
 
+// ─── CORPORATE MAP / AUTOCOMPLETE ───
+var _corpMap, _corpDirSvc, _corpDirRenderer, _corpACPickup, _corpACDest;
+var _corpPickupPlace = null, _corpDestPlace = null;
+
+function initCorpMap(){
+  var center = {lat:43.0718,lng:-70.7626};
+  _corpMap = new google.maps.Map(document.getElementById('corp-map'),{
+    center:center,zoom:9,
+    styles:[{featureType:'all',elementType:'geometry',stylers:[{color:'#1a1a1a'}]},{featureType:'water',elementType:'geometry',stylers:[{color:'#0a0a0a'}]},{featureType:'road',elementType:'geometry',stylers:[{color:'#2a2a2a'}]},{featureType:'road.arterial',elementType:'geometry',stylers:[{color:'#333'}]},{featureType:'poi',elementType:'labels',stylers:[{visibility:'off'}]},{featureType:'all',elementType:'labels.text.fill',stylers:[{color:'#888'}]},{featureType:'all',elementType:'labels.text.stroke',stylers:[{color:'#111'}]}]
+  });
+  _corpDirSvc = new google.maps.DirectionsService();
+  _corpDirRenderer = new google.maps.DirectionsRenderer({
+    suppressMarkers:false,
+    polylineOptions:{strokeColor:'#C9A84C',strokeWeight:4,strokeOpacity:0.9}
+  });
+  _corpDirRenderer.setMap(_corpMap);
+
+  var acOpts = {types:['geocode','establishment'],componentRestrictions:{country:'us'},fields:['geometry','formatted_address','name']};
+  _corpACPickup = new google.maps.places.Autocomplete(document.getElementById('b-pickup'), acOpts);
+  _corpACDest   = new google.maps.places.Autocomplete(document.getElementById('b-dest'),   acOpts);
+
+  _corpACPickup.addListener('place_changed',function(){
+    _corpPickupPlace = _corpACPickup.getPlace();
+    if(_corpPickupPlace.geometry) tryCorpRoute();
+  });
+  _corpACDest.addListener('place_changed',function(){
+    _corpDestPlace = _corpACDest.getPlace();
+    if(_corpDestPlace.geometry) tryCorpRoute();
+  });
+}
+
+function tryCorpRoute(){
+  if(!_corpPickupPlace||!_corpPickupPlace.geometry||!_corpDestPlace||!_corpDestPlace.geometry) return;
+  document.getElementById('corp-map-wrap').style.display='block';
+  _corpDirSvc.route({
+    origin:_corpPickupPlace.geometry.location,
+    destination:_corpDestPlace.geometry.location,
+    travelMode:google.maps.TravelMode.DRIVING
+  },function(result,status){
+    if(status!=='OK') return;
+    _corpDirRenderer.setDirections(result);
+    var leg=result.routes[0].legs[0];
+    var miles=leg.distance.value/1609.34;
+    var fare=Math.max(45,15+miles*2.50);
+    var bar=document.getElementById('corp-route-bar');
+    document.getElementById('corp-route-dist').textContent=leg.distance.text;
+    document.getElementById('corp-route-dur').textContent=leg.duration.text;
+    document.getElementById('corp-route-fare').textContent='Est. $'+fare.toFixed(2);
+    bar.style.display='flex';
+  });
+}
+
+// ─── STATEMENTS ───
+var _stmtMode = 'month';
+var _stmtFiltered = [];
+
+window.addEventListener('DOMContentLoaded',function(){
+  // Set default month/year selectors to current date
+  var now = new Date();
+  var mSel = document.getElementById('stmt-month');
+  if(mSel) mSel.value = now.getMonth();
+  var yM = document.getElementById('stmt-year-m');
+  if(yM) yM.value = now.getFullYear();
+  var yA = document.getElementById('stmt-annual-year');
+  if(yA) yA.value = now.getFullYear();
+  // Default custom range: first of month → today
+  var firstOfMonth = new Date(now.getFullYear(),now.getMonth(),1).toISOString().split('T')[0];
+  var todayStr = now.toISOString().split('T')[0];
+  var sf = document.getElementById('stmt-from'); if(sf) sf.value = firstOfMonth;
+  var st = document.getElementById('stmt-to');   if(st) st.value = todayStr;
+  // Build annual on load once trips loaded
+});
+
+function stmtMode(mode){
+  _stmtMode = mode;
+  document.getElementById('stmt-mode-month').classList.toggle('on', mode==='month');
+  document.getElementById('stmt-mode-custom').classList.toggle('on', mode==='custom');
+  document.getElementById('stmt-month-fields').style.display  = mode==='month'  ? 'flex'   : 'none';
+  document.getElementById('stmt-custom-fields').style.display = mode==='custom' ? 'flex'   : 'none';
+}
+
+function filterStmt(){
+  var from, to, periodLabel;
+  var now = new Date();
+  if(_stmtMode==='month'){
+    var m = parseInt(document.getElementById('stmt-month').value);
+    var y = parseInt(document.getElementById('stmt-year-m').value) || now.getFullYear();
+    from = new Date(y,m,1);
+    to   = new Date(y,m+1,0,23,59,59);
+    var monthNames=['January','February','March','April','May','June','July','August','September','October','November','December'];
+    periodLabel = monthNames[m]+' '+y;
+  } else {
+    var fv = document.getElementById('stmt-from').value;
+    var tv = document.getElementById('stmt-to').value;
+    if(!fv||!tv){alert('Please select both a From and To date.');return;}
+    from = new Date(fv+'T00:00:00');
+    to   = new Date(tv+'T23:59:59');
+    periodLabel = fv+' — '+tv;
+  }
+  _stmtFiltered = _trips.filter(function(t){
+    var d = new Date(t.date+'T12:00:00');
+    return d>=from && d<=to;
+  });
+  var total = _stmtFiltered.reduce(function(s,t){var p=parseFloat((t.price+'').replace(/[^0-9.]/g,''));return s+(isNaN(p)?0:p);},0);
+  document.getElementById('stmt-period-lbl').textContent = periodLabel;
+  document.getElementById('stmt-trip-count').textContent = _stmtFiltered.length;
+  document.getElementById('stmt-total-amt').textContent  = '$'+total.toFixed(2);
+  var tbody = document.getElementById('stmt-tbody');
+  var empty = document.getElementById('stmt-empty');
+  if(!_stmtFiltered.length){
+    tbody.innerHTML=''; empty.style.display='block';
+  } else {
+    empty.style.display='none';
+    tbody.innerHTML = _stmtFiltered.map(function(t){
+      var d=new Date(t.date+'T12:00:00');
+      var ds=d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+      var bdg=t.status==='Completed'?'<span class="bdg bdg-com">Paid</span>':'<span class="bdg bdg-pen">Due</span>';
+      return '<tr><td>'+ds+'</td><td style="color:#775a19;font-weight:600">'+escH(t.code||'—')+'</td><td>'+escH(t.name||'—')+'</td><td>'+escH(t.service||'—')+'</td><td>'+escH((t.pickup||'—').substring(0,18))+'→'+escH((t.destination||'—').substring(0,18))+'</td><td><strong>'+(t.price||'—')+'</strong></td><td>'+bdg+'</td></tr>';
+    }).join('');
+  }
+  document.getElementById('stmt-results').style.display='block';
+}
+
+function printStmtPDF(){
+  if(!_stmtFiltered.length){alert('Generate a statement first.');return;}
+  var periodLbl = document.getElementById('stmt-period-lbl').textContent;
+  var total = _stmtFiltered.reduce(function(s,t){var p=parseFloat((t.price+'').replace(/[^0-9.]/g,''));return s+(isNaN(p)?0:p);},0);
+  var rows = _stmtFiltered.map(function(t){
+    return '<tr><td>'+t.date+'</td><td>'+escH(t.code||'')+'</td><td>'+escH(t.name||'')+'</td><td>'+escH(t.service||'')+'</td><td>'+escH(t.pickup||'')+'</td><td>'+escH(t.destination||'')+'</td><td style="text-align:right">$'+(parseFloat(t.price)||0).toFixed(2)+'</td><td>'+t.status+'</td></tr>';
+  }).join('');
+  var w=window.open('','_blank');
+  w.document.write('<html><head><title>Statement — '+escH(sess.company)+'</title><style>body{font-family:Arial,sans-serif;padding:2.5rem;max-width:900px;margin:0 auto}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ddd;padding:7px 9px;text-align:left;font-size:0.8rem}th{background:#f3f3f3}h1{font-size:1.4rem;margin-bottom:0.2rem}.total{font-size:1.1rem;font-weight:700;margin-top:1rem;text-align:right}.header{border-bottom:3px solid #000;padding-bottom:1rem;margin-bottom:1.5rem}@media print{body{padding:1rem}}</style></head><body>');
+  w.document.write('<div class="header"><h1>SEACOAST RVIP LLC</h1><p style="color:#888;font-size:.85rem">Premium Ground Transportation</p><p style="font-weight:700">TRIP STATEMENT</p></div>');
+  w.document.write('<p><strong>Bill To:</strong> '+escH(sess.company)+'</p>');
+  w.document.write('<p><strong>Contact:</strong> '+escH(sess.contactName||'')+'</p>');
+  w.document.write('<p><strong>Address:</strong> '+escH(sess.billingAddress||'')+'</p>');
+  w.document.write('<p><strong>Period:</strong> '+escH(periodLbl)+'</p>');
+  w.document.write('<p><strong>Generated:</strong> '+new Date().toLocaleDateString('en-US')+'</p><br>');
+  w.document.write('<table><thead><tr><th>Date</th><th>Conf#</th><th>Passenger</th><th>Service</th><th>Pickup</th><th>Destination</th><th style="text-align:right">Amount</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table>');
+  w.document.write('<div class="total">Total: $'+total.toFixed(2)+'</div>');
+  w.document.write('<p style="margin-top:2rem;font-size:0.75rem;color:#888">Questions: info@seacoastrvip.com | (978) 255-3140 | seacoastrvip.com</p>');
+  w.document.write('</body></html>');w.document.close();w.print();
+}
+
+function printNet30Filtered(){
+  if(!_stmtFiltered.length){alert('Generate a statement first.');return;}
+  var periodLbl = document.getElementById('stmt-period-lbl').textContent;
+  var total = _stmtFiltered.reduce(function(s,t){var p=parseFloat((t.price+'').replace(/[^0-9.]/g,''));return s+(isNaN(p)?0:p);},0);
+  var rows = _stmtFiltered.map(function(t){
+    return '<tr><td>'+t.date+'</td><td>'+escH(t.code||'')+'</td><td>'+escH(t.service||'')+'</td><td>'+escH(t.pickup||'')+'</td><td>'+escH(t.destination||'')+'</td><td style="text-align:right">$'+(parseFloat(t.price)||0).toFixed(2)+'</td><td>'+t.status+'</td></tr>';
+  }).join('');
+  var w=window.open('','_blank');
+  w.document.write('<html><head><title>NET-30 Statement — '+escH(sess.company)+'</title><style>body{font-family:Arial,sans-serif;padding:2.5rem;max-width:800px;margin:0 auto}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ddd;padding:8px;text-align:left;font-size:.85rem}th{background:#f3f3f3}h1{font-size:1.5rem;margin-bottom:.25rem}.total{font-size:1.25rem;font-weight:700;margin-top:1rem;text-align:right}.header{border-bottom:3px solid #000;padding-bottom:1rem;margin-bottom:1.5rem}@media print{body{padding:1rem}}</style></head><body>');
+  w.document.write('<div class="header"><h1>SEACOAST RVIP LLC</h1><p>Premium Ground Transportation</p><p style="color:#000;font-weight:600">NET-30 STATEMENT</p></div>');
+  w.document.write('<p><strong>Bill To:</strong> '+escH(sess.company)+'</p><p><strong>Contact:</strong> '+escH(sess.contactName||'')+'</p><p><strong>Address:</strong> '+escH(sess.billingAddress||'')+'</p>');
+  w.document.write('<p><strong>Period:</strong> '+escH(periodLbl)+'</p>');
+  w.document.write('<p><strong>Payment Due:</strong> '+new Date(Date.now()+30*24*60*60*1000).toLocaleDateString('en-US')+'</p><br>');
+  w.document.write('<table><thead><tr><th>Date</th><th>Conf#</th><th>Service</th><th>Pickup</th><th>Destination</th><th style="text-align:right">Amount</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table>');
+  w.document.write('<div class="total">Total Due: $'+total.toFixed(2)+'</div>');
+  w.document.write('<p style="margin-top:2rem;font-size:.78rem;color:#888">Payment Terms: NET-30. Make payments to Seacoast RVIP LLC.<br>Questions: info@seacoastrvip.com | (978) 255-3140</p>');
+  w.document.write('</body></html>');w.document.close();w.print();
+}
+
+function buildAnnual(){
+  var year = parseInt(document.getElementById('stmt-annual-year').value) || new Date().getFullYear();
+  var monthNames=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  var months = monthNames.map(function(_,i){return {name:monthNames[i],count:0,total:0};});
+  _trips.forEach(function(t){
+    var d=new Date(t.date+'T12:00:00');
+    if(d.getFullYear()!==year) return;
+    var m=d.getMonth();
+    months[m].count++;
+    var p=parseFloat((t.price+'').replace(/[^0-9.]/g,''));
+    if(!isNaN(p)) months[m].total+=p;
+  });
+  var grandTotal=months.reduce(function(s,m){return s+m.total;},0);
+  var grandCount=months.reduce(function(s,m){return s+m.count;},0);
+  var tbody=document.getElementById('annual-tbody');
+  var empty=document.getElementById('annual-empty');
+  if(!grandCount){tbody.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+  tbody.innerHTML=months.map(function(m){
+    if(!m.count) return '<tr style="color:#ccc"><td>'+m.name+'</td><td style="text-align:center">—</td><td style="text-align:right">—</td></tr>';
+    return '<tr><td>'+m.name+'</td><td style="text-align:center">'+m.count+'</td><td style="text-align:right;font-weight:600">$'+m.total.toFixed(2)+'</td></tr>';
+  }).join('')+'<tr style="background:#f3f3f3;font-weight:700"><td>TOTAL '+year+'</td><td style="text-align:center">'+grandCount+'</td><td style="text-align:right">$'+grandTotal.toFixed(2)+'</td></tr>';
+}
+
+function printAnnualSummary(){
+  var year = parseInt(document.getElementById('stmt-annual-year').value) || new Date().getFullYear();
+  var monthNames=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  var months=monthNames.map(function(_,i){return {name:monthNames[i],count:0,total:0};});
+  _trips.forEach(function(t){
+    var d=new Date(t.date+'T12:00:00');
+    if(d.getFullYear()!==year) return;
+    var m=d.getMonth(); months[m].count++;
+    var p=parseFloat((t.price+'').replace(/[^0-9.]/g,'')); if(!isNaN(p)) months[m].total+=p;
+  });
+  var grandTotal=months.reduce(function(s,m){return s+m.total;},0);
+  var grandCount=months.reduce(function(s,m){return s+m.count;},0);
+  var rows=months.map(function(m){
+    return '<tr'+(m.count?'':' style="color:#aaa"')+'><td>'+m.name+'</td><td style="text-align:center">'+(m.count||'—')+'</td><td style="text-align:right">'+(m.count?'$'+m.total.toFixed(2):'—')+'</td></tr>';
+  }).join('');
+  var w=window.open('','_blank');
+  w.document.write('<html><head><title>Annual Summary '+year+' — '+escH(sess.company)+'</title><style>body{font-family:Arial,sans-serif;padding:2.5rem;max-width:680px;margin:0 auto}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ddd;padding:9px 12px;text-align:left;font-size:.85rem}th{background:#f3f3f3}.grand{background:#000;color:#fff;font-weight:700}h1{font-size:1.4rem;margin-bottom:.2rem}.header{border-bottom:3px solid #000;padding-bottom:1rem;margin-bottom:1.5rem}@media print{body{padding:1rem}}</style></head><body>');
+  w.document.write('<div class="header"><h1>SEACOAST RVIP LLC</h1><p style="color:#888;font-size:.85rem">Premium Ground Transportation</p><p style="font-weight:700">ANNUAL EXPENSE SUMMARY — '+year+'</p></div>');
+  w.document.write('<p><strong>Company:</strong> '+escH(sess.company)+'</p><p><strong>Contact:</strong> '+escH(sess.contactName||'')+'</p><p><strong>Address:</strong> '+escH(sess.billingAddress||'')+'</p>');
+  w.document.write('<p style="font-size:.8rem;color:#888;margin-top:.5rem">For tax and accounting use — Fiscal Year '+year+'</p><br>');
+  w.document.write('<table><thead><tr><th>Month</th><th style="text-align:center">Trips</th><th style="text-align:right">Amount</th></tr></thead><tbody>'+rows+'<tr class="grand"><td>TOTAL '+year+'</td><td style="text-align:center">'+grandCount+'</td><td style="text-align:right">$'+grandTotal.toFixed(2)+'</td></tr></tbody></table>');
+  w.document.write('<p style="margin-top:2rem;font-size:.75rem;color:#888">Generated '+new Date().toLocaleDateString('en-US')+' | info@seacoastrvip.com | (978) 255-3140 | seacoastrvip.com</p>');
+  w.document.write('</body></html>');w.document.close();w.print();
+}
+
 // ─── UTILS ───
 function escH(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function logout(){localStorage.removeItem('corp_session');window.location.href='corporate.html';}
+</script>
+<script async defer
+  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAtiBZ-MmvzTnOg3hDluVDCVy7mcersqe4&libraries=places&callback=initCorpMap">
 </script>
 </body>
 </html>

@@ -261,16 +261,7 @@ function sendCode(){
       err.style.display='block';return;
     }
     _acc=found;
-    _code=Math.floor(100000+Math.random()*900000).toString();
-    var expiry=Date.now()+10*60*1000;
-    db.collection('corp_auth_codes').doc(_ph).set({code:_code,expiry:expiry,accountId:found.id,company:found.company}).then(function(){
-      notifyAdmin(found,_code);
-      document.getElementById('code-show').textContent=_code.substring(0,3)+'  '+_code.substring(3);
-      document.getElementById('s2-sub').textContent='Your code is shown below. We\'ve also notified dispatch — call (978) 255-3140 if you need assistance.';
-      startTimer(expiry);
-      goS('s2');
-      setTimeout(function(){document.getElementById('d0').focus();},100);
-    });
+    grantAccess(found);
   }).catch(function(){
     err.textContent='Connection error. Please try again.';err.style.display='block';
     btn.textContent='Send Verification Code →';btn.disabled=false;
