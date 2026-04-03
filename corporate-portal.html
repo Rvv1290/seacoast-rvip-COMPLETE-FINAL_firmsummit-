@@ -722,28 +722,32 @@ function goTab(id, el){
   if(id==='cal') buildCal();
 }
 
-// ─── LOAD TRIPS ───
+// ─── LOAD TRIPS (real-time) ───
+var _tripsUnsub = null; // holds the onSnapshot unsubscribe fn
+
 function loadTrips(){
   if(!db||!sess) return;
   var accountId = sess.accountId || '';
-  var company = sess.company || '';
+  var company   = sess.company   || '';
+
+  // Unsubscribe any previous listener to avoid duplicates
+  if(_tripsUnsub){ try{ _tripsUnsub(); }catch(e){} _tripsUnsub=null; }
 
   function processSnap(snap){
-    _trips=[];
+    // Merge new snapshot into _trips, deduplicate
+    var incoming = [];
     snap.forEach(function(d){
-      var td = d.data();
-      td._docId = d.id;
-      _trips.push(td);
+      var td = d.data(); td._docId = d.id; incoming.push(td);
     });
-    // Remove duplicates by id
-    var seen = {};
-    _trips = _trips.filter(function(t){
+    // Merge with any trips from the fallback company query
+    var seen = {}, merged = incoming.concat(
+      _trips.filter(function(t){ return incoming.every(function(i){ return (i.id||i._docId) !== (t.id||t._docId); }); })
+    );
+    _trips = merged.filter(function(t){
       var key = t.id || t._docId;
-      if(seen[key]) return false;
-      seen[key] = true;
-      return true;
+      if(seen[key]) return false; seen[key]=true; return true;
     });
-    _trips.sort(function(a,b){ return new Date(b.date) - new Date(a.date); });
+    _trips.sort(function(a,b){ return new Date(b.date)-new Date(a.date); });
     renderDashUpcoming();
     renderTrips();
     renderPayments();
@@ -751,23 +755,43 @@ function loadTrips(){
     buildCal();
   }
 
-  if(accountId){
-    db.collection('bookings').where('corporateAccountId','==',accountId).orderBy('date','desc').get()
-      .then(function(snap){
-        if(!snap.empty){ processSnap(snap); }
-        else if(company){
-          // Fallback: query by company name
-          db.collection('bookings').where('corporateCompany','==',company).orderBy('date','desc').get()
-            .then(processSnap).catch(function(){ renderDashUpcoming(); });
-        }
-      }).catch(function(err){
-        // Index may be missing — try without orderBy
-        db.collection('bookings').where('corporateAccountId','==',accountId).get()
+  function fallbackGet(){
+    // Plain .get() when onSnapshot isn't supported / index missing
+    var q = accountId
+      ? db.collection('bookings').where('corporateAccountId','==',accountId)
+      : db.collection('bookings').where('corporateCompany','==',company);
+    q.get().then(function(snap){
+      processSnap(snap);
+      // Also try by company name if accountId returned nothing
+      if(snap.empty && accountId && company){
+        db.collection('bookings').where('corporateCompany','==',company).get()
           .then(processSnap).catch(function(){ renderDashUpcoming(); });
-      });
-  } else if(company){
-    db.collection('bookings').where('corporateCompany','==',company).get()
-      .then(processSnap).catch(function(){ renderDashUpcoming(); });
+      }
+    }).catch(function(){ renderDashUpcoming(); });
+  }
+
+  if(!accountId && !company){ renderDashUpcoming(); return; }
+
+  try {
+    // Primary real-time listener by accountId
+    var q1 = accountId
+      ? db.collection('bookings').where('corporateAccountId','==',accountId)
+      : db.collection('bookings').where('corporateCompany','==',company);
+
+    _tripsUnsub = q1.onSnapshot(function(snap){
+      processSnap(snap);
+      // If accountId query returned nothing also pull by company name (one-time)
+      if(snap.empty && accountId && company){
+        db.collection('bookings').where('corporateCompany','==',company).get()
+          .then(processSnap).catch(function(){});
+      }
+    }, function(err){
+      // onSnapshot failed (e.g. missing index) — fall back to .get()
+      console.warn('Corp trips listener error, falling back:', err.message);
+      fallbackGet();
+    });
+  } catch(e){
+    fallbackGet();
   }
 }
 

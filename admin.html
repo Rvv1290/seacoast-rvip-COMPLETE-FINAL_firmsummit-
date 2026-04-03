@@ -1109,6 +1109,45 @@
         if(curTab === 'manage-drivers') renderDrivers();
         if(curTab === 'compliance') renderCompliance();
       });
+
+      // ── Real-time Bookings Sync ──
+      // Listens for ANY change in bookings — driver completes trip → admin sees it live
+      db.collection('bookings').orderBy('updatedAt','desc').limit(200)
+        .onSnapshot(function(snap){
+          var local = getBks();
+          var localMap = {};
+          local.forEach(function(b){ if(b.id) localMap[b.id] = b; });
+          var changed = 0;
+          snap.docChanges().forEach(function(change){
+            if(change.type === 'added' || change.type === 'modified'){
+              var b = change.doc.data();
+              if(!b.id) return;
+              var prev = localMap[b.id];
+              if(!prev){ local.push(b); changed++; }
+              else {
+                // Update existing entry
+                var idx = local.findIndex(function(x){ return x.id === b.id; });
+                if(idx >= 0){ local[idx] = b; changed++; }
+              }
+              localMap[b.id] = b;
+            }
+          });
+          if(changed > 0){
+            setBks(local);
+            if(curTab === 'all' || curTab === 'bookings') renderBks();
+            // If the corp detail modal is open, refresh its trips
+            if(document.getElementById('corp-detail-modal').style.display === 'block' && _cdCorpId){
+              var acc = _corpAccounts.find(function(a){ return a.id === _cdCorpId; });
+              if(acc){
+                var bonus = parseInt(document.getElementById('cd-bonus-display').textContent)||0;
+                loadCdTrips(acc, bonus);
+              }
+            }
+          }
+        }, function(err){
+          // onSnapshot failed — silent fallback, admin can use Refresh button
+          console.warn('Bookings listener:', err.message);
+        });
     } catch (e) { console.warn('Firebase:', e.message); }
 
     // ─────────────────────────────────────────────
