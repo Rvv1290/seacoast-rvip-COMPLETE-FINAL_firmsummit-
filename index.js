@@ -1,7 +1,15 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { defineSecret } = require("firebase-functions/params");
 const admin = require("firebase-admin");
+const { setGlobalOptions } = require("firebase-functions/v2");
+
 admin.initializeApp();
+
+// Set global options for all v2 functions
+setGlobalOptions({ 
+  region: "us-central1",
+  invoker: "public"
+});
 
 // Define the secret - replace STRIPE_SECRET with your key when prompted by firebase deploy
 const stripeSecret = defineSecret("STRIPE_SECRET");
@@ -10,8 +18,7 @@ const stripeSecret = defineSecret("STRIPE_SECRET");
  * Ensures a corporate account has a Stripe Customer ID.
  */
 exports.getStripeCustomer = onCall({ 
-  secrets: [stripeSecret],
-  invoker: "public" 
+  secrets: [stripeSecret]
 }, async (request) => {
   const stripe = require("stripe")(stripeSecret.value());
   const { accountId, email, company } = request.data;
@@ -40,8 +47,7 @@ exports.getStripeCustomer = onCall({
  * Generates a SetupIntent client secret.
  */
 exports.createSetupIntent = onCall({ 
-  secrets: [stripeSecret],
-  invoker: "public"
+  secrets: [stripeSecret]
 }, async (request) => {
   const stripe = require("stripe")(stripeSecret.value());
   const { customerId } = request.data;
@@ -59,8 +65,7 @@ exports.createSetupIntent = onCall({
  * Charges the saved payment method.
  */
 exports.chargeSavedCard = onCall({ 
-  secrets: [stripeSecret],
-  invoker: "public"
+  secrets: [stripeSecret]
 }, async (request) => {
   const stripe = require("stripe")(stripeSecret.value());
   const { accountId, amount } = request.data;
@@ -119,6 +124,7 @@ exports.chargeSavedCard = onCall({
     }
     return { success: false, status: paymentIntent.status };
   } catch (error) {
+    console.error("chargeSavedCard Error:", error);
     throw new HttpsError("internal", error.message);
   }
 });
@@ -127,8 +133,7 @@ exports.chargeSavedCard = onCall({
  * Saves PM ID to Firestore.
  */
 exports.savePaymentMethod = onCall({ 
-  secrets: [stripeSecret],
-  invoker: "public"
+  secrets: [stripeSecret]
 }, async (request) => {
   const stripe = require("stripe")(stripeSecret.value());
   const { accountId, paymentMethodId } = request.data;
