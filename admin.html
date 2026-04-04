@@ -765,6 +765,14 @@
                     <input id="cd-bonus-input" type="number" min="0" placeholder="Add bonus points" style="padding:0.6rem 0.75rem;border:1.5px solid #e5e5e5;font-family:Inter,sans-serif;font-size:0.85rem;outline:none;flex:1"/>
                     <button onclick="awardBonusPoints()" class="btn bg" style="font-size:0.72rem;white-space:nowrap"><span class="material-symbols-outlined" style="font-size:13px">add_circle</span>Award Points</button>
                   </div>
+                  <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid #eee">
+                    <div style="font-family:'Work Sans',sans-serif;font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#555;min-width:100px">Set Balance Due</div>
+                    <span style="font-family:Inter,sans-serif;font-size:0.85rem;color:#888">$</span>
+                    <input type="number" id="cd-balance-input" min="0" step="0.01" placeholder="0.00" style="width:110px;padding:0.4rem 0.5rem;border:1px solid #ddd;font-family:Inter,sans-serif;font-size:0.85rem"/>
+                    <input type="text" id="cd-balance-note" placeholder="Invoice note (optional)" style="flex:1;min-width:150px;padding:0.4rem 0.5rem;border:1px solid #ddd;font-family:Inter,sans-serif;font-size:0.82rem"/>
+                    <button onclick="updateCorpBalance()" style="background:#000;color:#fff;border:none;padding:0.5rem 1.25rem;font-family:'Work Sans',sans-serif;font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;cursor:pointer;border-bottom:2px solid #775a19">Update</button>
+                    <button onclick="clearCorpBalance()" style="background:transparent;color:#22c55e;border:1.5px solid #22c55e;padding:0.5rem 1rem;font-family:'Work Sans',sans-serif;font-size:0.68rem;font-weight:700;text-transform:uppercase;cursor:pointer">Clear ($0)</button>
+                  </div>
                 </div>
               </div>
 
@@ -2572,6 +2580,31 @@
         document.getElementById('cd-reward-tier').textContent=tier.icon+' '+tier.name;
         document.getElementById('cd-tier-badge').textContent=tier.icon+' '+tier.name;
       }).catch(function(err){ showToast('Error: '+err.message); });
+    }
+
+    function updateCorpBalance(){
+      if(!_cdCorpId||!db) return;
+      var amt = parseFloat(document.getElementById('cd-balance-input').value) || 0;
+      var note = (document.getElementById('cd-balance-note').value || '').trim();
+      db.collection('corporate_accounts').doc(_cdCorpId).update({
+        balance: amt,
+        balanceNote: note,
+        balanceUpdatedAt: new Date().toISOString()
+      }).then(function(){
+        alert('Balance updated to $' + amt.toFixed(2));
+      }).catch(function(e){ alert('Error: ' + e.message); });
+    }
+
+    function clearCorpBalance(){
+      if(!_cdCorpId||!db) return;
+      db.collection('corporate_accounts').doc(_cdCorpId).update({
+        balance: 0,
+        balanceNote: '',
+        balanceUpdatedAt: new Date().toISOString()
+      }).then(function(){
+        document.getElementById('cd-balance-input').value = '';
+        alert('Balance cleared — account marked current.');
+      }).catch(function(e){ alert('Error: ' + e.message); });
     }
 
     function renderDrivers() {

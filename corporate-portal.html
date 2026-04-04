@@ -8,6 +8,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script>
+<script src="https://js.stripe.com/v3/"></script>
 <script>
 (function(){
   var c={apiKey:"AIzaSyDGel0ktZDQYcdlOuoZo4bAqZWCuGvOVbc",authDomain:"seacoast-rip.firebaseapp.com",projectId:"seacoast-rip",storageBucket:"seacoast-rip.firebasestorage.app",messagingSenderId:"684535453116",appId:"1:684535453116:web:922c843b5bad3b81ad47b9"};
@@ -251,6 +253,58 @@ var _sess = null;
         <button class="btn-blk" style="border-bottom-color:#e8c97a" onclick="goTab('book',null)">+ Book a Ride</button>
       </div>
 
+      <!-- Balance & Quick Pay -->
+      <div id="dash-pay-block" style="display:none;margin-bottom:2rem">
+        <!-- Balance Due -->
+        <div id="dash-pay-due" style="display:none;background:#fff;border:1px solid #e8e8e8;border-left:4px solid #000">
+          <div style="padding:1.5rem 2rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1.5rem;border-bottom:1px solid #f0f0f0">
+            <div>
+              <div style="font-family:'Work Sans',sans-serif;font-size:0.58rem;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:#888;margin-bottom:6px">Outstanding Balance</div>
+              <div style="font-family:'Times New Roman',serif;font-size:2.5rem;font-weight:700;color:#000;line-height:1.1" id="dash-bal-amt">$0.00</div>
+              <div style="font-family:Inter,sans-serif;font-size:0.75rem;color:#888;margin-top:8px" id="dash-bal-note">Pay securely below or contact billing for wire/ACH options.</div>
+            </div>
+            <div style="display:flex;gap:0.75rem;flex-wrap:wrap;align-items:center;justify-content:flex-end">
+              <!-- Stripe One-Click Pay -->
+              <button id="dash-pay-stripe" onclick="payWithSavedCard()" style="display:none;align-items:center;gap:0.5rem;background:#000;color:#fff;border:none;border-bottom:3px solid #775a19;padding:0.875rem 1.5rem;font-family:'Work Sans',sans-serif;font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;cursor:pointer;transition:opacity 0.2s" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
+                <span class="material-symbols-outlined" style="font-size:18px">contactless</span>
+                <span id="dash-stripe-label">Pay with Card</span>
+              </button>
+              
+              <!-- Setup Card (if none) -->
+              <button id="dash-setup-card" onclick="openCardModal()" style="display:flex;align-items:center;gap:0.5rem;background:#fff;color:#000;border:1.5px solid #000;padding:0.875rem 1.5rem;font-family:'Work Sans',sans-serif;font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;cursor:pointer;transition:all 0.2s">
+                <span class="material-symbols-outlined" style="font-size:18px">credit_card</span>
+                Add Payment Method
+              </button>
+
+              <button onclick="payVenmo()" style="display:flex;align-items:center;gap:0.5rem;background:#3D95CE;color:#fff;border:none;padding:0.875rem 1.5rem;font-family:'Work Sans',sans-serif;font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;cursor:pointer;transition:opacity 0.2s" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M17.4 2C14.6 2 12.4 3.5 11 6.2 9.9 4.3 8.3 3.3 6.2 3.3c-3 0-4.2 2.2-4.2 4.8 0 5 7 14.4 9.2 14.4 1.3 0 2.4-1.5 4-4.3.4.1.7.1 1.1.1 3.4 0 6.1-3.1 6.1-7.8C22.4 4.5 20.3 2 17.4 2z"/></svg>
+                Venmo
+              </button>
+
+              <!-- Link to change card if one exists -->
+              <div id="dash-manage-card" style="display:none;width:100%;text-align:right">
+                <span id="dash-card-info" style="font-family:Inter,sans-serif;font-size:0.68rem;color:#888;margin-right:10px"></span>
+                <span onclick="openCardModal()" style="font-family:Inter,sans-serif;font-size:0.68rem;color:#775a19;cursor:pointer;font-weight:600;text-decoration:underline">Change Card</span>
+              </div>
+            </div>
+          </div>
+          <div style="padding:0.875rem 2rem;background:#fafafa;display:flex;align-items:center;gap:0.5rem">
+            <span style="font-family:Inter,sans-serif;font-size:0.75rem;color:#888">Wire / ACH / Check:</span>
+            <a href="mailto:billing@seacoastrvip.com" style="font-family:Inter,sans-serif;font-size:0.75rem;color:#775a19;font-weight:600;text-decoration:none">billing@seacoastrvip.com</a>
+            <span style="color:#ddd;margin:0 0.5rem">|</span>
+            <span style="font-family:Inter,sans-serif;font-size:0.75rem;color:#888">(978) 255-3140</span>
+          </div>
+        </div>
+        <!-- Account Clear -->
+        <div id="dash-pay-clear" style="display:none;background:#f0fdf4;border-left:3px solid #22c55e;padding:0.875rem 1.25rem;display:flex;align-items:center;gap:0.75rem">
+          <span style="color:#22c55e;font-size:1.2rem;line-height:1">✓</span>
+          <div>
+            <div style="font-family:'Work Sans',sans-serif;font-size:0.72rem;font-weight:700;color:#15803d;text-transform:uppercase;letter-spacing:0.06em">Account is current</div>
+            <div style="font-family:Inter,sans-serif;font-size:0.75rem;color:#4ade80">No outstanding balance — thank you for your prompt payment.</div>
+          </div>
+        </div>
+      </div>
+
       <!-- Upcoming Trips -->
       <div class="sec-hdr">
         <div><div class="sec-title">Upcoming Trips</div><div class="sec-sub">Your next scheduled rides</div></div>
@@ -266,10 +320,10 @@ var _sess = null;
       </div>
       <div id="book-err" style="display:none;margin-bottom:1.5rem" class="alert-err"></div>
       <!-- Two-column: form left, big map right -->
-      <div style="display:grid;grid-template-columns:minmax(0,1fr) 480px;gap:0;align-items:start;margin:-2rem;min-height:calc(100vh - 64px)">
+      <div style="display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:0;align-items:start;margin:-2rem;width:calc(100% + 4rem);min-height:calc(100vh - 65px)">
 
         <!-- ── LEFT: Booking Form ── -->
-        <div class="book-card" style="border-radius:0;border:none;border-right:1px solid #e8e8e8;padding:2rem;overflow-y:auto;max-height:calc(100vh - 65px)">
+        <div class="book-card" style="border-radius:0;border:none;border-right:1px solid #e8e8e8;padding:2rem;overflow-y:auto;max-height:calc(100vh - 65px);max-width:none">
 
           <!-- Header -->
           <div style="margin-bottom:1.75rem">
@@ -759,6 +813,184 @@ var _trips = [];
 var _tripFilter = 'all';
 var _calDate = new Date();
 var _veh = 'Black SUV Luxury';
+var _accountBalance = 0;
+var _cardData = null;
+var _squarePayLink = 'https://checkout.square.site/merchant/MLXF7THRGCXJC/checkout/JPSFJKF4BYHK7TB6HWPVZIYP?src=sheet';
+var _venmoHandle = 'SeacoastRVIP';
+
+function loadAccountLive(){
+  if(!db || !sess || !sess.accountId) return;
+  // Real-time listener on the account doc — balance + payment settings update live
+  db.collection('corporate_accounts').doc(sess.accountId).onSnapshot(function(snap){
+    if(!snap.exists) return;
+    var d = snap.data();
+    _accountBalance = d.balance || 0;
+    if(d.squarePaymentLink) _squarePayLink = d.squarePaymentLink;
+    if(d.venmoHandle) _venmoHandle = d.venmoHandle;
+    
+    // Stripe card data
+    if(d.cardBrand && d.cardLast4){
+      _cardData = { brand: d.cardBrand, last4: d.cardLast4 };
+    } else {
+      _cardData = null;
+    }
+
+    renderDashBalance();
+  }, function(){});
+}
+
+function renderDashBalance(){
+  var block = document.getElementById('dash-pay-block');
+  var due   = document.getElementById('dash-pay-due');
+  var clear = document.getElementById('dash-pay-clear');
+  if(!block) return;
+  
+  // Update Card UI
+  var stripeBtn = document.getElementById('dash-pay-stripe');
+  var setupBtn  = document.getElementById('dash-setup-card');
+  var manageBox = document.getElementById('dash-manage-card');
+  var cardInfo  = document.getElementById('dash-card-info');
+
+  if(_cardData){
+    if(stripeBtn) stripeBtn.style.display = 'flex';
+    if(setupBtn)  setupBtn.style.display  = 'none';
+    if(manageBox) manageBox.style.display = 'block';
+    if(cardInfo)  cardInfo.textContent = _cardData.brand.toUpperCase() + ' •••• ' + _cardData.last4;
+  } else {
+    if(stripeBtn) stripeBtn.style.display = 'none';
+    if(setupBtn)  setupBtn.style.display  = 'flex';
+    if(manageBox) manageBox.style.display = 'none';
+  }
+
+  block.style.display = 'block';
+  if(_accountBalance > 0){
+    due.style.display   = 'block';
+    clear.style.display = 'none';
+    document.getElementById('dash-bal-amt').textContent = '$' + _accountBalance.toFixed(2);
+    // Also update the stats card
+    var statBal = document.getElementById('stat-bal');
+    if(statBal) statBal.textContent = '$' + _accountBalance.toFixed(2);
+  } else {
+    due.style.display   = 'none';
+    clear.style.display = 'block';
+    var statBal = document.getElementById('stat-bal');
+    if(statBal) statBal.textContent = '$0.00';
+  }
+}
+
+function payVenmo(){
+  var amount = _accountBalance.toFixed(2);
+  var note   = encodeURIComponent('Seacoast RVIP — ' + (sess.company || 'Corporate'));
+  var handle = (_venmoHandle || 'SeacoastRVIP').replace(/^@/, '');
+  window.open('https://venmo.com/u/' + handle + '?txn=pay&amount=' + amount + '&note=' + note, '_blank');
+}
+
+function paySquare(){
+  window.open(_squarePayLink, '_blank');
+}
+
+// ─── STRIPE INTEGRATION ───
+var stripe = Stripe('pk_test_51TDR9sA1R5g39IibVbtiHGPBv4s1rNsIV5fNoMR68INDxN98rTFkZFXDdqS3RlupdfPeMlt9xHTd3EyN9hclmvKV00L6AVRt0z');
+var elements = stripe.elements();
+var cardElement = elements.create('card', {
+  style: {
+    base: {
+      fontFamily: 'Inter, sans-serif',
+      fontSize: '16px',
+      color: '#000',
+      '::placeholder': { color: '#aaa' }
+    }
+  }
+});
+
+function openCardModal(){
+  document.getElementById('card-modal').style.display = 'flex';
+  cardElement.mount('#card-element');
+}
+
+function closeCardModal(){
+  document.getElementById('card-modal').style.display = 'none';
+  cardElement.unmount();
+}
+
+async function saveCard(){
+  const btn = document.getElementById('card-save-btn');
+  const errEl = document.getElementById('card-errors');
+  btn.disabled = true;
+  btn.textContent = 'Saving…';
+  errEl.textContent = '';
+
+  try {
+    const functions = firebase.functions();
+    
+    // 1. Ensure Stripe Customer exists
+    const getCust = functions.httpsCallable('getStripeCustomer');
+    const { data: { customerId } } = await getCust({ 
+      accountId: sess.accountId, 
+      email: sess.contactEmail,
+      company: sess.company
+    });
+
+    // 2. Get SetupIntent client secret
+    const getSecret = functions.httpsCallable('createSetupIntent');
+    const { data: { clientSecret } } = await getSecret({ customerId });
+
+    // 3. Confirm card setup with Stripe
+    const { setupIntent, error } = await stripe.confirmCardSetup(clientSecret, {
+      payment_method: { card: cardElement }
+    });
+
+    if (error) {
+      errEl.textContent = error.message;
+      btn.disabled = false;
+      btn.textContent = 'Save Card Info';
+      return;
+    }
+
+    // 4. Save PaymentMethod ID to Firestore account via Cloud Function
+    const savePM = functions.httpsCallable('savePaymentMethod');
+    await savePM({ accountId: sess.accountId, paymentMethodId: setupIntent.payment_method });
+
+    alert('Success! Your card has been saved securely.');
+    closeCardModal();
+    // loadAccountLive will pick up the changes via onSnapshot
+  } catch (err) {
+    console.error(err);
+    errEl.textContent = 'An error occurred. Please try again.';
+    btn.disabled = false;
+    btn.textContent = 'Save Card Info';
+  }
+}
+
+async function payWithSavedCard(){
+  if(_accountBalance <= 0) return;
+  if(!confirm('Pay outstanding balance of $' + _accountBalance.toFixed(2) + ' using your saved card?')) return;
+
+  const btn = document.getElementById('dash-pay-stripe');
+  const label = document.getElementById('dash-stripe-label');
+  const originalLabel = label.textContent;
+  
+  btn.disabled = true;
+  label.textContent = 'Processing…';
+
+  try {
+    const charge = firebase.functions().httpsCallable('chargeSavedCard');
+    const { data } = await charge({ accountId: sess.accountId, amount: _accountBalance });
+
+    if(data.success){
+      alert('Payment successful! Your balance has been cleared.');
+    } else {
+      alert('Payment failed: ' + (data.status || 'Unknown error'));
+    }
+  } catch (err) {
+    console.error(err);
+    alert('Payment error: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    label.textContent = originalLabel;
+  }
+}
+
 var tabTitles = {dash:'Dashboard',book:'Book a Ride',cal:'Calendar',trips:'Trips',team:'Team',pay:'Payments',stmt:'Statements',rewards:'Rewards',acct:'Account'};
 var _allTabs = ['dash','book','cal','trips','team','pay','stmt','rewards','acct'];
 
@@ -792,6 +1024,7 @@ window.addEventListener('DOMContentLoaded', function(){
     loadTrips();
   });
   loadMembers();
+  loadAccountLive();
   // Build calendar
   buildCal();
 });
@@ -1559,5 +1792,23 @@ function logout(){localStorage.removeItem('corp_session');window.location.href='
 <script async defer
   src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAtiBZ-MmvzTnOg3hDluVDCVy7mcersqe4&libraries=places&callback=initCorpMap">
 </script>
+<!-- ── CARD MODAL ── -->
+<div id="card-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9000;display:none;align-items:center;justify-content:center;padding:1rem">
+  <div style="background:#fff;width:100%;max-width:440px;padding:2rem;position:relative;border-left:4px solid #000">
+    <button onclick="closeCardModal()" style="position:absolute;top:1rem;right:1rem;background:none;border:none;font-size:1.5rem;cursor:pointer;color:#aaa">&times;</button>
+    <div style="font-family:'Work Sans',sans-serif;font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:#775a19;margin-bottom:6px">Secure Card Entry</div>
+    <h3 style="font-family:'Times New Roman',serif;font-size:1.25rem;font-weight:700;margin-bottom:1.5rem">Save Payment Method</h3>
+    
+    <div id="card-element" style="padding:1rem;border:1px solid #eee;margin-bottom:1.5rem;background:#fcfcfc"></div>
+    <div id="card-errors" style="color:#ef4444;font-size:0.75rem;margin-bottom:1rem;min-height:1rem"></div>
+    
+    <button id="card-save-btn" onclick="saveCard()" class="btn-blk full">Save Card Info</button>
+    <p style="font-family:Inter,sans-serif;font-size:0.65rem;color:#888;margin-top:1.25rem;text-align:center;line-height:1.5">
+      <span class="material-symbols-outlined" style="font-size:12px;vertical-align:middle">lock</span>
+      Your card data is stored securely by **Stripe**. Seacoast RVIP never sees your full card number.
+    </p>
+  </div>
+</div>
+
 </body>
 </html>
