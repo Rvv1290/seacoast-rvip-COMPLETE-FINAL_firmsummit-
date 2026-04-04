@@ -1751,7 +1751,8 @@
         await db.collection('bookings').doc(currentActiveRideId).update({
           status: 'Completed',
           driverStatus: 'Completed',
-          completedAt: new Date().toISOString()
+          completedAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
         });
         showToast('Run Authorized as Complete. Syncing...');
         switchTab('dashboard');
