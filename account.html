@@ -97,9 +97,50 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 #toast{position:fixed;bottom:2.5rem;left:50%;transform:translateX(-50%);background:#000;color:#fff;padding:0.9rem 2rem;font-family:'Work Sans',sans-serif;font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;border-radius:4px;box-shadow:0 10px 30px rgba(0,0,0,0.2);display:none;z-index:3000}
 .tab-panel{display:none}.tab-panel.on{display:block}
 
+/* ─── ACTIVE FILTER BUTTON ─── */
+.btn-out.selected{background:#000;color:#fff;border-color:#000}
+
+/* ─── TIER CARDS ─── */
+.tier-card{border:1px solid var(--border);padding:1.25rem;display:flex;flex-direction:column;gap:6px;flex:1;min-width:140px}
+.tier-card.active-tier{border-color:var(--gold);background:rgba(201,168,76,0.06)}
+.tier-badge-label{font-family:'Work Sans',sans-serif;font-size:0.6rem;font-weight:800;text-transform:uppercase;letter-spacing:0.12em}
+.tier-req{font-size:0.72rem;color:var(--text-sec)}
+
+/* ─── MOBILE SIDEBAR DRAWER ─── */
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1500}
+.sidebar-overlay.open{display:block}
+.sidebar.mobile-open{display:flex!important;position:fixed;top:0;left:0;height:100vh;z-index:1600;width:280px;overflow-y:auto;padding-top:1.5rem}
+
+/* ─── MOBILE BOTTOM NAV ─── */
+.mobile-bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--border);z-index:1000;padding-bottom:env(safe-area-inset-bottom)}
+.mbn-item{flex:1;display:flex;flex-direction:column;align-items:center;padding:10px 4px 8px;cursor:pointer;font-family:'Work Sans',sans-serif;font-size:0.5rem;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:#aaa;border:none;background:none;gap:3px}
+.mbn-item.active{color:var(--gold-dark)}
+.mbn-item .material-symbols-outlined{font-size:22px}
+.mobile-menu-btn{display:none;background:none;border:none;cursor:pointer;padding:8px;color:#000}
+
+/* ─── RESPONSIVE ─── */
 @media(max-width:1000px){
   .dash-container{grid-template-columns:1fr}
   .sidebar{display:none}
+}
+@media(max-width:768px){
+  .main-content{padding:1.5rem 1rem 5rem}
+  .mobile-bottom-nav{display:flex}
+  .mobile-menu-btn{display:flex;align-items:center}
+  .trip-card{flex-direction:column;align-items:flex-start}
+  .t-actions{flex-direction:row;width:100%;justify-content:space-between;align-items:center}
+  .trip-filter-row{flex-wrap:wrap;gap:8px}
+  .trips-header{flex-direction:column;align-items:flex-start;gap:1rem}
+  .fin-grid{grid-template-columns:1fr!important}
+  .pay-box-row{flex-direction:column;align-items:flex-start}
+  .pay-box-btns{flex-direction:column;width:100%}
+  .pay-box-btns .btn-k,.pay-box-btns .btn-v{width:100%;justify-content:center}
+}
+@media(max-width:480px){
+  .dash-grid{grid-template-columns:1fr}
+  .stat-val{font-size:2rem}
+  .login-card{padding:2rem 1.5rem}
+  .tier-cards-row{flex-direction:column}
 }
 </style>
 </head>
@@ -109,7 +150,8 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 
 <!-- NAV -->
 <nav class="nav">
-  <div style="display:flex;align-items:center;gap:2rem">
+  <div style="display:flex;align-items:center;gap:1.5rem">
+    <button class="mobile-menu-btn" id="hamburger-btn" onclick="toggleMobileSidebar()"><span class="material-symbols-outlined">menu</span></button>
     <a href="index.html" class="nav-logo">Seacoast RVIP</a>
     <div style="display:flex;gap:1.5rem;font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em">
        <a href="index.html" style="text-decoration:none;color:#000">Home</a>
@@ -158,6 +200,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 
 <!-- ═══════════ DASHBOARD PAGE ═══════════ -->
 <div id="pg-dash">
+  <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeMobileSidebar()"></div>
   <div class="dash-container">
     
     <!-- Sidebar -->
@@ -191,6 +234,10 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
           <span class="material-symbols-outlined" style="font-size:20px;color:var(--gold-dark)">call</span>
           (978) 255-3140
         </a>
+        <a href="mailto:info@seacoastrvip.com" style="display:flex;align-items:center;gap:10px;text-decoration:none;color:#000;font-size:0.82rem;font-weight:600;margin-top:8px">
+          <span class="material-symbols-outlined" style="font-size:20px;color:var(--gold-dark)">mail</span>
+          info@seacoastrvip.com
+        </a>
       </div>
     </div>
 
@@ -216,17 +263,47 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
           <div class="stat-card">
             <div class="stat-lbl">Outstanding Balance</div>
             <div class="stat-val" id="stat-balance" style="color:#d32f2f">$0.00</div>
+            <button id="stat-pay-btn" onclick="payTotalBalance()" class="btn-k" style="display:none;margin-top:1rem;padding:0.5rem 1rem;font-size:0.65rem">Pay Now →</button>
           </div>
+        </div>
+
+        <!-- Loyalty Rewards Program -->
+        <div style="margin-bottom:3rem">
+          <h3 style="font-family:'Work Sans',sans-serif;font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:var(--text-sec);margin-bottom:1.25rem">Loyalty Rewards Program</h3>
+          <div class="tier-cards-row" style="display:flex;gap:1rem;margin-bottom:1rem">
+            <div class="tier-card" id="tier-member">
+              <span class="material-symbols-outlined" style="font-size:28px;color:#888">person</span>
+              <div>
+                <div class="tier-badge-label" style="color:#555">Member</div>
+                <div class="tier-req">0 – 9 trips</div>
+              </div>
+            </div>
+            <div class="tier-card" id="tier-silver">
+              <span class="material-symbols-outlined" style="font-size:28px;color:#aaa">workspace_premium</span>
+              <div>
+                <div class="tier-badge-label" style="color:#888">Silver</div>
+                <div class="tier-req">10 – 24 trips</div>
+              </div>
+            </div>
+            <div class="tier-card" id="tier-gold">
+              <span class="material-symbols-outlined" style="font-size:28px;color:var(--gold)">star</span>
+              <div>
+                <div class="tier-badge-label" style="color:var(--gold-dark)">Gold</div>
+                <div class="tier-req">25+ trips</div>
+              </div>
+            </div>
+          </div>
+          <p id="rewards-status-msg" style="font-size:0.78rem;color:var(--text-sec)">Loading rewards status...</p>
         </div>
 
         <!-- Balance Quick Pay & Venmo -->
         <div id="pay-box" style="display:none;background:#fcfcfc;border:1px solid var(--border);padding:2.5rem;margin-bottom:3rem">
-           <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:2rem">
+           <div class="pay-box-row" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:2rem">
               <div>
                  <h3 style="font-family:'Times New Roman',serif;font-size:1.6rem;margin-bottom:0.5rem">Unpaid Balance</h3>
                  <p style="color:var(--text-sec);font-size:0.85rem">You have outstanding invoices totaling <strong id="pay-total-lbl">$0.00</strong>.</p>
               </div>
-              <div style="display:flex;gap:1rem;flex-wrap:wrap">
+              <div class="pay-box-btns" style="display:flex;gap:1rem;flex-wrap:wrap">
                  <button onclick="payTotalBalance()" class="btn-k">Pay Total with Card →</button>
                  <a href="https://venmo.com/SeacoastRVIP" target="_blank" class="btn-v">
                     <span class="material-symbols-outlined">savings</span>Pay with Venmo
@@ -271,12 +348,12 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 
       <!-- Tab: My Trips -->
       <div id="tab-trips" class="tab-panel">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2.5rem">
+        <div class="trips-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2.5rem">
           <h2 style="font-family:'Times New Roman',serif;font-size:2.2rem;color:#000">Trip Records</h2>
-          <div style="display:flex;gap:12px">
-            <button class="btn-out" onclick="filterTrips('all',this)">All Rides</button>
-            <button class="btn-out" onclick="filterTrips('upcoming',this)">Scheduled</button>
-            <button class="btn-out" onclick="filterTrips('completed',this)">Completed</button>
+          <div class="trip-filter-row" style="display:flex;gap:12px">
+            <button class="btn-out trip-filter-btn selected" onclick="filterTrips('all',this)">All Rides</button>
+            <button class="btn-out trip-filter-btn" onclick="filterTrips('upcoming',this)">Scheduled</button>
+            <button class="btn-out trip-filter-btn" onclick="filterTrips('completed',this)">Completed</button>
           </div>
         </div>
         <div id="trips-list"></div>
@@ -286,7 +363,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
       <div id="tab-pay" class="tab-panel">
         <h2 style="font-family:'Times New Roman',serif;font-size:2.2rem;color:#000;margin-bottom:2.5rem">Financial Records</h2>
         
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;margin-bottom:3rem">
+        <div class="fin-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;margin-bottom:3rem">
             <!-- Saved Card -->
             <div style="background:#fff;border:1px solid var(--border);padding:2.5rem">
                <h3 style="font-family:'Work Sans',sans-serif;font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;border-bottom:1px solid var(--border);padding-bottom:1rem;margin-bottom:1.5rem">Saved Payment Method</h3>
@@ -361,6 +438,22 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
   </div>
 </div>
 
+<!-- MOBILE BOTTOM NAV -->
+<div class="mobile-bottom-nav" id="mobile-bottom-nav" style="display:none">
+  <button class="mbn-item active" id="mbn-dash" onclick="showTab('tab-dash',null);setMbnActive(this)">
+    <span class="material-symbols-outlined">analytics</span>Overview
+  </button>
+  <button class="mbn-item" id="mbn-cal" onclick="showTab('tab-cal',null);setMbnActive(this)">
+    <span class="material-symbols-outlined">calendar_month</span>Calendar
+  </button>
+  <button class="mbn-item" id="mbn-trips" onclick="showTab('tab-trips',null);setMbnActive(this)">
+    <span class="material-symbols-outlined">list_alt</span>Trips
+  </button>
+  <button class="mbn-item" id="mbn-pay" onclick="showTab('tab-pay',null);setMbnActive(this)">
+    <span class="material-symbols-outlined">payments</span>Payments
+  </button>
+</div>
+
 <script>
 // ─── CONFIG ───
 const FB_CFG = {
@@ -379,6 +472,7 @@ const stripe = Stripe('pk_test_51TDR9sA1R5g39IibVbtiHGPBv4s1rNsIV5fNoMR68INDxN98
 let currentUser = null;
 let allTrips = [];
 let _calDate = new Date();
+let _tripFilter = 'all';
 let stripeElements = null, stripeCard = null;
 
 // ─── LOGIN & AUTH ───
@@ -423,6 +517,7 @@ function loginUser(client){
   document.getElementById('pg-login').style.display='none';
   document.getElementById('pg-dash').style.display='block';
   document.getElementById('nav-btn-logout').style.display='block';
+  document.getElementById('mobile-bottom-nav').style.display='flex';
   initDashboard();
 }
 
@@ -466,8 +561,10 @@ function updateDashboardUI(){
   if(balance > 0){
      document.getElementById('pay-box').style.display='block';
      document.getElementById('pay-total-lbl').textContent = `$${balance.toFixed(2)}`;
+     document.getElementById('stat-pay-btn').style.display='block';
   } else {
      document.getElementById('pay-box').style.display='none';
+     document.getElementById('stat-pay-btn').style.display='none';
   }
 
   updateLoyaltyUI(completed);
@@ -481,11 +578,27 @@ function updateLoyaltyUI(count){
   const pct = Math.min((count/next)*100, 100);
   document.getElementById('loyalty-count').textContent = `${count} Trips`;
   document.getElementById('loyalty-bar').style.width = pct + '%';
-  let tier = 'Member', msg = `${10-count} more for Silver status`;
-  if(count>=25){ tier='Gold'; msg='Premium Loyalty Rank'; }
-  else if(count>=10){ tier='Silver'; msg=`${25-count} more for Gold status`; }
+  let tier = 'Member', msg = `${10-count} more trips to reach Silver status`;
+  if(count>=25){ tier='Gold'; msg='You have reached Premium Gold status!'; }
+  else if(count>=10){ tier='Silver'; msg=`${25-count} more trips to reach Gold status`; }
   document.getElementById('tier-badge').textContent = tier;
   document.getElementById('loyalty-msg').textContent = msg;
+
+  // Update rewards tier cards on overview
+  ['member','silver','gold'].forEach(t => {
+    const el = document.getElementById('tier-'+t);
+    if(el) el.classList.remove('active-tier');
+  });
+  const activeTier = count>=25?'gold':(count>=10?'silver':'member');
+  const activeEl = document.getElementById('tier-'+activeTier);
+  if(activeEl) activeEl.classList.add('active-tier');
+
+  // Rewards status message
+  const statusEl = document.getElementById('rewards-status-msg');
+  if(statusEl){
+    const tierLabel = activeTier.charAt(0).toUpperCase()+activeTier.slice(1);
+    statusEl.innerHTML = `<strong>${count} trips completed</strong> &mdash; Current status: <strong style="color:var(--gold-dark)">${tierLabel}</strong>. ${msg}.`;
+  }
 }
 
 function renderRecentActivity(){
@@ -687,8 +800,47 @@ function generateStatement(){
    w.document.close(); w.print();
 }
 
+// ─── FILTER TRIPS ───
+function filterTrips(filter, el){
+  _tripFilter = filter;
+  document.querySelectorAll('.trip-filter-btn').forEach(b => b.classList.remove('selected'));
+  if(el) el.classList.add('selected');
+  renderTripsList(filter);
+}
+
+// ─── REBOOK ───
+function rebook(tripId){
+  const t = allTrips.find(x => x.id === tripId);
+  if(!t) return toast('Trip not found.');
+  localStorage.setItem('rvip-rebook', JSON.stringify({
+    name: currentUser.name || '',
+    phone: currentUser.phone || '',
+    email: currentUser.email || '',
+    service: t.service || '',
+    pickup: t.pickup || '',
+    destination: t.destination || '',
+    vehicle: t.vehicle || ''
+  }));
+  window.location.href = 'schedule.html?rebook=1';
+}
+
+// ─── MOBILE SIDEBAR ───
+function toggleMobileSidebar(){
+  document.querySelector('.sidebar').classList.toggle('mobile-open');
+  document.getElementById('sidebar-overlay').classList.toggle('open');
+}
+function closeMobileSidebar(){
+  document.querySelector('.sidebar').classList.remove('mobile-open');
+  document.getElementById('sidebar-overlay').classList.remove('open');
+}
+function setMbnActive(el){
+  document.querySelectorAll('.mbn-item').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  closeMobileSidebar();
+}
+
 // ─── UTILS ───
-function showTab(id, link){ 
+function showTab(id, link){
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('on'));
   document.getElementById(id).classList.add('on');
   if(link){ document.querySelectorAll('.side-link').forEach(l=>l.classList.remove('active')); link.classList.add('active'); }
