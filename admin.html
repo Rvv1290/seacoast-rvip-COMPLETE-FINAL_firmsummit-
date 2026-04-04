@@ -524,9 +524,23 @@
       <div class="topbar-in">
         <div>
           <div style="font-family:'Times New Roman',serif;font-size:1.05rem;font-weight:700">Seacoast RVIP</div>
-          <div style="font-size:.6rem;text-transform:uppercase;letter-spacing:.08em;color:#aaa">Admin · <span
-              id="today-lbl"></span></div>
+          <div style="font-size:.6rem;text-transform:uppercase;letter-spacing:.08em;color:#aaa">Admin · <span id="today-lbl"></span></div>
         </div>
+        
+        <!-- NEW: Global Search & Filter Bar -->
+        <div style="display:flex;gap:0.5rem;flex:1;max-width:500px;margin:0 1rem">
+          <div style="position:relative;flex:1">
+            <span class="material-symbols-outlined" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:18px;color:#aaa">search</span>
+            <input type="text" id="admin-search" oninput="renderBks()" placeholder="Search guest, phone, or code…" style="width:100%;padding:0.6rem 0.6rem 0.6rem 2.2rem;border:1.5px solid #eee;border-radius:4px;font-family:Inter,sans-serif;font-size:0.8rem;outline:none;transition:border-color 0.2s" onfocus="this.style.borderColor='#775a19'" onblur="this.style.borderColor='#eee'"/>
+          </div>
+          <select id="admin-filter-service" onchange="renderBks()" style="padding:0.6rem;border:1.5px solid #eee;border-radius:4px;font-family:Inter,sans-serif;font-size:0.8rem;outline:none;background:#fff;cursor:pointer">
+            <option value="">All Services</option>
+            <option value="Black SUV Luxury">Black SUV Luxury</option>
+            <option value="Black Sedan Luxury">Black Sedan Luxury</option>
+            <option value="Mercedes Sprinter">Mercedes Sprinter</option>
+          </select>
+        </div>
+
         <div style="display:flex;gap:.5rem;flex-wrap:wrap">
           <button onclick="openAdd()" class="btn bk">
             <span class="material-symbols-outlined" style="font-size:15px">add</span>New Booking
@@ -563,16 +577,16 @@
 
     <div class="wrap">
       <div class="tabs">
-        <button class="tab on" onclick="goTab('all',this)">All</button>
-        <button class="tab" onclick="goTab('upcoming',this)">Upcoming</button>
-        <button class="tab" onclick="goTab('awaiting',this)">Awaiting Pay</button>
+        <button class="tab on" onclick="goTab('all',this)">All Rides</button>
+        <button class="tab" onclick="goTab('pending',this)" style="color:#d97706">Pending ●</button>
+        <button class="tab" onclick="goTab('confirmed',this)" style="color:#1d4ed8">Active Schedule</button>
+        <button class="tab" onclick="goTab('awaiting',this)" style="color:#775a19">Awaiting Pay</button>
         <button class="tab" onclick="goTab('done',this)">Completed</button>
-        <button class="tab" onclick="goTab('clients',this)" style="color:#7c3aed;font-weight:700">Clients ●</button>
-        <button class="tab" onclick="goTab('quotes',this)" style="color:#16a34a;font-weight:700">Quotes ●</button>
-        <button class="tab" onclick="goTab('messages',this)" style="color:#1d4ed8;font-weight:700">Messages ✉</button>
-        <button class="tab" onclick="goTab('compliance',this)" style="color:#f59e0b;font-weight:700">Onboarding 📋</button>
-        <button class="tab" onclick="goTab('manage-drivers',this)" style="color:#775a19;font-weight:700">Active Drivers ⚙</button>
+        <button class="tab" onclick="goTab('calendar',this)" style="color:#000;font-weight:800"><span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle;margin-right:4px">calendar_month</span>Calendar</button>
+        <button class="tab" onclick="goTab('clients',this)" style="color:#7c3aed;font-weight:700">Clients</button>
+        <button class="tab" onclick="goTab('quotes',this)" style="color:#16a34a;font-weight:700">Quotes</button>
         <button class="tab" onclick="goTab('corporate',this)" style="color:#7c3aed;font-weight:700">Corporate ⭐</button>
+        <button class="tab" onclick="goTab('manage-drivers',this)" style="color:#775a19;font-weight:700">Management ⚙</button>
       </div>
 
       <div id="sec-all">
@@ -674,6 +688,33 @@
           <div style="font-size:0.8rem;color:#666">Drivers self-register via Portal Link</div>
         </div>
         <div id="dr-list"></div>
+      </div>
+
+      <!-- ADMIN CALENDAR -->
+      <div id="sec-calendar" style="display:none">
+        <div style="background:#fff;padding:2rem;border-left:4px solid #000">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2rem">
+            <div>
+              <div style="font-family:'Work Sans',sans-serif;font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.14em;color:#775a19;margin-bottom:4px">Dispatch Schedule</div>
+              <h2 style="font-family:'Times New Roman',serif;font-size:1.5rem;font-weight:700" id="admin-cal-label">Month Year</h2>
+            </div>
+            <div style="display:flex;gap:0.5rem">
+              <button onclick="adminCalMove(-1)" class="btn bo"><span class="material-symbols-outlined">chevron_left</span></button>
+              <button onclick="adminCalMove(1)" class="btn bo"><span class="material-symbols-outlined">chevron_right</span></button>
+            </div>
+          </div>
+          
+          <div id="admin-cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);border:1px solid #eee">
+            <!-- Headers and Days injected by JS -->
+          </div>
+          
+          <div id="admin-cal-detail" style="margin-top:2rem;padding-top:2rem;border-top:2px solid #f0f0f0">
+            <div style="text-align:center;color:#ccc;padding:2rem">
+              <span class="material-symbols-outlined" style="font-size:2rem;display:block;margin-bottom:0.5rem">event_note</span>
+              Select a date on the calendar to view scheduled trips.
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- CORPORATE ACCOUNTS -->
@@ -1162,6 +1203,10 @@
     //  STATE — plain variables, no JSON-in-onclick
     // ─────────────────────────────────────────────
     var curTab = 'all';
+    var _adminCalDate = new Date();
+    var _adminSelectedDate = null;
+    var _adminSearch = '';
+    var _adminFilterService = '';
     var curPayBk = null;   // booking open in pay modal
     var curClBk = null;   // booking open in client modal
     var curQid = null;   // quote docId being converted
@@ -1304,11 +1349,33 @@
       document.getElementById('s4').textContent = aw;
 
       var list = bks.filter(function (b) {
-        if (curTab === 'upcoming') return b.status === 'Confirmed' || b.status === 'Pending';
-        if (curTab === 'awaiting') return b.status === 'Confirmed';
-        if (curTab === 'done') return b.status === 'Paid' || b.status === 'Completed';
+        // 1. Status Tab Filter
+        if (curTab === 'pending') if (b.status !== 'Pending') return false;
+        if (curTab === 'confirmed') if (b.status !== 'Confirmed') return false;
+        if (curTab === 'awaiting') if (b.status !== 'Confirmed') return false;
+        if (curTab === 'done') if (b.status !== 'Paid' && b.status !== 'Completed') return false;
+        
+        // 2. Search Query (Name, Phone, Code)
+        var s = document.getElementById('admin-search')?.value.toLowerCase() || '';
+        if (s) {
+          var match = (b.name||'').toLowerCase().includes(s) || (b.phone||'').includes(s) || (b.code||'').toLowerCase().includes(s);
+          if (!match) return false;
+        }
+
+        // 3. Service Filter
+        var fsv = document.getElementById('admin-filter-service')?.value || '';
+        if (fsv && b.service !== fsv) return false;
+
+        // 4. Calendar Date Selection (if active)
+        if (curTab === 'calendar' && _adminSelectedDate) {
+          if (b.date !== _adminSelectedDate) return false;
+        }
+
         return true;
-      }).sort(function (a, b) { return new Date(a.date) - new Date(b.date); });
+      }).sort(function (a, b) { 
+        // SORT BY DATE DESCENDING (Most recent first)
+        return new Date(b.date + ' ' + (b.time || '23:59')) - new Date(a.date + ' ' + (a.time || '23:59')); 
+      });
 
       var lEl = document.getElementById('bk-list'), eEl = document.getElementById('bk-empty');
       if (!list.length) { lEl.innerHTML = ''; eEl.style.display = 'block'; return; }
@@ -1427,7 +1494,7 @@
       curTab = tab;
       document.querySelectorAll('.tab').forEach(function (b) { b.classList.remove('on'); });
       if (btn) btn.classList.add('on');
-      ['sec-all', 'sec-clients', 'sec-quotes', 'sec-messages', 'sec-compliance', 'sec-manage-drivers', 'sec-driver', 'sec-corporate'].forEach(function (id) {
+      ['sec-all', 'sec-clients', 'sec-quotes', 'sec-messages', 'sec-compliance', 'sec-manage-drivers', 'sec-driver', 'sec-corporate', 'sec-calendar'].forEach(function (id) {
         var el = document.getElementById(id);
         if (el) el.style.display = 'none';
       });
@@ -1438,8 +1505,60 @@
       else if (tab === 'manage-drivers') { document.getElementById('sec-manage-drivers').style.display = 'block'; renderDrivers(); }
       else if (tab === 'driver') { document.getElementById('sec-driver').style.display = 'block'; loadDriverRides(); }
       else if (tab === 'corporate') { document.getElementById('sec-corporate').style.display = 'block'; loadCorporate(); }
+      else if (tab === 'calendar') { document.getElementById('sec-calendar').style.display = 'block'; buildAdminCal(); }
       else { document.getElementById('sec-all').style.display = 'block'; renderBks(); }
     }
+
+    // ── ADMIN CALENDAR LOGIC ──
+    function buildAdminCal() {
+      var label = document.getElementById('admin-cal-label');
+      var grid = document.getElementById('admin-cal-grid');
+      if (!label || !grid) return;
+      var year = _adminCalDate.getFullYear(), month = _adminCalDate.getMonth();
+      label.textContent = new Date(year, month, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+      
+      var bks = getBks();
+      var tripMap = {};
+      bks.forEach(function(b){ if(b.date){ if(!tripMap[b.date]) tripMap[b.date]=[]; tripMap[b.date].push(b); }});
+
+      var headers = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+      var html = headers.map(function(h){ return '<div style="background:#f9f9f9;padding:0.75rem;text-align:center;font-family:\'Work Sans\',sans-serif;font-size:0.6rem;font-weight:700;text-transform:uppercase;color:#aaa;border-bottom:1px solid #eee">'+h+'</div>'; }).join('');
+      
+      var first = new Date(year, month, 1).getDay();
+      var last = new Date(year, month + 1, 0).getDate();
+      for(var i=0; i<first; i++) html += '<div style="padding:1rem;border-bottom:1px solid #eee;border-right:1px solid #eee;background:#fafafa"></div>';
+      
+      var today = new Date().toISOString().split('T')[0];
+      for(var d=1; d<=last; d++) {
+        var dateStr = year + '-' + String(month+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+        var trips = tripMap[dateStr] || [];
+        var isToday = dateStr === today;
+        var hasTrips = trips.length > 0;
+        var sel = _adminSelectedDate === dateStr ? 'background:#775a19;color:#fff' : (isToday ? 'background:#fdfaf4;color:#775a19' : '');
+        
+        html += '<div onclick="selectAdminDate(\''+dateStr+'\')" style="padding:1rem;min-height:100px;border-bottom:1px solid #eee;border-right:1px solid #eee;cursor:pointer;'+sel+'">' +
+          '<div style="font-weight:700;font-size:0.85rem;margin-bottom:0.5rem">'+d+'</div>' +
+          trips.map(function(t){ 
+            var color = t.status === 'Pending' ? '#f59e0b' : '#1d4ed8';
+            return '<div style="font-size:0.62rem;padding:2px 4px;margin-bottom:2px;background:'+color+'20;color:'+color+';border-radius:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">🚗 '+e(t.name)+'</div>';
+          }).join('') +
+          '</div>';
+      }
+      grid.innerHTML = html;
+      
+      // If a date is selected, show its trips below
+      if (_adminSelectedDate) {
+        var el = document.getElementById('admin-cal-detail');
+        el.innerHTML = '<div style="font-family:\'Work Sans\',sans-serif;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#000;margin-bottom:1.25rem">Schedule for '+new Date(_adminSelectedDate+'T12:00:00').toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})+'</div><div id="cal-trip-list"></div>';
+        renderBks(); // This will use the calendar filter
+        // Move the rendered list into the detail section
+        var list = document.getElementById('bk-list');
+        document.getElementById('cal-trip-list').appendChild(list);
+      }
+    }
+
+    function adminCalMove(dir) { _adminCalDate.setMonth(_adminCalDate.getMonth() + dir); buildAdminCal(); }
+    function selectAdminDate(d) { _adminSelectedDate = d; buildAdminCal(); }
 
     // ─────────────────────────────────────────────
     //  ADD / EDIT BOOKING
@@ -1533,6 +1652,20 @@
     async function fbSync(bk) {
       if (!db) return;
       try {
+        // 1. Check if we need to update Corporate Balance
+        // Logic: Status is 'Confirmed' AND it's a corporate account AND hasn't been added yet
+        if (bk.status === 'Confirmed' && bk.corporateAccountId && !bk.balanceAdded) {
+          try {
+            var price = parseFloat(bk.price) || 0;
+            if (price > 0) {
+              await db.collection('corporate_accounts').doc(bk.corporateAccountId).update({
+                balance: firebase.firestore.FieldValue.increment(price)
+              });
+              bk.balanceAdded = true; // Mark as added to prevent double charge
+            }
+          } catch(e) { console.warn('Corp Balance Update Error:', e.message); }
+        }
+
         await db.collection('bookings').doc(bk.id).set({
           id: bk.id, code: (bk.code || '').toUpperCase(),
           name: bk.name || '', phone: bk.phone || '', email: bk.email || '',
@@ -1543,6 +1676,9 @@
           driverId: bk.driverId || '',
           driverStatus: bk.driverStatus || '',
           status: bk.status || 'Confirmed', notes: bk.notes || '',
+          balanceAdded: bk.balanceAdded || false,
+          corporateAccountId: bk.corporateAccountId || null,
+          corporateCompany: bk.corporateCompany || null,
           source: bk.source || 'admin', updatedAt: new Date().toISOString()
         }, { merge: true });
 
@@ -1607,6 +1743,19 @@
       if (!curPayBk) return;
       var msg = document.getElementById('pay-msg').value;
       window.open('sms:' + curPayBk.phone + '&body=' + encodeURIComponent(msg));
+    }
+
+    function quickConfirm(id) {
+      var bks = getBks();
+      var b = bks.find(function(x){ return x.id === id; });
+      if(!b) return;
+      if(!confirm('Confirm this booking? This will update the status to "Confirmed" and notify the client.')) return;
+      
+      b.status = 'Confirmed';
+      setBks(bks);
+      fbSync(b);
+      renderBks();
+      toast('Booking Confirmed!');
     }
     function payEmail() {
       if (!curPayBk) return;
