@@ -326,8 +326,8 @@ var _sess = null;
         </div>
 
         <!-- Map + Route Estimate -->
-        <div id="corp-map-wrap" style="display:none;margin-bottom:1.75rem">
-          <div id="corp-map" style="width:100%;height:280px;background:#1a1a1a;border:1px solid #e5e5e5"></div>
+        <div id="corp-map-wrap" style="margin-bottom:1.75rem">
+          <div id="corp-map" style="width:100%;height:280px;background:#1a1a1a;border:1px solid #222;border-radius:4px 4px 0 0"></div>
           <div id="corp-route-bar" style="display:none;background:#f9f9f9;border:1px solid #e5e5e5;border-top:0;padding:0.75rem 1rem;display:flex;gap:1.5rem;flex-wrap:wrap;align-items:center">
             <span style="font-family:'Work Sans',sans-serif;font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#775a19">Route</span>
             <span id="corp-route-dist" style="font-family:Inter,sans-serif;font-size:0.82rem;color:#333"></span>
@@ -812,6 +812,17 @@ function goTab(id, el){
     }
   }
   if(id==='cal') buildCal();
+  if(id==='book'){
+    setTimeout(function(){
+      // Lazy-init if Maps API already loaded but map not yet created
+      if(!_corpMap && typeof google!=='undefined' && google.maps) initCorpMap();
+      // Always trigger resize so map fills the now-visible container
+      if(_corpMap) {
+        google.maps.event.trigger(_corpMap,'resize');
+        _corpMap.setCenter({lat:43.0718,lng:-70.7626});
+      }
+    },60);
+  }
 }
 
 // ─── LOAD TRIPS (real-time, two listeners) ───
@@ -1316,6 +1327,7 @@ var _corpMap, _corpDirSvc, _corpDirRenderer, _corpACPickup, _corpACDest;
 var _corpPickupPlace = null, _corpDestPlace = null;
 
 function initCorpMap(){
+  if(_corpMap) return; // already initialized
   var center = {lat:43.0718,lng:-70.7626};
   _corpMap = new google.maps.Map(document.getElementById('corp-map'),{
     center:center,zoom:9,
@@ -1344,7 +1356,6 @@ function initCorpMap(){
 
 function tryCorpRoute(){
   if(!_corpPickupPlace||!_corpPickupPlace.geometry||!_corpDestPlace||!_corpDestPlace.geometry) return;
-  document.getElementById('corp-map-wrap').style.display='block';
   _corpDirSvc.route({
     origin:_corpPickupPlace.geometry.location,
     destination:_corpDestPlace.geometry.location,
