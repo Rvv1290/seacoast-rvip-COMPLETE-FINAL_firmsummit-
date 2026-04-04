@@ -955,8 +955,17 @@ async function saveCard(){
     closeCardModal();
     // loadAccountLive will pick up the changes via onSnapshot
   } catch (err) {
-    console.error(err);
-    errEl.textContent = 'An error occurred. Please try again.';
+    console.error('Save Card Error:', err);
+    // Show a more descriptive error if available
+    let msg = 'An error occurred. ';
+    if (err.message) {
+      if (err.message.includes('NOT_FOUND')) msg += '(Function not found - please wait a moment)';
+      else if (err.message.includes('PERMISSION_DENIED')) msg += '(Permission denied - check backend settings)';
+      else msg += '(' + err.message + ')';
+    } else {
+      msg += 'Please try again.';
+    }
+    errEl.textContent = msg;
     btn.disabled = false;
     btn.textContent = 'Save Card Info';
   }
