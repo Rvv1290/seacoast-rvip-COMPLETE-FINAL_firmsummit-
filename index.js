@@ -1,34 +1,23 @@
-const { onCall, HttpsError } = require("firebase-functions/v2/https");
-const { defineSecret } = require("firebase-functions/params");
+const functions = require("firebase-functions");
 const admin = require("firebase-admin");
-const { setGlobalOptions } = require("firebase-functions/v2");
-
 admin.initializeApp();
 
-// Set global options for all v2 functions
-setGlobalOptions({ 
-  region: "us-central1",
-  invoker: "public"
-});
-
-// Define the secret - replace STRIPE_SECRET with your key when prompted by firebase deploy
-const stripeSecret = defineSecret("STRIPE_SECRET");
+// STRIPE VERSION 1 CALLABLES
+const stripeSecret = "STRIPE_SECRET"; // In v1 we use .runWith({ secrets: [...] })
 
 /**
  * Ensures a corporate account has a Stripe Customer ID.
  */
-exports.getStripeCustomer = onCall({ 
-  secrets: [stripeSecret]
-}, async (request) => {
-  const stripe = require("stripe")(stripeSecret.value());
-  const { accountId, email, company } = request.data;
+exports.getStripeCustomer = functions.runWith({ secrets: [stripeSecret] }).https.onCall(async (data, context) => {
+  const stripe = require("stripe")(process.env.STRIPE_SECRET);
+  const { accountId, email, company } = data;
   
-  if (!accountId) throw new HttpsError("invalid-argument", "Missing Account ID");
+  if (!accountId) throw new functions.https.HttpsError("invalid-argument", "Missing Account ID");
 
   const accountRef = admin.firestore().collection("corporate_accounts").doc(accountId);
   const accountDoc = await accountRef.get();
 
-  if (!accountDoc.exists) throw new HttpsError("not-found", "Account not found");
+  if (!accountDoc.exists) throw new functions.https.HttpsError("not-found", "Account not found");
 
   const accountData = accountDoc.data();
   if (accountData.stripeCustomerId) return { customerId: accountData.stripeCustomerId };
@@ -46,12 +35,10 @@ exports.getStripeCustomer = onCall({
 /**
  * Generates a SetupIntent client secret.
  */
-exports.createSetupIntent = onCall({ 
-  secrets: [stripeSecret]
-}, async (request) => {
-  const stripe = require("stripe")(stripeSecret.value());
-  const { customerId } = request.data;
-  if (!customerId) throw new HttpsError("invalid-argument", "Missing Customer ID");
+exports.createSetupIntent = functions.runWith({ secrets: [stripeSecret] }).https.onCall(async (data, context) => {
+  const stripe = require("stripe")(process.env.STRIPE_SECRET);
+  const { customerId } = data;
+  if (!customerId) throw new functions.https.HttpsError("invalid-argument", "Missing Customer ID");
 
   const setupIntent = await stripe.setupIntents.create({
     customer: customerId,
@@ -64,25 +51,23 @@ exports.createSetupIntent = onCall({
 /**
  * Charges the saved payment method.
  */
-exports.chargeSavedCard = onCall({ 
-  secrets: [stripeSecret]
-}, async (request) => {
-  const stripe = require("stripe")(stripeSecret.value());
-  const { accountId, amount } = request.data;
+exports.chargeSavedCard = functions.runWith({ secrets: [stripeSecret] }).https.onCall(async (data, context) => {
+  const stripe = require("stripe")(process.env.STRIPE_SECRET);
+  const { accountId, amount } = data;
 
   if (!accountId || !amount || amount <= 0) {
-    throw new HttpsError("invalid-argument", "Invalid account or amount");
+    throw new functions.https.HttpsError("invalid-argument", "Invalid account or amount");
   }
 
   const accountRef = admin.firestore().collection("corporate_accounts").doc(accountId);
   const accountDoc = await accountRef.get();
-  if (!accountDoc.exists) throw new HttpsError("not-found", "Account not found");
+  if (!accountDoc.exists) throw new functions.https.HttpsError("not-found", "Account not found");
 
   const accountData = accountDoc.data();
   const { stripeCustomerId: customerId, stripePaymentMethodId: paymentMethodId } = accountData;
 
   if (!customerId || !paymentMethodId) {
-    throw new HttpsError("failed-precondition", "No saved payment method found");
+    throw new functions.https.HttpsError("failed-precondition", "No saved payment method found");
   }
 
   try {
@@ -125,19 +110,17 @@ exports.chargeSavedCard = onCall({
     return { success: false, status: paymentIntent.status };
   } catch (error) {
     console.error("chargeSavedCard Error:", error);
-    throw new HttpsError("internal", error.message);
+    throw new functions.https.HttpsError("internal", error.message);
   }
 });
 
 /**
  * Saves PM ID to Firestore.
  */
-exports.savePaymentMethod = onCall({ 
-  secrets: [stripeSecret]
-}, async (request) => {
-  const stripe = require("stripe")(stripeSecret.value());
-  const { accountId, paymentMethodId } = request.data;
-  if (!accountId || !paymentMethodId) throw new HttpsError("invalid-argument", "Missing data");
+exports.savePaymentMethod = functions.runWith({ secrets: [stripeSecret] }).https.onCall(async (data, context) => {
+  const stripe = require("stripe")(process.env.STRIPE_SECRET);
+  const { accountId, paymentMethodId } = data;
+  if (!accountId || !paymentMethodId) throw new functions.https.HttpsError("invalid-argument", "Missing data");
 
   const paymentMethod = await stripe.paymentMethods.retrieve(paymentMethodId);
 
