@@ -7,6 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script>
 <script src="https://js.stripe.com/v3/"></script>
@@ -176,9 +177,25 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
       <div id="phone-err" style="display:none;color:#d32f2f;font-size:0.8rem;margin-bottom:1rem"></div>
       <button id="phone-btn" onclick="doPhoneLogin()" class="btn-k" style="width:100%">Continue →</button>
       <p style="text-align:center;font-size:0.7rem;color:#888;margin-top:2rem">Professional service at your fingertips.</p>
+      <div id="recaptcha-container"></div>
     </div>
 
-    <!-- Step 2: New User -->
+    <!-- Step 2: OTP Verification -->
+    <div id="step-otp" style="display:none">
+      <div style="background:#f9f9f9;padding:1.25rem;color:#000;font-size:0.85rem;margin-bottom:2rem;border-left:4px solid var(--gold)">
+        A 6-digit verification code was sent to <strong id="otp-phone-display"></strong>.
+      </div>
+      <div class="f-group">
+        <label class="f-label">Verification Code</label>
+        <input id="otp-inp" type="text" class="f-input" placeholder="000000" maxlength="6" inputmode="numeric" autocomplete="one-time-code" oninput="this.value=this.value.replace(/\D/g,'');if(this.value.length===6)verifyOTP()"/>
+      </div>
+      <div id="otp-err" style="display:none;color:#d32f2f;font-size:0.8rem;margin-bottom:1rem"></div>
+      <button id="otp-btn" onclick="verifyOTP()" class="btn-k" style="width:100%">Verify & Continue →</button>
+      <button onclick="backToPhone()" style="width:100%;background:none;border:none;color:#888;font-size:0.75rem;margin-top:1.25rem;cursor:pointer">← Change Phone Number</button>
+      <p style="text-align:center;font-size:0.7rem;color:#888;margin-top:1rem">Didn't receive it? <span onclick="resendOTP()" style="color:var(--gold-dark);cursor:pointer;font-weight:600">Resend Code</span></p>
+    </div>
+
+    <!-- Step 3: New User -->
     <div id="step-newuser" style="display:none">
       <div style="background:#f9f9f9;padding:1.25rem;color:#000;font-size:0.85rem;margin-bottom:2rem;border-left:4px solid var(--gold)">
         It looks like you're new here. Please create your profile.
@@ -466,8 +483,12 @@ const FB_CFG = {
 };
 if(!firebase.apps.length) firebase.initializeApp(FB_CFG);
 const db = firebase.firestore();
+const auth = firebase.auth();
 const funcs = firebase.functions();
 const stripe = Stripe('pk_test_51TDR9sA1R5g39IibVbtiHGPBv4s1rNsIV5fNoMR68INDxN98rTFkZFXDdqS3RlupdfPeMlt9xHTd3EyN9hclmvKV00L6AVRt0z');
+
+// Keep user signed in across browser sessions
+auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
 
 let currentUser = null;
 let allTrips = [];
@@ -475,25 +496,74 @@ let _calDate = new Date();
 let _tripFilter = 'all';
 let stripeElements = null, stripeCard = null;
 
+// OTP flow state
+let _pendingPhone = null;
+let _pendingClient = null;
+let _pendingIsNewUser = false;
+let _confirmationResult = null;
+
 // ─── LOGIN & AUTH ───
 async function doPhoneLogin(){
   const raw = document.getElementById('phone-inp').value;
   const digits = raw.replace(/\D/g,'');
   if(digits.length < 10) return showErr('phone-err', 'Please enter a valid 10-digit number.');
-  const btn = document.getElementById('phone-btn'); btn.disabled=true; btn.textContent='Locating...';
+  const btn = document.getElementById('phone-btn'); btn.disabled=true; btn.textContent='Sending Code...';
   try {
-    let client = null;
-    const phone = digits.length===10?'+1'+digits:'+'+digits;
-    const snap = await db.collection('clients').where('phone','==',phone).limit(1).get();
-    if(!snap.empty){
-      snap.forEach(d => client = {id:d.id, ...d.data()});
-      loginUser(client);
-    } else {
-      document.getElementById('step-phone').style.display='none';
-      document.getElementById('step-newuser').style.display='block';
-    }
-  } catch(e){ showErr('phone-err', e.message); }
+    _pendingPhone = digits.length===10 ? '+1'+digits : '+'+digits;
+
+    // Pre-check Firestore so we know if this is a new or returning user
+    const snap = await db.collection('clients').where('phone','==',_pendingPhone).limit(1).get();
+    _pendingIsNewUser = snap.empty;
+    _pendingClient = null;
+    if(!snap.empty) snap.forEach(d => _pendingClient = {id:d.id, ...d.data()});
+
+    // Set up invisible reCAPTCHA (reset first if it already exists)
+    if(window._recaptchaVerifier){ try{ window._recaptchaVerifier.clear(); }catch(e){} }
+    window._recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', { size:'invisible' });
+
+    // Send OTP
+    _confirmationResult = await auth.signInWithPhoneNumber(_pendingPhone, window._recaptchaVerifier);
+
+    // Show OTP step
+    document.getElementById('step-phone').style.display='none';
+    document.getElementById('step-otp').style.display='block';
+    document.getElementById('otp-phone-display').textContent = raw;
+  } catch(e){
+    showErr('phone-err', e.message || 'Could not send code. Please try again.');
+    if(window._recaptchaVerifier){ try{ window._recaptchaVerifier.clear(); }catch(ex){} window._recaptchaVerifier=null; }
+  }
   btn.disabled=false; btn.textContent='Continue →';
+}
+
+async function verifyOTP(){
+  const code = document.getElementById('otp-inp').value.trim();
+  if(code.length < 6) return showErr('otp-err', 'Please enter the 6-digit code.');
+  const btn = document.getElementById('otp-btn'); btn.disabled=true; btn.textContent='Verifying...';
+  document.getElementById('otp-err').style.display='none';
+  try {
+    await _confirmationResult.confirm(code);
+    // Firebase verified — now proceed
+    if(_pendingIsNewUser){
+      document.getElementById('step-otp').style.display='none';
+      document.getElementById('step-newuser').style.display='block';
+    } else {
+      loginUser(_pendingClient);
+    }
+  } catch(e){
+    showErr('otp-err', 'Invalid or expired code. Please try again.');
+    btn.disabled=false; btn.textContent='Verify & Continue →';
+  }
+}
+
+async function resendOTP(){
+  document.getElementById('otp-inp').value='';
+  document.getElementById('otp-err').style.display='none';
+  if(window._recaptchaVerifier){ try{ window._recaptchaVerifier.clear(); }catch(e){} }
+  window._recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', { size:'invisible' });
+  try {
+    _confirmationResult = await auth.signInWithPhoneNumber(_pendingPhone, window._recaptchaVerifier);
+    toast('New code sent.');
+  } catch(e){ toast('Could not resend. Please refresh and try again.'); }
 }
 
 async function createAccount(){
@@ -501,14 +571,12 @@ async function createAccount(){
   if(!name) return showErr('new-err', 'Name is required.');
   const btn = document.getElementById('create-btn'); btn.disabled=true; btn.textContent='Initializing...';
   try {
-    const raw = document.getElementById('phone-inp').value;
-    const phone = '+1' + raw.replace(/\D/g,'');
     const email = document.getElementById('email-inp').value.trim();
     const ref = db.collection('clients').doc();
-    const data = { name, phone, email, createdAt: new Date().toISOString() };
+    const data = { name, phone: _pendingPhone, email, createdAt: new Date().toISOString() };
     await ref.set(data);
     loginUser({id:ref.id, ...data});
-  } catch(e){ showErr('new-err', e.message); }
+  } catch(e){ showErr('new-err', e.message); btn.disabled=false; btn.textContent='Initialize Account →'; }
 }
 
 function loginUser(client){
@@ -521,7 +589,11 @@ function loginUser(client){
   initDashboard();
 }
 
-function doLogout(){ localStorage.removeItem('rvip-client-id'); location.reload(); }
+function doLogout(){
+  auth.signOut();
+  localStorage.removeItem('rvip-client-id');
+  location.reload();
+}
 
 // ─── UI & DATA ───
 async function initDashboard(){
@@ -849,7 +921,14 @@ function openM(id){ document.getElementById(id).style.display='flex'; }
 function closeM(id){ document.getElementById(id).style.display='none'; }
 function toast(m){ const e=document.getElementById('toast'); e.textContent=m; e.style.display='block'; setTimeout(()=>e.style.display='none',3500); }
 function showErr(id, m){ const e=document.getElementById(id); e.textContent=m; e.style.display='block'; }
-function backToPhone(){ document.getElementById('step-phone').style.display='block'; document.getElementById('step-newuser').style.display='none'; }
+function backToPhone(){
+  document.getElementById('step-phone').style.display='block';
+  document.getElementById('step-otp').style.display='none';
+  document.getElementById('step-newuser').style.display='none';
+  document.getElementById('otp-inp').value='';
+  document.getElementById('otp-err').style.display='none';
+  _confirmationResult=null; _pendingPhone=null; _pendingClient=null;
+}
 function fmtPhone(el){
   let v = el.value.replace(/\D/g,''); let out = '';
   if(v.length>0) out += '('+v.substring(0,3); if(v.length>=3) out += ') '; if(v.length>3) out += v.substring(3,6); if(v.length>=6) out += '-'; if(v.length>6) out += v.substring(6,10);
@@ -871,10 +950,24 @@ async function saveProfile(){
   } catch(e){ toast(e.message); }
 }
 
-// Init
-const saved = localStorage.getItem('rvip-client-id');
-if(saved) db.collection('clients').doc(saved).get().then(d=>{if(d.exists)loginUser({id:d.id,...d.data()});else document.getElementById('pg-login').style.display='flex';});
-else document.getElementById('pg-login').style.display='flex';
+// ─── AUTO LOGIN (stays signed in after first OTP) ───
+auth.onAuthStateChanged(async user => {
+  if(user){
+    // Firebase session still active — restore account without re-verifying
+    const saved = localStorage.getItem('rvip-client-id');
+    if(saved){
+      const d = await db.collection('clients').doc(saved).get();
+      if(d.exists){ loginUser({id:d.id,...d.data()}); return; }
+    }
+    // Fallback: look up by phone number
+    if(user.phoneNumber){
+      const snap = await db.collection('clients').where('phone','==',user.phoneNumber).limit(1).get();
+      if(!snap.empty){ let c; snap.forEach(d=>c={id:d.id,...d.data()}); loginUser(c); return; }
+    }
+  }
+  // No active session — show login
+  document.getElementById('pg-login').style.display='flex';
+});
 
 const stmtMonth = document.getElementById('stmt-month');
 if(stmtMonth) stmtMonth.value = new Date().getMonth();

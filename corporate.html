@@ -8,11 +8,17 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script>
 (function(){
   var c={apiKey:"AIzaSyDGel0ktZDQYcdlOuoZo4bAqZWCuGvOVbc",authDomain:"seacoast-rip.firebaseapp.com",projectId:"seacoast-rip",storageBucket:"seacoast-rip.firebasestorage.app",messagingSenderId:"684535453116",appId:"1:684535453116:web:922c843b5bad3b81ad47b9"};
-  try{if(!firebase.apps.length)firebase.initializeApp(c);window._db=firebase.firestore();}catch(e){window._db=null;}
+  try{
+    if(!firebase.apps.length)firebase.initializeApp(c);
+    window._db=firebase.firestore();
+    window._auth=firebase.auth();
+    window._auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+  }catch(e){window._db=null;window._auth=null;}
 })();
 </script>
 <style>
@@ -137,6 +143,7 @@ body{font-family:'Inter',sans-serif;min-height:100vh;background:#fff;overflow-x:
         <input class="f-input" id="ph" type="tel" placeholder="(603) 555-0100" inputmode="numeric" maxlength="14"/>
       </div>
     </div>
+    <div id="recaptcha-container"></div>
     <button class="btn-blk" id="send-btn" onclick="sendCode()">Send Verification Code →</button>
     <button class="btn-out" onclick="window.location.href='index.html'">← Back to Home</button>
     <div class="div-line"><span>New to Corporate?</span></div>
@@ -154,11 +161,7 @@ body{font-family:'Inter',sans-serif;min-height:100vh;background:#fff;overflow-x:
       <span>Change phone number</span>
     </div>
     <h1 class="panel-title">Verify<br>Your Code</h1>
-    <p class="panel-sub" id="s2-sub">Your 6-digit code is displayed below and has also been shared with our dispatch team to forward if needed.</p>
-    <div class="code-reveal">
-      <div class="code-num" id="code-show">— — —  — — —</div>
-      <div class="code-expire" id="code-timer">Expires in 10:00</div>
-    </div>
+    <p class="panel-sub" id="s2-sub">A 6-digit verification code was sent via SMS to your registered business phone number.</p>
     <div id="err2" class="alert-err"></div>
     <label class="f-label">Enter 6-Digit Code</label>
     <div class="digits">
@@ -209,12 +212,25 @@ body{font-family:'Inter',sans-serif;min-height:100vh;background:#fff;overflow-x:
 
 <script>
 var db = window._db;
-var _ph = '', _code = '', _acc = null, _timer = null;
+var auth = window._auth;
+var _ph = '', _acc = null, _confirmationResult = null;
 
-// Check if already logged in
+// ─── AUTO LOGIN (stays signed in after first OTP) ───
 (function(){
-  var s = JSON.parse(localStorage.getItem('corp_session')||'null');
-  if(s && s.expiresAt > Date.now()) window.location.href='corporate-portal.html';
+  if(auth){
+    auth.onAuthStateChanged(function(user){
+      if(user){
+        var s = JSON.parse(localStorage.getItem('corp_session')||'null');
+        if(s && s.expiresAt > Date.now()){
+          window.location.href='corporate-portal.html';
+        }
+      }
+    });
+  } else {
+    // Fallback: session-only check
+    var s = JSON.parse(localStorage.getItem('corp_session')||'null');
+    if(s && s.expiresAt > Date.now()) window.location.href='corporate-portal.html';
+  }
 })();
 
 // Phone formatting
@@ -240,51 +256,44 @@ function sendCode(){
   _ph=raw;
   btn.textContent='Searching…';btn.disabled=true;
   if(!db){err.textContent='Service error. Please call (978) 255-3140.';err.style.display='block';btn.textContent='Send Verification Code →';btn.disabled=false;return;}
+
   db.collection('corporate_accounts').where('status','in',['Approved','Active']).get().then(function(snap){
     var found=null;
     snap.forEach(function(d){
-      var a=d.data();
-      a.id = a.id || d.id; // always ensure id is set
+      var a=d.data(); a.id=a.id||d.id;
       var p=(a.contactPhone||'').replace(/\D/g,'');
-      // Check primary contact phone
       if(p===raw||p.slice(-10)===raw){found=a;return;}
-      // Also check members array
       var members=a.members||[];
       for(var i=0;i<members.length;i++){
         var mp=(members[i].phone||'').replace(/\D/g,'');
         if(mp===raw||mp.slice(-10)===raw){found=a;return;}
       }
     });
-    btn.textContent='Send Verification Code →';btn.disabled=false;
     if(!found){
       err.textContent='No approved corporate account found for this phone. Please check the number or contact us at (978) 255-3140.';
-      err.style.display='block';return;
+      err.style.display='block';btn.textContent='Send Verification Code →';btn.disabled=false;return;
     }
     _acc=found;
-    grantAccess(found);
+
+    // Send OTP via Firebase Phone Auth
+    if(!auth){err.textContent='Auth service unavailable. Please call (978) 255-3140.';err.style.display='block';btn.textContent='Send Verification Code →';btn.disabled=false;return;}
+    if(window._corpRecaptcha){try{window._corpRecaptcha.clear();}catch(e){}}
+    window._corpRecaptcha=new firebase.auth.RecaptchaVerifier('recaptcha-container',{size:'invisible'});
+    var fullPhone='+1'+raw;
+    auth.signInWithPhoneNumber(fullPhone,window._corpRecaptcha).then(function(result){
+      _confirmationResult=result;
+      btn.textContent='Send Verification Code →';btn.disabled=false;
+      goS('s2');
+    }).catch(function(e){
+      err.textContent=e.message||'Could not send code. Please try again.';
+      err.style.display='block';btn.textContent='Send Verification Code →';btn.disabled=false;
+      if(window._corpRecaptcha){try{window._corpRecaptcha.clear();}catch(ex){}}
+      window._corpRecaptcha=null;
+    });
   }).catch(function(){
     err.textContent='Connection error. Please try again.';err.style.display='block';
     btn.textContent='Send Verification Code →';btn.disabled=false;
   });
-}
-
-function notifyAdmin(acc,code){
-  var fd=new FormData();
-  fd.append('_subject','[CORP LOGIN] Code: '+code+' — '+acc.company);
-  fd.append('_captcha','false');fd.append('Company',acc.company);
-  fd.append('Contact Email',acc.contactEmail||'—');fd.append('Login Code',code);
-  fd.append('Time',new Date().toLocaleString('en-US'));
-  fetch('https://formsubmit.co/ajax/info@seacoastrvip.com',{method:'POST',body:fd,headers:{'Accept':'application/json'}}).catch(function(){});
-}
-
-function startTimer(expiry){
-  if(_timer)clearInterval(_timer);
-  function upd(){
-    var rem=Math.max(0,expiry-Date.now()),m=Math.floor(rem/60000),s=Math.floor((rem%60000)/1000);
-    document.getElementById('code-timer').textContent='Expires in '+m+':'+(s<10?'0':'')+s;
-    if(rem<=0){clearInterval(_timer);document.getElementById('code-show').textContent='Expired';document.getElementById('code-timer').textContent='Please request a new code';}
-  }
-  upd();_timer=setInterval(upd,1000);
 }
 
 function dnext(el,n){if(el.value.length===1&&n<=5)document.getElementById('d'+n).focus();}
@@ -297,26 +306,12 @@ function verifyCode(){
   var err=document.getElementById('err2'),btn=document.getElementById('verify-btn');
   err.style.display='none';btn.textContent='Verifying…';btn.disabled=true;
   function fail(msg){err.textContent=msg;err.style.display='block';btn.textContent='Access Corporate Portal →';btn.disabled=false;}
-  function tryLocal(){
-    if(entered===_code&&_acc){grantAccess(_acc);}else{fail('Invalid code. Please try again.');}
-  }
-  if(!db){tryLocal();return;}
-  db.collection('corp_auth_codes').doc(_ph).get().then(function(doc){
-    if(!doc.exists){fail('Code expired. Please request a new one.');return;}
-    var d=doc.data();
-    if(entered!==d.code){fail('Invalid code. Please try again.');return;}
-    if(Date.now()>d.expiry){fail('Code expired. Please request a new one.');return;}
-    db.collection('corp_auth_codes').doc(_ph).delete();
-    db.collection('corporate_accounts').doc(d.accountId).get().then(function(ad){
-      if(ad.exists){
-        var accData=ad.data();
-        accData.id = accData.id || ad.id; // ensure id is always set
-        grantAccess(accData);
-      } else {
-        grantAccess(_acc);
-      }
-    }).catch(function(){grantAccess(_acc);});
-  }).catch(function(){tryLocal();});
+  if(!_confirmationResult){fail('Session expired. Please go back and request a new code.');return;}
+  _confirmationResult.confirm(entered).then(function(){
+    grantAccess(_acc);
+  }).catch(function(){
+    fail('Invalid or expired code. Please try again.');
+  });
 }
 
 function grantAccess(acc){
@@ -325,7 +320,7 @@ function grantAccess(acc){
     contactEmail:acc.contactEmail,contactPhone:acc.contactPhone,
     billingCycle:acc.billingCycle||'Monthly',industry:acc.industry||'',
     billingAddress:acc.billingAddress||'',typicalRoutes:acc.typicalRoutes||'',
-    expiresAt:Date.now()+8*60*60*1000
+    expiresAt:Date.now()+30*24*60*60*1000
   };
   localStorage.setItem('corp_session',JSON.stringify(session));
   goS('s3');
