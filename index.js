@@ -14,8 +14,14 @@ exports.getStripeCustomer = functions.runWith({ secrets: [stripeSecret] }).https
   
   if (!accountId) throw new functions.https.HttpsError("invalid-argument", "Missing Account ID");
 
-  const accountRef = admin.firestore().collection("corporate_accounts").doc(accountId);
-  const accountDoc = await accountRef.get();
+  let accountRef = admin.firestore().collection("corporate_accounts").doc(accountId);
+  let accountDoc = await accountRef.get();
+
+  // If not in corporate, check clients
+  if (!accountDoc.exists) {
+    accountRef = admin.firestore().collection("clients").doc(accountId);
+    accountDoc = await accountRef.get();
+  }
 
   if (!accountDoc.exists) throw new functions.https.HttpsError("not-found", "Account not found");
 
@@ -59,8 +65,12 @@ exports.chargeSavedCard = functions.runWith({ secrets: [stripeSecret] }).https.o
     throw new functions.https.HttpsError("invalid-argument", "Invalid account or amount");
   }
 
-  const accountRef = admin.firestore().collection("corporate_accounts").doc(accountId);
-  const accountDoc = await accountRef.get();
+  let accountRef = admin.firestore().collection("corporate_accounts").doc(accountId);
+  let accountDoc = await accountRef.get();
+  if(!accountDoc.exists) {
+    accountRef = admin.firestore().collection("clients").doc(accountId);
+    accountDoc = await accountRef.get();
+  }
   if (!accountDoc.exists) throw new functions.https.HttpsError("not-found", "Account not found");
 
   const accountData = accountDoc.data();
@@ -122,9 +132,17 @@ exports.savePaymentMethod = functions.runWith({ secrets: [stripeSecret] }).https
   const { accountId, paymentMethodId } = data;
   if (!accountId || !paymentMethodId) throw new functions.https.HttpsError("invalid-argument", "Missing data");
 
+  let accountRef = admin.firestore().collection("corporate_accounts").doc(accountId);
+  let accountDoc = await accountRef.get();
+  if(!accountDoc.exists) {
+    accountRef = admin.firestore().collection("clients").doc(accountId);
+    accountDoc = await accountRef.get();
+  }
+  if (!accountDoc.exists) throw new functions.https.HttpsError("not-found", "Account not found");
+
   const paymentMethod = await stripe.paymentMethods.retrieve(paymentMethodId);
 
-  await admin.firestore().collection("corporate_accounts").doc(accountId).update({
+  await accountRef.update({
     stripePaymentMethodId: paymentMethodId,
     cardBrand: paymentMethod.card.brand,
     cardLast4: paymentMethod.card.last4
