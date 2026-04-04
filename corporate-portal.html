@@ -1589,7 +1589,18 @@ function initCorpMap(){
   var center = {lat:43.0718,lng:-70.7626};
   _corpMap = new google.maps.Map(document.getElementById('corp-map'),{
     center:center,zoom:9,
-    styles:[{featureType:'all',elementType:'geometry',stylers:[{color:'#1a1a1a'}]},{featureType:'water',elementType:'geometry',stylers:[{color:'#0a0a0a'}]},{featureType:'road',elementType:'geometry',stylers:[{color:'#2a2a2a'}]},{featureType:'road.arterial',elementType:'geometry',stylers:[{color:'#333'}]},{featureType:'poi',elementType:'labels',stylers:[{visibility:'off'}]},{featureType:'all',elementType:'labels.text.fill',stylers:[{color:'#888'}]},{featureType:'all',elementType:'labels.text.stroke',stylers:[{color:'#111'}]}]
+    styles:[
+      {featureType:'all',elementType:'geometry',stylers:[{color:'#1a1a1a'}]},
+      {featureType:'water',elementType:'geometry',stylers:[{color:'#0a0a0a'}]},
+      {featureType:'road',elementType:'geometry',stylers:[{color:'#2a2a2a'}]},
+      {featureType:'road.arterial',elementType:'geometry',stylers:[{color:'#333'}]},
+      {featureType:'poi',elementType:'labels',stylers:[{visibility:'off'}]},
+      {featureType:'all',elementType:'labels.text.fill',stylers:[{color:'#ffffff'}]}, // WHITE LABELS
+      {featureType:'all',elementType:'labels.text.stroke',stylers:[{color:'#000000'}, {weight:2}]},
+      {featureType:'administrative.locality',elementType:'labels.text.fill',stylers:[{color:'#C9A84C'}]}, // GOLD CITIES
+      {featureType:'administrative.neighborhood',elementType:'labels',stylers:[{visibility:'off'}]}, // Fewer clutter cities
+      {featureType:'transit',stylers:[{visibility:'off'}]}
+    ]
   });
   _corpDirSvc = new google.maps.DirectionsService();
   _corpDirRenderer = new google.maps.DirectionsRenderer({
