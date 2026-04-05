@@ -166,36 +166,74 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 <div id="pg-login">
   <div class="login-card">
     <h1 class="login-title">Client Login</h1>
-    <p class="login-sub">Welcome back. Enter your mobile number to access your account dashboard.</p>
+    <p class="login-sub">Welcome back. Verify with your phone number or email address.</p>
 
-    <!-- Step 1: Phone -->
-    <div id="step-phone">
-      <div class="f-group">
-        <label class="f-label">Mobile Number</label>
-        <input id="phone-inp" type="tel" class="f-input" placeholder="(603) 000-0000" oninput="fmtPhone(this)" onkeydown="if(event.key==='Enter')doPhoneLogin()"/>
-      </div>
-      <div id="phone-err" style="display:none;color:#d32f2f;font-size:0.8rem;margin-bottom:1rem"></div>
-      <button id="phone-btn" onclick="doPhoneLogin()" class="btn-k" style="width:100%">Continue →</button>
-      <p style="text-align:center;font-size:0.7rem;color:#888;margin-top:2rem">Professional service at your fingertips.</p>
-      <div id="recaptcha-container"></div>
+    <!-- Debug log - always visible so we can see errors -->
+    <div id="debug-log" style="display:none;background:#fff3cd;border:1px solid #ffc107;padding:1rem;margin-bottom:1.5rem;font-size:0.72rem;font-family:monospace;border-radius:4px;color:#333;max-height:180px;overflow-y:auto"></div>
+
+    <!-- Login Method Toggle -->
+    <div style="display:flex;margin-bottom:2rem;border:1px solid var(--border)">
+      <button id="tab-phone-btn" onclick="switchLoginTab('phone')" style="flex:1;padding:0.75rem;font-family:'Work Sans',sans-serif;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;background:#000;color:#fff;border:none;cursor:pointer;transition:0.2s">📱 Phone</button>
+      <button id="tab-email-btn" onclick="switchLoginTab('email')" style="flex:1;padding:0.75rem;font-family:'Work Sans',sans-serif;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;background:transparent;color:#888;border:none;cursor:pointer;transition:0.2s">✉️ Email</button>
     </div>
 
-    <!-- Step 2: OTP Verification -->
-    <div id="step-otp" style="display:none">
-      <div style="background:#f9f9f9;padding:1.25rem;color:#000;font-size:0.85rem;margin-bottom:2rem;border-left:4px solid var(--gold)">
-        A 6-digit verification code was sent to <strong id="otp-phone-display"></strong>.
-      </div>
-      <div class="f-group">
-        <label class="f-label">Verification Code</label>
-        <input id="otp-inp" type="text" class="f-input" placeholder="000000" maxlength="6" inputmode="numeric" autocomplete="one-time-code" oninput="this.value=this.value.replace(/\D/g,'');if(this.value.length===6)verifyOTP()"/>
-      </div>
-      <div id="otp-err" style="display:none;color:#d32f2f;font-size:0.8rem;margin-bottom:1rem"></div>
-      <button id="otp-btn" onclick="verifyOTP()" class="btn-k" style="width:100%">Verify & Continue →</button>
-      <button onclick="backToPhone()" style="width:100%;background:none;border:none;color:#888;font-size:0.75rem;margin-top:1.25rem;cursor:pointer">← Change Phone Number</button>
-      <p style="text-align:center;font-size:0.7rem;color:#888;margin-top:1rem">Didn't receive it? <span onclick="resendOTP()" style="color:var(--gold-dark);cursor:pointer;font-weight:600">Resend Code</span></p>
-    </div>
+    <!-- ── PHONE METHOD ── -->
+    <div id="login-phone-method">
 
-    <!-- Step 3: New User -->
+      <!-- Step 1: Phone -->
+      <div id="step-phone">
+        <div class="f-group">
+          <label class="f-label">Mobile Number</label>
+          <input id="phone-inp" type="tel" class="f-input" placeholder="(603) 000-0000" oninput="fmtPhone(this)" onkeydown="if(event.key==='Enter')doPhoneLogin()"/>
+        </div>
+        <div id="phone-err" style="display:none;color:#d32f2f;font-size:0.8rem;margin-bottom:1rem"></div>
+        <button id="phone-btn" onclick="doPhoneLogin()" class="btn-k" style="width:100%">Send Code →</button>
+        <div id="recaptcha-container" style="margin-top:1rem"></div>
+      </div>
+
+      <!-- Step 2: Phone OTP -->
+      <div id="step-otp" style="display:none">
+        <div style="background:#f9f9f9;padding:1.25rem;color:#000;font-size:0.85rem;margin-bottom:2rem;border-left:4px solid var(--gold)">
+          A 6-digit code was sent via SMS to <strong id="otp-phone-display"></strong>.
+        </div>
+        <div class="f-group">
+          <label class="f-label">Verification Code</label>
+          <input id="otp-inp" type="text" class="f-input" placeholder="000000" maxlength="6" inputmode="numeric" autocomplete="one-time-code" oninput="this.value=this.value.replace(/\D/g,'');if(this.value.length===6)verifyOTP()"/>
+        </div>
+        <div id="otp-err" style="display:none;color:#d32f2f;font-size:0.8rem;margin-bottom:1rem"></div>
+        <button id="otp-btn" onclick="verifyOTP()" class="btn-k" style="width:100%">Verify & Continue →</button>
+        <button onclick="backToPhone()" style="width:100%;background:none;border:none;color:#888;font-size:0.75rem;margin-top:1.25rem;cursor:pointer">← Change Phone Number</button>
+        <p style="text-align:center;font-size:0.7rem;color:#888;margin-top:1rem">Didn't receive it? <span onclick="resendOTP()" style="color:var(--gold-dark);cursor:pointer;font-weight:600">Resend Code</span></p>
+      </div>
+
+    </div><!-- /login-phone-method -->
+
+    <!-- ── EMAIL METHOD ── -->
+    <div id="login-email-method" style="display:none">
+
+      <!-- Step 1: Enter Email -->
+      <div id="step-email">
+        <div class="f-group">
+          <label class="f-label">Email Address</label>
+          <input id="email-login-inp" type="email" class="f-input" placeholder="you@example.com" onkeydown="if(event.key==='Enter')doEmailLogin()"/>
+        </div>
+        <div id="email-err" style="display:none;color:#d32f2f;font-size:0.8rem;margin-bottom:1rem"></div>
+        <button id="email-login-btn" onclick="doEmailLogin()" class="btn-k" style="width:100%">Send Login Link →</button>
+        <p style="text-align:center;font-size:0.7rem;color:#888;margin-top:2rem">We'll email you a secure one-click sign-in link.</p>
+      </div>
+
+      <!-- Step 2: Check Email -->
+      <div id="step-email-sent" style="display:none;text-align:center;padding:1rem 0">
+        <div style="font-size:3rem;margin-bottom:1rem">📧</div>
+        <h3 style="font-family:'Times New Roman',serif;font-size:1.4rem;margin-bottom:0.75rem">Check Your Email</h3>
+        <p style="font-size:0.85rem;color:var(--text-sec);line-height:1.6">We sent a login link to<br><strong id="email-sent-display" style="color:#000"></strong></p>
+        <p style="font-size:0.78rem;color:#aaa;margin-top:1rem">Click the link in the email to sign in instantly.<br>The link expires in 10 minutes.</p>
+        <button onclick="switchLoginTab('email')" style="margin-top:2rem;background:none;border:none;color:#888;font-size:0.75rem;cursor:pointer">← Try a different email</button>
+      </div>
+
+    </div><!-- /login-email-method -->
+
+    <!-- Step: New User (shared by both methods) -->
     <div id="step-newuser" style="display:none">
       <div style="background:#f9f9f9;padding:1.25rem;color:#000;font-size:0.85rem;margin-bottom:2rem;border-left:4px solid var(--gold)">
         It looks like you're new here. Please create your profile.
@@ -503,33 +541,51 @@ let _pendingIsNewUser = false;
 let _confirmationResult = null;
 
 // ─── LOGIN & AUTH ───
+function dbg(msg){
+  console.log('[RVIP]', msg);
+  const el = document.getElementById('debug-log');
+  if(el){ el.style.display='block'; el.innerHTML += '<div>▶ '+msg+'</div>'; }
+}
+
 async function doPhoneLogin(){
   const raw = document.getElementById('phone-inp').value;
   const digits = raw.replace(/\D/g,'');
   if(digits.length < 10) return showErr('phone-err', 'Please enter a valid 10-digit number.');
-  const btn = document.getElementById('phone-btn'); btn.disabled=true; btn.textContent='Sending Code...';
+  const btn = document.getElementById('phone-btn');
+  btn.disabled=true; btn.textContent='Sending Code...';
+  document.getElementById('phone-err').style.display='none';
+  dbg('Button clicked — phone: ' + raw);
   try {
     _pendingPhone = digits.length===10 ? '+1'+digits : '+'+digits;
+    dbg('Checking Firestore for account...');
 
-    // Pre-check Firestore so we know if this is a new or returning user
     const snap = await db.collection('clients').where('phone','==',_pendingPhone).limit(1).get();
     _pendingIsNewUser = snap.empty;
     _pendingClient = null;
     if(!snap.empty) snap.forEach(d => _pendingClient = {id:d.id, ...d.data()});
+    dbg('Firestore check done. New user: ' + _pendingIsNewUser);
 
-    // Set up invisible reCAPTCHA (reset first if it already exists)
-    if(window._recaptchaVerifier){ try{ window._recaptchaVerifier.clear(); }catch(e){} }
-    window._recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', { size:'invisible' });
+    // Reset reCAPTCHA
+    if(window._recaptchaVerifier){ try{ window._recaptchaVerifier.clear(); }catch(e){} window._recaptchaVerifier=null; }
+    document.getElementById('recaptcha-container').innerHTML = '';
+    dbg('Setting up reCAPTCHA...');
+    window._recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
+      size: 'invisible',
+      callback: () => { dbg('reCAPTCHA solved!'); }
+    });
+    await window._recaptchaVerifier.render();
+    dbg('reCAPTCHA ready. Calling signInWithPhoneNumber...');
 
-    // Send OTP
     _confirmationResult = await auth.signInWithPhoneNumber(_pendingPhone, window._recaptchaVerifier);
+    dbg('SUCCESS — OTP sent!');
 
-    // Show OTP step
     document.getElementById('step-phone').style.display='none';
     document.getElementById('step-otp').style.display='block';
     document.getElementById('otp-phone-display').textContent = raw;
   } catch(e){
-    showErr('phone-err', e.message || 'Could not send code. Please try again.');
+    const msg = e.message || 'Could not send code. Please try again.';
+    dbg('ERROR: ' + e.code + ' — ' + e.message);
+    showErr('phone-err', msg);
     if(window._recaptchaVerifier){ try{ window._recaptchaVerifier.clear(); }catch(ex){} window._recaptchaVerifier=null; }
   }
   btn.disabled=false; btn.textContent='Continue →';
@@ -896,6 +952,80 @@ function rebook(tripId){
   window.location.href = 'schedule.html?rebook=1';
 }
 
+// ─── LOGIN TAB SWITCH ───
+function switchLoginTab(tab){
+  const isPhone = tab === 'phone';
+  document.getElementById('login-phone-method').style.display = isPhone ? 'block' : 'none';
+  document.getElementById('login-email-method').style.display = isPhone ? 'none' : 'block';
+  document.getElementById('tab-phone-btn').style.cssText += isPhone ? ';background:#000;color:#fff' : ';background:transparent;color:#888';
+  document.getElementById('tab-email-btn').style.cssText += isPhone ? ';background:transparent;color:#888' : ';background:#000;color:#fff';
+  // Reset email steps when switching back
+  if(isPhone){
+    document.getElementById('step-email').style.display='block';
+    document.getElementById('step-email-sent').style.display='none';
+  }
+}
+
+// ─── EMAIL LINK LOGIN ───
+async function doEmailLogin(){
+  const email = document.getElementById('email-login-inp').value.trim();
+  const err = document.getElementById('email-err');
+  err.style.display='none';
+  if(!email || !email.includes('@')) return (err.textContent='Please enter a valid email address.', err.style.display='block');
+  const btn = document.getElementById('email-login-btn');
+  btn.disabled=true; btn.textContent='Sending...';
+  try {
+    const actionCodeSettings = {
+      url: 'https://seacoastrvip.com/account.html',
+      handleCodeInApp: true
+    };
+    await auth.sendSignInLinkToEmail(email, actionCodeSettings);
+    localStorage.setItem('rvip-email-signin', email);
+    document.getElementById('step-email').style.display='none';
+    document.getElementById('step-email-sent').style.display='block';
+    document.getElementById('email-sent-display').textContent = email;
+  } catch(e){
+    err.textContent = e.message || 'Could not send link. Please try again.';
+    err.style.display='block';
+    console.error('[Email Auth]', e.code, e.message);
+  }
+  btn.disabled=false; btn.textContent='Send Login Link →';
+}
+
+// ─── HANDLE EMAIL LINK ON PAGE LOAD ───
+async function checkEmailLink(){
+  if(!auth.isSignInWithEmailLink(window.location.href)) return false;
+  let email = localStorage.getItem('rvip-email-signin');
+  if(!email) email = window.prompt('Please confirm your email address to complete sign-in:');
+  if(!email) return false;
+  try {
+    await auth.signInWithEmailLink(email, window.location.href);
+    localStorage.removeItem('rvip-email-signin');
+    window.history.replaceState({}, document.title, '/account.html');
+    // Look up client by email
+    const snap = await db.collection('clients').where('email','==',email).limit(1).get();
+    if(!snap.empty){
+      let c; snap.forEach(d => c = {id:d.id,...d.data()});
+      loginUser(c);
+    } else {
+      // New user — show create profile, pre-fill email
+      document.getElementById('pg-login').style.display='flex';
+      document.getElementById('login-phone-method').style.display='none';
+      document.getElementById('login-email-method').style.display='none';
+      document.getElementById('tab-phone-btn').style.display='none';
+      document.getElementById('tab-email-btn').style.display='none';
+      document.getElementById('step-newuser').style.display='block';
+      document.getElementById('email-inp').value = email;
+      _pendingIsNewUser = true;
+    }
+  } catch(e){
+    console.error('[Email Link Error]', e.code, e.message);
+    document.getElementById('pg-login').style.display='flex';
+    toast('Login link expired or already used. Please try again.');
+  }
+  return true;
+}
+
 // ─── MOBILE SIDEBAR ───
 function toggleMobileSidebar(){
   document.querySelector('.sidebar').classList.toggle('mobile-open');
@@ -950,18 +1080,27 @@ async function saveProfile(){
   } catch(e){ toast(e.message); }
 }
 
-// ─── AUTO LOGIN (stays signed in after first OTP) ───
+// ─── AUTO LOGIN (stays signed in after first verification) ───
 auth.onAuthStateChanged(async user => {
+  // First check if this is an email link sign-in (from clicking email link)
+  const wasEmailLink = await checkEmailLink();
+  if(wasEmailLink) return;
+
   if(user){
-    // Firebase session still active — restore account without re-verifying
+    // Firebase session active — restore account without re-verifying
     const saved = localStorage.getItem('rvip-client-id');
     if(saved){
       const d = await db.collection('clients').doc(saved).get();
       if(d.exists){ loginUser({id:d.id,...d.data()}); return; }
     }
-    // Fallback: look up by phone number
+    // Look up by phone
     if(user.phoneNumber){
       const snap = await db.collection('clients').where('phone','==',user.phoneNumber).limit(1).get();
+      if(!snap.empty){ let c; snap.forEach(d=>c={id:d.id,...d.data()}); loginUser(c); return; }
+    }
+    // Look up by email
+    if(user.email){
+      const snap = await db.collection('clients').where('email','==',user.email).limit(1).get();
       if(!snap.empty){ let c; snap.forEach(d=>c={id:d.id,...d.data()}); loginUser(c); return; }
     }
   }
