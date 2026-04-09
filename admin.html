@@ -1788,18 +1788,6 @@
       window.open('sms:' + curPayBk.phone + '&body=' + encodeURIComponent(msg));
     }
 
-    function quickConfirm(id) {
-      var bks = getBks();
-      var b = bks.find(function(x){ return x.id === id; });
-      if(!b) return;
-      if(!confirm('Confirm this booking? This will update the status to "Confirmed" and notify the client.')) return;
-      
-      b.status = 'Confirmed';
-      setBks(bks);
-      fbSync(b);
-      renderBks();
-      toast('Booking Confirmed!');
-    }
     function payEmail() {
       if (!curPayBk) return;
       var msg = document.getElementById('pay-msg').value;
@@ -1838,7 +1826,22 @@
 
     // ─────────────────────────────────────────────
     //  CLIENT PROFILE & TRIPS MANAGER
-    // ─────────────�            ' <span class="bdg ' + (t.bookingId ? 'bpu' : 'byw') + '" style="margin-left:4px">' + e(t.status) + '</span>' +
+    // ─────────────────────────────────────────────
+    async function loadCliTrips(cid) {
+      if (!document.getElementById('cli-trips-list')) return;
+      var el = document.getElementById('cli-trips-list');
+      el.innerHTML = '<div class="empty"><span class="material-symbols-outlined">directions_car</span><div style="font-size:.8rem">Loading trips...</div></div>';
+      try {
+        if (!db) return;
+        var snap = await db.collection('clients').doc(cid).collection('trips').orderBy('date', 'desc').limit(50).get();
+        if (snap.empty) { el.innerHTML = '<div class="empty"><span class="material-symbols-outlined">directions_car</span><div style="font-size:.8rem">No trips found</div></div>'; return; }
+        var h = '';
+        snap.forEach(function (d) {
+          var t = d.data();
+          h += '<div style="background:#f9f9f9;border:1px solid #eee;border-radius:6px;padding:.75rem;margin-bottom:.5rem;display:flex;justify-content:space-between;align-items:center">' +
+            '<div>' +
+            '<div style="font-weight:700;font-size:.85rem;margin-bottom:4px">' + e(t.service) +
+            ' <span class="bdg ' + (t.bookingId ? 'bpu' : 'byw') + '" style="margin-left:4px">' + e(t.status) + '</span>' +
             (t.bookingId ? '<span class="bdg bgr" style="margin-left:4px" title="Auto-synced from Bookings">Linked</span>' : '') +
             '</div>' +
             '<div style="font-size:.7rem;color:#555"><span class="material-symbols-outlined" style="font-size:11px;vertical-align:middle">calendar_today</span> ' + e(t.date) + (t.time ? ' at ' + t.time : '') + (t.price ? ' &nbsp; <b>$' + t.price + '</b>' : '') + '</div>' +
@@ -1853,6 +1856,7 @@
         el.innerHTML = h;
       } catch (ex) { el.innerHTML = '<div style="padding:1rem;color:#dc2626;font-size:.8rem">Error loading trips</div>'; }
     }
+
 
     // ─────────────────────────────────────────────
     //  CLIENTS TAB
@@ -1881,32 +1885,6 @@
             '<div style="font-size:.68rem;color:#aaa;margin-bottom:.1rem">Since ' + since + '</div>' +
             '<a href="sms:' + (c.phone || '') + '" onclick="event.stopPropagation()" class="btn bk" style="text-decoration:none;font-size:.62rem"><span class="material-symbols-outlined" style="font-size:12px">sms</span>Text</a>' +
             '<button onclick="event.stopPropagation();deleteClient(\'' + c.id + '\',\'' + e(c.name||c.phone||'client') + '\')" class="btn br" style="font-size:.62rem"><span class="material-symbols-outlined" style="font-size:12px">delete_forever</span>Delete</button>' +
-            '</div>' +
-            '</div>' +
-            '</div>';
-        }).join('');
-      } catch (ex) { el.innerHTML = fbErrHTML(ex.message); }
-    }= fbErrHTML(); return; }
-      el.innerHTML = '<div style="text-align:center;padding:2rem;color:#aaa;font-size:.8rem">Loading...</div>';
-      try {
-        var snap = await db.collection('clients').orderBy('createdAt', 'desc').limit(100).get();
-        var list = []; snap.forEach(function (d) { list.push(Object.assign({ id: d.id }, d.data())); });
-        document.getElementById('s5').textContent = list.length;
-        if (!list.length) { el.innerHTML = '<div class="empty"><span class="material-symbols-outlined">people</span><div style="font-size:.8rem">No clients yet</div></div>'; return; }
-        el.innerHTML = list.map(function (c) {
-          var since = c.createdAt ? new Date(c.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
-          var tag = c.createdByAdmin ? '<span class="bdg byw" style="margin-left:6px">Admin added</span>' : '<span class="bdg bgr" style="margin-left:6px">Self signup</span>';
-          return '<div class="card msgcard" style="margin-bottom:.625rem;cursor:pointer" onclick="openCliProfile(\'' + c.id + '\')">' +
-            '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:.75rem">' +
-            '<div>' +
-            '<div style="font-weight:700;margin-bottom:4px">' + e(c.name || c.phone || 'Unknown') + tag + '</div>' +
-            '<div class="crow"><span class="material-symbols-outlined">phone</span>' + e(c.phone || '—') + '</div>' +
-            (c.email ? '<div class="crow"><span class="material-symbols-outlined">mail</span>' + e(c.email) + '</div>' : '') +
-            (c.address ? '<div class="crow"><span class="material-symbols-outlined">home</span>' + e(c.address) + '</div>' : '') +
-            '</div>' +
-            '<div style="text-align:right">' +
-            '<div style="font-size:.68rem;color:#aaa;margin-bottom:.5rem">Since ' + since + '</div>' +
-            '<a href="sms:' + (c.phone || '') + '" onclick="event.stopPropagation()" class="btn bk" style="text-decoration:none;font-size:.62rem"><span class="material-symbols-outlined" style="font-size:12px">sms</span>Text</a>' +
             '</div>' +
             '</div>' +
             '</div>';
