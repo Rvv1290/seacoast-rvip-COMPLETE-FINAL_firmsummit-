@@ -1267,7 +1267,7 @@
         showDash();
       } else {
         var drs = getDrivers();
-        var dr = drs.find(function (d) { return d.pwd.trim() === cleanValue; });
+        var dr = drs.find(function (d) { return d.pwd && d.pwd.trim() === cleanValue; });
         if (dr) {
           curUser = { name: dr.name, role: 'driver', id: dr.id };
           saveSession(curUser);
