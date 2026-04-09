@@ -207,25 +207,22 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
     <!-- ── EMAIL METHOD ── -->
     <div id="login-email-method" style="display:none">
 
-      <!-- Step 1: Enter Email -->
+      <!-- Email + Password -->
       <div id="step-email">
         <div class="f-group">
           <label class="f-label">Email Address</label>
-          <input id="email-login-inp" type="email" class="f-input" placeholder="you@example.com" onkeydown="if(event.key==='Enter')doEmailLogin()"/>
+          <input id="email-login-inp" type="email" class="f-input" placeholder="you@example.com" onkeydown="if(event.key==='Enter')document.getElementById('email-pwd-inp').focus()"/>
+        </div>
+        <div class="f-group">
+          <label class="f-label">Password</label>
+          <input id="email-pwd-inp" type="password" class="f-input" placeholder="Enter your password" onkeydown="if(event.key==='Enter')doEmailLogin()"/>
         </div>
         <div id="email-err" style="display:none;color:#d32f2f;font-size:0.8rem;margin-bottom:1rem"></div>
         <button id="email-login-btn" onclick="doEmailLogin()" class="btn-k" style="width:100%">Sign In →</button>
-        <p style="text-align:center;font-size:0.7rem;color:#888;margin-top:2rem">Sign in instantly via your email.</p>
       </div>
 
-      <!-- Step 2: Check Email -->
-      <div id="step-email-sent" style="display:none;text-align:center;padding:1rem 0">
-        <div style="font-size:3rem;margin-bottom:1rem">📧</div>
-        <h3 style="font-family:'Times New Roman',serif;font-size:1.4rem;margin-bottom:0.75rem">Check Your Email</h3>
-        <p style="font-size:0.85rem;color:var(--text-sec);line-height:1.6">We sent a login link to<br><strong id="email-sent-display" style="color:#000"></strong></p>
-        <p style="font-size:0.78rem;color:#aaa;margin-top:1rem">Click the link in the email to sign in instantly.<br>The link expires in 10 minutes.</p>
-        <button onclick="switchLoginTab('email')" style="margin-top:2rem;background:none;border:none;color:#888;font-size:0.75rem;cursor:pointer">← Try a different email</button>
-      </div>
+      <!-- kept hidden for legacy compatibility -->
+      <div id="step-email-sent" style="display:none"></div>
 
     </div><!-- /login-email-method -->
 
@@ -630,7 +627,6 @@ function loginUser(client){
 }
 
 function doLogout(){
-  auth.signOut();
   localStorage.removeItem('rvip-client-id');
   location.reload();
 }
