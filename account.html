@@ -186,6 +186,31 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
           <input id="phone-pwd-inp" type="password" class="f-input" placeholder="Enter your password" onkeydown="if(event.key==='Enter')doPhoneLogin()"/>
         </div>
         <div id="phone-err" style="display:none;color:#d32f2f;font-size:0.8rem;margin-bottom:1rem"></div>
+        <button id="phone-btn" onclick="doPhoneLogin()" class="btn-k" style="width:100%">Sign In →</button>
+        
+        <div id="migration-prompt" style="display:none;margin-top:1.5rem;padding:1rem;background:#fff8e1;border:1px solid #ffe082;border-radius:4px;font-size:0.8rem">
+          <div><strong>First-time sign in?</strong></div>
+          <div style="margin:0.5rem 0 1rem;color:#5d4037">If you used our old system, you need to set a password once.</div>
+          <button onclick="startMigration()" class="btn-k" style="width:100%;background:#5d4037;font-size:0.7rem">Verify via SMS & Setup Password</button>
+        </div>
+      </div>
+
+      <!-- Step: Set Password (Migration) -->
+      <div id="step-set-pwd" style="display:none">
+        <div style="background:#f9f9f9;padding:1.25rem;color:#000;font-size:0.85rem;margin-bottom:2rem;border-left:4px solid var(--gold)">
+           Identity verified. Please set a password for future logins.
+        </div>
+        <div class="f-group">
+          <label class="f-label">New Password (min 6 chars)</label>
+          <input id="new-pwd-inp" type="password" class="f-input" placeholder="••••••"/>
+        </div>
+        <div class="f-group">
+          <label class="f-label">Confirm Password</label>
+          <input id="conf-pwd-inp" type="password" class="f-input" placeholder="••••••"/>
+        </div>
+        <div id="set-pwd-err" style="display:none;color:#d32f2f;font-size:0.8rem;margin-bottom:1rem"></div>
+        <button id="set-pwd-btn" onclick="saveInitialPassword()" class="btn-k" style="width:100%">Save & Sign In →</button>
+      </div>
 
       <!-- Step 2: Phone OTP -->
       <div id="step-otp" style="display:none">
@@ -203,6 +228,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
       </div>
 
     </div><!-- /login-phone-method -->
+    <div id="recaptcha-container"></div>
 
     <!-- ── EMAIL METHOD ── -->
     <div id="login-email-method" style="display:none">
@@ -522,12 +548,12 @@ const FB_CFG = {
 };
 if(!firebase.apps.length) firebase.initializeApp(FB_CFG);
 const db = firebase.firestore();
-// const auth = firebase.auth();
+const auth = firebase.auth();
 const funcs = firebase.functions();
 const stripe = Stripe('pk_test_51TDR9sA1R5g39IibVbtiHGPBv4s1rNsIV5fNoMR68INDxN98rTFkZFXDdqS3RlupdfPeMlt9xHTd3EyN9hclmvKV00L6AVRt0z');
 
 // Keep user signed in across browser sessions
-// auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
 
 let currentUser = null;
 let allTrips = [];
@@ -554,17 +580,48 @@ async function doPhoneLogin(){
   const digits = raw.replace(/\D/g,'');
   const btn = document.getElementById('phone-btn');
   const err = document.getElementById('phone-err');
+  const mig = document.getElementById('migration-prompt');
+  
   err.style.display='none';
+  mig.style.display='none';
+
   if(digits.length < 10) { err.textContent='Please enter a valid 10-digit number.'; err.style.display='block'; return; }
   if(!pwd) { err.textContent='Please enter your password.'; err.style.display='block'; return; }
+  
   btn.disabled=true; btn.textContent='Signing In...';
+  
   try {
-    const phone = digits.length===10 ? '+1'+digits : '+'+digits;
-    const snap = await db.collection('clients').where('phone','==',phone).limit(1).get();
-    if(snap.empty){ err.textContent='Incorrect phone number or password.'; err.style.display='block'; btn.disabled=false; btn.textContent='Sign In →'; return; }
-    let client; snap.forEach(d => client = {id:d.id, ...d.data()});
-    if(client.password !== pwd){ err.textContent='Incorrect phone number or password.'; err.style.display='block'; btn.disabled=false; btn.textContent='Sign In →'; return; }
-    loginUser(client);
+    // Try multiple phone formats (+1, plain, formatted)
+    const pFmt1 = `(${digits.substring(0,3)}) ${digits.substring(3,6)}-${digits.substring(6,10)}`;
+    const pFmt2 = `${digits.substring(0,3)}-${digits.substring(3,6)}-${digits.substring(6,10)}`;
+    const formats = ['+1'+digits, digits, pFmt1, pFmt2];
+    let foundDoc = null;
+    
+    for(const p of formats){
+        const snap = await db.collection('clients').where('phone','==',p).limit(1).get();
+        if(!snap.empty){
+            snap.forEach(d => foundDoc = {id:d.id, ...d.data()});
+            break;
+        }
+    }
+
+    if(!foundDoc){
+      err.textContent='Incorrect phone number or password.';
+      err.style.display='block';
+    } else {
+      if(!foundDoc.password){
+          // User found but no password (migrated user)
+          err.innerHTML='Account found, but <strong>no password is set</strong>.<br>Please use the migration link below.';
+          err.style.display='block';
+          mig.style.display='block';
+      } else if(foundDoc.password !== pwd){
+          err.textContent='Incorrect phone number or password.';
+          err.style.display='block';
+      } else {
+          loginUser(foundDoc);
+          return; // Success
+      }
+    }
   } catch(e){
     err.textContent = e.message || 'Connection error. Please try again.';
     err.style.display='block';
@@ -572,23 +629,91 @@ async function doPhoneLogin(){
   btn.disabled=false; btn.textContent='Sign In →';
 }
 
+// ─── MIGRATION FLOW (OTP fallback for first password setup) ───
+
+async function startMigration(){
+  const digits = document.getElementById('phone-inp').value.replace(/\D/g,'');
+  if(digits.length < 10) return alert('Enter your 10-digit phone number first.');
+  
+  const phone = '+1' + digits;
+  _pendingPhone = phone;
+  
+  const btn = document.querySelector('#migration-prompt button');
+  btn.disabled = true; btn.textContent = 'Verifying...';
+  
+  try {
+    // Check if user exists
+    const pFmt1 = `(${digits.substring(0,3)}) ${digits.substring(3,6)}-${digits.substring(6,10)}`;
+    const pFmt2 = `${digits.substring(0,3)}-${digits.substring(3,6)}-${digits.substring(6,10)}`;
+    const formats = [phone, digits, pFmt1, pFmt2];
+    
+    let client = null;
+    for(const p of formats){
+        const snap = await db.collection('clients').where('phone','==',p).limit(1).get();
+        if(!snap.empty){
+            snap.forEach(d => client = {id:d.id, ...d.data()});
+            break;
+        }
+    }
+    
+    if(!client){
+        alert('We couldn\'t find an account with that number. Please start a new booking.');
+        btn.disabled = false; btn.textContent = 'Verify via SMS & Setup Password';
+        return;
+    }
+    
+    _pendingClient = client;
+    
+    // Trigger Phone Auth
+    if(window._recaptchaVerifier) try{ window._recaptchaVerifier.clear(); }catch(e){}
+    window._recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', { size:'invisible' });
+    
+    const prov = new firebase.auth.PhoneAuthProvider();
+    _confirmationResult = await firebase.auth().signInWithPhoneNumber(phone, window._recaptchaVerifier);
+    
+    document.getElementById('otp-phone-display').textContent = phone;
+    document.getElementById('step-phone').style.display='none';
+    document.getElementById('step-otp').style.display='block';
+  } catch(e){
+    alert('Error: ' + e.message);
+    btn.disabled = false; btn.textContent = 'Verify via SMS & Setup Password';
+  }
+}
+
 async function verifyOTP(){
   const code = document.getElementById('otp-inp').value.trim();
-  if(code.length < 6) return showErr('otp-err', 'Please enter the 6-digit code.');
+  if(code.length < 6) return;
   const btn = document.getElementById('otp-btn'); btn.disabled=true; btn.textContent='Verifying...';
-  document.getElementById('otp-err').style.display='none';
   try {
     await _confirmationResult.confirm(code);
-    // Firebase verified — now proceed
-    if(_pendingIsNewUser){
-      document.getElementById('step-otp').style.display='none';
-      document.getElementById('step-newuser').style.display='block';
-    } else {
-      loginUser(_pendingClient);
-    }
+    // Verified! Now move to Set Password step
+    document.getElementById('step-otp').style.display='none';
+    document.getElementById('step-set-pwd').style.display='block';
   } catch(e){
-    showErr('otp-err', 'Invalid or expired code. Please try again.');
+    alert('Invalid code. Please try again.');
     btn.disabled=false; btn.textContent='Verify & Continue →';
+  }
+}
+
+async function saveInitialPassword(){
+  const p1 = document.getElementById('new-pwd-inp').value;
+  const p2 = document.getElementById('conf-pwd-inp').value;
+  const err = document.getElementById('set-pwd-err');
+  
+  if(p1.length < 6) { err.textContent='Password must be at least 6 characters.'; err.style.display='block'; return; }
+  if(p1 !== p2) { err.textContent='Passwords do not match.'; err.style.display='block'; return; }
+  
+  const btn = document.getElementById('set-pwd-btn');
+  btn.disabled = true; btn.textContent = 'Saving...';
+  
+  try {
+    await db.collection('clients').doc(_pendingClient.id).update({ password: p1 });
+    _pendingClient.password = p1;
+    loginUser(_pendingClient);
+    alert('Password set successfully! You can now use this for future logins.');
+  } catch(e){
+    alert('Error saving password: ' + e.message);
+    btn.disabled = false; btn.textContent = 'Save & Sign In →';
   }
 }
 
@@ -960,6 +1085,10 @@ async function doEmailLogin(){
     const snap = await db.collection('clients').where('email','==',email).limit(1).get();
     if(snap.empty){ err.textContent='Incorrect email or password.'; err.style.display='block'; btn.disabled=false; btn.textContent='Sign In →'; return; }
     let client; snap.forEach(d=>client={id:d.id, ...d.data()});
+    if(!client.password){
+        err.innerHTML='Account found, but <strong>no password is set</strong>.<br>Please use the <strong>Phone</strong> tab to set your initial password.';
+        err.style.display='block'; btn.disabled=false; btn.textContent='Sign In →'; return;
+    }
     if(client.password !== pwd){ err.textContent='Incorrect email or password.'; err.style.display='block'; btn.disabled=false; btn.textContent='Sign In →'; return; }
     loginUser(client);
   } catch(e){

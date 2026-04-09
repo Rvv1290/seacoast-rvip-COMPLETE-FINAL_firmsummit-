@@ -373,10 +373,10 @@ function verifyCode(){
   if(entered.length<6)return;
   var err=document.getElementById('err2'),btn=document.getElementById('verify-btn');
   err.style.display='none';btn.textContent='Verifying…';btn.disabled=true;
-  function fail(msg){err.textContent=msg;err.style.display='block';btn.textContent='Access Corporate Portal →';btn.disabled=false;}
+  function fail(msg){err.textContent=msg;err.style.display='block';btn.textContent='Activate Account →';btn.disabled=false;}
   if(!_confirmationResult){fail('Session expired. Please go back and request a new code.');return;}
   _confirmationResult.confirm(entered).then(function(){
-    grantAccess(_acc);
+    goS('s4');
   }).catch(function(){
     fail('Invalid or expired code. Please try again.');
   });
