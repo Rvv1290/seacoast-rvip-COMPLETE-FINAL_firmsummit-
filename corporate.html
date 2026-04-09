@@ -16,9 +16,8 @@
   try{
     if(!firebase.apps.length)firebase.initializeApp(c);
     window._db=firebase.firestore();
-    // window._auth=firebase.auth();
-    // window._auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-    window._auth=null;
+    window._auth=firebase.auth();
+    window._auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
   }catch(e){window._db=null;window._auth=null;}
 })();
 </script>
@@ -156,6 +155,46 @@ body{font-family:'Inter',sans-serif;min-height:100vh;background:#fff;overflow-x:
       <div class="apply-box-txt">NET-30 invoicing · Priority dispatch · Monthly statements· Dedicated support</div>
       <a href="#apply">Apply Now →</a>
     </div>
+    
+    <div id="migration-prompt" style="display:none;margin-top:1.5rem;padding:1.25rem;background:#fff8e1;border:1px solid #ffe082;border-radius:6px;font-size:0.8rem">
+      <div style="font-weight:700;color:#775a19">First-time sign in?</div>
+      <div style="margin:0.55rem 0 1.25rem;color:#5d4037;line-height:1.5">If you used our old system, you need to set your corporate password once.</div>
+      <button onclick="startCorpMigration()" class="btn-blk" style="background:#5d4037;margin:0">Verify via SMS & Setup</button>
+    </div>
+    <div id="recaptcha-container"></div>
+  </div>
+
+  <!-- STEP 2 — OTP Verification (Migration Only) -->
+  <div id="s2" class="step">
+    <h1 class="panel-title">Verify Your<br>Identity</h1>
+    <p class="panel-sub" id="otp-sub">Enter the 6-digit code sent to your phone.</p>
+    <div id="err2" class="alert-err"></div>
+    <div class="digits">
+      <input class="dg" id="d0" type="text" maxlength="1" inputmode="numeric" oninput="dnext(this,1)" onkeydown="dprev(event,this,null)"/>
+      <input class="dg" id="d1" type="text" maxlength="1" inputmode="numeric" oninput="dnext(this,2)" onkeydown="dprev(event,this,0)"/>
+      <input class="dg" id="d2" type="text" maxlength="1" inputmode="numeric" oninput="dnext(this,3)" onkeydown="dprev(event,this,1)"/>
+      <input class="dg" id="d3" type="text" maxlength="1" inputmode="numeric" oninput="dnext(this,4)" onkeydown="dprev(event,this,2)"/>
+      <input class="dg" id="d4" type="text" maxlength="1" inputmode="numeric" oninput="dnext(this,5)" onkeydown="dprev(event,this,3)"/>
+      <input class="dg" id="d5" type="text" maxlength="1" inputmode="numeric" oninput="dcheck()" onkeydown="dprev(event,this,4)"/>
+    </div>
+    <button class="btn-blk" id="verify-btn" onclick="verifyCode()">Activate Account →</button>
+    <button class="btn-out" onclick="goS('s1')">← Back</button>
+  </div>
+
+  <!-- STEP 4 — Set Password (Migration Only) -->
+  <div id="s4" class="step">
+    <h1 class="panel-title">Create Your<br>Password</h1>
+    <p class="panel-sub">Set a secure password for your company portal.</p>
+    <div id="err4" class="alert-err"></div>
+    <div class="f-group">
+      <label class="f-label">New Password (min 6 chars)</label>
+      <input class="f-input" id="np-pwd" type="password" placeholder="••••••"/>
+    </div>
+    <div class="f-group">
+      <label class="f-label">Confirm Password</label>
+      <input class="f-input" id="np-conf" type="password" placeholder="••••••"/>
+    </div>
+    <button class="btn-blk" id="save-pwd-btn" onclick="saveCorpInitialPwd()">Save & Sign In →</button>
   </div>
 
   <!-- STEP 3 — Success -->
@@ -214,13 +253,19 @@ document.getElementById('ph').addEventListener('input',function(e){
 document.getElementById('ph').addEventListener('keypress',function(e){if(e.key==='Enter')document.getElementById('pwd').focus();});
 
 function goS(id){
-  ['s1','s3'].forEach(function(s){var el=document.getElementById(s);if(el)el.classList.remove('active');});
-  var t=document.getElementById(id);if(t)t.classList.add('active');
+  ['s1', 's2', 's3', 's4'].forEach(function(s){
+    var el = document.getElementById(s);
+    if(el) el.classList.remove('active');
+  });
+  var t = document.getElementById(id);
+  if(t) t.classList.add('active');
 }
 
+var _confirmationResult = null;
+
 function sendCode(){
-  var btn=document.getElementById('send-btn'),err=document.getElementById('err1');
-  err.style.display='none';
+  var btn=document.getElementById('send-btn'),err=document.getElementById('err1'),mig=document.getElementById('migration-prompt');
+  err.style.display='none'; mig.style.display='none';
   var raw=document.getElementById('ph').value.replace(/\D/g,'');
   var pwd=document.getElementById('pwd').value;
   if(raw.length<10){err.textContent='Please enter a valid 10-digit phone number.';err.style.display='block';return;}
@@ -228,9 +273,9 @@ function sendCode(){
   
   _ph=raw;
   btn.textContent='Signing In...';btn.disabled=true;
-  if(!db){err.textContent='Service error. Please call (978) 255-3140.';err.style.display='block';btn.textContent='Sign In →';btn.disabled=false;return;}
+  if(!_db){err.textContent='Service error. Please call (978) 255-3140.';err.style.display='block';btn.textContent='Sign In →';btn.disabled=false;return;}
 
-  db.collection('corporate_accounts').where('status','in',['Approved','Active']).get().then(function(snap){
+  _db.collection('corporate_accounts').where('status','in',['Approved','Active']).get().then(function(snap){
     var found=null;
     snap.forEach(function(d){
       var a=d.data(); a.id=a.id||d.id;
@@ -248,7 +293,65 @@ function sendCode(){
       err.style.display='block';btn.textContent='Sign In →';btn.disabled=false;return;
     }
 
+    if(!found.password){
+      err.innerHTML='Account found, but <strong>no password is set</strong>. If you used our old system, use the setup link below.';
+      err.style.display='block';
+      mig.style.display='block';
+      btn.textContent='Sign In →';btn.disabled=false;
+      return;
+    }
+
     if(found.password !== pwd){
+      err.textContent='Incorrect phone number or password.';
+      err.style.display='block';btn.textContent='Sign In →';btn.disabled=false;return;
+    }
+
+    _acc=found;
+    grantAccess(_acc);
+  }).catch(function(e){
+    console.error(e);
+    err.textContent='Connection error. Please try again.';err.style.display='block';
+    btn.textContent='Sign In →';btn.disabled=false;
+  });
+}
+
+async function startCorpMigration(){
+  var btn=document.querySelector('#migration-prompt button'), err=document.getElementById('err1');
+  btn.disabled=true; btn.textContent='Locating account…';
+  var phone = '+1' + _ph;
+  
+  try {
+    if(!window._recaptchaVerifier) {
+      window._recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', { size:'invisible' });
+    }
+    
+    _confirmationResult = await firebase.auth().signInWithPhoneNumber(phone, window._recaptchaVerifier);
+    document.getElementById('otp-sub').textContent = 'Enter the 6-digit code sent to ' + phone;
+    goS('s2');
+  } catch(e){
+    alert('SMS verification failed: ' + e.message);
+    btn.disabled=false; btn.textContent='Verify via SMS & Setup';
+  }
+}
+
+async function saveCorpInitialPwd(){
+  var p1=document.getElementById('np-pwd').value;
+  var p2=document.getElementById('np-conf').value;
+  var err=document.getElementById('err4'), btn=document.getElementById('save-pwd-btn');
+  if(p1.length<6){err.textContent='Password must be at least 6 characters.';err.style.display='block';return;}
+  if(p1!==p2){err.textContent='Passwords do not match.';err.style.display='block';return;}
+  
+  btn.disabled=true; btn.textContent='Saving…';
+  try {
+    await _db.collection('corporate_accounts').doc(_acc.id).update({ password: p1 });
+    _acc.password=p1;
+    grantAccess(_acc);
+  } catch(e){
+    err.textContent='Error saving password: '+e.message; err.style.display='block';
+    btn.disabled=false; btn.textContent='Save & Sign In →';
+  }
+}
+{
       err.textContent='Incorrect phone number or password.';
       err.style.display='block';btn.textContent='Sign In →';btn.disabled=false;return;
     }
