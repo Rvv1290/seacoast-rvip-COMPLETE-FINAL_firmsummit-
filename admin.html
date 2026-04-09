@@ -784,6 +784,7 @@
                 <button id="cd-btn-activate" onclick="cdAction('Active')" class="btn bg" style="background:#3b82f6;font-size:0.72rem"><span class="material-symbols-outlined" style="font-size:13px">star</span>Activate</button>
                 <button id="cd-btn-reject" onclick="cdAction('Rejected')" class="btn brd" style="font-size:0.72rem"><span class="material-symbols-outlined" style="font-size:13px">cancel</span>Reject</button>
                 <button id="cd-btn-reopen" onclick="cdAction('Pending')" class="btn bo" style="font-size:0.72rem"><span class="material-symbols-outlined" style="font-size:13px">undo</span>Reopen</button>
+                <button onclick="setCorpTempPwd()" class="btn" style="background:#7c3aed;color:#fff;font-size:0.72rem"><span class="material-symbols-outlined" style="font-size:13px">lock_reset</span>Set Password</button>
               </div>
 
               <!-- Rewards Management -->
@@ -2696,9 +2697,19 @@
 
     function cdAction(newStatus){
       if(!_cdCorpId||!db) return;
-      db.collection('corporate_accounts').doc(_cdCorpId).update({status:newStatus,updatedAt:new Date().toISOString()}).then(function(){
+      var updateData = {status:newStatus, updatedAt:new Date().toISOString()};
+
+      // When approving, prompt admin to set a temporary password
+      if(newStatus==='Approved' || newStatus==='Active'){
+        var tempPwd = prompt('Set a temporary password for this account:\n(Client will be able to change it in their portal)','Seacoast' + Math.floor(1000+Math.random()*9000) + '!');
+        if(tempPwd===null) return; // cancelled
+        if(tempPwd.length < 6){ showToast('Password must be at least 6 characters.'); return; }
+        updateData.password = tempPwd;
+        alert('\u2705 Approval saved!\n\nTemporary Password to send to client:\n\n' + tempPwd + '\n\nPlease send this to the contact now.');
+      }
+
+      db.collection('corporate_accounts').doc(_cdCorpId).update(updateData).then(function(){
         showToast('Status updated: '+newStatus);
-        // Update local account and refresh buttons
         if(_cdAcc) _cdAcc.status=newStatus;
         var sc=STATUS_COLORS[newStatus]||'#888';
         var sb=document.getElementById('cd-status-badge');
@@ -2708,6 +2719,17 @@
         document.getElementById('cd-btn-reject').style.display   = (newStatus!=='Rejected')?'':'none';
         document.getElementById('cd-btn-reopen').style.display   = (newStatus==='Rejected')?'':'none';
         loadCorporate();
+      }).catch(function(err){ showToast('Error: '+err.message); });
+    }
+
+    function setCorpTempPwd(){
+      if(!_cdCorpId||!db) return;
+      var tempPwd = prompt('Enter a new temporary password for this account:','Seacoast' + Math.floor(1000+Math.random()*9000) + '!');
+      if(tempPwd===null) return;
+      if(tempPwd.length < 6){ showToast('Password must be at least 6 characters.'); return; }
+      db.collection('corporate_accounts').doc(_cdCorpId).update({password: tempPwd}).then(function(){
+        showToast('Password updated.');
+        alert('\u2705 Password set!\n\nSend this to the client:\n\n' + tempPwd);
       }).catch(function(err){ showToast('Error: '+err.message); });
     }
 

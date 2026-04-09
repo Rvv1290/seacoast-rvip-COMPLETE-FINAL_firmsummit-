@@ -16,8 +16,9 @@
   try{
     if(!firebase.apps.length)firebase.initializeApp(c);
     window._db=firebase.firestore();
-    window._auth=firebase.auth();
-    window._auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+    // window._auth=firebase.auth();
+    // window._auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+    window._auth=null;
   }catch(e){window._db=null;window._auth=null;}
 })();
 </script>
@@ -131,10 +132,10 @@ body{font-family:'Inter',sans-serif;min-height:100vh;background:#fff;overflow-x:
     <span class="logo-tag">Corporate Accounts</span>
   </div>
 
-  <!-- STEP 1 — Phone -->
+  <!-- STEP 1 — Phone & Password -->
   <div id="s1" class="step active">
     <h1 class="panel-title">Corporate<br>Sign In</h1>
-    <p class="panel-sub">Enter your registered business phone number to receive your access code.</p>
+    <p class="panel-sub">Enter your business phone number and password.</p>
     <div id="err1" class="alert-err"></div>
     <div class="f-group">
       <label class="f-label">Business Phone Number</label>
@@ -143,8 +144,11 @@ body{font-family:'Inter',sans-serif;min-height:100vh;background:#fff;overflow-x:
         <input class="f-input" id="ph" type="tel" placeholder="(603) 555-0100" inputmode="numeric" maxlength="14"/>
       </div>
     </div>
-    <div id="recaptcha-container"></div>
-    <button class="btn-blk" id="send-btn" onclick="sendCode()">Send Verification Code →</button>
+    <div class="f-group">
+      <label class="f-label">Password</label>
+      <input class="f-input" id="pwd" type="password" placeholder="Enter password" onkeydown="if(event.key==='Enter')sendCode()"/>
+    </div>
+    <button class="btn-blk" id="send-btn" onclick="sendCode()" style="margin-top:10px">Sign In →</button>
     <button class="btn-out" onclick="window.location.href='index.html'">← Back to Home</button>
     <div class="div-line"><span>New to Corporate?</span></div>
     <div class="apply-box">
@@ -152,28 +156,6 @@ body{font-family:'Inter',sans-serif;min-height:100vh;background:#fff;overflow-x:
       <div class="apply-box-txt">NET-30 invoicing · Priority dispatch · Monthly statements· Dedicated support</div>
       <a href="#apply">Apply Now →</a>
     </div>
-  </div>
-
-  <!-- STEP 2 — Code -->
-  <div id="s2" class="step">
-    <div class="back-link" onclick="goS('s1')">
-      <span class="material-symbols-outlined" style="font-size:18px">arrow_back</span>
-      <span>Change phone number</span>
-    </div>
-    <h1 class="panel-title">Verify<br>Your Code</h1>
-    <p class="panel-sub" id="s2-sub">A 6-digit verification code was sent via SMS to your registered business phone number.</p>
-    <div id="err2" class="alert-err"></div>
-    <label class="f-label">Enter 6-Digit Code</label>
-    <div class="digits">
-      <input class="dg" id="d0" maxlength="1" inputmode="numeric" oninput="dnext(this,1)" onkeydown="dprev(event,this,null)"/>
-      <input class="dg" id="d1" maxlength="1" inputmode="numeric" oninput="dnext(this,2)" onkeydown="dprev(event,this,0)"/>
-      <input class="dg" id="d2" maxlength="1" inputmode="numeric" oninput="dnext(this,3)" onkeydown="dprev(event,this,1)"/>
-      <input class="dg" id="d3" maxlength="1" inputmode="numeric" oninput="dnext(this,4)" onkeydown="dprev(event,this,2)"/>
-      <input class="dg" id="d4" maxlength="1" inputmode="numeric" oninput="dnext(this,5)" onkeydown="dprev(event,this,3)"/>
-      <input class="dg" id="d5" maxlength="1" inputmode="numeric" oninput="dcheck()" onkeydown="dprev(event,this,4)"/>
-    </div>
-    <button class="btn-blk" id="verify-btn" onclick="verifyCode()">Access Corporate Portal →</button>
-    <button class="btn-out" onclick="sendCode()">Resend Code</button>
   </div>
 
   <!-- STEP 3 — Success -->
@@ -213,24 +195,12 @@ body{font-family:'Inter',sans-serif;min-height:100vh;background:#fff;overflow-x:
 <script>
 var db = window._db;
 var auth = window._auth;
-var _ph = '', _acc = null, _confirmationResult = null;
+var _ph = '', _acc = null;
 
-// ─── AUTO LOGIN (stays signed in after first OTP) ───
+// ─── AUTO LOGIN ───
 (function(){
-  if(auth){
-    auth.onAuthStateChanged(function(user){
-      if(user){
-        var s = JSON.parse(localStorage.getItem('corp_session')||'null');
-        if(s && s.expiresAt > Date.now()){
-          window.location.href='corporate-portal.html';
-        }
-      }
-    });
-  } else {
-    // Fallback: session-only check
-    var s = JSON.parse(localStorage.getItem('corp_session')||'null');
-    if(s && s.expiresAt > Date.now()) window.location.href='corporate-portal.html';
-  }
+  var s = JSON.parse(localStorage.getItem('corp_session')||'null');
+  if(s && s.expiresAt > Date.now()) window.location.href='corporate-portal.html';
 })();
 
 // Phone formatting
@@ -241,10 +211,10 @@ document.getElementById('ph').addEventListener('input',function(e){
   if(v.length>=7)f+='-'+v.substring(6,10);
   e.target.value=f;
 });
-document.getElementById('ph').addEventListener('keypress',function(e){if(e.key==='Enter')sendCode();});
+document.getElementById('ph').addEventListener('keypress',function(e){if(e.key==='Enter')document.getElementById('pwd').focus();});
 
 function goS(id){
-  ['s1','s2','s3'].forEach(function(s){var el=document.getElementById(s);if(el)el.classList.remove('active');});
+  ['s1','s3'].forEach(function(s){var el=document.getElementById(s);if(el)el.classList.remove('active');});
   var t=document.getElementById(id);if(t)t.classList.add('active');
 }
 
@@ -252,10 +222,13 @@ function sendCode(){
   var btn=document.getElementById('send-btn'),err=document.getElementById('err1');
   err.style.display='none';
   var raw=document.getElementById('ph').value.replace(/\D/g,'');
+  var pwd=document.getElementById('pwd').value;
   if(raw.length<10){err.textContent='Please enter a valid 10-digit phone number.';err.style.display='block';return;}
+  if(!pwd){err.textContent='Please enter your password.';err.style.display='block';return;}
+  
   _ph=raw;
-  btn.textContent='Searching…';btn.disabled=true;
-  if(!db){err.textContent='Service error. Please call (978) 255-3140.';err.style.display='block';btn.textContent='Send Verification Code →';btn.disabled=false;return;}
+  btn.textContent='Signing In...';btn.disabled=true;
+  if(!db){err.textContent='Service error. Please call (978) 255-3140.';err.style.display='block';btn.textContent='Sign In →';btn.disabled=false;return;}
 
   db.collection('corporate_accounts').where('status','in',['Approved','Active']).get().then(function(snap){
     var found=null;
@@ -269,30 +242,22 @@ function sendCode(){
         if(mp===raw||mp.slice(-10)===raw){found=a;return;}
       }
     });
-    if(!found){
-      err.textContent='No approved corporate account found for this phone. Please check the number or contact us at (978) 255-3140.';
-      err.style.display='block';btn.textContent='Send Verification Code →';btn.disabled=false;return;
-    }
-    _acc=found;
 
-    // Send OTP via Firebase Phone Auth
-    if(!auth){err.textContent='Auth service unavailable. Please call (978) 255-3140.';err.style.display='block';btn.textContent='Send Verification Code →';btn.disabled=false;return;}
-    if(window._corpRecaptcha){try{window._corpRecaptcha.clear();}catch(e){}}
-    window._corpRecaptcha=new firebase.auth.RecaptchaVerifier('recaptcha-container',{size:'invisible'});
-    var fullPhone='+1'+raw;
-    auth.signInWithPhoneNumber(fullPhone,window._corpRecaptcha).then(function(result){
-      _confirmationResult=result;
-      btn.textContent='Send Verification Code →';btn.disabled=false;
-      goS('s2');
-    }).catch(function(e){
-      err.textContent=e.message||'Could not send code. Please try again.';
-      err.style.display='block';btn.textContent='Send Verification Code →';btn.disabled=false;
-      if(window._corpRecaptcha){try{window._corpRecaptcha.clear();}catch(ex){}}
-      window._corpRecaptcha=null;
-    });
+    if(!found){
+      err.textContent='Incorrect phone number or password.';
+      err.style.display='block';btn.textContent='Sign In →';btn.disabled=false;return;
+    }
+
+    if(found.password !== pwd){
+      err.textContent='Incorrect phone number or password.';
+      err.style.display='block';btn.textContent='Sign In →';btn.disabled=false;return;
+    }
+
+    _acc=found;
+    grantAccess(_acc);
   }).catch(function(){
     err.textContent='Connection error. Please try again.';err.style.display='block';
-    btn.textContent='Send Verification Code →';btn.disabled=false;
+    btn.textContent='Sign In →';btn.disabled=false;
   });
 }
 

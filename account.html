@@ -166,10 +166,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 <div id="pg-login">
   <div class="login-card">
     <h1 class="login-title">Client Login</h1>
-    <p class="login-sub">Welcome back. Verify with your phone number or email address.</p>
-
-    <!-- Debug log - always visible so we can see errors -->
-    <div id="debug-log" style="display:none;background:#fff3cd;border:1px solid #ffc107;padding:1rem;margin-bottom:1.5rem;font-size:0.72rem;font-family:monospace;border-radius:4px;color:#333;max-height:180px;overflow-y:auto"></div>
+    <p class="login-sub">Welcome back. Sign in with your phone number or email and password.</p>
 
     <!-- Login Method Toggle -->
     <div style="display:flex;margin-bottom:2rem;border:1px solid var(--border)">
@@ -179,17 +176,16 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 
     <!-- ── PHONE METHOD ── -->
     <div id="login-phone-method">
-
-      <!-- Step 1: Phone -->
       <div id="step-phone">
         <div class="f-group">
           <label class="f-label">Mobile Number</label>
-          <input id="phone-inp" type="tel" class="f-input" placeholder="(603) 000-0000" oninput="fmtPhone(this)" onkeydown="if(event.key==='Enter')doPhoneLogin()"/>
+          <input id="phone-inp" type="tel" class="f-input" placeholder="(603) 000-0000" oninput="fmtPhone(this)" onkeydown="if(event.key==='Enter')document.getElementById('phone-pwd-inp').focus()"/>
+        </div>
+        <div class="f-group">
+          <label class="f-label">Password</label>
+          <input id="phone-pwd-inp" type="password" class="f-input" placeholder="Enter your password" onkeydown="if(event.key==='Enter')doPhoneLogin()"/>
         </div>
         <div id="phone-err" style="display:none;color:#d32f2f;font-size:0.8rem;margin-bottom:1rem"></div>
-        <button id="phone-btn" onclick="doPhoneLogin()" class="btn-k" style="width:100%">Send Code →</button>
-        <div id="recaptcha-container" style="margin-top:1rem"></div>
-      </div>
 
       <!-- Step 2: Phone OTP -->
       <div id="step-otp" style="display:none">
@@ -218,8 +214,8 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
           <input id="email-login-inp" type="email" class="f-input" placeholder="you@example.com" onkeydown="if(event.key==='Enter')doEmailLogin()"/>
         </div>
         <div id="email-err" style="display:none;color:#d32f2f;font-size:0.8rem;margin-bottom:1rem"></div>
-        <button id="email-login-btn" onclick="doEmailLogin()" class="btn-k" style="width:100%">Send Login Link →</button>
-        <p style="text-align:center;font-size:0.7rem;color:#888;margin-top:2rem">We'll email you a secure one-click sign-in link.</p>
+        <button id="email-login-btn" onclick="doEmailLogin()" class="btn-k" style="width:100%">Sign In →</button>
+        <p style="text-align:center;font-size:0.7rem;color:#888;margin-top:2rem">Sign in instantly via your email.</p>
       </div>
 
       <!-- Step 2: Check Email -->
@@ -473,6 +469,14 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
       <div class="f-group"><label class="f-label">Email Communications</label><input id="p-email" class="f-input"/></div>
       <div class="f-group"><label class="f-label">Primary Address</label><input id="p-addr" class="f-input" placeholder="Home or Office"/></div>
       <button onclick="saveProfile()" id="save-prof-btn" class="btn-k" style="width:100%;margin-top:1.5rem">Update Account</button>
+
+      <hr style="margin:1.75rem 0;border:none;border-top:1px solid var(--border)"/>
+      <h4 style="font-family:'Times New Roman',serif;font-size:1rem;margin-bottom:1rem">🔒 Change Password</h4>
+      <div id="cpwd-err" style="display:none;color:#d32f2f;font-size:0.8rem;margin-bottom:1rem"></div>
+      <div id="cpwd-succ" style="display:none;color:#10b981;font-size:0.8rem;margin-bottom:1rem">Password updated successfully.</div>
+      <div class="f-group"><label class="f-label">New Password</label><input id="cpwd-new" type="password" class="f-input" placeholder="Min 6 characters"/></div>
+      <div class="f-group"><label class="f-label">Confirm New Password</label><input id="cpwd-conf" type="password" class="f-input"/></div>
+      <button onclick="changeClientPwd()" class="btn-k" style="width:100%;margin-top:0.5rem;background:#333">Update Password</button>
     </div>
   </div>
 </div>
@@ -521,12 +525,12 @@ const FB_CFG = {
 };
 if(!firebase.apps.length) firebase.initializeApp(FB_CFG);
 const db = firebase.firestore();
-const auth = firebase.auth();
+// const auth = firebase.auth();
 const funcs = firebase.functions();
 const stripe = Stripe('pk_test_51TDR9sA1R5g39IibVbtiHGPBv4s1rNsIV5fNoMR68INDxN98rTFkZFXDdqS3RlupdfPeMlt9xHTd3EyN9hclmvKV00L6AVRt0z');
 
 // Keep user signed in across browser sessions
-auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+// auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
 
 let currentUser = null;
 let allTrips = [];
@@ -549,46 +553,26 @@ function dbg(msg){
 
 async function doPhoneLogin(){
   const raw = document.getElementById('phone-inp').value;
+  const pwd = document.getElementById('phone-pwd-inp').value;
   const digits = raw.replace(/\D/g,'');
-  if(digits.length < 10) return showErr('phone-err', 'Please enter a valid 10-digit number.');
   const btn = document.getElementById('phone-btn');
-  btn.disabled=true; btn.textContent='Sending Code...';
-  document.getElementById('phone-err').style.display='none';
-  dbg('Button clicked — phone: ' + raw);
+  const err = document.getElementById('phone-err');
+  err.style.display='none';
+  if(digits.length < 10) { err.textContent='Please enter a valid 10-digit number.'; err.style.display='block'; return; }
+  if(!pwd) { err.textContent='Please enter your password.'; err.style.display='block'; return; }
+  btn.disabled=true; btn.textContent='Signing In...';
   try {
-    _pendingPhone = digits.length===10 ? '+1'+digits : '+'+digits;
-    dbg('Checking Firestore for account...');
-
-    const snap = await db.collection('clients').where('phone','==',_pendingPhone).limit(1).get();
-    _pendingIsNewUser = snap.empty;
-    _pendingClient = null;
-    if(!snap.empty) snap.forEach(d => _pendingClient = {id:d.id, ...d.data()});
-    dbg('Firestore check done. New user: ' + _pendingIsNewUser);
-
-    // Reset reCAPTCHA
-    if(window._recaptchaVerifier){ try{ window._recaptchaVerifier.clear(); }catch(e){} window._recaptchaVerifier=null; }
-    document.getElementById('recaptcha-container').innerHTML = '';
-    dbg('Setting up reCAPTCHA...');
-    window._recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
-      size: 'invisible',
-      callback: () => { dbg('reCAPTCHA solved!'); }
-    });
-    await window._recaptchaVerifier.render();
-    dbg('reCAPTCHA ready. Calling signInWithPhoneNumber...');
-
-    _confirmationResult = await auth.signInWithPhoneNumber(_pendingPhone, window._recaptchaVerifier);
-    dbg('SUCCESS — OTP sent!');
-
-    document.getElementById('step-phone').style.display='none';
-    document.getElementById('step-otp').style.display='block';
-    document.getElementById('otp-phone-display').textContent = raw;
+    const phone = digits.length===10 ? '+1'+digits : '+'+digits;
+    const snap = await db.collection('clients').where('phone','==',phone).limit(1).get();
+    if(snap.empty){ err.textContent='Incorrect phone number or password.'; err.style.display='block'; btn.disabled=false; btn.textContent='Sign In →'; return; }
+    let client; snap.forEach(d => client = {id:d.id, ...d.data()});
+    if(client.password !== pwd){ err.textContent='Incorrect phone number or password.'; err.style.display='block'; btn.disabled=false; btn.textContent='Sign In →'; return; }
+    loginUser(client);
   } catch(e){
-    const msg = e.message || 'Could not send code. Please try again.';
-    dbg('ERROR: ' + e.code + ' — ' + e.message);
-    showErr('phone-err', msg);
-    if(window._recaptchaVerifier){ try{ window._recaptchaVerifier.clear(); }catch(ex){} window._recaptchaVerifier=null; }
+    err.textContent = e.message || 'Connection error. Please try again.';
+    err.style.display='block';
   }
-  btn.disabled=false; btn.textContent='Continue →';
+  btn.disabled=false; btn.textContent='Sign In →';
 }
 
 async function verifyOTP(){
@@ -966,30 +950,48 @@ function switchLoginTab(tab){
   }
 }
 
-// ─── EMAIL LINK LOGIN ───
+// ─── EMAIL LOGIN ───
 async function doEmailLogin(){
   const email = document.getElementById('email-login-inp').value.trim();
+  const pwd = document.getElementById('email-pwd-inp').value;
   const err = document.getElementById('email-err');
   err.style.display='none';
-  if(!email || !email.includes('@')) return (err.textContent='Please enter a valid email address.', err.style.display='block');
+  if(!email || !email.includes('@')) { err.textContent='Please enter a valid email.'; err.style.display='block'; return; }
+  if(!pwd) { err.textContent='Please enter your password.'; err.style.display='block'; return; }
   const btn = document.getElementById('email-login-btn');
-  btn.disabled=true; btn.textContent='Sending...';
+  btn.disabled=true; btn.textContent='Signing In...';
   try {
-    const actionCodeSettings = {
-      url: 'https://seacoastrvip.com/account.html',
-      handleCodeInApp: true
-    };
-    await auth.sendSignInLinkToEmail(email, actionCodeSettings);
-    localStorage.setItem('rvip-email-signin', email);
-    document.getElementById('step-email').style.display='none';
-    document.getElementById('step-email-sent').style.display='block';
-    document.getElementById('email-sent-display').textContent = email;
+    const snap = await db.collection('clients').where('email','==',email).limit(1).get();
+    if(snap.empty){ err.textContent='Incorrect email or password.'; err.style.display='block'; btn.disabled=false; btn.textContent='Sign In →'; return; }
+    let client; snap.forEach(d=>client={id:d.id, ...d.data()});
+    if(client.password !== pwd){ err.textContent='Incorrect email or password.'; err.style.display='block'; btn.disabled=false; btn.textContent='Sign In →'; return; }
+    loginUser(client);
   } catch(e){
-    err.textContent = e.message || 'Could not send link. Please try again.';
-    err.style.display='block';
-    console.error('[Email Auth]', e.code, e.message);
+    err.textContent = e.message || 'Error occurred.';
+    err.style.display = 'block';
   }
-  btn.disabled=false; btn.textContent='Send Login Link →';
+  btn.disabled=false; btn.textContent='Sign In →';
+}
+
+// ─── CHANGE PASSWORD ───
+async function changeClientPwd(){
+  const np = document.getElementById('cpwd-new').value;
+  const cp = document.getElementById('cpwd-conf').value;
+  const err = document.getElementById('cpwd-err');
+  const succ = document.getElementById('cpwd-succ');
+  err.style.display='none'; succ.style.display='none';
+  if(!np||!cp){ err.textContent='Please fill both fields.'; err.style.display='block'; return; }
+  if(np!==cp){ err.textContent='Passwords do not match.'; err.style.display='block'; return; }
+  if(np.length<6){ err.textContent='Password must be at least 6 characters.'; err.style.display='block'; return; }
+  try{
+    await db.collection('clients').doc(currentUser.id).update({ password: np });
+    succ.style.display='block';
+    document.getElementById('cpwd-new').value='';
+    document.getElementById('cpwd-conf').value='';
+  }catch(e){
+    err.textContent=e.message||'Failed to update password.';
+    err.style.display='block';
+  }
 }
 
 // ─── HANDLE EMAIL LINK ON PAGE LOAD ───
@@ -1080,33 +1082,18 @@ async function saveProfile(){
   } catch(e){ toast(e.message); }
 }
 
-// ─── AUTO LOGIN (stays signed in after first verification) ───
-auth.onAuthStateChanged(async user => {
-  // First check if this is an email link sign-in (from clicking email link)
-  const wasEmailLink = await checkEmailLink();
-  if(wasEmailLink) return;
-
-  if(user){
-    // Firebase session active — restore account without re-verifying
-    const saved = localStorage.getItem('rvip-client-id');
-    if(saved){
-      const d = await db.collection('clients').doc(saved).get();
-      if(d.exists){ loginUser({id:d.id,...d.data()}); return; }
-    }
-    // Look up by phone
-    if(user.phoneNumber){
-      const snap = await db.collection('clients').where('phone','==',user.phoneNumber).limit(1).get();
-      if(!snap.empty){ let c; snap.forEach(d=>c={id:d.id,...d.data()}); loginUser(c); return; }
-    }
-    // Look up by email
-    if(user.email){
-      const snap = await db.collection('clients').where('email','==',user.email).limit(1).get();
-      if(!snap.empty){ let c; snap.forEach(d=>c={id:d.id,...d.data()}); loginUser(c); return; }
-    }
+// ─── AUTO LOGIN (check localStorage session) ───
+(function(){
+  const saved = localStorage.getItem('rvip-client-id');
+  if(saved && db){
+    db.collection('clients').doc(saved).get().then(d=>{
+      if(d.exists) loginUser({id:d.id,...d.data()});
+      else document.getElementById('pg-login').style.display='flex';
+    }).catch(()=>{ document.getElementById('pg-login').style.display='flex'; });
+  } else {
+    document.getElementById('pg-login').style.display='flex';
   }
-  // No active session — show login
-  document.getElementById('pg-login').style.display='flex';
-});
+})();
 
 const stmtMonth = document.getElementById('stmt-month');
 if(stmtMonth) stmtMonth.value = new Date().getMonth();

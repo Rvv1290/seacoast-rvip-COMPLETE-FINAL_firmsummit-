@@ -783,6 +783,16 @@ var _sess = null;
         <div class="acct-row"><span class="acct-key">Typical Routes</span><span class="acct-val" id="a-routes"></span></div>
         <div class="acct-row"><span class="acct-key">Team Members</span><span class="acct-val" id="a-riders" style="white-space:pre-line"></span></div>
       </div>
+      <div class="acct-card">
+        <div class="acct-title">Security Settings</div>
+        <div id="pwd-err" style="display:none;color:#d32f2f;font-size:0.8rem;margin-bottom:1rem"></div>
+        <div id="pwd-succ" style="display:none;color:#10b981;font-size:0.8rem;margin-bottom:1rem">Password updated successfully.</div>
+        <div class="book-grid">
+          <div class="f-group"><label class="f-label">New Password</label><input class="f-input" id="cp-new" type="password"/></div>
+          <div class="f-group"><label class="f-label">Confirm Password</label><input class="f-input" id="cp-conf" type="password"/></div>
+        </div>
+        <button class="btn-blk" onclick="changeCorpPwd()" style="margin-top:0.5rem">Update Password</button>
+      </div>
       <div style="margin-top:1rem;display:flex;gap:0.75rem;flex-wrap:wrap">
         <button class="btn-blk" onclick="goTab('book',null)">+ Book a Ride</button>
         <button class="btn-out" style="margin-left:0" onclick="goTab('team',null)">👥 Manage Team</button>
@@ -1808,6 +1818,29 @@ function printAnnualSummary(){
 
 // ─── UTILS ───
 function escH(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+async function changeCorpPwd(){
+  var np = document.getElementById('cp-new').value;
+  var cp = document.getElementById('cp-conf').value;
+  var err = document.getElementById('pwd-err');
+  var succ = document.getElementById('pwd-succ');
+  err.style.display='none';
+  succ.style.display='none';
+  if(!np || !cp){ err.textContent='Please fill both fields.'; err.style.display='block'; return; }
+  if(np !== cp){ err.textContent='Passwords do not match.'; err.style.display='block'; return; }
+  if(np.length < 6){ err.textContent='Password must be at least 6 characters.'; err.style.display='block'; return; }
+  
+  try {
+    await db.collection('corporate_accounts').doc(sess.accountId).update({ password: np });
+    succ.style.display='block';
+    document.getElementById('cp-new').value='';
+    document.getElementById('cp-conf').value='';
+  } catch(e) {
+    err.textContent=e.message || 'Failed to update password.';
+    err.style.display='block';
+  }
+}
+
 function logout(){
   localStorage.removeItem('corp_session');
   try{ firebase.auth().signOut(); }catch(e){}
