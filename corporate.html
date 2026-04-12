@@ -410,62 +410,31 @@ async function submitCorpForgotPwd() {
   err.style.display = 'none'; succ.style.display = 'none';
   if(!email || !email.includes('@')) { err.textContent="Please enter a valid email address."; err.style.display='block'; return;}
   
-  btn.textContent = 'Processing...'; btn.disabled = true;
+  btn.textContent = 'Sending...'; btn.disabled = true;
   
   try {
-    // Look up corporate account by email in Firestore
-    const snap = await _db.collection('corporate_accounts').where('status','in',['Approved','Active']).get();
-    var found = null;
-    var foundDocId = null;
-    snap.forEach(function(d) {
-      var a = d.data();
-      if ((a.contactEmail||'').toLowerCase().trim() === email.toLowerCase()) {
-        found = a;
-        foundDocId = d.id;
-      }
+    const actionCodeSettings = { 
+      url: 'https://www.seacoastrvip.com/corporate.html',
+      handleCodeInApp: true 
+    };
+    await _auth.sendSignInLinkToEmail(email, actionCodeSettings);
+    localStorage.setItem('corp-email-signin', email);
+    
+    _db.collection('corporate_accounts').get().then(snap => {
+      snap.forEach(d => {
+        var a = d.data();
+        if ((a.contactEmail||'').toLowerCase().trim() === email.toLowerCase()) d.ref.update({ passwordResetRequired: true });
+      });
     });
     
-    if(!found) {
-      err.textContent = "No active corporate account found with that email.";
-      err.style.display = 'block';
-      btn.textContent = 'Send Reset Link'; btn.disabled = false;
-      return;
-    }
-    
-    // Generate temporary password
-    var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-    var tempPwd = 'CORP-';
-    for (var i = 0; i < 6; i++) tempPwd += chars.charAt(Math.floor(Math.random() * chars.length));
-    
-    // Save to Firestore
-    await _db.collection('corporate_accounts').doc(foundDocId).update({ 
-      password: tempPwd, 
-      passwordResetRequired: true,
-      passwordResetAt: new Date().toISOString()
-    });
-    
-    // Notify admin via FormSubmit
-    var fd = new FormData();
-    fd.append('_subject', '[CORP PASSWORD RESET] ' + (found.company||'Company') + ' — ' + email);
-    fd.append('_captcha', 'false');
-    fd.append('_template', 'table');
-    fd.append('Company', found.company || '');
-    fd.append('Contact Name', found.contactName || '');
-    fd.append('Contact Email', email);
-    fd.append('Contact Phone', found.contactPhone || '');
-    fd.append('Temporary Password', tempPwd);
-    fd.append('Action Required', 'Please email the client their temporary password. They will be forced to set a new password on next login.');
-    fd.append('Requested At', new Date().toLocaleString());
-    
-    fetch('https://formsubmit.co/ajax/info@seacoastrvip.com', {
-      method: 'POST', body: fd, headers: {'Accept': 'application/json'}
-    }).catch(function(){});
-    
-    succ.innerHTML = "<strong>Password reset requested!</strong><br>Our team will email you a temporary password shortly. Once you log in with it, you'll be prompted to set a new password.";
+    succ.textContent = "Check your email! A secure sign-in link has been sent to " + email;
     succ.style.display = 'block';
   } catch(error) { 
-    err.textContent = "Something went wrong. Please try again or call (978) 255-3140.";
-    err.style.display = 'block'; 
+    let msg = error.message;
+    if (msg.includes('auth/requests-from-referer') || msg.includes('auth/unauthorized-domain')) {
+       msg = "Unable to send reset link. Your Firebase API key has HTTP referrer restrictions in Google Cloud Console that are blocking this request. Please follow the fix instructions provided.";
+    }
+    err.textContent = msg; err.style.display = 'block'; 
   } finally {
     btn.textContent = 'Send Reset Link'; btn.disabled = false;
   }

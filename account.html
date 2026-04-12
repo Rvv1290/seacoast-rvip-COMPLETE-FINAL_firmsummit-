@@ -530,7 +530,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
       <button class="close-btn" onclick="closeM('m-forgot'); document.getElementById('forgot-err').style.display='none'; document.getElementById('forgot-succ').style.display='none';">&times;</button>
     </div>
     <div class="modal-bd">
-      <p style="font-size:0.85rem;color:var(--text-sec);line-height:1.5;margin-bottom:1rem">Enter the email associated with your account. Our team will send you a temporary password so you can log back in and set a new one.</p>
+      <p style="font-size:0.85rem;color:var(--text-sec);line-height:1.5;margin-bottom:1rem">Enter the email associated with your account to receive a secure login link. Once you click the link, you'll be prompted to set a new password.</p>
       
       <div id="forgot-err" style="display:none;padding:10px;background:#fef2f2;border-left:3px solid #ef4444;color:#b91c1c;font-size:0.8rem;margin-bottom:1rem"></div>
       <div id="forgot-succ" style="display:none;padding:10px;background:#f0fdf4;border-left:3px solid #10b981;color:#047857;font-size:0.8rem;margin-bottom:1rem"></div>
@@ -539,7 +539,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
         <label class="f-label">Account Email</label>
         <input id="forgot-email" type="email" class="f-input" placeholder="name@domain.com"/>
       </div>
-      <button id="forgot-submit-btn" onclick="submitForgotPwd()" class="btn-k" style="width:100%;margin-top:0.5rem">Request Password Reset</button>
+      <button id="forgot-submit-btn" onclick="submitForgotPwd()" class="btn-k" style="width:100%;margin-top:0.5rem">Send Reset Link</button>
     </div>
   </div>
 </div>
@@ -1211,13 +1211,6 @@ function sendForgotPwdLink(type) {
   openM('m-forgot');
 }
 
-function generateTempPassword() {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let pwd = 'RVIP-';
-  for (let i = 0; i < 6; i++) pwd += chars.charAt(Math.floor(Math.random() * chars.length));
-  return pwd;
-}
-
 async function submitForgotPwd() {
   const email = document.getElementById('forgot-email').value.trim();
   const err = document.getElementById('forgot-err');
@@ -1229,57 +1222,32 @@ async function submitForgotPwd() {
   
   if(!email || !email.includes('@')) { err.textContent = "Please enter a valid email address."; err.style.display = 'block'; return; }
   
-  btn.textContent = 'Processing...';
+  btn.textContent = 'Sending...';
   btn.disabled = true;
   
   try {
-    // Look up client by email in Firestore
+    const actionCodeSettings = { 
+      url: window.location.href, 
+      handleCodeInApp: true 
+    };
+    await auth.sendSignInLinkToEmail(email, actionCodeSettings);
+    localStorage.setItem('rvip-email-signin', email);
+    
+    // Tag user for forced password reset
     const snaps = await db.collection('clients').where('email','==',email).get();
+    snaps.forEach(d => { db.collection('clients').doc(d.id).update({ passwordResetRequired: true }); });
     
-    if(snaps.empty) {
-      err.textContent = "No account found with that email address.";
-      err.style.display = 'block';
-      btn.textContent = 'Send Reset Link';
-      btn.disabled = false;
-      return;
-    }
-    
-    // Generate temporary password and save to Firestore
-    const tempPwd = generateTempPassword();
-    let clientName = '';
-    let clientPhone = '';
-    
-    snaps.forEach(d => {
-      const data = d.data();
-      clientName = data.name || 'Client';
-      clientPhone = data.phone || '';
-      db.collection('clients').doc(d.id).update({ 
-        password: tempPwd, 
-        passwordResetRequired: true,
-        passwordResetAt: new Date().toISOString()
-      });
-    });
-    
-    // Notify admin via FormSubmit so they can contact the client
-    const fd = new FormData();
-    fd.append('_subject', '[PASSWORD RESET] ' + clientName + ' — ' + email);
-    fd.append('_captcha', 'false');
-    fd.append('_template', 'table');
-    fd.append('Client Name', clientName);
-    fd.append('Client Email', email);
-    fd.append('Client Phone', clientPhone);
-    fd.append('Temporary Password', tempPwd);
-    fd.append('Action Required', 'Please email the client their temporary password. They will be forced to set a new password on next login.');
-    fd.append('Requested At', new Date().toLocaleString());
-    
-    fetch('https://formsubmit.co/ajax/info@seacoastrvip.com', {
-      method: 'POST', body: fd, headers: {'Accept': 'application/json'}
-    }).catch(function(){});
-    
-    succ.innerHTML = "<strong>Password reset requested!</strong><br>Our team will email you a temporary password shortly. Once you log in with it, you'll be prompted to set your own secure password.";
+    succ.textContent = "Check your email! A secure sign-in link has been sent to " + email;
     succ.style.display = 'block';
   } catch(error) {
-    err.textContent = "Something went wrong. Please try again or call (978) 255-3140.";
+    let msg = error.message;
+    if (msg.includes('auth/requests-from-referer')) {
+       // Extract the actual domain being blocked from the error string
+       const matchedDomain = msg.match(/referer-(.*?)-are/);
+       const domainStr = matchedDomain ? matchedDomain[1] : "your current URL";
+       msg = `Configuration Error: ${domainStr} is not yet authorized. Please add it to Firebase Auth > Settings > Authorized Domains. Check Google Cloud Console API Key restrictions as well.`;
+    }
+    err.textContent = msg;
     err.style.display = 'block';
   } finally {
     btn.textContent = 'Send Reset Link';
