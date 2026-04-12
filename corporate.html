@@ -429,7 +429,9 @@ async function submitCorpForgotPwd() {
   } catch(error) { 
     let msg = error.message;
     if (msg.includes('auth/requests-from-referer')) {
-       msg = "Configuration Error: The domain is not yet authorized in Firebase Console. Please add www.seacoastrvip.com to Firebase Auth > Settings > Authorized Domains.";
+       const matchedDomain = msg.match(/referer-(.*?)-are/);
+       const domainStr = matchedDomain ? matchedDomain[1] : "your current URL";
+       msg = `Configuration Error: ${domainStr} is not yet authorized in Firebase Console. Please add it to Firebase Auth > Settings > Authorized Domains.`;
     }
     err.textContent = msg; err.style.display = 'block'; 
   } finally {
