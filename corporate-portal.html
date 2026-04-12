@@ -1963,7 +1963,11 @@ async function submitForcedReset() {
   btn.textContent = 'Saving...'; btn.disabled = true;
   
   try {
-    var userId = localStorage.getItem('corp_pwd_reset_required');
+    // USE SESSION ID instead of a potentially stale localStorage key
+    var userId = (sess && sess.accountId) ? sess.accountId : localStorage.getItem('corp_pwd_reset_required');
+    
+    if(!userId) { throw new Error('Account ID not found. Please log out and sign in again.'); }
+
     await _db.collection('corporate_accounts').doc(userId).update({
       password: np,
       passwordResetRequired: false

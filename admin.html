@@ -2545,7 +2545,10 @@
       if (!db) { el.innerHTML = '<div class="empty">Firebase not connected</div>'; return; }
       db.collection('corporate_accounts').orderBy('createdAt','desc').get().then(function(snap) {
         var accounts = [];
-        snap.forEach(function(d){ accounts.push(d.data()); });
+        snap.forEach(function(d){ 
+          var a = d.data(); a.id = d.id; 
+          accounts.push(a); 
+        });
         renderCorporate(accounts);
       }).catch(function(e){
         el.innerHTML = '<div class="empty">Error: ' + e.message + '</div>';
