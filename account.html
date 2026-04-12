@@ -522,6 +522,28 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
   </div>
 </div>
 
+<!-- MODAL: Forgot Password (m-forgot) -->
+<div class="overlay" id="m-forgot">
+  <div class="modal">
+    <div class="modal-hd">
+      <h3 style="font-family:'Times New Roman',serif;font-size:1.3rem;color:#000">Reset Password</h3>
+      <button class="close-btn" onclick="closeM('m-forgot'); document.getElementById('forgot-err').style.display='none'; document.getElementById('forgot-succ').style.display='none';">&times;</button>
+    </div>
+    <div class="modal-bd">
+      <p style="font-size:0.85rem;color:var(--text-sec);line-height:1.5;margin-bottom:1rem">Enter the email associated with your account to receive a secure login link. Once you click the link, you'll be prompted to set a new password.</p>
+      
+      <div id="forgot-err" style="display:none;padding:10px;background:#fef2f2;border-left:3px solid #ef4444;color:#b91c1c;font-size:0.8rem;margin-bottom:1rem"></div>
+      <div id="forgot-succ" style="display:none;padding:10px;background:#f0fdf4;border-left:3px solid #10b981;color:#047857;font-size:0.8rem;margin-bottom:1rem"></div>
+      
+      <div class="f-group">
+        <label class="f-label">Account Email</label>
+        <input id="forgot-email" type="email" class="f-input" placeholder="name@domain.com"/>
+      </div>
+      <button id="forgot-submit-btn" onclick="submitForgotPwd()" class="btn-k" style="width:100%;margin-top:0.5rem">Send Reset Link</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL: Add Card (Stripe) -->
 <div class="overlay" id="m-card">
   <div class="modal">
@@ -1180,29 +1202,50 @@ async function forceChangeClientPwd(){
 }
 
 // ─── FORGOT PASSWORD ───
-async function sendForgotPwdLink(type) {
-  let email = '';
-  if (type === 'email') email = document.getElementById('email-login-inp').value.trim();
-  email = window.prompt("Enter your account email address to receive a secure login link:", email);
-  if(!email || !email.includes('@')) return;
+function sendForgotPwdLink(type) {
+  let initialEmail = '';
+  if (type === 'email') initialEmail = document.getElementById('email-login-inp').value.trim();
+  document.getElementById('forgot-email').value = initialEmail;
+  document.getElementById('forgot-err').style.display = 'none';
+  document.getElementById('forgot-succ').style.display = 'none';
+  openM('m-forgot');
+}
+
+async function submitForgotPwd() {
+  const email = document.getElementById('forgot-email').value.trim();
+  const err = document.getElementById('forgot-err');
+  const succ = document.getElementById('forgot-succ');
+  const btn = document.getElementById('forgot-submit-btn');
+  
+  err.style.display = 'none';
+  succ.style.display = 'none';
+  
+  if(!email || !email.includes('@')) { err.textContent = "Please enter a valid email address."; err.style.display = 'block'; return; }
+  
+  btn.textContent = 'Sending...';
+  btn.disabled = true;
   
   try {
-    const actionCodeSettings = {
-      url: window.location.href,
-      handleCodeInApp: true
-    };
+    const actionCodeSettings = { url: window.location.href, handleCodeInApp: true };
     await auth.sendSignInLinkToEmail(email, actionCodeSettings);
     localStorage.setItem('rvip-email-signin', email);
     
-    // Attempt to tag the user as requiring a reset so when they log in with the link, they must set password
+    // Tag user for forced password reset
     const snaps = await db.collection('clients').where('email','==',email).get();
-    snaps.forEach(d => {
-       db.collection('clients').doc(d.id).update({ passwordResetRequired: true });
-    });
+    snaps.forEach(d => { db.collection('clients').doc(d.id).update({ passwordResetRequired: true }); });
     
-    alert("Check your email! A secure sign-in link has been sent to " + email);
-  } catch(e) {
-    alert("Unable to send reset link. Error: " + e.message);
+    succ.textContent = "Check your email! A secure sign-in link has been sent to " + email;
+    succ.style.display = 'block';
+  } catch(error) {
+    let msg = error.message;
+    if (msg.includes('auth/requests-from-referer')) {
+       msg = "Error: Your domain is not yet authorized in Firebase Console. Please add www.seacoastrvip.com to Firebase Auth > Settings > Authorized Domains.";
+    }
+    err.textContent = msg;
+    err.style.display = 'block';
+  } finally {
+    btn.textContent = 'Send Reset Link';
+    btn.disabled = false;
   }
 }
 

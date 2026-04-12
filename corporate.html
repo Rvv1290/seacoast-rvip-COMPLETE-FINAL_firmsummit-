@@ -147,7 +147,7 @@ body{font-family:'Inter',sans-serif;min-height:100vh;background:#fff;overflow-x:
       <input class="f-input" id="pwd" type="password" placeholder="Enter password" onkeydown="if(event.key==='Enter')sendCode()"/>
     </div>
     <button class="btn-blk" id="send-btn" onclick="sendCode()" style="margin-top:10px">Sign In →</button>
-    <button onclick="sendCorpForgotPwdLink()" style="width:100%;margin-bottom:0.875rem;background:transparent;border:none;color:#888;font-size:0.7rem;cursor:pointer;text-decoration:underline">Forgot Password?</button>
+    <button onclick="openCorpForgotModal()" style="width:100%;margin-bottom:0.875rem;background:transparent;border:none;color:#888;font-size:0.7rem;cursor:pointer;text-decoration:underline">Forgot Password?</button>
     <button class="btn-out" onclick="window.location.href='index.html'">← Back to Home</button>
     <div class="div-line"><span>New to Corporate?</span></div>
     <div class="apply-box">
@@ -209,6 +209,24 @@ body{font-family:'Inter',sans-serif;min-height:100vh;background:#fff;overflow-x:
     <a href="terms.html">Terms</a>
     <a href="contact.html">Contact Us</a>
     <a href="schedule.html">Personal Booking</a>
+  </div>
+</div>
+
+<!-- MODAL: Forgot Password -->
+<div id="m-corp-forgot" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:999;align-items:center;justify-content:center">
+  <div style="background:#fff;width:90%;max-width:400px;padding:2rem;position:relative;border-top:4px solid #775a19">
+    <button onclick="closeCorpForgotModal()" style="position:absolute;top:1rem;right:1rem;background:transparent;border:none;font-size:1.5rem;cursor:pointer;color:#aaa">&times;</button>
+    <h3 style="font-family:'Times New Roman',serif;font-size:1.35rem;margin-bottom:0.5rem">Reset Password</h3>
+    <p style="font-size:0.85rem;color:#666;line-height:1.5;margin-bottom:1.25rem">Enter your business email. If matched to a corporate account, a secure login link will be sent to establish a new password.</p>
+    
+    <div id="c-forgot-err" class="alert-err" style="margin-bottom:1rem"></div>
+    <div id="c-forgot-succ" class="alert-ok" style="margin-bottom:1rem"></div>
+    
+    <div class="f-group">
+      <label class="f-label">Account Email</label>
+      <input id="c-forgot-email" type="email" class="f-input" placeholder="name@company.com" style="background:#fafaf8"/>
+    </div>
+    <button id="c-forgot-btn" class="btn-blk" onclick="submitCorpForgotPwd()" style="margin-bottom:0">Send Reset Link</button>
   </div>
 </div>
 
@@ -371,12 +389,28 @@ async function saveCorpInitialPwd(){
     btn.disabled=false; btn.textContent='Save & Sign In →';
   }
 }
-async function sendCorpForgotPwdLink() {
+function openCorpForgotModal() {
+  document.getElementById('m-corp-forgot').style.display='flex';
   var iden = document.getElementById('ph').value.trim();
-  var email = '';
-  if (iden.includes('@')) email = iden;
-  email = window.prompt("Enter your corporate account email to receive a secure login link:", email);
-  if(!email || !email.includes('@')) return;
+  if (iden.includes('@')) document.getElementById('c-forgot-email').value = iden;
+  document.getElementById('c-forgot-err').style.display = 'none';
+  document.getElementById('c-forgot-succ').style.display = 'none';
+}
+
+function closeCorpForgotModal() {
+  document.getElementById('m-corp-forgot').style.display='none';
+}
+
+async function submitCorpForgotPwd() {
+  const email = document.getElementById('c-forgot-email').value.trim();
+  const err = document.getElementById('c-forgot-err');
+  const succ = document.getElementById('c-forgot-succ');
+  const btn = document.getElementById('c-forgot-btn');
+  
+  err.style.display = 'none'; succ.style.display = 'none';
+  if(!email || !email.includes('@')) { err.textContent="Please enter a valid email address."; err.style.display='block'; return;}
+  
+  btn.textContent = 'Sending...'; btn.disabled = true;
   
   try {
     const actionCodeSettings = { url: window.location.href, handleCodeInApp: true };
@@ -386,13 +420,21 @@ async function sendCorpForgotPwdLink() {
     _db.collection('corporate_accounts').get().then(snap => {
       snap.forEach(d => {
         var a = d.data();
-        if ((a.contactEmail||'').toLowerCase().trim() === email.toLowerCase()) {
-           d.ref.update({ passwordResetRequired: true });
-        }
+        if ((a.contactEmail||'').toLowerCase().trim() === email.toLowerCase()) d.ref.update({ passwordResetRequired: true });
       });
     });
-    alert("Check your email! A secure sign-in link has been sent to " + email);
-  } catch(e) { alert("Unable to send reset link. Error: " + e.message); }
+    
+    succ.textContent = "Success! Check your email for the secure login link.";
+    succ.style.display = 'block';
+  } catch(error) { 
+    let msg = error.message;
+    if (msg.includes('auth/requests-from-referer')) {
+       msg = "Configuration Error: The domain is not yet authorized in Firebase Console. Please add www.seacoastrvip.com to Firebase Auth > Settings > Authorized Domains.";
+    }
+    err.textContent = msg; err.style.display = 'block'; 
+  } finally {
+    btn.textContent = 'Send Reset Link'; btn.disabled = false;
+  }
 }
 
 // ─── HANDLE EMAIL LINK ON PAGE LOAD ───
