@@ -2549,6 +2549,7 @@
           var a = d.data(); a.id = d.id; 
           accounts.push(a); 
         });
+        window.allCorpsCache = accounts; // FIX: Populate cache for messaging triggers
         renderCorporate(accounts);
       }).catch(function(e){
         el.innerHTML = '<div class="empty">Error: ' + e.message + '</div>';
@@ -2881,35 +2882,37 @@
         var tempPwd = prompt('Set a temporary password for this account:\n(Client will be able to change it in their portal)','Seacoast' + Math.floor(1000+Math.random()*9000) + '!');
         if(tempPwd===null) return; // cancelled
         if(tempPwd.length < 6){ showToast('Password must be at least 6 characters.'); return; }
-        updateData.password = tempPwd;
-        
-        // Automated Notification Trigger
-        const msg = (window.allCorpsCache || []).find(c => c.id === _cdCorpId) || {};
-        const welcomeMsg = `Welcome to Seacoast RVIP! Your corporate account for ${msg.companyName || 'your company'} is now approved.\n\nTemporary Password: ${tempPwd}\n\nLog in at seacoastrvip.com/corporate.html\n\n⚠️ IMPORTANT SECURITY MATTER: Do not share this info with anyone. Our staff will never ask for your password.`;
-        
+        // 1. AUTOMATED EMAIL (Standard Firebase 'Trigger Email' extension)
+        db.collection('mail').add({
+          to: msg.contactEmail || msg.email,
+          message: {
+            subject: 'Welcome to Seacoast RVIP - Your Corporate Account is Approved',
+            text: welcomeMsg,
+            html: welcomeMsg.replace(/\n/g, '<br>')
+          }
+        }).catch(function(e){ console.error('Standard mail trigger failed:', e); });
+
+        // 2. AUTOMATED NOTIFICATIONS (Backup for custom Cloud Functions)
         db.collection('notifications').add({
           type: 'corporate_approval',
-          to: msg.email || '',
-          phone: msg.phone || '',
+          to: msg.contactEmail || msg.email,
+          phone: msg.contactPhone || msg.phone,
           content: welcomeMsg,
-          company: msg.companyName || '',
+          company: msg.company || msg.companyName,
           createdAt: new Date().toISOString(),
           status: 'pending'
-        });
+        }).catch(function(e){ console.error('Notification queue failed:', e); });
 
-        // Direct Delivery - Launch App with Pre-filled Message
+        // Force password reset on first login
+        updateData.passwordResetRequired = true;
+
+        // Direct Delivery - Launch App with Pre-filled Message (Manual SMS Fallback)
         const encodedMsg = encodeURIComponent(welcomeMsg);
-        const mobilePhone = (msg.phone || '').replace(/\D/g,'');
+        const mobilePhone = (msg.contactPhone || msg.phone || '').replace(/\D/g,'');
         
-        if(confirm('✅ Approval saved!\n\nWould you like to send the Login Instructions to the client now?')) {
-          var choice = prompt("Type 'SMS' to send via text, or 'EMAIL' to send via mail:", "SMS");
-          if(choice && choice.toUpperCase() === 'SMS') {
-            window.open(`sms:${mobilePhone}?&body=${encodedMsg}`);
-          } else if(choice && choice.toUpperCase() === 'EMAIL') {
-            window.open(`mailto:${msg.email}?subject=Your Seacoast RVIP Account&body=${encodedMsg}`);
-          }
+        if(confirm('✅ Approval Saved & Automation Triggered!\n\n(Wait ~30 seconds for your automated email system to deliver).\n\nWould you also like to send a Quick Text (SMS) to the client now?')) {
+          window.open(`sms:${mobilePhone}?&body=${encodedMsg}`);
           navigator.clipboard.writeText(welcomeMsg);
-          showToast('Instructions triggered and copied to clipboard.');
         }
       }
 
