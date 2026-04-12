@@ -923,8 +923,10 @@ function loadAccountLive(){
       _cardData = null;
     }
 
-    // New: Handle Temporary Password Force-Reset
+    // Responsive: Handle Temporary Password Force-Reset
+    const modalEl = document.getElementById('forced-pwd-modal');
     if (d.passwordResetRequired) {
+      if (modalEl) modalEl.style.display = 'flex';
       setTimeout(function(){
         goTab('acct', null);
         var err = document.getElementById('pwd-err');
@@ -936,6 +938,11 @@ function loadAccountLive(){
           err.style.borderColor = '#C9A84C';
         }
       }, 1500);
+    } else {
+      // INSTANTLY HIDE when reset is complete
+      if (modalEl) modalEl.style.display = 'none';
+      const acctErr = document.getElementById('pwd-err');
+      if (acctErr) acctErr.style.display = 'none';
     }
 
     renderDashBalance();
@@ -1943,11 +1950,7 @@ function logout(){
 }
 
 // ─── FORCED RESET LOGIC ───
-window.addEventListener('load', function(){
-  if(localStorage.getItem('corp_pwd_reset_required')) {
-    document.getElementById('forced-pwd-modal').style.display = 'flex';
-  }
-});
+// Legacy load check removed in favor of real-time loadAccountLive listener
 
 async function submitForcedReset() {
   var np = document.getElementById('fr-new').value;

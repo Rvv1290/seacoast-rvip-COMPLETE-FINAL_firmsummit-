@@ -465,9 +465,7 @@ async function submitCorpForgotPwd() {
       });
       if(found) {
         // If password reset required, flag it before redirecting
-        if(found.passwordResetRequired) {
-          localStorage.setItem('corp_pwd_reset_required', found.id);
-        }
+        // If password reset required, it will be handled by the portal's real-time listener
         grantAccess(found);
       }
       else alert("No active corporate account found with this email.");
