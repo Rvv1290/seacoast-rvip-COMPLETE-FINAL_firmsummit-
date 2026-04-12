@@ -150,3 +150,26 @@ exports.savePaymentMethod = functions.runWith({ secrets: [stripeSecret] }).https
 
   return { success: true };
 });
+
+/**
+ * [TEMPLATE] AUTOMATED NOTIFICATION DISPATCHER
+ * This function watches the 'notifications' collection and sends actual SMS/Emails.
+ * To activate: npm install twilio @sendgrid/mail
+ */
+/*
+exports.dispatchNotification = functions.firestore.document('notifications/{id}').onCreate(async (snap, context) => {
+  const data = snap.data();
+  console.log('Dispatching notification:', data.type);
+  
+  // 1. Send Email (using SendGrid)
+  // const sgMail = require('@sendgrid/mail');
+  // sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+  // await sgMail.send({ to: data.to, from: 'info@seacoastrvip.com', subject: 'Seacoast RVIP Account', text: data.content });
+
+  // 2. Send SMS (using Twilio)
+  // const twilio = require('twilio')(process.env.TWILIO_SID, process.env.TWILIO_TOKEN);
+  // await twilio.messages.create({ body: data.content, from: '+1XXXXXXXXXX', to: data.phone });
+
+  return snap.ref.update({ status: 'sent', sentAt: admin.firestore.FieldValue.serverTimestamp() });
+});
+*/

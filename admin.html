@@ -2897,9 +2897,19 @@
           status: 'pending'
         });
 
-        if(confirm('✅ Approval saved!\n\nWould you like to copy the Welcome Message to your clipboard to send via text or email now?')) {
+        // Direct Delivery - Launch App with Pre-filled Message
+        const encodedMsg = encodeURIComponent(welcomeMsg);
+        const mobilePhone = (msg.phone || '').replace(/\D/g,'');
+        
+        if(confirm('✅ Approval saved!\n\nWould you like to send the Login Instructions to the client now?')) {
+          var choice = prompt("Type 'SMS' to send via text, or 'EMAIL' to send via mail:", "SMS");
+          if(choice && choice.toUpperCase() === 'SMS') {
+            window.open(`sms:${mobilePhone}?&body=${encodedMsg}`);
+          } else if(choice && choice.toUpperCase() === 'EMAIL') {
+            window.open(`mailto:${msg.email}?subject=Your Seacoast RVIP Account&body=${encodedMsg}`);
+          }
           navigator.clipboard.writeText(welcomeMsg);
-          showToast('Welcome message copied!');
+          showToast('Instructions triggered and copied to clipboard.');
         }
       }
 
