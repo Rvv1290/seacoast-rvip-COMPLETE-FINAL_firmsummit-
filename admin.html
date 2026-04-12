@@ -2639,13 +2639,13 @@
 
         // Fetch contact data from cache for messaging
         const msg = (window.allCorpsCache || []).find(c => c.id === id) || {};
-        const welcomeMsg = `Welcome to Seacoast RVIP! Your corporate account for ${msg.companyName || msg.company || 'your company'} is now approved.\n\nTemporary Password: ${tempPwd}\n\nLog in at seacoastrvip.com/corporate.html\n\n⚠️ IMPORTANT SECURITY MATTER: Do not share this info with anyone. Our staff will never ask for your password.`;
+        const welcomeMsg = `Welcome to Seacoast RVIP! Your corporate account for ${msg.companyName || msg.company || 'your company'} is now approved.\n\nTemporary Password: ${tempPwd}\n\nINSTRUCTIONS: Log in at seacoastrvip.com/corporate.html using this temporary password, and then change it in your Account Settings immediately after logging in.\n\n⚠️ IMPORTANT SECURITY MATTER: Do not share this info with anyone. Our staff will never ask for your password.`;
 
         // 1. AUTOMATED EMAIL (Standard Firebase 'Trigger Email' extension)
         db.collection('mail').add({
           to: msg.contactEmail || msg.email,
           message: {
-            subject: 'Welcome to Seacoast RVIP - Your Corporate Account is Approved',
+            subject: 'Welcome to Seacoast RVIP - Action Required: Your Corporate Account is Approved',
             text: welcomeMsg,
             html: welcomeMsg.replace(/\n/g, '<br>')
           }
@@ -2662,11 +2662,18 @@
           status: 'pending'
         }).catch(function(e){ console.error('Notification queue failed:', e); });
 
-        // 3. Manual SMS Fallback
+        // 3. Manual Fallback Prompt (SMS or Email)
         const encodedMsg = encodeURIComponent(welcomeMsg);
         const mobilePhone = (msg.contactPhone || msg.phone || '').replace(/\D/g,'');
-        if(confirm('✅ Approval Saved & Automation Triggered!\n\n(Wait ~30 seconds for email delivery).\n\nWould you also like to send a Quick Text (SMS) to the client now?')) {
-          window.open(`sms:${mobilePhone}?&body=${encodedMsg}`);
+        const targetEmail = msg.contactEmail || msg.email || '';
+        
+        if(confirm('✅ Approval Saved & Automation Triggered!\n\n(Wait ~30 seconds for background delivery).\n\nWould you also like to manually send a copy now via SMS or Email?')) {
+          var choice = prompt("Type 'SMS' to text, or 'MAIL' to open your Email app:", "SMS");
+          if(choice && choice.toUpperCase() === 'SMS') {
+            window.open(`sms:${mobilePhone}?&body=${encodedMsg}`);
+          } else if(choice && choice.toUpperCase() === 'MAIL') {
+            window.open(`mailto:${targetEmail}?subject=Your Seacoast RVIP Credentials&body=${encodedMsg}`);
+          }
           navigator.clipboard.writeText(welcomeMsg);
         }
       }
