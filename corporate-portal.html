@@ -147,19 +147,48 @@ body{font-family:'Inter',sans-serif;background:#f7f7f7;color:#1a1c1c;min-height:
 .reward-progress-fill{height:100%;background:#C9A84C;border-radius:3px;transition:width 0.6s ease}
 .reward-perk{font-family:Inter,sans-serif;font-size:0.72rem;color:rgba(255,255,255,0.6);margin-top:3px}
 /* ─── MOBILE ─── */
-@media(max-width:900px){
-  .sidebar{display:none}
+@media(max-width:1000px){
+  .sidebar{display:none;position:fixed;top:0;left:-280px;width:280px;height:100vh;z-index:1000;transition:left 0.3s ease;background:#000}
+  .sidebar.open{display:flex;left:0}
+  .sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:999}
+  .sidebar-overlay.open{display:block}
   .main{margin-left:0}
-  .mob-nav{display:flex;position:fixed;bottom:0;left:0;right:0;background:#000;z-index:40;border-top:2px solid #775a19}
-  .mob-nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;padding:0.625rem 0;cursor:pointer;color:rgba(255,255,255,0.45);transition:color 0.15s;border:none;background:none;font-family:'Work Sans',sans-serif;font-size:0.5rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;gap:2px}
-  .mob-nav-btn .material-symbols-outlined{font-size:20px}
-  .mob-nav-btn.on,.mob-nav-btn:hover{color:#e8c97a}
-  .content{padding:1.25rem;padding-bottom:5rem}
-  .stat-row{grid-template-columns:1fr 1fr}
+  .topbar{padding:0.75rem 1rem}
+  .mob-menu-btn{display:flex!important;align-items:center;background:none;border:none;color:#000;cursor:pointer}
+  .stat-row{grid-template-columns:repeat(2,1fr)}
   .book-grid{grid-template-columns:1fr}
   .book-full{grid-column:1}
+  .content{padding:1.25rem;padding-bottom:5rem}
+  .mob-nav{display:flex;position:fixed;bottom:0;left:0;right:0;background:#000;z-index:40;border-top:2px solid #775a19;padding-bottom:env(safe-area-inset-bottom)}
+  .mob-nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;padding:0.75rem 4px;cursor:pointer;color:rgba(255,255,255,0.45);transition:color 0.15s;border:none;background:none;font-family:'Work Sans',sans-serif;font-size:0.55rem;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;gap:4px}
+  .mob-nav-btn .material-symbols-outlined{font-size:22px}
+  .mob-nav-btn.on{color:#e8c97a}
 }
-@media(min-width:901px){.mob-nav{display:none}}
+@media(max-width:480px){
+  .stat-row{grid-template-columns:1fr}
+  .topbar-right{display:none}
+}
+@media(min-width:1001px){.mob-nav{display:none}.mob-menu-btn{display:none!important}}
+
+/* ─── FORCED PASSWORD RESET MODAL ─── */
+#forced-pwd-modal {
+  position: fixed;
+  inset: 0;
+  background: #fff;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+.forced-pwd-card {
+  width: 100%;
+  max-width: 480px;
+  background: #fff;
+  border-left: 5px solid #775a19;
+  padding: 2.5rem;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+}
 </style>
 </head>
 <body>
@@ -176,17 +205,51 @@ var _sess = null;
 })();
 </script>
 
+<div id="sidebar-overlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
 <div class="portal">
 <!-- ─── SIDEBAR ─── -->
-<aside class="sidebar">
+<aside class="sidebar" id="sidebar">
   <div class="sb-brand">
-    <a href="index.html" class="sb-logo">Seacoast RVIP</a>
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <a href="index.html" class="sb-logo">Seacoast RVIP</a>
+      <button class="mob-menu-btn" onclick="toggleSidebar()" style="color:#fff;display:none"><span class="material-symbols-outlined">close</span></button>
+    </div>
     <span class="sb-tag">Corporate Portal</span>
   </div>
   <div class="sb-company">
     <div class="sb-company-name" id="sb-company">Loading…</div>
     <div class="sb-company-user" id="sb-user"></div>
   </div>
+
+  <!-- Forced Password Reset Overlay -->
+  <div id="forced-pwd-modal" style="display:none">
+    <div class="forced-pwd-card">
+      <div style="font-family:'Work Sans',sans-serif;font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.18em;color:#775a19;margin-bottom:0.75rem">Security Requirement</div>
+      <h2 style="font-family:'Times New Roman',serif;font-size:1.6rem;font-weight:700;margin-bottom:1rem;color:#000">Set Your New Password</h2>
+      <p style="font-family:Inter,sans-serif;font-size:0.85rem;color:#666;line-height:1.6;margin-bottom:1.5rem">
+        For your security, you must set a new private password before accessing your dashboard. Choose something secure that you haven't used before.
+      </p>
+      
+      <div id="forced-err" style="display:none;background:#fef2f2;border-left:3px solid #ef4444;padding:0.75rem 1rem;font-family:Inter,sans-serif;font-size:0.82rem;color:#b91c1c;margin-bottom:1.25rem"></div>
+      
+      <div class="f-group">
+        <label class="f-label">New Password *</label>
+        <input class="f-input" id="fr-new" type="password" placeholder="At least 6 characters"/>
+      </div>
+      <div class="f-group">
+        <label class="f-label">Confirm New Password *</label>
+        <input class="f-input" id="fr-conf" type="password" placeholder="Repeat your new password"/>
+      </div>
+      
+      <button class="btn-blk full" id="forced-btn" onclick="submitForcedReset()" style="margin-top:1rem">Activate Account &amp; Log In →</button>
+      
+      <p style="text-align:center;margin-top:1.5rem;font-family:Inter,sans-serif;font-size:0.72rem;color:#aaa">
+        Questions? Contact support at <a href="tel:+19782553140" style="color:#775a19;text-decoration:none;font-weight:600">(978) 255-3140</a>
+      </p>
+    </div>
+  </div>
+
   <nav class="sb-nav">
     <a class="sb-link on" onclick="goTab('dash',this)"><span class="material-symbols-outlined">dashboard</span>Dashboard</a>
     <a class="sb-link" onclick="goTab('book',this)"><span class="material-symbols-outlined">add_circle</span>Book a Ride</a>
@@ -210,7 +273,10 @@ var _sess = null;
 <div class="main">
   <!-- Top Bar -->
   <div class="topbar">
-    <div class="topbar-title" id="tab-title">Dashboard</div>
+    <div style="display:flex;align-items:center;gap:1rem">
+      <button class="mob-menu-btn" onclick="toggleSidebar()"><span class="material-symbols-outlined">menu</span></button>
+      <div class="topbar-title" id="tab-title">Dashboard</div>
+    </div>
     <div class="topbar-right">
       <span class="tb-badge" id="tb-billing">Monthly (NET-30)</span>
       <a href="tel:+19782553140" style="font-family:Inter,sans-serif;font-size:0.75rem;color:#775a19;text-decoration:none;font-weight:600">(978) 255-3140</a>
@@ -807,14 +873,11 @@ var _sess = null;
 
 <!-- MOBILE BOTTOM NAV -->
 <nav class="mob-nav">
-  <button class="mob-nav-btn on" onclick="goTab('dash',this)"><span class="material-symbols-outlined">dashboard</span>Home</button>
-  <button class="mob-nav-btn" onclick="goTab('book',this)"><span class="material-symbols-outlined">add_circle</span>Book</button>
-  <button class="mob-nav-btn" onclick="goTab('cal',this)"><span class="material-symbols-outlined">calendar_month</span>Calendar</button>
-  <button class="mob-nav-btn" onclick="goTab('trips',this)"><span class="material-symbols-outlined">directions_car</span>Trips</button>
-  <button class="mob-nav-btn" onclick="goTab('team',this)"><span class="material-symbols-outlined">group</span>Team</button>
-  <button class="mob-nav-btn" onclick="goTab('pay',this)"><span class="material-symbols-outlined">payments</span>Pay</button>
-  <button class="mob-nav-btn" onclick="goTab('stmt',this)"><span class="material-symbols-outlined">summarize</span>Statements</button>
-  <button class="mob-nav-btn" onclick="goTab('rewards',this)"><span class="material-symbols-outlined">workspace_premium</span>Rewards</button>
+  <button class="mob-nav-btn on" data-tab="dash" onclick="goTab('dash',this)"><span class="material-symbols-outlined">dashboard</span>Home</button>
+  <button class="mob-nav-btn" data-tab="book" onclick="goTab('book',this)"><span class="material-symbols-outlined">add_circle</span>Book</button>
+  <button class="mob-nav-btn" data-tab="trips" onclick="goTab('trips',this)"><span class="material-symbols-outlined">directions_car</span>Trips</button>
+  <button class="mob-nav-btn" data-tab="team" onclick="goTab('team',this)"><span class="material-symbols-outlined">group</span>Team</button>
+  <button class="mob-nav-btn" data-tab="pay" onclick="goTab('pay',this)"><span class="material-symbols-outlined">payments</span>Pay</button>
 </nav>
 
 <script>
@@ -828,6 +891,11 @@ var _accountBalance = 0;
 var _cardData = null;
 var _squarePayLink = 'https://checkout.square.site/merchant/MLXF7THRGCXJC/checkout/JPSFJKF4BYHK7TB6HWPVZIYP?src=sheet';
 var _venmoHandle = 'SeacoastRVIP';
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebar-overlay').classList.toggle('open');
+}
 
 function loadAccountLive(){
   if(!db || !sess || !sess.accountId) return;
@@ -844,6 +912,21 @@ function loadAccountLive(){
       _cardData = { brand: d.cardBrand, last4: d.cardLast4 };
     } else {
       _cardData = null;
+    }
+
+    // New: Handle Temporary Password Force-Reset
+    if (d.passwordResetRequired) {
+      setTimeout(function(){
+        goTab('acct', null);
+        var err = document.getElementById('pwd-err');
+        if(err) {
+          err.innerHTML = '<span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle">info</span> <strong>Security Notice:</strong> Please set a private, secure password for your corporate portal.';
+          err.style.display = 'block';
+          err.style.background = '#fff8e1';
+          err.style.color = '#775a19';
+          err.style.borderColor = '#C9A84C';
+        }
+      }, 1500);
     }
 
     renderDashBalance();
@@ -1831,7 +1914,10 @@ async function changeCorpPwd(){
   if(np.length < 6){ err.textContent='Password must be at least 6 characters.'; err.style.display='block'; return; }
   
   try {
-    await db.collection('corporate_accounts').doc(sess.accountId).update({ password: np });
+    await db.collection('corporate_accounts').doc(sess.accountId).update({ 
+      password: np,
+      passwordResetRequired: false 
+    });
     succ.style.display='block';
     document.getElementById('cp-new').value='';
     document.getElementById('cp-conf').value='';
@@ -1845,6 +1931,46 @@ function logout(){
   localStorage.removeItem('corp_session');
   try{ firebase.auth().signOut(); }catch(e){}
   window.location.href='corporate.html';
+}
+
+// ─── FORCED RESET LOGIC ───
+window.addEventListener('load', function(){
+  if(localStorage.getItem('corp_pwd_reset_required')) {
+    document.getElementById('forced-pwd-modal').style.display = 'flex';
+  }
+});
+
+async function submitForcedReset() {
+  var np = document.getElementById('fr-new').value;
+  var cp = document.getElementById('fr-conf').value;
+  var err = document.getElementById('forced-err');
+  var btn = document.getElementById('forced-btn');
+  
+  if(!np || !cp) { err.textContent = 'Please fill both fields.'; err.style.display = 'block'; return; }
+  if(np !== cp) { err.textContent = 'Passwords do not match.'; err.style.display = 'block'; return; }
+  if(np.length < 6) { err.textContent = 'Password must be at least 6 characters.'; err.style.display = 'block'; return; }
+  
+  err.style.display = 'none';
+  btn.textContent = 'Saving...'; btn.disabled = true;
+  
+  try {
+    var userId = localStorage.getItem('corp_pwd_reset_required');
+    await _db.collection('corporate_accounts').doc(userId).update({
+      password: np,
+      passwordResetRequired: false
+    });
+    
+    // Clear flag and close modal
+    localStorage.removeItem('corp_pwd_reset_required');
+    document.getElementById('forced-pwd-modal').style.display = 'none';
+    
+    // Refresh session name/info just in case
+    initDashData(); 
+  } catch(e) {
+    err.textContent = 'Update failed: ' + e.message;
+    err.style.display = 'block';
+    btn.textContent = 'Activate Account & Log In →'; btn.disabled = false;
+  }
 }
 </script>
 <script async defer

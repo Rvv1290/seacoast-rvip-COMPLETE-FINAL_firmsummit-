@@ -114,9 +114,9 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 
 /* ─── MOBILE BOTTOM NAV ─── */
 .mobile-bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--border);z-index:1000;padding-bottom:env(safe-area-inset-bottom)}
-.mbn-item{flex:1;display:flex;flex-direction:column;align-items:center;padding:10px 4px 8px;cursor:pointer;font-family:'Work Sans',sans-serif;font-size:0.5rem;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:#aaa;border:none;background:none;gap:3px}
+.mbn-item{flex:1;display:flex;flex-direction:column;align-items:center;padding:10px 4px 8px;cursor:pointer;font-family:'Work Sans',sans-serif;font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:#aaa;border:none;background:none;gap:3px}
 .mbn-item.active{color:var(--gold-dark)}
-.mbn-item .material-symbols-outlined{font-size:22px}
+.mbn-item .material-symbols-outlined{font-size:24px}
 .mobile-menu-btn{display:none;background:none;border:none;cursor:pointer;padding:8px;color:#000}
 
 /* ─── RESPONSIVE ─── */
@@ -140,8 +140,16 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 @media(max-width:480px){
   .dash-grid{grid-template-columns:1fr}
   .stat-val{font-size:2rem}
-  .login-card{padding:2rem 1.5rem}
+  .login-card{padding:2rem 1.25rem}
   .tier-cards-row{flex-direction:column}
+  .nav{padding:0 1rem}
+  .nav-logo{font-size:1.1rem}
+  .mbn-item{font-size:0.6rem}
+}
+@media(max-width:360px){
+  .nav{gap:0.5rem}
+  .nav > div{gap:0.75rem!important}
+  .nav a{font-size:0.65rem!important}
 }
 
 /* ─── NEW: Social Auth & Signup UI ─── */
