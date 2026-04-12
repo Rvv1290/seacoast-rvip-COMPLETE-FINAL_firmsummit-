@@ -2882,6 +2882,11 @@
         var tempPwd = prompt('Set a temporary password for this account:\n(Client will be able to change it in their portal)','Seacoast' + Math.floor(1000+Math.random()*9000) + '!');
         if(tempPwd===null) return; // cancelled
         if(tempPwd.length < 6){ showToast('Password must be at least 6 characters.'); return; }
+        updateData.password = tempPwd;
+        
+        const msg = (window.allCorpsCache || []).find(c => c.id === _cdCorpId) || {};
+        const welcomeMsg = `Welcome to Seacoast RVIP! Your corporate account for ${msg.companyName || msg.company || 'your company'} is now approved.\n\nTemporary Password: ${tempPwd}\n\nLog in at seacoastrvip.com/corporate.html\n\n⚠️ IMPORTANT SECURITY MATTER: Do not share this info with anyone. Our staff will never ask for your password.`;
+
         // 1. AUTOMATED EMAIL (Standard Firebase 'Trigger Email' extension)
         db.collection('mail').add({
           to: msg.contactEmail || msg.email,
