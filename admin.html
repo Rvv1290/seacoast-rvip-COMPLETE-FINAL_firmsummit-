@@ -2629,41 +2629,52 @@
       if (!db) return;
       var updateData = { status: newStatus, updatedAt: new Date().toISOString() };
       
-      // When approving/activating, prompt for password if it doesn't exist yet
+      // When approving/activating, trigger full automation
       if(newStatus === 'Approved' || newStatus === 'Active') {
         var tempPwd = prompt('Set a temporary password for this corporate account:\n(Client will be able to change it in their portal)','Seacoast' + Math.floor(1000+Math.random()*9000) + '!');
         if(tempPwd === null) return; // cancelled
         if(tempPwd.length < 6) { showToast('Password must be at least 6 characters.'); return; }
         updateData.password = tempPwd;
         updateData.passwordResetRequired = true; // Force client to change it on first login
-        alert('\u2705 Approval saved!\n\nTemporary Password to send to client:\n\n' + tempPwd + '\n\nPlease send this to the contact now.');
+
+        // Fetch contact data from cache for messaging
+        const msg = (window.allCorpsCache || []).find(c => c.id === id) || {};
+        const welcomeMsg = `Welcome to Seacoast RVIP! Your corporate account for ${msg.companyName || msg.company || 'your company'} is now approved.\n\nTemporary Password: ${tempPwd}\n\nLog in at seacoastrvip.com/corporate.html\n\n⚠️ IMPORTANT SECURITY MATTER: Do not share this info with anyone. Our staff will never ask for your password.`;
+
+        // 1. AUTOMATED EMAIL (Standard Firebase 'Trigger Email' extension)
+        db.collection('mail').add({
+          to: msg.contactEmail || msg.email,
+          message: {
+            subject: 'Welcome to Seacoast RVIP - Your Corporate Account is Approved',
+            text: welcomeMsg,
+            html: welcomeMsg.replace(/\n/g, '<br>')
+          }
+        }).catch(function(e){ console.error('Standard mail trigger failed:', e); });
+
+        // 2. AUTOMATED NOTIFICATIONS (Backup for custom Cloud Functions)
+        db.collection('notifications').add({
+          type: 'corporate_approval',
+          to: msg.contactEmail || msg.email,
+          phone: msg.contactPhone || msg.phone,
+          content: welcomeMsg,
+          company: msg.company || msg.companyName,
+          createdAt: new Date().toISOString(),
+          status: 'pending'
+        }).catch(function(e){ console.error('Notification queue failed:', e); });
+
+        // 3. Manual SMS Fallback
+        const encodedMsg = encodeURIComponent(welcomeMsg);
+        const mobilePhone = (msg.contactPhone || msg.phone || '').replace(/\D/g,'');
+        if(confirm('✅ Approval Saved & Automation Triggered!\n\n(Wait ~30 seconds for email delivery).\n\nWould you also like to send a Quick Text (SMS) to the client now?')) {
+          window.open(`sms:${mobilePhone}?&body=${encodedMsg}`);
+          navigator.clipboard.writeText(welcomeMsg);
+        }
       }
 
       db.collection('corporate_accounts').doc(id).update(updateData).then(function(){
         showToast('Account status updated: ' + newStatus);
-        if (newStatus === 'Approved' || newStatus === 'Active') {
-          db.collection('corporate_accounts').doc(id).get().then(function(doc) {
-            if (!doc.exists) return;
-            var acc = doc.data();
-            var fd = new FormData();
-            fd.append('_subject', '[CORP APPROVED] Welcome to Seacoast RVIP Corporate — ' + (acc.company || ''));
-            fd.append('_captcha', 'false');
-            fd.append('_template', 'box');
-            fd.append('Company', acc.company || '');
-            fd.append('Contact Name', acc.contactName || '');
-            fd.append('Status', newStatus);
-            fd.append('Portal Link', window.location.origin + '/corporate.html');
-            fd.append('Login Phone', acc.contactPhone || '');
-            fd.append('Message', 'Your Seacoast RVIP corporate account is now ' + newStatus.toLowerCase() + '! Log in at corporate.html using your registered phone number. Questions: (978) 255-3140');
-            fetch('https://formsubmit.co/ajax/info@seacoastrvip.com', {
-              method: 'POST', body: fd, headers: { 'Accept': 'application/json' }
-            }).then(function() {
-              showToast('Notification email sent!');
-            }).catch(function() {});
-          });
-        }
         loadCorporate();
-      }).catch(function(e){ showToast('Error: ' + e.message); });
+      });
     }
 
     // ── Corporate Member Management ──
@@ -2875,64 +2886,25 @@
 
     function cdAction(newStatus){
       if(!_cdCorpId||!db) return;
-      var updateData = {status:newStatus, updatedAt:new Date().toISOString()};
-
-      // When approving, prompt admin to set a temporary password
-      if(newStatus==='Approved' || newStatus==='Active'){
-        var tempPwd = prompt('Set a temporary password for this account:\n(Client will be able to change it in their portal)','Seacoast' + Math.floor(1000+Math.random()*9000) + '!');
-        if(tempPwd===null) return; // cancelled
-        if(tempPwd.length < 6){ showToast('Password must be at least 6 characters.'); return; }
-        updateData.password = tempPwd;
-        
-        const msg = (window.allCorpsCache || []).find(c => c.id === _cdCorpId) || {};
-        const welcomeMsg = `Welcome to Seacoast RVIP! Your corporate account for ${msg.companyName || msg.company || 'your company'} is now approved.\n\nTemporary Password: ${tempPwd}\n\nLog in at seacoastrvip.com/corporate.html\n\n⚠️ IMPORTANT SECURITY MATTER: Do not share this info with anyone. Our staff will never ask for your password.`;
-
-        // 1. AUTOMATED EMAIL (Standard Firebase 'Trigger Email' extension)
-        db.collection('mail').add({
-          to: msg.contactEmail || msg.email,
-          message: {
-            subject: 'Welcome to Seacoast RVIP - Your Corporate Account is Approved',
-            text: welcomeMsg,
-            html: welcomeMsg.replace(/\n/g, '<br>')
-          }
-        }).catch(function(e){ console.error('Standard mail trigger failed:', e); });
-
-        // 2. AUTOMATED NOTIFICATIONS (Backup for custom Cloud Functions)
-        db.collection('notifications').add({
-          type: 'corporate_approval',
-          to: msg.contactEmail || msg.email,
-          phone: msg.contactPhone || msg.phone,
-          content: welcomeMsg,
-          company: msg.company || msg.companyName,
-          createdAt: new Date().toISOString(),
-          status: 'pending'
-        }).catch(function(e){ console.error('Notification queue failed:', e); });
-
-        // Force password reset on first login
-        updateData.passwordResetRequired = true;
-
-        // Direct Delivery - Launch App with Pre-filled Message (Manual SMS Fallback)
-        const encodedMsg = encodeURIComponent(welcomeMsg);
-        const mobilePhone = (msg.contactPhone || msg.phone || '').replace(/\D/g,'');
-        
-        if(confirm('✅ Approval Saved & Automation Triggered!\n\n(Wait ~30 seconds for your automated email system to deliver).\n\nWould you also like to send a Quick Text (SMS) to the client now?')) {
-          window.open(`sms:${mobilePhone}?&body=${encodedMsg}`);
-          navigator.clipboard.writeText(welcomeMsg);
-        }
+      corpAction(_cdCorpId, newStatus);
+      
+      // Update Modal UI directly
+      if(_cdAcc) _cdAcc.status=newStatus;
+      var sc=STATUS_COLORS[newStatus]||'#888';
+      var sb=document.getElementById('cd-status-badge');
+      if(sb){
+        sb.textContent=newStatus; 
+        sb.style.background=sc+'22'; 
+        sb.style.color=sc;
       }
-
-      db.collection('corporate_accounts').doc(_cdCorpId).update(updateData).then(function(){
-        showToast('Status updated: '+newStatus);
-        if(_cdAcc) _cdAcc.status=newStatus;
-        var sc=STATUS_COLORS[newStatus]||'#888';
-        var sb=document.getElementById('cd-status-badge');
-        sb.textContent=newStatus; sb.style.background=sc+'22'; sb.style.color=sc;
-        document.getElementById('cd-btn-approve').style.display  = (newStatus!=='Approved'&&newStatus!=='Active')?'':'none';
-        document.getElementById('cd-btn-activate').style.display = (newStatus==='Approved')?'':'none';
-        document.getElementById('cd-btn-reject').style.display   = (newStatus!=='Rejected')?'':'none';
-        document.getElementById('cd-btn-reopen').style.display   = (newStatus==='Rejected')?'':'none';
-        loadCorporate();
-      }).catch(function(err){ showToast('Error: '+err.message); });
+      var bApp = document.getElementById('cd-btn-approve');
+      if(bApp) bApp.style.display = (newStatus!=='Approved'&&newStatus!=='Active')?'':'none';
+      var bAct = document.getElementById('cd-btn-activate');
+      if(bAct) bAct.style.display = (newStatus==='Approved')?'':'none';
+      var bRej = document.getElementById('cd-btn-reject');
+      if(bRej) bRej.style.display = (newStatus!=='Rejected')?'':'none';
+      var bReo = document.getElementById('cd-btn-reopen');
+      if(bReo) bReo.style.display = (newStatus==='Rejected')?'':'none';
     }
 
     function setCorpTempPwd(){
