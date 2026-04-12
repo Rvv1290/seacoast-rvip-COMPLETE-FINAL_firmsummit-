@@ -463,7 +463,13 @@ async function submitCorpForgotPwd() {
           }
         }
       });
-      if(found) grantAccess(found);
+      if(found) {
+        // If password reset required, flag it before redirecting
+        if(found.passwordResetRequired) {
+          localStorage.setItem('corp_pwd_reset_required', found.id);
+        }
+        grantAccess(found);
+      }
       else alert("No active corporate account found with this email.");
     } catch(e) {
       alert("Login link expired or invalid.");

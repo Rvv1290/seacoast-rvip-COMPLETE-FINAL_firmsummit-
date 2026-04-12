@@ -507,17 +507,17 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 </div>
 
 <!-- MODAL: Force Change Password (m-cpwd) -->
-<div class="overlay" id="m-cpwd">
+<div class="overlay" id="m-cpwd" style="z-index:10000">
   <div class="modal">
     <div class="modal-hd">
       <h3 style="font-family:'Times New Roman',serif;font-size:1.3rem;color:#d32f2f"><span class="material-symbols-outlined" style="vertical-align:middle">security</span> Security requirement</h3>
     </div>
     <div class="modal-bd">
-      <p style="font-size:0.85rem;color:var(--text-sec);line-height:1.5;margin-bottom:1.5rem">It looks like a temporary password was assigned to your account. Please set your private, secure password before accessing your portal.</p>
+      <p style="font-size:0.85rem;color:var(--text-sec);line-height:1.5;margin-bottom:1.5rem">For your security, you must set a new private password before accessing your dashboard. Choose something secure that you haven't used before.</p>
       <div id="force-cpwd-err" style="display:none;color:#d32f2f;font-size:0.8rem;margin-bottom:1rem"></div>
-      <div class="f-group"><label class="f-label">New Password</label><input id="force-cpwd-new" type="password" class="f-input" placeholder="Min 6 characters"/></div>
-      <div class="f-group"><label class="f-label">Confirm New Password</label><input id="force-cpwd-conf" type="password" class="f-input"/></div>
-      <button onclick="forceChangeClientPwd()" class="btn-k" style="width:100%;margin-top:0.5rem">Save & Continue</button>
+      <div class="f-group"><label class="f-label">New Password *</label><input id="force-cpwd-new" type="password" class="f-input" placeholder="Min 6 characters"/></div>
+      <div class="f-group"><label class="f-label">Confirm New Password *</label><input id="force-cpwd-conf" type="password" class="f-input" placeholder="Repeat new password"/></div>
+      <button onclick="forceChangeClientPwd()" id="force-cpwd-btn" class="btn-k" style="width:100%;margin-top:0.5rem">Activate Account &amp; Continue →</button>
     </div>
   </div>
 </div>
@@ -1181,23 +1181,31 @@ async function forceChangeClientPwd(){
   const np = document.getElementById('force-cpwd-new').value.trim();
   const cp = document.getElementById('force-cpwd-conf').value.trim();
   const err = document.getElementById('force-cpwd-err');
+  const btn = document.getElementById('force-cpwd-btn');
   err.style.display='none';
   if(!np||!cp){ err.textContent='Please fill both fields.'; err.style.display='block'; return; }
   if(np!==cp){ err.textContent='Passwords do not match.'; err.style.display='block'; return; }
   if(np.length<6){ err.textContent='Password must be at least 6 characters.'; err.style.display='block'; return; }
   
+  btn.disabled = true; btn.textContent = 'Saving...';
+  
   try{
-    await db.collection('clients').doc(currentUser.id).update({ 
+    const userId = localStorage.getItem('rvip_pwd_reset_required') || currentUser.id;
+    await db.collection('clients').doc(userId).update({ 
       password: np,
       passwordResetRequired: false 
     });
-    currentUser.password = np;
-    currentUser.passwordResetRequired = false;
+    localStorage.removeItem('rvip_pwd_reset_required');
+    if(currentUser) {
+      currentUser.password = np;
+      currentUser.passwordResetRequired = false;
+    }
     closeM('m-cpwd');
-    toast('Password successfully updated!');
+    toast('Account activated! Welcome to Seacoast RVIP.');
   }catch(e){
     err.textContent = e.message || 'Failed to update password.';
     err.style.display='block';
+    btn.disabled = false; btn.textContent = 'Activate Account & Continue →';
   }
 }
 
@@ -1269,6 +1277,7 @@ async function checkEmailLink(){
     const snap = await db.collection('clients').where('email','==',email).limit(1).get();
     if(!snap.empty){
       let c; snap.forEach(d => c = {id:d.id,...d.data()});
+      if(c.passwordResetRequired) localStorage.setItem('rvip_pwd_reset_required', c.id);
       loginUser(c);
     } else {
       // New user — show create profile, pre-fill email
@@ -1348,13 +1357,23 @@ async function saveProfile(){
   const saved = localStorage.getItem('rvip-client-id');
   if(saved && db){
     db.collection('clients').doc(saved).get().then(d=>{
-      if(d.exists) loginUser({id:d.id,...d.data()});
+      if(d.exists) {
+        const data = {id:d.id,...d.data()};
+        if(data.passwordResetRequired) localStorage.setItem('rvip_pwd_reset_required', data.id);
+        loginUser(data);
+      }
       else document.getElementById('pg-login').style.display='flex';
     }).catch(()=>{ document.getElementById('pg-login').style.display='flex'; });
   } else {
     document.getElementById('pg-login').style.display='flex';
   }
 })();
+
+window.addEventListener('load', function(){
+  if(localStorage.getItem('rvip_pwd_reset_required')) {
+    openM('m-cpwd');
+  }
+});
 
 const stmtMonth = document.getElementById('stmt-month');
 if(stmtMonth) stmtMonth.value = new Date().getMonth();
