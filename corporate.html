@@ -134,13 +134,12 @@ body{font-family:'Inter',sans-serif;min-height:100vh;background:#fff;overflow-x:
   <!-- STEP 1 — Phone & Password -->
   <div id="s1" class="step active">
     <h1 class="panel-title">Corporate<br>Sign In</h1>
-    <p class="panel-sub">Enter your business phone number and password.</p>
+    <p class="panel-sub">Enter your business email or phone number and password.</p>
     <div id="err1" class="alert-err"></div>
     <div class="f-group">
-      <label class="f-label">Business Phone Number</label>
+      <label class="f-label">Business Phone Number or Email</label>
       <div class="phone-row">
-        <span class="prefix">+1</span>
-        <input class="f-input" id="ph" type="tel" placeholder="(603) 555-0100" inputmode="numeric" maxlength="14"/>
+        <input class="f-input" id="ph" type="text" placeholder="name@company.com or (603) 555-0100"/>
       </div>
     </div>
     <div class="f-group">
@@ -148,6 +147,7 @@ body{font-family:'Inter',sans-serif;min-height:100vh;background:#fff;overflow-x:
       <input class="f-input" id="pwd" type="password" placeholder="Enter password" onkeydown="if(event.key==='Enter')sendCode()"/>
     </div>
     <button class="btn-blk" id="send-btn" onclick="sendCode()" style="margin-top:10px">Sign In →</button>
+    <button onclick="sendCorpForgotPwdLink()" style="width:100%;margin-bottom:0.875rem;background:transparent;border:none;color:#888;font-size:0.7rem;cursor:pointer;text-decoration:underline">Forgot Password?</button>
     <button class="btn-out" onclick="window.location.href='index.html'">← Back to Home</button>
     <div class="div-line"><span>New to Corporate?</span></div>
     <div class="apply-box">
@@ -242,13 +242,16 @@ var _ph = '', _acc = null;
   if(s && s.expiresAt > Date.now()) window.location.href='corporate-portal.html';
 })();
 
-// Phone formatting
+// Phone/Email formatting
 document.getElementById('ph').addEventListener('input',function(e){
-  var v=e.target.value.replace(/\D/g,'').substring(0,10),f='';
+  var val = e.target.value;
+  // If obviously an email, don't format as phone
+  if(val.includes('@') || val.match(/[a-zA-Z]/)) return;
+  var v=val.replace(/\D/g,'').substring(0,10),f='';
   if(v.length>0)f='('+v.substring(0,3);
   if(v.length>=4)f+=') '+v.substring(3,6);
   if(v.length>=7)f+='-'+v.substring(6,10);
-  e.target.value=f;
+  if(v.length > 0) e.target.value=f;
 });
 document.getElementById('ph').addEventListener('keypress',function(e){if(e.key==='Enter')document.getElementById('pwd').focus();});
 
@@ -266,30 +269,47 @@ var _confirmationResult = null;
 function sendCode(){
   var btn=document.getElementById('send-btn'),err=document.getElementById('err1'),mig=document.getElementById('migration-prompt');
   err.style.display='none'; mig.style.display='none';
-  var raw=document.getElementById('ph').value.replace(/\D/g,'');
-  var pwd=document.getElementById('pwd').value;
-  if(raw.length<10){err.textContent='Please enter a valid 10-digit phone number.';err.style.display='block';return;}
+  var iden = document.getElementById('ph').value.trim();
+  var raw=iden.replace(/\D/g,'');
+  var isEmail = iden.includes('@');
+  var pwd=document.getElementById('pwd').value.trim();
+  
+  if(!iden){err.textContent='Please enter your business email or phone number.';err.style.display='block';return;}
+  if(!isEmail && raw.length<10){err.textContent='Please enter a valid email or 10-digit phone number.';err.style.display='block';return;}
   if(!pwd){err.textContent='Please enter your password.';err.style.display='block';return;}
   
   _ph=raw;
   btn.textContent='Signing In...';btn.disabled=true;
   if(!_db){err.textContent='Service error. Please call (978) 255-3140.';err.style.display='block';btn.textContent='Sign In →';btn.disabled=false;return;}
 
-  _db.collection('corporate_accounts').where('status','in',['Approved','Active']).get().then(function(snap){
-    var found=null;
-    snap.forEach(function(d){
-      var a=d.data(); a.id=a.id||d.id;
-      var p=(a.contactPhone||'').replace(/\D/g,'');
-      if(p===raw||p.slice(-10)===raw){found=a;return;}
-      var members=a.members||[];
-      for(var i=0;i<members.length;i++){
-        var mp=(members[i].phone||'').replace(/\D/g,'');
-        if(mp===raw||mp.slice(-10)===raw){found=a;return;}
-      }
-    });
+    _db.collection('corporate_accounts').where('status','in',['Approved','Active']).get().then(function(snap){
+      var found=null;
+      var idenLower = iden.toLowerCase();
+      snap.forEach(function(d){
+        var a=d.data(); a.id=a.id||d.id;
+        var p=(a.contactPhone||'').replace(/\D/g,'');
+        var e=(a.contactEmail||'').toLowerCase().trim();
+        
+        if(isEmail){
+          if(e === idenLower) { found=a; return; }
+        } else {
+          if(p===raw||p.slice(-10)===raw){found=a;return;}
+        }
+        
+        var members=a.members||[];
+        for(var i=0;i<members.length;i++){
+          var mp=(members[i].phone||'').replace(/\D/g,'');
+          var me=(members[i].email||'').toLowerCase().trim();
+          if(isEmail){
+             if(me === idenLower) { found=a; return; }
+          } else {
+             if(mp===raw||mp.slice(-10)===raw){found=a;return;}
+          }
+        }
+      });
 
-    if(!found){
-      err.textContent='Incorrect phone number or password.';
+      if(!found){
+        err.textContent='Incorrect email/phone or password.';
       err.style.display='block';btn.textContent='Sign In →';btn.disabled=false;return;
     }
 
@@ -302,7 +322,7 @@ function sendCode(){
     }
 
     if(found.password !== pwd){
-      err.textContent='Incorrect phone number or password.';
+      err.textContent='Incorrect email/phone or password.';
       err.style.display='block';btn.textContent='Sign In →';btn.disabled=false;return;
     }
 
@@ -335,8 +355,8 @@ async function startCorpMigration(){
 }
 
 async function saveCorpInitialPwd(){
-  var p1=document.getElementById('np-pwd').value;
-  var p2=document.getElementById('np-conf').value;
+  var p1=document.getElementById('np-pwd').value.trim();
+  var p2=document.getElementById('np-conf').value.trim();
   var err=document.getElementById('err4'), btn=document.getElementById('save-pwd-btn');
   if(p1.length<6){err.textContent='Password must be at least 6 characters.';err.style.display='block';return;}
   if(p1!==p2){err.textContent='Passwords do not match.';err.style.display='block';return;}
@@ -351,19 +371,60 @@ async function saveCorpInitialPwd(){
     btn.disabled=false; btn.textContent='Save & Sign In →';
   }
 }
-{
-      err.textContent='Incorrect phone number or password.';
-      err.style.display='block';btn.textContent='Sign In →';btn.disabled=false;return;
-    }
-
-    _acc=found;
-    grantAccess(_acc);
-  }).catch(function(){
-    err.textContent='Connection error. Please try again.';err.style.display='block';
-    btn.textContent='Sign In →';btn.disabled=false;
-  });
+async function sendCorpForgotPwdLink() {
+  var iden = document.getElementById('ph').value.trim();
+  var email = '';
+  if (iden.includes('@')) email = iden;
+  email = window.prompt("Enter your corporate account email to receive a secure login link:", email);
+  if(!email || !email.includes('@')) return;
+  
+  try {
+    const actionCodeSettings = { url: window.location.href, handleCodeInApp: true };
+    await _auth.sendSignInLinkToEmail(email, actionCodeSettings);
+    localStorage.setItem('corp-email-signin', email);
+    
+    _db.collection('corporate_accounts').get().then(snap => {
+      snap.forEach(d => {
+        var a = d.data();
+        if ((a.contactEmail||'').toLowerCase().trim() === email.toLowerCase()) {
+           d.ref.update({ passwordResetRequired: true });
+        }
+      });
+    });
+    alert("Check your email! A secure sign-in link has been sent to " + email);
+  } catch(e) { alert("Unable to send reset link. Error: " + e.message); }
 }
 
+// ─── HANDLE EMAIL LINK ON PAGE LOAD ───
+(async function(){
+  if(window._auth && window._auth.isSignInWithEmailLink(window.location.href)) {
+    var email = localStorage.getItem('corp-email-signin');
+    if(!email) email = window.prompt('Please confirm your email address to complete sign-in:');
+    if(!email) return;
+    try {
+      await _auth.signInWithEmailLink(email, window.location.href);
+      localStorage.removeItem('corp-email-signin');
+      window.history.replaceState({}, document.title, window.location.pathname);
+      
+      var snap = await _db.collection('corporate_accounts').where('status','in',['Approved','Active']).get();
+      var found = null;
+      snap.forEach(d => {
+        var a = d.data(); a.id = d.id;
+        if ((a.contactEmail||'').toLowerCase().trim() === email.toLowerCase()) found = a;
+        else {
+          var members=a.members||[];
+          for(var i=0;i<members.length;i++) {
+            if((members[i].email||'').toLowerCase().trim() === email.toLowerCase()) found = a;
+          }
+        }
+      });
+      if(found) grantAccess(found);
+      else alert("No active corporate account found with this email.");
+    } catch(e) {
+      alert("Login link expired or invalid.");
+    }
+  }
+})();
 function dnext(el,n){if(el.value.length===1&&n<=5)document.getElementById('d'+n).focus();}
 function dprev(e,el,p){if(e.key==='Backspace'&&el.value===''&&p!==null)document.getElementById('d'+p).focus();}
 function dcheck(){var c='';for(var i=0;i<6;i++)c+=(document.getElementById('d'+i).value||'');if(c.length===6)setTimeout(verifyCode,200);}

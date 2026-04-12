@@ -187,6 +187,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
         </div>
         <div id="phone-err" style="display:none;color:#d32f2f;font-size:0.8rem;margin-bottom:1rem"></div>
         <button id="phone-btn" onclick="doPhoneLogin()" class="btn-k" style="width:100%">Sign In →</button>
+        <button onclick="sendForgotPwdLink('phone')" style="width:100%;margin-top:0.75rem;background:transparent;border:none;color:#888;font-size:0.7rem;cursor:pointer;text-decoration:underline">Forgot Password?</button>
         
         <div id="migration-prompt" style="display:none;margin-top:1.5rem;padding:1rem;background:#fff8e1;border:1px solid #ffe082;border-radius:4px;font-size:0.8rem">
           <div><strong>First-time sign in?</strong></div>
@@ -245,6 +246,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
         </div>
         <div id="email-err" style="display:none;color:#d32f2f;font-size:0.8rem;margin-bottom:1rem"></div>
         <button id="email-login-btn" onclick="doEmailLogin()" class="btn-k" style="width:100%">Sign In →</button>
+        <button onclick="sendForgotPwdLink('email')" style="width:100%;margin-top:0.75rem;background:transparent;border:none;color:#888;font-size:0.7rem;cursor:pointer;text-decoration:underline">Forgot Password?</button>
       </div>
 
       <!-- kept hidden for legacy compatibility -->
@@ -504,6 +506,22 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
   </div>
 </div>
 
+<!-- MODAL: Force Change Password (m-cpwd) -->
+<div class="overlay" id="m-cpwd">
+  <div class="modal">
+    <div class="modal-hd">
+      <h3 style="font-family:'Times New Roman',serif;font-size:1.3rem;color:#d32f2f"><span class="material-symbols-outlined" style="vertical-align:middle">security</span> Security requirement</h3>
+    </div>
+    <div class="modal-bd">
+      <p style="font-size:0.85rem;color:var(--text-sec);line-height:1.5;margin-bottom:1.5rem">It looks like a temporary password was assigned to your account. Please set your private, secure password before accessing your portal.</p>
+      <div id="force-cpwd-err" style="display:none;color:#d32f2f;font-size:0.8rem;margin-bottom:1rem"></div>
+      <div class="f-group"><label class="f-label">New Password</label><input id="force-cpwd-new" type="password" class="f-input" placeholder="Min 6 characters"/></div>
+      <div class="f-group"><label class="f-label">Confirm New Password</label><input id="force-cpwd-conf" type="password" class="f-input"/></div>
+      <button onclick="forceChangeClientPwd()" class="btn-k" style="width:100%;margin-top:0.5rem">Save & Continue</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL: Add Card (Stripe) -->
 <div class="overlay" id="m-card">
   <div class="modal">
@@ -576,7 +594,7 @@ function dbg(msg){
 
 async function doPhoneLogin(){
   const raw = document.getElementById('phone-inp').value;
-  const pwd = document.getElementById('phone-pwd-inp').value;
+  const pwd = document.getElementById('phone-pwd-inp').value.trim();
   const digits = raw.replace(/\D/g,'');
   const btn = document.getElementById('phone-btn');
   const err = document.getElementById('phone-err');
@@ -609,8 +627,13 @@ async function doPhoneLogin(){
       err.textContent='Incorrect phone number or password.';
       err.style.display='block';
     } else {
-      if(!foundDoc.password){
-          // User found but no password (migrated user)
+      // Check status
+      const status = foundDoc.status || 'Approved'; // Default to Approved if not set
+      if (status !== 'Approved') {
+          err.innerHTML = '<strong>Account Pending Approval</strong><br>Your profile is currently being reviewed. We will notify you by text once it is active.';
+          err.style.display = 'block';
+      } else if(!foundDoc.password){
+          // User found but no password
           err.innerHTML='Account found, but <strong>no password is set</strong>.<br>Please use the migration link below.';
           err.style.display='block';
           mig.style.display='block';
@@ -696,8 +719,8 @@ async function verifyOTP(){
 }
 
 async function saveInitialPassword(){
-  const p1 = document.getElementById('new-pwd-inp').value;
-  const p2 = document.getElementById('conf-pwd-inp').value;
+  const p1 = document.getElementById('new-pwd-inp').value.trim();
+  const p2 = document.getElementById('conf-pwd-inp').value.trim();
   const err = document.getElementById('set-pwd-err');
   
   if(p1.length < 6) { err.textContent='Password must be at least 6 characters.'; err.style.display='block'; return; }
@@ -748,6 +771,15 @@ function loginUser(client){
   document.getElementById('pg-dash').style.display='block';
   document.getElementById('nav-btn-logout').style.display='block';
   document.getElementById('mobile-bottom-nav').style.display='flex';
+  
+  // New logic: Check if a password reset is forced (Temporary Password usage)
+  if (currentUser.passwordResetRequired) {
+    setTimeout(() => {
+      showToast('Welcome! Please set your private password.');
+      openM('m-cpwd');
+    }, 1000);
+  }
+
   initDashboard();
 }
 
@@ -1074,7 +1106,7 @@ function switchLoginTab(tab){
 // ─── EMAIL LOGIN ───
 async function doEmailLogin(){
   const email = document.getElementById('email-login-inp').value.trim();
-  const pwd = document.getElementById('email-pwd-inp').value;
+  const pwd = document.getElementById('email-pwd-inp').value.trim();
   const err = document.getElementById('email-err');
   err.style.display='none';
   if(!email || !email.includes('@')) { err.textContent='Please enter a valid email.'; err.style.display='block'; return; }
@@ -1100,8 +1132,8 @@ async function doEmailLogin(){
 
 // ─── CHANGE PASSWORD ───
 async function changeClientPwd(){
-  const np = document.getElementById('cpwd-new').value;
-  const cp = document.getElementById('cpwd-conf').value;
+  const np = document.getElementById('cpwd-new').value.trim();
+  const cp = document.getElementById('cpwd-conf').value.trim();
   const err = document.getElementById('cpwd-err');
   const succ = document.getElementById('cpwd-succ');
   err.style.display='none'; succ.style.display='none';
@@ -1109,13 +1141,68 @@ async function changeClientPwd(){
   if(np!==cp){ err.textContent='Passwords do not match.'; err.style.display='block'; return; }
   if(np.length<6){ err.textContent='Password must be at least 6 characters.'; err.style.display='block'; return; }
   try{
-    await db.collection('clients').doc(currentUser.id).update({ password: np });
+    await db.collection('clients').doc(currentUser.id).update({ 
+      password: np,
+      passwordResetRequired: false 
+    });
     succ.style.display='block';
     document.getElementById('cpwd-new').value='';
     document.getElementById('cpwd-conf').value='';
+    currentUser.password = np; // Update in memory!
   }catch(e){
     err.textContent=e.message||'Failed to update password.';
     err.style.display='block';
+  }
+}
+
+async function forceChangeClientPwd(){
+  const np = document.getElementById('force-cpwd-new').value.trim();
+  const cp = document.getElementById('force-cpwd-conf').value.trim();
+  const err = document.getElementById('force-cpwd-err');
+  err.style.display='none';
+  if(!np||!cp){ err.textContent='Please fill both fields.'; err.style.display='block'; return; }
+  if(np!==cp){ err.textContent='Passwords do not match.'; err.style.display='block'; return; }
+  if(np.length<6){ err.textContent='Password must be at least 6 characters.'; err.style.display='block'; return; }
+  
+  try{
+    await db.collection('clients').doc(currentUser.id).update({ 
+      password: np,
+      passwordResetRequired: false 
+    });
+    currentUser.password = np;
+    currentUser.passwordResetRequired = false;
+    closeM('m-cpwd');
+    toast('Password successfully updated!');
+  }catch(e){
+    err.textContent = e.message || 'Failed to update password.';
+    err.style.display='block';
+  }
+}
+
+// ─── FORGOT PASSWORD ───
+async function sendForgotPwdLink(type) {
+  let email = '';
+  if (type === 'email') email = document.getElementById('email-login-inp').value.trim();
+  email = window.prompt("Enter your account email address to receive a secure login link:", email);
+  if(!email || !email.includes('@')) return;
+  
+  try {
+    const actionCodeSettings = {
+      url: window.location.href,
+      handleCodeInApp: true
+    };
+    await auth.sendSignInLinkToEmail(email, actionCodeSettings);
+    localStorage.setItem('rvip-email-signin', email);
+    
+    // Attempt to tag the user as requiring a reset so when they log in with the link, they must set password
+    const snaps = await db.collection('clients').where('email','==',email).get();
+    snaps.forEach(d => {
+       db.collection('clients').doc(d.id).update({ passwordResetRequired: true });
+    });
+    
+    alert("Check your email! A secure sign-in link has been sent to " + email);
+  } catch(e) {
+    alert("Unable to send reset link. Error: " + e.message);
   }
 }
 
