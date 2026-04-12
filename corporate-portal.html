@@ -1196,14 +1196,15 @@ function goTab(id, el){
 // ─── LOAD TRIPS (real-time, two listeners) ───
 // Two separate caches so each onSnapshot fully replaces its own set —
 // no stale merging that hides status changes (e.g. driver marks Complete)
-var _tripsByAccId   = [];   // from corporateAccountId query
-var _tripsByCompany = [];   // from corporateCompany fallback query
-var _tripsUnsubAccId   = null;
-var _tripsUnsubCompany = null;
+var _tripsByAccId   = [];
+var _tripsByCompany = [];
+var _tripsByIdentity = {}; // Map of listenerKey -> array of trips
+var _unsubs = [];
 
 function mergeTripCaches(){
-  // Combine both sets, always prefer the most-recently-updated copy
   var seen = {}, all = _tripsByAccId.concat(_tripsByCompany);
+  Object.keys(_tripsByIdentity).forEach(function(k){ all = all.concat(_tripsByIdentity[k]); });
+
   _trips = all.filter(function(t){
     var key = t.id || t._docId || '';
     if(!key || !seen[key]){ if(key) seen[key]=true; return true; }
@@ -1219,13 +1220,11 @@ function mergeTripCaches(){
 
 function loadTrips(){
   if(!db||!sess) return;
-  var accountId = sess.accountId || '';
-  var company   = sess.company   || '';
-
-  // Tear down old listeners
-  if(_tripsUnsubAccId){   try{ _tripsUnsubAccId();   }catch(e){} _tripsUnsubAccId=null;   }
-  if(_tripsUnsubCompany){ try{ _tripsUnsubCompany(); }catch(e){} _tripsUnsubCompany=null; }
-  _tripsByAccId=[]; _tripsByCompany=[];
+  
+  // Clear old listeners
+  _unsubs.forEach(function(u){ try{ u(); }catch(e){} });
+  _unsubs = [];
+  _tripsByAccId = []; _tripsByCompany = []; _tripsByIdentity = {};
 
   function snapToArray(snap){
     var arr=[];
@@ -1233,42 +1232,45 @@ function loadTrips(){
     return arr;
   }
 
-  // ── Listener 1: by corporateAccountId ──
-  if(accountId){
-    try{
-      _tripsUnsubAccId = db.collection('bookings')
-        .where('corporateAccountId','==',accountId)
+  function addListener(field, value, targetCollection) {
+    if(!value) return;
+    try {
+      var unsub = db.collection('bookings').where(field, '==', value)
         .onSnapshot(function(snap){
-          _tripsByAccId = snapToArray(snap);
+          var arr = snapToArray(snap);
+          if(targetCollection === 'accId') _tripsByAccId = arr;
+          else if(targetCollection === 'company') _tripsByCompany = arr;
+          else _tripsByIdentity[field + '_' + value] = arr;
           mergeTripCaches();
         }, function(err){
-          console.warn('AccId listener failed, trying .get():', err.message);
-          db.collection('bookings').where('corporateAccountId','==',accountId).get()
-            .then(function(s){ _tripsByAccId=snapToArray(s); mergeTripCaches(); })
-            .catch(function(){});
+          console.warn('Listener failed for ' + field + ':', err.message);
         });
-    }catch(e){}
+      _unsubs.push(unsub);
+    } catch(e) { console.error(e); }
   }
 
-  // ── Listener 2: by corporateCompany name (catches older/untagged bookings) ──
-  if(company){
-    try{
-      _tripsUnsubCompany = db.collection('bookings')
-        .where('corporateCompany','==',company)
-        .onSnapshot(function(snap){
-          _tripsByCompany = snapToArray(snap);
-          mergeTripCaches();
-        }, function(err){
-          console.warn('Company listener failed, trying .get():', err.message);
-          db.collection('bookings').where('corporateCompany','==',company).get()
-            .then(function(s){ _tripsByCompany=snapToArray(s); mergeTripCaches(); })
-            .catch(function(){});
-        });
-    }catch(e){}
+  // 1. Direct IDs
+  addListener('corporateAccountId', sess.accountId, 'accId');
+  addListener('corporateCompany', sess.company, 'company');
+
+  // 2. Identity Matches (Primary)
+  addListener('email', sess.contactEmail);
+  if(sess.contactPhone) {
+    var raw = sess.contactPhone.replace(/\D/g,'');
+    if(raw.length >= 10) addListener('phone', sess.contactPhone);
   }
 
-  // If neither query is possible, just show empty state
-  if(!accountId && !company) renderDashUpcoming();
+  // 3. Member Identity Matches
+  (sess.members || []).forEach(function(m) {
+    if(m.email) addListener('email', m.email);
+    if(m.phone) {
+       var mr = m.phone.replace(/\D/g,'');
+       if(mr.length >= 10) addListener('phone', m.phone);
+    }
+  });
+
+  // Fallback for initial render if no listeners hit yet
+  setTimeout(mergeTripCaches, 1000);
 }
 
 // ─── BONUS POINTS — load once at startup, not on every calcStats ───

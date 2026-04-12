@@ -498,6 +498,7 @@ function grantAccess(acc){
     contactEmail:acc.contactEmail,contactPhone:acc.contactPhone,
     billingCycle:acc.billingCycle||'Monthly',industry:acc.industry||'',
     billingAddress:acc.billingAddress||'',typicalRoutes:acc.typicalRoutes||'',
+    members:acc.members||[],
     expiresAt:Date.now()+30*24*60*60*1000
   };
   localStorage.setItem('corp_session',JSON.stringify(session));

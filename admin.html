@@ -3033,9 +3033,27 @@
 
     function loadCdTrips(acc, bonusPoints){
       if(!db){ renderCdTrips([], bonusPoints); return; }
-      var q1 = db.collection('bookings').where('corporateAccountId','==',acc.id).get();
-      var q2 = db.collection('bookings').where('corporateCompany','==',acc.company).get();
-      Promise.all([q1, q2]).then(function(results){
+      var queries = [];
+      
+      // 1. Direct IDs
+      if(acc.id)      queries.push(db.collection('bookings').where('corporateAccountId','==',acc.id).get());
+      if(acc.company) queries.push(db.collection('bookings').where('corporateCompany','==',acc.company).get());
+      
+      // 2. Primary Contact Identity
+      if(acc.contactEmail) queries.push(db.collection('bookings').where('email','==',acc.contactEmail).get());
+      if(acc.contactPhone) {
+        var rawPh = acc.contactPhone.replace(/\D/g,'');
+        if(rawPh.length >= 10) queries.push(db.collection('bookings').where('phone','==',acc.contactPhone).get());
+      }
+      
+      // 3. Member Identities
+      var members = acc.members || [];
+      members.forEach(function(m) {
+        if(m.email) queries.push(db.collection('bookings').where('email','==',m.email).get());
+        if(m.phone) queries.push(db.collection('bookings').where('phone','==',m.phone).get());
+      });
+
+      Promise.all(queries).then(function(results){
         var seen = {}, trips = [];
         results.forEach(function(snap){
           snap.forEach(function(d){
@@ -3044,7 +3062,10 @@
         });
         trips.sort(function(a,b){ return new Date(b.date)-new Date(a.date); });
         renderCdTrips(trips, bonusPoints);
-      }).catch(function(){ renderCdTrips([], bonusPoints); });
+      }).catch(function(err){ 
+        console.error('loadCdTrips multi-query fail:', err);
+        renderCdTrips([], bonusPoints); 
+      });
     }
 
     function renderCdTrips(trips, bonusPoints){
