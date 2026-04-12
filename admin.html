@@ -2879,7 +2879,25 @@
         if(tempPwd===null) return; // cancelled
         if(tempPwd.length < 6){ showToast('Password must be at least 6 characters.'); return; }
         updateData.password = tempPwd;
-        alert('\u2705 Approval saved!\n\nTemporary Password to send to client:\n\n' + tempPwd + '\n\nPlease send this to the contact now.');
+        
+        // Automated Notification Trigger
+        const msg = (window.allCorpsCache || []).find(c => c.id === _cdCorpId) || {};
+        const welcomeMsg = `Welcome to Seacoast RVIP! Your corporate account for ${msg.companyName || 'your company'} is now approved.\n\nTemporary Password: ${tempPwd}\n\nLog in at seacoastrvip.com/corporate.html\n\n⚠️ IMPORTANT SECURITY MATTER: Do not share this info with anyone. Our staff will never ask for your password.`;
+        
+        db.collection('notifications').add({
+          type: 'corporate_approval',
+          to: msg.email || '',
+          phone: msg.phone || '',
+          content: welcomeMsg,
+          company: msg.companyName || '',
+          createdAt: new Date().toISOString(),
+          status: 'pending'
+        });
+
+        if(confirm('✅ Approval saved!\n\nWould you like to copy the Welcome Message to your clipboard to send via text or email now?')) {
+          navigator.clipboard.writeText(welcomeMsg);
+          showToast('Welcome message copied!');
+        }
       }
 
       db.collection('corporate_accounts').doc(_cdCorpId).update(updateData).then(function(){
