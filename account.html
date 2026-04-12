@@ -1226,7 +1226,10 @@ async function submitForgotPwd() {
   btn.disabled = true;
   
   try {
-    const actionCodeSettings = { url: window.location.href, handleCodeInApp: true };
+    const actionCodeSettings = { 
+      url: "https://www.seacoastrvip.com/account.html", 
+      handleCodeInApp: true 
+    };
     await auth.sendSignInLinkToEmail(email, actionCodeSettings);
     localStorage.setItem('rvip-email-signin', email);
     

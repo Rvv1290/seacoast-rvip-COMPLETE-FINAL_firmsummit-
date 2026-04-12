@@ -413,7 +413,10 @@ async function submitCorpForgotPwd() {
   btn.textContent = 'Sending...'; btn.disabled = true;
   
   try {
-    const actionCodeSettings = { url: window.location.href, handleCodeInApp: true };
+    const actionCodeSettings = { 
+      url: "https://www.seacoastrvip.com/corporate.html", 
+      handleCodeInApp: true 
+    };
     await _auth.sendSignInLinkToEmail(email, actionCodeSettings);
     localStorage.setItem('corp-email-signin', email);
     
