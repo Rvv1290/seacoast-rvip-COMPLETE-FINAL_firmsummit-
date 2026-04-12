@@ -143,6 +143,23 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
   .login-card{padding:2rem 1.5rem}
   .tier-cards-row{flex-direction:column}
 }
+
+/* ─── NEW: Social Auth & Signup UI ─── */
+.auth-toggle{display:flex;margin-bottom:2rem;border:1px solid var(--border);border-radius:4px;overflow:hidden}
+.auth-toggle-btn{flex:1;padding:0.85rem;font-family:'Work Sans',sans-serif;font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;background:#fff;color:#888;border:none;cursor:pointer;transition:all 0.2s}
+.auth-toggle-btn.active{background:#000;color:#fff}
+
+.social-auth{display:flex;flex-direction:column;gap:0.75rem;margin-bottom:2rem;padding-bottom:1.5rem;border-bottom:1px solid var(--border)}
+.btn-social{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;padding:0.75rem;border:1px solid #ddd;background:#fff;color:#000;font-family:'Work Sans',sans-serif;font-size:0.75rem;font-weight:600;cursor:pointer;transition:0.2s}
+.btn-social:hover{background:#f9f9f9;border-color:#bbb}
+.btn-social img{width:18px;height:18px}
+
+.divider{display:flex;align-items:center;text-align:center;margin-bottom:1.5rem;color:#ccc;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.15em}
+.divider::before, .divider::after{content:'';flex:1;border-bottom:1px solid #eee}
+.divider:not(:empty)::before{margin-right:1rem}
+.divider:not(:empty)::after{margin-left:1rem}
+
+#form-signup{display:none}
 </style>
 </head>
 <body>
@@ -165,14 +182,41 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 <!-- ═══════════ LOGIN PAGE ═══════════ -->
 <div id="pg-login">
   <div class="login-card">
-    <h1 class="login-title">Client Login</h1>
-    <p class="login-sub">Welcome back. Sign in with your phone number or email and password.</p>
+    <div class="auth-toggle">
+      <button id="toggle-login-btn" onclick="showAuthMode('login')" class="auth-toggle-btn active">Sign In</button>
+      <button id="toggle-signup-btn" onclick="showAuthMode('signup')" class="auth-toggle-btn">Create Account</button>
+    </div>
+
+    <div id="auth-header-login">
+      <h1 class="login-title">Welcome Back</h1>
+      <p class="login-sub">Sign in to manage your rides and loyalty rewards.</p>
+    </div>
+    <div id="auth-header-signup" style="display:none">
+      <h1 class="login-title">Join RVIP</h1>
+      <p class="login-sub">Create your private account for direct booking and premium access.</p>
+    </div>
+
+    <!-- Social Auth -->
+    <div class="social-auth">
+      <button onclick="doSocialAuth('google')" class="btn-social">
+        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google"/>
+        Continue with Google
+      </button>
+      <button onclick="doSocialAuth('apple')" class="btn-social">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg" alt="Apple"/>
+        Continue with Apple
+      </button>
+    </div>
+
+    <div class="divider">Or use your credentials</div>
 
     <!-- Login Method Toggle -->
-    <div style="display:flex;margin-bottom:2rem;border:1px solid var(--border)">
-      <button id="tab-phone-btn" onclick="switchLoginTab('phone')" style="flex:1;padding:0.75rem;font-family:'Work Sans',sans-serif;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;background:#000;color:#fff;border:none;cursor:pointer;transition:0.2s">📱 Phone</button>
-      <button id="tab-email-btn" onclick="switchLoginTab('email')" style="flex:1;padding:0.75rem;font-family:'Work Sans',sans-serif;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;background:transparent;color:#888;border:none;cursor:pointer;transition:0.2s">✉️ Email</button>
-    </div>
+    <!-- Login View Tabs -->
+    <div id="view-login">
+      <div style="display:flex;margin-bottom:2rem;border:1px solid var(--border);border-radius:4px;overflow:hidden">
+        <button id="tab-phone-btn" onclick="switchLoginTab('phone')" style="flex:1;padding:0.75rem;font-family:'Work Sans',sans-serif;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;background:#000;color:#fff;border:none;cursor:pointer;transition:0.2s">📱 Phone</button>
+        <button id="tab-email-btn" onclick="switchLoginTab('email')" style="flex:1;padding:0.75rem;font-family:'Work Sans',sans-serif;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;background:transparent;color:#888;border:none;cursor:pointer;transition:0.2s">✉️ Email</button>
+      </div>
 
     <!-- ── PHONE METHOD ── -->
     <div id="login-phone-method">
@@ -232,27 +276,20 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
     <div id="recaptcha-container"></div>
 
     <!-- ── EMAIL METHOD ── -->
-    <div id="login-email-method" style="display:none">
+    </div><!-- /view-login -->
 
-      <!-- Email + Password -->
-      <div id="step-email">
-        <div class="f-group">
-          <label class="f-label">Email Address</label>
-          <input id="email-login-inp" type="email" class="f-input" placeholder="you@example.com" onkeydown="if(event.key==='Enter')document.getElementById('email-pwd-inp').focus()"/>
-        </div>
-        <div class="f-group">
-          <label class="f-label">Password</label>
-          <input id="email-pwd-inp" type="password" class="f-input" placeholder="Enter your password" onkeydown="if(event.key==='Enter')doEmailLogin()"/>
-        </div>
-        <div id="email-err" style="display:none;color:#d32f2f;font-size:0.8rem;margin-bottom:1rem"></div>
-        <button id="email-login-btn" onclick="doEmailLogin()" class="btn-k" style="width:100%">Sign In →</button>
-        <button onclick="sendForgotPwdLink('email')" style="width:100%;margin-top:0.75rem;background:transparent;border:none;color:#888;font-size:0.7rem;cursor:pointer;text-decoration:underline">Forgot Password?</button>
-      </div>
-
-      <!-- kept hidden for legacy compatibility -->
-      <div id="step-email-sent" style="display:none"></div>
-
-    </div><!-- /login-email-method -->
+    <!-- Signup View -->
+    <div id="view-signup" style="display:none">
+      <div class="f-group"><label class="f-label">Full Name *</label><input id="reg-name" class="f-input" placeholder="e.g. John Doe"/></div>
+      <div class="f-group"><label class="f-label">Email Address *</label><input id="reg-email" type="email" class="f-input" placeholder="name@example.com"/></div>
+      <div class="f-group"><label class="f-label">Phone Number *</label><input id="reg-phone" type="tel" class="f-input" placeholder="(603) 000-0000" oninput="fmtPhone(this)"/></div>
+      <div class="f-group"><label class="f-label">Create Password * (min 6 chars)</label><input id="reg-pwd" type="password" class="f-input" placeholder="••••••••"/></div>
+      
+      <div id="reg-err" style="display:none;color:#d32f2f;font-size:0.8rem;margin-bottom:1rem"></div>
+      <button id="reg-btn" onclick="doSignup()" class="btn-k" style="width:100%">Create My Account →</button>
+      
+      <p style="font-size:0.68rem;color:#999;text-align:center;margin-top:1.5rem;line-height:1.5">By signing up, you agree to Seacoast RVIP's Premium Service Terms and Privacy Policy.</p>
+    </div>
 
     <!-- Step: New User (shared by both methods) -->
     <div id="step-newuser" style="display:none">
@@ -608,10 +645,99 @@ let _pendingIsNewUser = false;
 let _confirmationResult = null;
 
 // ─── LOGIN & AUTH ───
-function dbg(msg){
-  console.log('[RVIP]', msg);
-  const el = document.getElementById('debug-log');
-  if(el){ el.style.display='block'; el.innerHTML += '<div>▶ '+msg+'</div>'; }
+function showAuthMode(mode) {
+  const isLogin = mode === 'login';
+  document.getElementById('view-login').style.display = isLogin ? 'block' : 'none';
+  document.getElementById('view-signup').style.display = isLogin ? 'none' : 'block';
+  document.getElementById('auth-header-login').style.display = isLogin ? 'block' : 'none';
+  document.getElementById('auth-header-signup').style.display = isLogin ? 'none' : 'block';
+  
+  document.getElementById('toggle-login-btn').classList.toggle('active', isLogin);
+  document.getElementById('toggle-signup-btn').classList.toggle('active', !isLogin);
+}
+
+async function doSocialAuth(providerName) {
+  let provider;
+  if (providerName === 'google') {
+    provider = new firebase.auth.GoogleAuthProvider();
+  } else if (providerName === 'apple') {
+    provider = new firebase.auth.OAuthProvider('apple.com');
+  } else return;
+
+  try {
+    const result = await auth.signInWithPopup(provider);
+    const user = result.user;
+    
+    // Check if client exists in Firestore
+    const snap = await db.collection('clients').where('email', '==', user.email).limit(1).get();
+    if (!snap.empty) {
+      let client; snap.forEach(d => client = {id: d.id, ...d.data()});
+      loginUser(client);
+    } else {
+      // Auto-create account for social users
+      const ref = db.collection('clients').doc();
+      const data = {
+        name: user.displayName || 'New Rider',
+        email: user.email,
+        phone: user.phoneNumber || '',
+        status: 'Approved',
+        createdAt: new Date().toISOString(),
+        authProvider: providerName
+      };
+      await ref.set(data);
+      loginUser({id: ref.id, ...data});
+      toast(`Welcome, ${data.name}!`);
+    }
+  } catch (e) {
+    alert('Authentication failed: ' + e.message);
+  }
+}
+
+async function doSignup() {
+  const name = document.getElementById('reg-name').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+  const phone = document.getElementById('reg-phone').value.trim();
+  const pwd = document.getElementById('reg-pwd').value.trim();
+  const err = document.getElementById('reg-err');
+  const btn = document.getElementById('reg-btn');
+
+  err.style.display = 'none';
+  if (!name || !email || !phone || !pwd) { 
+    err.textContent = 'All fields are required.'; err.style.display = 'block'; return; 
+  }
+  if (pwd.length < 6) { 
+    err.textContent = 'Password must be at least 6 characters.'; err.style.display = 'block'; return; 
+  }
+
+  btn.disabled = true; btn.textContent = 'Creating Account...';
+
+  try {
+    // Check if email or phone already exists
+    const emailSnap = await db.collection('clients').where('email', '==', email).limit(1).get();
+    const phoneSnap = await db.collection('clients').where('phone', '==', phone).limit(1).get();
+    
+    if (!emailSnap.empty) {
+      err.textContent = 'An account with this email already exists.';
+      err.style.display = 'block';
+    } else if (!phoneSnap.empty) {
+      err.textContent = 'An account with this phone number already exists.';
+      err.style.display = 'block';
+    } else {
+      const ref = db.collection('clients').doc();
+      const data = {
+        name, email, phone, password: pwd,
+        status: 'Approved', // Direct access for self-signup
+        createdAt: new Date().toISOString()
+      };
+      await ref.set(data);
+      loginUser({id: ref.id, ...data});
+      toast('Account created! Welcome to RVIP.');
+    }
+  } catch (e) {
+    err.textContent = e.message;
+    err.style.display = 'block';
+  }
+  btn.disabled = false; btn.textContent = 'Create My Account →';
 }
 
 async function doPhoneLogin(){

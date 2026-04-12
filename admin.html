@@ -1059,7 +1059,7 @@
         <input type="hidden" id="cli-detail-id" />
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
           <div style="font-family:'Times New Roman',serif;font-weight:700;font-size:1.1rem">Profile Details</div>
-          <div style="display:flex;gap:0.5rem">
+          <div id="cpr-action-btns" style="display:flex;gap:0.5rem">
             <button onclick="saveCliProfile()" class="btn bgn" style="padding:.5rem .75rem">Save Profile</button>
             <button id="cpr-del-btn" class="btn br" style="padding:.5rem .75rem"><span class="material-symbols-outlined" style="font-size:16px">delete_forever</span></button>
           </div>
@@ -1978,7 +1978,7 @@
           ab.innerHTML = '<span class="material-symbols-outlined" style="font-size:16px">check_circle</span> Approve Account';
           ab.onclick = function() { approveClient(id); };
           // Append next to the Save button in the header
-          document.querySelector('#m-cli-detail .modal-bd > div > div > div:last-child').appendChild(ab);
+          document.getElementById('cpr-action-btns').appendChild(ab);
         }
         
         delBtn.onclick = function() { deleteClient(id, c.name || 'this client'); };
@@ -2631,6 +2631,7 @@
         if(tempPwd === null) return; // cancelled
         if(tempPwd.length < 6) { showToast('Password must be at least 6 characters.'); return; }
         updateData.password = tempPwd;
+        updateData.passwordResetRequired = true; // Force client to change it on first login
         alert('\u2705 Approval saved!\n\nTemporary Password to send to client:\n\n' + tempPwd + '\n\nPlease send this to the contact now.');
       }
 
