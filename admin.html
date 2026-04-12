@@ -1087,7 +1087,12 @@
               <option>Regular Black SUV</option>
             </select>
           </div>
-
+          <div>
+            <label class="flbl">Corporate Account (Link Trip)</label>
+            <select id="fcorp" class="fsel">
+              <option value="">— Non-Corporate —</option>
+            </select>
+          </div>
           <div>
             <label class="flbl">Assign Driver</label>
             <select id="fdr" class="fsel">
@@ -1423,6 +1428,11 @@
       renderBks();
       if (db) {
         pullFromFirebase();
+        // Fetch corporate accounts for link-booking cache
+        db.collection('corporate_accounts').where('status','in',['Approved','Active']).get().then(function(snap){
+          var accs = []; snap.forEach(function(d){ var a=d.data(); a.id=d.id; accs.push(a); });
+          window.allCorpsCache = accs;
+        });
         db.collection('clients').get()
           .then(function (s) { document.getElementById('s5').textContent = s.size; })
           .catch(function () { });
@@ -1729,7 +1739,9 @@
       });
       document.getElementById('fst').value = 'Confirmed';
       updateDriverSelects();
+      updateCorpSelect();
       document.getElementById('fdr').value = '';
+      document.getElementById('fcorp').value = '';
       curQid = null;
       genCode();
       openM('m-add');
@@ -1755,7 +1767,9 @@
       document.getElementById('fve').value = b.vehicle || '';
       document.getElementById('fno').value = b.notes || '';
       updateDriverSelects();
+      updateCorpSelect();
       document.getElementById('fdr').value = b.driverId || '';
+      document.getElementById('fcorp').value = b.corporateAccountId || '';
       curQid = null;
       openM('m-add');
     }
@@ -1772,6 +1786,13 @@
       if (!name || !phone || !price || !date) { toast('Fill in Name, Phone, Price and Date'); return; }
       var bks = getBks(), eid = document.getElementById('eid').value;
       var orig = eid ? bks.find(function (b) { return b.id === eid; }) : null;
+      var corpId = document.getElementById('fcorp').value || '';
+      var corpComp = '';
+      if(corpId) {
+        var c = (window.allCorpsCache || []).find(function(x){ return x.id === corpId; });
+        if(c) corpComp = c.company;
+      }
+
       var bk = {
         id: eid || Date.now().toString(), name: name, phone: phone,
         email: document.getElementById('fe').value.trim(),
@@ -1781,6 +1802,8 @@
         destination: document.getElementById('fde').value.trim(),
         vehicle: document.getElementById('fve').value,
         driverId: document.getElementById('fdr').value || '',
+        corporateAccountId: corpId,
+        corporateCompany: corpComp,
         price: parseFloat(price),
         tip: parseFloat(document.getElementById('fti').value) || 0,
         status: document.getElementById('fst').value,
@@ -2637,6 +2660,16 @@
       if (el) el.innerHTML = html;
     }
 
+    function updateCorpSelect() {
+      var corps = window.allCorpsCache || [];
+      var html = '<option value="">— Non-Corporate —</option>';
+      corps.forEach(function (c) { 
+        html += '<option value="' + c.id + '">' + e(c.company) + '</option>'; 
+      });
+      var el = document.getElementById('fcorp');
+      if (el) el.innerHTML = html;
+    }
+
     // ─────────────────────────────────────────────
     //  CORPORATE ACCOUNTS
     // ─────────────────────────────────────────────
@@ -2799,17 +2832,22 @@
         await db.collection('corporate_accounts').doc(_apId).update(updateData);
         
         // 2. Double-Layer Email (Firebase + FormSubmit)
-        // Firebase Extension trigger
+        // Firebase Extension trigger - EXPLICITLY SETTING SENDER
         db.collection('mail').add({
-          to: [targetEmail], // Array is safer for most extensions
+          to: targetEmail, 
+          from: 'Seacoast RVIP <info@seacoastrvip.com>',
+          replyTo: 'info@seacoastrvip.com',
           message: {
             subject: 'Action Required: Your Seacoast RVIP Corporate Account is Approved',
             text: msg,
             html: msg.replace(/\n/g, '<br>')
           }
+        }).catch(err => {
+          console.error("Firestore Mail write failed:", err);
+          showToast("Cloud email trigger error: " + err.message);
         });
 
-        // FormSubmit Fallback (Guaranteed to bypass Firestore rules)
+        // FormSubmit Fallback (Reliable Receipt to Admin)
         const fd = new FormData();
         fd.append('_subject', '[APPROVED] Seacoast RVIP Corporate Access');
         fd.append('_captcha', 'false');
@@ -2817,7 +2855,7 @@
         fd.append('Company', _apMsgData.company || _apMsgData.companyName || '');
         fd.append('Instructions', msg);
         
-        await fetch('https://formsubmit.co/ajax/info@seacoastrvip.com', { method: 'POST', body: fd }).catch(() => {});
+        fetch('https://formsubmit.co/ajax/info@seacoastrvip.com', { method: 'POST', body: fd }).catch(() => {});
 
         showToast('Approval saved and automation triggered!');
         closeApModal();
