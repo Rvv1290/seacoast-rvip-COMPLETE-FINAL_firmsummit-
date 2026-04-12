@@ -149,6 +149,17 @@ function saveBookingToFirebase(data) {
     createdAt:   new Date().toISOString(),
     tosAcceptedAt: data.tosAcceptedAt || null
   };
+  
+  // Attach client info if logged in
+  try {
+    const cid = localStorage.getItem('rvip-client-id');
+    if (cid) {
+      doc.clientId = cid;
+      // Mark as personal ride automatically
+      doc.type = 'Personal';
+    }
+  } catch(e) {}
+
   window._db.collection('bookings').doc(id).set(doc)
     .then(function(){ console.log('Booking saved to Firebase:', doc.code); })
     .catch(function(e){ console.warn('Firebase error:', e.message); });

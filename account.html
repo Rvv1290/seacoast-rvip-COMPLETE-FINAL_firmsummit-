@@ -943,12 +943,33 @@ async function initDashboard(){
   const parts = currentUser.name.split(' ');
   document.getElementById('avatar-initials').textContent = (parts[0][0] + (parts[1]?parts[1][0]:'')).toUpperCase();
   
-  // Real-time Listeners
-  db.collection('clients').doc(currentUser.id).collection('trips').orderBy('date','desc').onSnapshot(s => {
-    allTrips = []; s.forEach(d => allTrips.push({id:d.id, ...d.data()}));
+  // Real-time Listeners with Merging Logic
+  const tripMap = new Map();
+  const mergeTrips = (snapshot) => {
+    snapshot.forEach(d => {
+      const trip = { id: d.id, ...d.data() };
+      tripMap.set(trip.id, trip);
+    });
+    allTrips = Array.from(tripMap.values()).sort((a,b) => new Date(b.date + ' ' + b.time) - new Date(a.date + ' ' + a.time));
     updateDashboardUI();
     buildCal();
-  });
+  };
+
+  // 1. Subcollection (assigned trips)
+  db.collection('clients').doc(currentUser.id).collection('trips').orderBy('date','desc').onSnapshot(mergeTrips);
+  
+  // 2. Global bookings (matching email)
+  if (currentUser.email) {
+    db.collection('bookings').where('email', '==', currentUser.email).onSnapshot(mergeTrips);
+  }
+  // 3. Global bookings (matching phone)
+  if (currentUser.phone) {
+    const rawPh = currentUser.phone.replace(/\D/g,'');
+    if (rawPh) {
+      db.collection('bookings').where('phone', '==', currentUser.phone).onSnapshot(mergeTrips);
+    }
+  }
+
   db.collection('clients').doc(currentUser.id).onSnapshot(d => {
     if(d.exists) {
       currentUser = {id:d.id, ...d.data()};
