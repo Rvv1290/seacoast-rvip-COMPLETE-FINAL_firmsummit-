@@ -485,6 +485,62 @@
       justify-content: space-between;
       border-radius: 4px;
     }
+
+    /* --- APPROVAL CONTROL CENTER MODAL --- */
+    .ap-modal-ov {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.8);
+      z-index: 2000;
+      padding: 1rem;
+      overflow-y: auto;
+      backdrop-filter: blur(8px);
+    }
+    .ap-modal {
+      background: #fff;
+      max-width: 600px;
+      margin: 2rem auto;
+      border-left: 6px solid #C9A84C;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+    }
+    .ap-header {
+      background: #000;
+      color: #fff;
+      padding: 1.5rem;
+    }
+    .ap-body {
+      padding: 1.5rem;
+    }
+    .ap-preview {
+      background: #f9f9f9;
+      border: 1px solid #eee;
+      padding: 1rem;
+      font-size: 0.82rem;
+      color: #444;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      max-height: 250px;
+      overflow-y: auto;
+      margin-top: 0.5rem;
+      font-family: 'Inter', sans-serif;
+    }
+    .ap-action-btn {
+      width: 100%;
+      padding: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-top: 0.75rem;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+    }
+    .ap-action-btn:active { transform: scale(0.98); }
   </style>
 </head>
 
@@ -850,6 +906,51 @@
                 <div id="cd-members-list" style="font-size:0.82rem;color:#555"></div>
               </div>
 
+            </div>
+          </div>
+        </div>
+
+        <!-- ── NEW: Approval Control Center Modal ── -->
+        <div id="approval-control-modal" class="ap-modal-ov">
+          <div class="ap-modal">
+            <div class="ap-header">
+              <div style="font-size:0.6rem;text-transform:uppercase;letter-spacing:0.15em;color:#C9A84C;margin-bottom:4px">Approval Control Center</div>
+              <h2 style="font-family:'Times New Roman',serif;font-size:1.35rem" id="ap-title">Approving Account</h2>
+              <div id="ap-client-info" style="font-size:0.75rem;opacity:0.7;margin-top:5px"></div>
+            </div>
+            <div class="ap-body">
+              <div style="margin-bottom:1.25rem">
+                <label class="flbl" style="color:#000">Set Temporary Password</label>
+                <div style="display:flex;gap:10px">
+                  <input type="text" id="ap-password" class="finp" style="font-weight:700;letter-spacing:1px" />
+                  <button onclick="genApPwd()" class="btn bo" style="flex-shrink:0">Regen</button>
+                </div>
+              </div>
+
+              <div style="margin-bottom:1.5rem">
+                <label class="flbl" style="color:#000">Message Preview (Instructions)</label>
+                <div id="ap-preview" class="ap-preview"></div>
+              </div>
+
+              <div style="border-top:1px solid #eee;padding-top:1.25rem">
+                <button id="ap-btn-auto" onclick="sendApAuto()" class="ap-action-btn bg" style="background:#10b981">
+                  <span class="material-symbols-outlined">auto_awesome</span>
+                  Send Automatic Email (Recommended)
+                </button>
+                
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                  <button onclick="launchApSMS()" class="ap-action-btn bo" style="font-size:0.65rem">
+                    <span class="material-symbols-outlined" style="font-size:18px">sms</span>
+                    Open Text App
+                  </button>
+                  <button onclick="launchApMail()" class="ap-action-btn bo" style="font-size:0.65rem">
+                    <span class="material-symbols-outlined" style="font-size:18px">mail</span>
+                    Open Mail App
+                  </button>
+                </div>
+                
+                <button onclick="closeApModal()" class="ap-action-btn bo" style="border:none;color:#888;font-size:0.65rem;margin-top:0.5rem">Cancel & Close</button>
+              </div>
             </div>
           </div>
         </div>
@@ -2625,63 +2726,128 @@
       renderCorporate(_corpAccounts);
     }
 
+    // ── NEW: Approval Control Center Logic ──
+    var _apId = null;
+    var _apStatus = null;
+    var _apMsgData = {};
+
     function corpAction(id, newStatus) {
       if (!db) return;
-      var updateData = { status: newStatus, updatedAt: new Date().toISOString() };
-      
-      // When approving/activating, trigger full automation
-      if(newStatus === 'Approved' || newStatus === 'Active') {
-        var tempPwd = prompt('Set a temporary password for this corporate account:\n(Client will be able to change it in their portal)','Seacoast' + Math.floor(1000+Math.random()*9000) + '!');
-        if(tempPwd === null) return; // cancelled
-        if(tempPwd.length < 6) { showToast('Password must be at least 6 characters.'); return; }
-        updateData.password = tempPwd;
-        updateData.passwordResetRequired = true; // Force client to change it on first login
-
-        // Fetch contact data from cache for messaging
-        const msg = (window.allCorpsCache || []).find(c => c.id === id) || {};
-        const welcomeMsg = `Welcome to Seacoast RVIP! Your corporate account for ${msg.companyName || msg.company || 'your company'} is now approved.\n\nTemporary Password: ${tempPwd}\n\nINSTRUCTIONS: Log in at seacoastrvip.com/corporate.html using this temporary password, and then change it in your Account Settings immediately after logging in.\n\n⚠️ IMPORTANT SECURITY MATTER: Do not share this info with anyone. Our staff will never ask for your password.`;
-
-        // 1. AUTOMATED EMAIL (Standard Firebase 'Trigger Email' extension)
-        db.collection('mail').add({
-          to: msg.contactEmail || msg.email,
-          message: {
-            subject: 'Welcome to Seacoast RVIP - Action Required: Your Corporate Account is Approved',
-            text: welcomeMsg,
-            html: welcomeMsg.replace(/\n/g, '<br>')
-          }
-        }).catch(function(e){ console.error('Standard mail trigger failed:', e); });
-
-        // 2. AUTOMATED NOTIFICATIONS (Backup for custom Cloud Functions)
-        db.collection('notifications').add({
-          type: 'corporate_approval',
-          to: msg.contactEmail || msg.email,
-          phone: msg.contactPhone || msg.phone,
-          content: welcomeMsg,
-          company: msg.company || msg.companyName,
-          createdAt: new Date().toISOString(),
-          status: 'pending'
-        }).catch(function(e){ console.error('Notification queue failed:', e); });
-
-        // 3. Manual Fallback Prompt (SMS or Email)
-        const encodedMsg = encodeURIComponent(welcomeMsg);
-        const mobilePhone = (msg.contactPhone || msg.phone || '').replace(/\D/g,'');
-        const targetEmail = msg.contactEmail || msg.email || '';
-        
-        if(confirm('✅ Approval Saved & Automation Triggered!\n\n(Wait ~30 seconds for background delivery).\n\nWould you also like to manually send a copy now via SMS or Email?')) {
-          var choice = prompt("Type 'SMS' to text, or 'MAIL' to open your Email app:", "SMS");
-          if(choice && choice.toUpperCase() === 'SMS') {
-            window.open(`sms:${mobilePhone}?&body=${encodedMsg}`);
-          } else if(choice && choice.toUpperCase() === 'MAIL') {
-            window.open(`mailto:${targetEmail}?subject=Your Seacoast RVIP Credentials&body=${encodedMsg}`);
-          }
-          navigator.clipboard.writeText(welcomeMsg);
-        }
+      if (newStatus === 'Approved' || newStatus === 'Active') {
+        openApModal(id, newStatus);
+      } else {
+        // Direct update for Reject/Reopen
+        db.collection('corporate_accounts').doc(id).update({ status: newStatus, updatedAt: new Date().toISOString() }).then(function() {
+          showToast('Status changed to ' + newStatus);
+          loadCorporate();
+        });
       }
+    }
 
-      db.collection('corporate_accounts').doc(id).update(updateData).then(function(){
-        showToast('Account status updated: ' + newStatus);
+    function openApModal(id, status) {
+      _apId = id;
+      _apStatus = status;
+      const acc = (window.allCorpsCache || []).find(c => c.id === id) || {};
+      _apMsgData = acc;
+
+      document.getElementById('ap-title').textContent = (status === 'Active' ? 'Activating' : 'Approving') + ' Account';
+      document.getElementById('ap-client-info').innerHTML = `<strong>${acc.company || acc.companyName || 'Unknown Corp'}</strong> &middot; ${acc.contactEmail || acc.email || 'No Email'}`;
+      
+      // Seed default password
+      document.getElementById('ap-password').value = 'Seacoast' + Math.floor(1000 + Math.random() * 9000) + '!';
+      
+      refreshApPreview();
+      document.getElementById('approval-control-modal').style.display = 'block';
+      document.body.style.overflow = 'hidden';
+
+      // Watch password changes to update preview
+      document.getElementById('ap-password').oninput = refreshApPreview;
+    }
+
+    function genApPwd() {
+      document.getElementById('ap-password').value = 'Seacoast' + Math.floor(1000 + Math.random() * 9000) + '!';
+      refreshApPreview();
+    }
+
+    function refreshApPreview() {
+      const pwd = document.getElementById('ap-password').value;
+      const comp = _apMsgData.company || _apMsgData.companyName || 'your company';
+      const msg = `Welcome to Seacoast RVIP! Your corporate account for ${comp} is now approved.\n\nTemporary Password: ${pwd}\n\nINSTRUCTIONS: Log in at seacoastrvip.com/corporate.html using this temporary password, and then change it in your Account Settings immediately after logging in.\n\n⚠️ IMPORTANT SECURITY MATTER: Do not share this info with anyone. Our staff will never ask for your password.`;
+      document.getElementById('ap-preview').textContent = msg;
+    }
+
+    async function sendApAuto() {
+      const btn = document.getElementById('ap-btn-auto');
+      const pwd = document.getElementById('ap-password').value;
+      const msg = document.getElementById('ap-preview').textContent;
+      const targetEmail = _apMsgData.contactEmail || _apMsgData.email;
+
+      if (!pwd || pwd.length < 6) { showToast('Password is too short.'); return; }
+      
+      btn.disabled = true;
+      btn.textContent = 'Sending...';
+
+      // 1. Update Firestore Account
+      const updateData = {
+        status: _apStatus,
+        password: pwd,
+        passwordResetRequired: true,
+        updatedAt: new Date().toISOString()
+      };
+
+      try {
+        await db.collection('corporate_accounts').doc(_apId).update(updateData);
+        
+        // 2. Double-Layer Email (Firebase + FormSubmit)
+        // Firebase Extension trigger
+        db.collection('mail').add({
+          to: [targetEmail], // Array is safer for most extensions
+          message: {
+            subject: 'Action Required: Your Seacoast RVIP Corporate Account is Approved',
+            text: msg,
+            html: msg.replace(/\n/g, '<br>')
+          }
+        });
+
+        // FormSubmit Fallback (Guaranteed to bypass Firestore rules)
+        const fd = new FormData();
+        fd.append('_subject', '[APPROVED] Seacoast RVIP Corporate Access');
+        fd.append('_captcha', 'false');
+        fd.append('Email', targetEmail);
+        fd.append('Company', _apMsgData.company || _apMsgData.companyName || '');
+        fd.append('Instructions', msg);
+        
+        await fetch('https://formsubmit.co/ajax/info@seacoastrvip.com', { method: 'POST', body: fd }).catch(() => {});
+
+        showToast('Approval saved and automation triggered!');
+        closeApModal();
         loadCorporate();
-      });
+      } catch (e) {
+        showToast('Error saving: ' + e.message);
+        btn.disabled = false;
+        btn.textContent = 'Retry Sending';
+      }
+    }
+
+    function launchApSMS() {
+      const msg = document.getElementById('ap-preview').textContent;
+      const phone = (_apMsgData.contactPhone || _apMsgData.phone || '').replace(/\D/g, '');
+      window.open(`sms:${phone}?&body=${encodeURIComponent(msg)}`);
+      navigator.clipboard.writeText(msg);
+      showToast('Copied to clipboard + launching SMS...');
+    }
+
+    function launchApMail() {
+      const msg = document.getElementById('ap-preview').textContent;
+      const email = _apMsgData.contactEmail || _apMsgData.email || '';
+      window.open(`mailto:${email}?subject=Your Seacoast RVIP Credentials&body=${encodeURIComponent(msg)}`);
+      navigator.clipboard.writeText(msg);
+      showToast('Copied to clipboard + launching Mail app...');
+    }
+
+    function closeApModal() {
+      document.getElementById('approval-control-modal').style.display = 'none';
+      document.body.style.overflow = '';
     }
 
     // ── Corporate Member Management ──
