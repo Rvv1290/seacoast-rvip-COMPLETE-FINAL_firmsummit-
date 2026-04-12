@@ -163,12 +163,21 @@ body{font-family:'Inter',sans-serif;background:#f7f7f7;color:#1a1c1c;min-height:
   .mob-nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;padding:0.75rem 4px;cursor:pointer;color:rgba(255,255,255,0.45);transition:color 0.15s;border:none;background:none;font-family:'Work Sans',sans-serif;font-size:0.55rem;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;gap:4px}
   .mob-nav-btn .material-symbols-outlined{font-size:22px}
   .mob-nav-btn.on{color:#e8c97a}
+  
+  /* Booking Refinement */
+  .book-layout-wrap{display:block!important;margin:0!important;width:100%!important;min-height:auto!important}
+  .book-card{padding:1.5rem!important;border-right:none!important;max-height:none!important}
+  #corp-map-wrap{position:relative!important;height:300px!important;top:0!important}
+  .topbar-title{font-size:1.1rem!important}
 }
 @media(max-width:480px){
   .stat-row{grid-template-columns:1fr}
   .topbar-right{display:none}
 }
 @media(min-width:1001px){.mob-nav{display:none}.mob-menu-btn{display:none!important}}
+
+/* Booking Desktop Layout Class */
+.book-layout-wrap{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:0;align-items:start;margin:-2rem;width:calc(100% + 4rem);min-height:calc(100vh - 65px)}
 
 /* ─── FORCED PASSWORD RESET MODAL ─── */
 #forced-pwd-modal {
@@ -387,7 +396,7 @@ var _sess = null;
       </div>
       <div id="book-err" style="display:none;margin-bottom:1.5rem" class="alert-err"></div>
       <!-- Two-column: form left, big map right -->
-      <div style="display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:0;align-items:start;margin:-2rem;width:calc(100% + 4rem);min-height:calc(100vh - 65px)">
+      <div class="book-layout-wrap">
 
         <!-- ── LEFT: Booking Form ── -->
         <div class="book-card" style="border-radius:0;border:none;border-right:1px solid #e8e8e8;padding:2rem;overflow-y:auto;max-height:calc(100vh - 65px);max-width:none">
