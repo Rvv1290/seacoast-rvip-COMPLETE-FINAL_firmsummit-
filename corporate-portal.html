@@ -351,22 +351,16 @@ var _sess = null;
               <div style="font-family:Inter,sans-serif;font-size:0.75rem;color:#888;margin-top:8px" id="dash-bal-note">Pay securely below or contact billing for wire/ACH options.</div>
             </div>
             <div style="display:flex;gap:0.75rem;flex-wrap:wrap;align-items:center;justify-content:flex-end">
-              <!-- Stripe One-Click Pay (Internal Saved Card) -->
-              <button id="dash-pay-stripe" onclick="payWithSavedCard()" style="display:none;align-items:center;gap:0.5rem;background:#000;color:#fff;border:none;border-bottom:3px solid #775a19;padding:0.875rem 1.5rem;font-family:'Work Sans',sans-serif;font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;cursor:pointer;transition:opacity 0.2s" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
-                <span class="material-symbols-outlined" style="font-size:18px">contactless</span>
-                <span id="dash-stripe-label">Pay with Saved Card</span>
-              </button>
-
-              <!-- Link Card (Internal Modal) -->
-              <button id="dash-setup-card" onclick="openCardModal()" style="display:flex;align-items:center;gap:0.5rem;background:#fff;color:#000;border:1.5px solid #000;padding:0.875rem 1.75rem;font-family:'Work Sans',sans-serif;font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;cursor:pointer;transition:all 0.2s">
-                <span class="material-symbols-outlined" style="font-size:18px">add_card</span>
-                Link Card for Automated Billing
-              </button>
-
-              <!-- Pay Now (External Stripe Link) -->
-              <button onclick="payWithStripeLink()" style="display:flex;align-items:center;gap:0.5rem;background:#775a19;color:#fff;border:none;padding:0.875rem 1.75rem;font-family:'Work Sans',sans-serif;font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;cursor:pointer" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
+              <!-- Integrated Stripe Pay (Auto-Settles Balance) -->
+              <button onclick="settleBalanceWithCard()" style="display:flex;align-items:center;gap:0.5rem;background:#000;color:#fff;border:none;border-bottom:3px solid #775a19;padding:0.875rem 1.75rem;font-family:'Work Sans',sans-serif;font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;cursor:pointer;transition:opacity 0.2s">
                 <span class="material-symbols-outlined" style="font-size:18px">payments</span>
-                Pay Outstanding Balance
+                Pay with Card
+              </button>
+
+              <!-- Venmo (Secondary) -->
+              <button onclick="payVenmo()" style="display:flex;align-items:center;gap:0.5rem;background:#3D95CE;color:#fff;border:none;padding:0.875rem 1.75rem;font-family:'Work Sans',sans-serif;font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;cursor:pointer;transition:opacity 0.2s">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M17.4 2C14.6 2 12.4 3.5 11 6.2 9.9 4.3 8.3 3.3 6.2 3.3c-3 0-4.2 2.2-4.2 4.8 0 5 7 14.4 9.2 14.4 1.3 0 2.4-1.5 4-4.3.4.1.7.1 1.1.1 3.4 0 6.1-3.1 6.1-7.8C22.4 4.5 20.3 2 17.4 2z"/></svg>
+                Venmo
               </button>
             </div>
             
@@ -646,8 +640,8 @@ var _sess = null;
           <div style="font-family:Inter,sans-serif;font-size:0.75rem;color:rgba(255,255,255,0.4);margin-top:4px" id="pay-cycle">Monthly (NET-30) billing</div>
         </div>
         <div style="display:flex;flex-direction:column;gap:0.75rem">
-          <button onclick="payWithStripeLink()" style="background:#775a19;color:#fff;border:none;padding:0.75rem 1.75rem;font-family:'Work Sans',sans-serif;font-size:0.73rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;text-decoration:none;display:flex;align-items:center;gap:0.5rem;border-bottom:2px solid #5d4201;cursor:pointer"><span class="material-symbols-outlined" style="font-size:16px">payments</span>Pay Outstanding Balance</button>
-          <button onclick="openCardModal()" style="background:#000;color:#fff;border:none;padding:0.75rem 1.75rem;font-family:'Work Sans',sans-serif;font-size:0.73rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;text-decoration:none;display:flex;align-items:center;gap:0.5rem;border-bottom:2px solid #775a19;cursor:pointer"><span class="material-symbols-outlined" style="font-size:16px">add_card</span>Link Card for Automated Billing</button>
+          <button onclick="settleBalanceWithCard()" style="background:#000;color:#fff;border:none;padding:0.75rem 1.75rem;font-family:'Work Sans',sans-serif;font-size:0.73rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;text-decoration:none;display:flex;align-items:center;gap:0.5rem;border-bottom:2px solid #775a19;cursor:pointer"><span class="material-symbols-outlined" style="font-size:16px">payments</span>Pay Outstanding Balance</button>
+          <button onclick="payVenmo()" style="background:#3D95CE;color:#fff;border:none;padding:0.75rem 1.75rem;font-family:'Work Sans',sans-serif;font-size:0.73rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;text-decoration:none;display:flex;align-items:center;gap:0.5rem;border-bottom:2px solid #2a6a94;cursor:pointer"><span class="material-symbols-outlined" style="font-size:16px">account_balance_wallet</span>Pay via Venmo</button>
         </div>
       </div>
       <div class="sec-hdr">
@@ -1061,9 +1055,18 @@ function closeCardModal(){
   cardElement.unmount();
 }
 
-/* --- PAYMENT REDIRECTS (PURE STRIPE) --- */
-function payWithStripeLink() {
-  window.open('https://buy.stripe.com/28E6oG97Vegt5f2bFNbjW00', '_blank');
+/* --- INTEGRATED PAYMENT LOGIC --- */
+function settleBalanceWithCard() {
+  if(_cardData) {
+    payWithSavedCard();
+  } else {
+    // If no card, open the integrated modal to save one first
+    openCardModal();
+  }
+}
+
+function payVenmo() {
+  window.open('https://venmo.com/u/Ramon-Vargas-83', '_blank');
 }
 
 async function saveCard(){

@@ -417,7 +417,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
           <p id="rewards-status-msg" style="font-size:0.78rem;color:var(--text-sec)">Loading rewards status...</p>
         </div>
 
-        <!-- Balance Quick Pay & Venmo -->
+        <!-- Balance Quick Pay -->
         <div id="pay-box" style="display:none;background:#fcfcfc;border:1px solid var(--border);padding:2.5rem;margin-bottom:3rem">
            <div class="pay-box-row" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:2rem">
               <div>
@@ -425,10 +425,10 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
                  <p style="color:var(--text-sec);font-size:0.85rem">You have outstanding invoices totaling <strong id="pay-total-lbl">$0.00</strong>.</p>
               </div>
               <div class="pay-box-btns" style="display:flex;gap:1rem;flex-wrap:wrap">
-                 <button onclick="payTotalBalance()" class="btn-k">Pay Total with Card →</button>
-                 <a href="https://venmo.com/SeacoastRVIP" target="_blank" class="btn-v">
+                 <button onclick="settleBalanceWithCard()" class="btn-k">Pay Total with Card →</button>
+                 <button onclick="payVenmo()" class="btn-v" style="border:none;cursor:pointer">
                     <span class="material-symbols-outlined">savings</span>Pay with Venmo
-                 </a>
+                 </button>
               </div>
            </div>
         </div>
@@ -493,7 +493,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
                   <div style="font-family:monospace;font-size:1.3rem;letter-spacing:0.15em">•••• •••• •••• <span id="card-last4">0000</span></div>
                </div>
                <div id="no-card" style="color:#aaa;font-size:0.85rem;margin-bottom:1.5rem">No card on file for quick payments.</div>
-               <button onclick="openCardModal()" class="btn-k" style="width:100%">Add / Update Card</button>
+               <button onclick="openCardModal()" class="btn-k" style="width:100%">Link Card for Automated Billing</button>
             </div>
 
             <!-- Statement Generator -->
@@ -1146,7 +1146,19 @@ function showDayTrips(dateStr){
   list.innerHTML = filtered.map(t => tripCard(t, true)).join('');
 }
 
-// ─── FINANCIAL / STRIPE ───
+// ─── FINANCIAL / INTEGRATED ───
+function settleBalanceWithCard() {
+  if(currentUser.stripePaymentMethodId) {
+    payTotalBalance();
+  } else {
+    openCardModal();
+  }
+}
+
+function payVenmo() {
+  window.open('https://venmo.com/u/Ramon-Vargas-83', '_blank');
+}
+
 function renderSavedCardInfo(){
   if(currentUser.cardLast4){
     document.getElementById('no-card').style.display='none';
@@ -1195,22 +1207,27 @@ async function payTrip(id, amt){
   } catch(e){ toast(e.message); }
 }
 async function payTotalBalance(){
+   if(!currentUser) return;
    const confirmed = allTrips.filter(t => (t.status||'').toLowerCase()==='confirmed');
    let total = 0; confirmed.forEach(t => total += parseFloat(t.price||0));
    if(total <= 0) return;
-   if(!currentUser.stripePaymentMethodId) return toast('Card Required. Save a card first.');
-   if(!confirm(`Charge $${total.toFixed(2)} to your saved card for all outstanding invoices?`)) return;
-   toast(`Processing $${total.toFixed(2)}...`);
-   try {
-      const charge = funcs.httpsCallable('chargeSavedCard');
-      const {data} = await charge({accountId:currentUser.id, amount:total});
-      if(data.success){
-         for(const t of confirmed){
-            await db.collection('clients').doc(currentUser.id).collection('trips').doc(t.id).update({status:'Completed'});
-         }
-         toast('Full Balance Settled');
-      } else toast('Payment Failed');
-   } catch(e){ toast(e.message); }
+   
+   if(currentUser.stripePaymentMethodId) {
+      if(!confirm(`Charge $${total.toFixed(2)} to your saved card for all outstanding invoices?`)) return;
+      toast(`Processing $${total.toFixed(2)}...`);
+      try {
+         const charge = funcs.httpsCallable('chargeSavedCard');
+         const {data} = await charge({accountId:currentUser.id, amount:total});
+         if(data.success){
+            for(const t of confirmed){
+               await db.collection('clients').doc(currentUser.id).collection('trips').doc(t.id).update({status:'Completed'});
+            }
+            toast('Full Balance Settled');
+         } else toast('Payment Failed');
+      } catch(e){ toast(e.message); }
+   } else {
+      openCardModal();
+   }
 }
 
 // ─── PDF / STATEMENTS ───
