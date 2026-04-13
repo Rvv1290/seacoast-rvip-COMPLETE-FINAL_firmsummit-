@@ -10,7 +10,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script>
-<!-- Payment SDKs removed in favor of direct Square/Venmo links -->
+<script src="https://js.stripe.com/v3/"></script>
 <script>
 (function(){
   var c={apiKey:"AIzaSyDGel0ktZDQYcdlOuoZo4bAqZWCuGvOVbc",authDomain:"seacoast-rip.firebaseapp.com",projectId:"seacoast-rip",storageBucket:"seacoast-rip.firebasestorage.app",messagingSenderId:"684535453116",appId:"1:684535453116:web:922c843b5bad3b81ad47b9"};
@@ -351,10 +351,22 @@ var _sess = null;
               <div style="font-family:Inter,sans-serif;font-size:0.75rem;color:#888;margin-top:8px" id="dash-bal-note">Pay securely below or contact billing for wire/ACH options.</div>
             </div>
             <div style="display:flex;gap:0.75rem;flex-wrap:wrap;align-items:center;justify-content:flex-end">
-              <!-- Square Link -->
-              <button onclick="payWithSquare()" style="display:flex;align-items:center;gap:0.5rem;background:#000;color:#fff;border:none;border-bottom:3px solid #775a19;padding:0.875rem 1.5rem;font-family:'Work Sans',sans-serif;font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;cursor:pointer;transition:opacity 0.2s" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
+              <!-- Stripe One-Click Pay (if card exists) -->
+              <button id="dash-pay-stripe" onclick="payWithSavedCard()" style="display:none;align-items:center;gap:0.5rem;background:#000;color:#fff;border:none;border-bottom:3px solid #775a19;padding:0.875rem 1.5rem;font-family:'Work Sans',sans-serif;font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;cursor:pointer;transition:opacity 0.2s" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
+                <span class="material-symbols-outlined" style="font-size:18px">contactless</span>
+                <span id="dash-stripe-label">Pay with Saved Card</span>
+              </button>
+
+              <!-- Setup Card / Stripe -->
+              <button id="dash-setup-card" onclick="openCardModal()" style="display:flex;align-items:center;gap:0.5rem;background:#fff;color:#000;border:1.5px solid #000;padding:0.875rem 1.5rem;font-family:'Work Sans',sans-serif;font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;cursor:pointer;transition:all 0.2s">
                 <span class="material-symbols-outlined" style="font-size:18px">credit_card</span>
-                Pay with Card / Apple / Google
+                Setup Automated Billing
+              </button>
+
+              <!-- Alternative: Square Pay Now -->
+              <button onclick="payWithSquare()" style="display:flex;align-items:center;gap:0.5rem;background:#775a19;color:#fff;border:none;padding:0.875rem 1.5rem;font-family:'Work Sans',sans-serif;font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;cursor:pointer" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
+                <span class="material-symbols-outlined" style="font-size:18px">open_in_new</span>
+                Square / Apple / Google
               </button>
 
               <!-- Venmo -->
@@ -362,6 +374,12 @@ var _sess = null;
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M17.4 2C14.6 2 12.4 3.5 11 6.2 9.9 4.3 8.3 3.3 6.2 3.3c-3 0-4.2 2.2-4.2 4.8 0 5 7 14.4 9.2 14.4 1.3 0 2.4-1.5 4-4.3.4.1.7.1 1.1.1 3.4 0 6.1-3.1 6.1-7.8C22.4 4.5 20.3 2 17.4 2z"/></svg>
                 Venmo
               </button>
+            </div>
+            
+            <!-- Link to change card if one exists -->
+            <div id="dash-manage-card" style="display:none;width:100%;text-align:right;margin-top:8px">
+              <span id="dash-card-info" style="font-family:Inter,sans-serif;font-size:0.68rem;color:#888;margin-right:10px"></span>
+              <span onclick="openCardModal()" style="font-family:Inter,sans-serif;font-size:0.68rem;color:#775a19;cursor:pointer;font-weight:600;text-decoration:underline">Update Saved Card</span>
             </div>
           </div>
           <div style="padding:0.875rem 2rem;background:#fafafa;display:flex;align-items:center;gap:0.5rem">
@@ -866,10 +884,31 @@ var _sess = null;
         <div class="acct-row"><span class="acct-key">Email</span><span class="acct-val" id="a-email"></span></div>
       </div>
       <div class="acct-card">
-        <div class="acct-title">Account Services</div>
-        <div class="acct-row"><span class="acct-key">Account Status</span><span class="acct-val"><span class="bdg bdg-con">Active</span></span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem">
+          <div class="acct-title" style="margin-bottom:0">Account Team / Travelers</div>
+          <button class="btn-out" style="padding:0.4rem 0.8rem;font-size:0.6rem" onclick="toggleAcctMemberForm()">+ Add New</button>
+        </div>
+        
+        <!-- Hidden Add Form in Account Tab -->
+        <div id="acct-member-form" style="display:none;background:#f9f9f9;padding:1.25rem;margin-bottom:1.5rem;border-left:3px solid #775a19">
+          <div style="font-family:'Work Sans',sans-serif;font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#775a19;margin-bottom:0.75rem">Add Authorized Traveler</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:1rem">
+            <input class="f-input" id="am-name" type="text" placeholder="Full Name *" style="font-size:0.8rem;padding:0.5rem 0"/>
+            <input class="f-input" id="am-phone" type="tel" placeholder="Phone *" style="font-size:0.8rem;padding:0.5rem 0"/>
+            <input class="f-input" id="am-email" type="email" placeholder="Email" style="font-size:0.8rem;padding:0.5rem 0"/>
+            <input class="f-input" id="am-role" type="text" placeholder="Title / Role" style="font-size:0.8rem;padding:0.5rem 0"/>
+          </div>
+          <div style="display:flex;gap:0.5rem">
+            <button class="btn-blk" onclick="addMemberFromAcct()" style="padding:0.5rem 1rem;font-size:0.65rem">Add Traveler</button>
+            <button class="btn-out" onclick="toggleAcctMemberForm()" style="padding:0.5rem 1rem;font-size:0.65rem;border-color:transparent">Cancel</button>
+          </div>
+        </div>
+
+        <div class="acct-row" style="flex-direction:column;align-items:flex-start;gap:0.5rem">
+          <span class="acct-key">Authorized Members</span>
+          <div id="a-riders-list" style="width:100%;font-family:Inter,sans-serif;font-size:0.85rem;color:#000"></div>
+        </div>
         <div class="acct-row"><span class="acct-key">Typical Routes</span><span class="acct-val" id="a-routes"></span></div>
-        <div class="acct-row"><span class="acct-key">Team Members</span><span class="acct-val" id="a-riders" style="white-space:pre-line"></span></div>
       </div>
       <div class="acct-card">
         <div class="acct-title">Security Settings</div>
@@ -934,6 +973,13 @@ function loadAccountLive(){
       _cardData = { brand: d.cardBrand, last4: d.cardLast4 };
     } else {
       _cardData = null;
+    }
+
+    // Unify Real-time Member Sync
+    if(d.members) {
+      _members = d.members;
+      renderMembers();
+      renderTravelerChips();
     }
 
     // Responsive: Handle Temporary Password Force-Reset
@@ -1045,10 +1091,82 @@ function payVenmo() {
   window.open('https://venmo.com/u/Ramon-Vargas-83', '_blank');
 }
 
-/* Legacy Stripe Functions Disabled
-async function saveCard(){ ... }
-async function payWithSavedCard(){ ... }
-*/
+async function saveCard(){
+  const btn = document.getElementById('card-save-btn');
+  const errEl = document.getElementById('card-errors');
+  btn.disabled = true;
+  btn.textContent = 'Saving…';
+  errEl.textContent = '';
+
+  try {
+    const functions = firebase.functions();
+    
+    // 1. Ensure Stripe Customer exists
+    const getCust = functions.httpsCallable('getStripeCustomer');
+    const { data: { customerId } } = await getCust({ 
+      accountId: sess.accountId, 
+      email: sess.contactEmail,
+      company: sess.company
+    });
+
+    // 2. Get SetupIntent client secret
+    const getSecret = functions.httpsCallable('createSetupIntent');
+    const { data: { clientSecret } } = await getSecret({ customerId });
+
+    // 3. Confirm card setup with Stripe
+    const { setupIntent, error } = await stripe.confirmCardSetup(clientSecret, {
+      payment_method: { card: cardElement }
+    });
+
+    if (error) {
+      errEl.textContent = error.message;
+      btn.disabled = false;
+      btn.textContent = 'Authorize & Save Card →';
+      return;
+    }
+
+    // 4. Save PaymentMethod ID to Firestore account via Cloud Function
+    const savePM = functions.httpsCallable('savePaymentMethod');
+    await savePM({ accountId: sess.accountId, paymentMethodId: setupIntent.payment_method });
+
+    alert('Success! Your card has been saved securely for automated billing.');
+    closeCardModal();
+  } catch (err) {
+    console.error('Save Card Error:', err);
+    errEl.textContent = err.message || 'Payment setup failed. Please contact support.';
+    btn.disabled = false;
+    btn.textContent = 'Authorize & Save Card →';
+  }
+}
+
+async function payWithSavedCard(){
+  if(_accountBalance <= 0) return;
+  if(!confirm('Pay outstanding balance of $' + _accountBalance.toFixed(2) + ' using your saved card?')) return;
+
+  const btn = document.getElementById('dash-pay-stripe');
+  const label = document.getElementById('dash-stripe-label');
+  const originalLabel = label.textContent;
+  
+  btn.disabled = true;
+  label.textContent = 'Processing…';
+
+  try {
+    const charge = firebase.functions().httpsCallable('chargeSavedCard');
+    const { data } = await charge({ accountId: sess.accountId, amount: _accountBalance });
+
+    if(data.success){
+      alert('Payment successful! Your balance has been cleared.');
+    } else {
+      alert('Payment failed: ' + (data.status || 'Unknown error'));
+    }
+  } catch (err) {
+    console.error(err);
+    alert('Payment error: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    label.textContent = originalLabel;
+  }
+}
 
 var tabTitles = {dash:'Dashboard',book:'Book a Ride',cal:'Calendar',trips:'Trips',team:'Team',pay:'Payments',stmt:'Statements',rewards:'Rewards',acct:'Account'};
 var _allTabs = ['dash','book','cal','trips','team','pay','stmt','rewards','acct'];
@@ -1073,7 +1191,6 @@ window.addEventListener('DOMContentLoaded', function(){
   document.getElementById('a-phone').textContent = sess.contactPhone || '—';
   document.getElementById('a-email').textContent = sess.contactEmail || '—';
   document.getElementById('a-routes').textContent = sess.typicalRoutes || '—';
-  document.getElementById('a-riders').textContent = sess.additionalRiders || 'None listed';
   // Set default date for booking
   var today = new Date();
   document.getElementById('b-date').min = today.toISOString().split('T')[0];
@@ -1583,23 +1700,65 @@ function loadMembers(){
 function renderMembers(){
   var el=document.getElementById('team-list');
   var cnt=document.getElementById('team-count');
+  var acctList=document.getElementById('a-riders-list');
+  
   if(cnt) cnt.textContent=_members.length;
-  if(!_members.length){
-    el.innerHTML='<div style="text-align:center;padding:2rem;color:#aaa;font-size:0.85rem"><span class="material-symbols-outlined" style="font-size:2rem;display:block;margin-bottom:0.5rem;opacity:0.3">group_add</span>No team members added yet.<br>Add your first traveler below.</div>';
-    return;
+  
+  // Update Team Tab
+  if(el){
+    if(!_members.length){
+      el.innerHTML='<div style="text-align:center;padding:2rem;color:#aaa;font-size:0.85rem"><span class="material-symbols-outlined" style="font-size:2rem;display:block;margin-bottom:0.5rem;opacity:0.3">group_add</span>No team members added yet.<br>Add your first traveler below.</div>';
+    } else {
+      el.innerHTML=_members.map(function(m,i){
+        return '<div style="display:flex;align-items:center;justify-content:space-between;padding:0.875rem 1rem;background:#f9f9f9;margin-bottom:0.5rem;border-left:3px solid #775a19">' +
+          '<div style="flex:1">' +
+            '<div style="font-weight:600;font-size:0.9rem">'+escH(m.name)+(m.role?' <span style="color:#888;font-weight:400;font-size:0.75rem">· '+escH(m.role)+'</span>':'')+'</div>' +
+            '<div style="font-size:0.78rem;color:#666;margin-top:3px">'+escH(m.phone||'')+(m.email?' · '+escH(m.email):'')+'</div>' +
+          '</div>' +
+          '<div style="display:flex;gap:0.5rem;align-items:center">' +
+            '<button onclick="bookForMember('+i+')" style="background:#000;color:#fff;border:none;padding:0.375rem 0.75rem;font-family:\'Work Sans\',sans-serif;font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;cursor:pointer;border-bottom:2px solid #775a19">Book</button>' +
+            '<button onclick="removeMember('+i+')" style="background:none;border:none;color:#ef4444;cursor:pointer"><span class="material-symbols-outlined" style="font-size:18px">delete</span></button>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+    }
   }
-  el.innerHTML=_members.map(function(m,i){
-    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:0.875rem 1rem;background:#f9f9f9;margin-bottom:0.5rem;border-left:3px solid #775a19">' +
-      '<div style="flex:1">' +
-        '<div style="font-weight:600;font-size:0.9rem">'+escH(m.name)+(m.role?' <span style="color:#888;font-weight:400;font-size:0.75rem">· '+escH(m.role)+'</span>':'')+'</div>' +
-        '<div style="font-size:0.78rem;color:#666;margin-top:3px">'+escH(m.phone||'')+(m.email?' · '+escH(m.email):'')+'</div>' +
-      '</div>' +
-      '<div style="display:flex;gap:0.5rem;align-items:center">' +
-        '<button onclick="bookForMember('+i+')" style="background:#000;color:#fff;border:none;padding:0.375rem 0.75rem;font-family:\'Work Sans\',sans-serif;font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;cursor:pointer;border-bottom:2px solid #775a19">Book</button>' +
-        '<button onclick="removeMember('+i+')" style="background:none;border:none;color:#ef4444;cursor:pointer"><span class="material-symbols-outlined" style="font-size:18px">delete</span></button>' +
-      '</div>' +
-    '</div>';
-  }).join('');
+
+  // Update Account Tab
+  if(acctList){
+    if(!_members.length){
+      acctList.textContent = 'None listed';
+    } else {
+      acctList.innerHTML = _members.map(function(m){ 
+        return '<div style="padding:4px 0;border-bottom:1px solid #eee">'+escH(m.name)+' <span style="color:#888;font-size:0.75rem">('+escH(m.phone)+')</span></div>'; 
+      }).join('');
+    }
+  }
+}
+
+function toggleAcctMemberForm(){
+  var f = document.getElementById('acct-member-form');
+  f.style.display = (f.style.display==='none'?'block':'none');
+}
+
+function addMemberFromAcct(){
+  var name=document.getElementById('am-name').value.trim();
+  var phone=document.getElementById('am-phone').value.trim();
+  var email=document.getElementById('am-email').value.trim();
+  var role=document.getElementById('am-role').value.trim();
+  if(!name||!phone){alert('Name and phone are required.');return;}
+  
+  var member={name:name,phone:phone,email:email,role:role,addedAt:new Date().toISOString()};
+  _members.push(member);
+  
+  if(db&&sess){
+    db.collection('corporate_accounts').doc(sess.accountId).update({members:_members}).then(function(){
+      renderMembers();
+      renderTravelerChips();
+      ['am-name','am-phone','am-email','am-role'].forEach(function(id){document.getElementById(id).value='';});
+      toggleAcctMemberForm();
+    }).catch(function(e){alert('Error: '+e.message);});
+  }
 }
 function addMember(){
   var name=document.getElementById('tm-name').value.trim();
@@ -2061,5 +2220,19 @@ function processVenmoPayment(amount) { console.log('Processing Venmo payment for
   </div>
 </div>
 
+<!-- ── CARD MODAL ── -->
+<div id="card-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9000;display:none;align-items:center;justify-content:center;padding:1rem">
+  <div style="background:#fff;width:100%;max-width:440px;padding:2.5rem;position:relative">
+    <button onclick="closeCardModal()" style="position:absolute;right:1rem;top:1rem;background:none;border:none;cursor:pointer"><span class="material-symbols-outlined">close</span></button>
+    <div style="font-family:'Work Sans',sans-serif;font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.18em;color:#775a19;margin-bottom:0.75rem">Secure Billing Integration</div>
+    <h2 style="font-family:'Times New Roman',serif;font-size:1.6rem;font-weight:700;margin-bottom:1rem">Save Card for Automated Billing</h2>
+    <p style="font-family:Inter,sans-serif;font-size:0.85rem;color:#666;line-height:1.6;margin-bottom:1.5rem">Save your card securely via Stripe to enable recurring bi-weekly or monthly payments.</p>
+    
+    <div id="card-element" style="padding:1rem;border:1px solid #e5e5e5;margin-bottom:1.25rem"></div>
+    <div id="card-errors" style="color:#d32f2f;font-size:0.75rem;margin-bottom:1rem"></div>
+    
+    <button class="btn-blk full" id="card-save-btn" onclick="saveCard()">Authorize &amp; Save Card →</button>
+  </div>
+</div>
 </body>
 </html>
