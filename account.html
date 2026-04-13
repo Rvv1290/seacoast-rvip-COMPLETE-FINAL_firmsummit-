@@ -609,12 +609,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
         💳 Your balance is <strong id="acct-modal-amt" style="font-size:1rem">$0</strong> — enter this amount below
       </p>
     </div>
-    <div style="padding:1.5rem;display:flex;justify-content:center">
-      <stripe-buy-button
-        buy-button-id="buy_btn_1TLb53APjRVAZeaeOSYbHrhC"
-        publishable-key="pk_live_51TDR9gAPjRVAZeaebc3zFuondJhpYccCrQQFW6ygR06CAQvtTsrU6qw6KtjIVr1A6mxaCiMcIbfxKs7IUbM94Vlr006GZuFXUv"
-      ></stripe-buy-button>
-    </div>
+    <div id="acct-stripe-btn-container" style="padding:1.5rem;display:flex;justify-content:center;min-height:80px;align-items:center"></div>
     <p style="text-align:center;font-size:0.65rem;color:#aaa;padding:0 1.25rem 1rem">Visa · MC · Amex · Apple Pay · Google Pay · Klarna · Affirm</p>
   </div>
 </div>
@@ -1161,34 +1156,44 @@ function showDayTrips(dateStr){
 }
 
 // ─── FINANCIAL / INTEGRATED ───
-var STRIPE_PAYMENT_LINK = 'https://buy.stripe.com/bJefZg3NBegt8reaBJbjW01';
+var STRIPE_BUY_BTN_ID = 'buy_btn_1TLb53APjRVAZeaeOSYbHrhC';
+var STRIPE_PUB_KEY    = 'pk_live_51TDR9gAPjRVAZeaebc3zFuondJhpYccCrQQFW6ygR06CAQvtTsrU6qw6KtjIVr1A6mxaCiMcIbfxKs7IUbM94Vlr006GZuFXUv';
 
 function openStripePayModal(amt) {
-  var modal = document.getElementById('acct-stripe-modal');
-  var frame = document.getElementById('acct-stripe-frame');
-  var amtEl = document.getElementById('acct-modal-amt');
+  var modal     = document.getElementById('acct-stripe-modal');
+  var container = document.getElementById('acct-stripe-btn-container');
+  var amtEl     = document.getElementById('acct-modal-amt');
+
   if (amt) {
     amtEl.textContent = '$' + parseFloat(amt).toFixed(2);
-    // Show reminder on Pay tab
-    var rem = document.getElementById('acct-balance-reminder');
+    var rem    = document.getElementById('acct-balance-reminder');
     var remAmt = document.getElementById('acct-balance-amt');
-    if (rem) rem.style.display = 'block';
+    if (rem)    rem.style.display = 'block';
     if (remAmt) remAmt.textContent = '$' + parseFloat(amt).toFixed(2);
   }
-  if (!frame.src || frame.src === 'about:blank') frame.src = STRIPE_PAYMENT_LINK;
+
+  // Inject buy button dynamically so it initialises after modal is visible
+  container.innerHTML = '';
   modal.style.display = 'flex';
   document.body.style.overflow = 'hidden';
+
+  setTimeout(function() {
+    var btn = document.createElement('stripe-buy-button');
+    btn.setAttribute('buy-button-id', STRIPE_BUY_BTN_ID);
+    btn.setAttribute('publishable-key', STRIPE_PUB_KEY);
+    container.appendChild(btn);
+  }, 80);
 }
 
 function closeStripePayModal() {
   document.getElementById('acct-stripe-modal').style.display = 'none';
+  document.getElementById('acct-stripe-btn-container').innerHTML = '';
   document.body.style.overflow = '';
 }
 
 // Close on backdrop click
 document.addEventListener('click', function(e) {
-  var modal = document.getElementById('acct-stripe-modal');
-  if (e.target === modal) closeStripePayModal();
+  if (e.target === document.getElementById('acct-stripe-modal')) closeStripePayModal();
 });
 
 function settleBalanceWithCard() {
