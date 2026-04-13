@@ -485,15 +485,18 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
         <h2 style="font-family:'Times New Roman',serif;font-size:2.2rem;color:#000;margin-bottom:2.5rem">Financial Records</h2>
         
         <div class="fin-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;margin-bottom:3rem">
-            <!-- Saved Card -->
+            <!-- Pay Now -->
             <div style="background:#fff;border:1px solid var(--border);padding:2.5rem">
-               <h3 style="font-family:'Work Sans',sans-serif;font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;border-bottom:1px solid var(--border);padding-bottom:1rem;margin-bottom:1.5rem">Saved Payment Method</h3>
-               <div id="card-display" style="background:#000;color:var(--gold);padding:2rem;border-radius:4px;display:none;margin-bottom:1.5rem">
-                  <div style="display:flex;justify-content:space-between;font-weight:700;margin-bottom:1.5rem"><span id="card-brand">CARD</span> <span class="material-symbols-outlined">contactless</span></div>
-                  <div style="font-family:monospace;font-size:1.3rem;letter-spacing:0.15em">•••• •••• •••• <span id="card-last4">0000</span></div>
+               <h3 style="font-family:'Work Sans',sans-serif;font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;border-bottom:1px solid var(--border);padding-bottom:1rem;margin-bottom:1.5rem">Quick Pay</h3>
+               <p style="font-size:0.82rem;color:var(--text-sec);margin-bottom:1.5rem;line-height:1.5">Pay your outstanding balance securely via Stripe — Card, Apple Pay, Google Pay, Klarna &amp; more accepted.</p>
+               <div id="acct-balance-reminder" style="display:none;background:#f9f6ef;border:1px solid #e8d99a;padding:0.75rem 1rem;margin-bottom:1.25rem;font-family:Inter,sans-serif;font-size:0.82rem;color:#5a4010">
+                 Your balance: <strong id="acct-balance-amt" style="font-size:1rem">$0</strong> — enter this amount in Stripe.
                </div>
-               <div id="no-card" style="color:#aaa;font-size:0.85rem;margin-bottom:1.5rem">No card on file for quick payments.</div>
-               <button onclick="openCardModal()" class="btn-k" style="width:100%">Link Card for Automated Billing</button>
+               <button onclick="openStripePayModal()" class="btn-k" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px">
+                 <span class="material-symbols-outlined" style="font-size:17px">lock</span>
+                 Pay Now via Stripe
+               </button>
+               <p style="font-size:0.65rem;color:#aaa;text-align:center;margin-top:0.75rem">Visa · MC · Amex · Apple Pay · Google Pay · Klarna</p>
             </div>
 
             <!-- Statement Generator -->
@@ -589,19 +592,22 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
   </div>
 </div>
 
-<!-- MODAL: Add Card (Stripe) -->
-<div class="overlay" id="m-card">
-  <div class="modal">
-    <div class="modal-hd">
-      <h3 style="font-family:'Times New Roman',serif;font-size:1.3rem">Vault Payment Method</h3>
-      <button onclick="closeM('m-card')" style="background:none;border:none;cursor:pointer"><span class="material-symbols-outlined">close</span></button>
+<!-- STRIPE INLINE PAYMENT MODAL -->
+<div id="acct-stripe-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:9999;align-items:center;justify-content:center;padding:1rem">
+  <div style="background:#fff;width:100%;max-width:520px;max-height:92vh;border-radius:6px;overflow:hidden;position:relative;display:flex;flex-direction:column;box-shadow:0 25px 60px rgba(0,0,0,0.35)">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:1rem 1.25rem;border-bottom:1px solid #eee;flex-shrink:0">
+      <div style="display:flex;align-items:center;gap:0.625rem">
+        <span class="material-symbols-outlined" style="font-size:18px;color:var(--gold-dark)">lock</span>
+        <span style="font-family:'Times New Roman',serif;font-size:1rem;font-weight:700">Seacoast RVIP — Secure Payment</span>
+      </div>
+      <button onclick="closeStripePayModal()" style="background:none;border:none;cursor:pointer;color:#888;font-size:1.4rem;line-height:1;padding:0.25rem">✕</button>
     </div>
-    <div class="modal-bd">
-      <p style="font-size:0.8rem;color:var(--text-sec);margin-bottom:2rem">Your data is secured by Stripe. Seacoast RVIP never stores your sensitive payment credentials.</p>
-      <div id="card-element" style="padding:1rem;border:1px solid #ddd;margin-bottom:1.5rem"></div>
-      <div id="card-err" style="color:#d32f2f;font-size:0.78rem;margin-bottom:1.25rem"></div>
-      <button id="save-card-btn" onclick="saveCard()" class="btn-k" style="width:100%">Save Card to Profile</button>
+    <div style="background:#f9f6ef;padding:0.625rem 1.25rem;border-bottom:1px solid #f0e8cc;flex-shrink:0">
+      <p style="font-family:Inter,sans-serif;font-size:0.78rem;color:#775a19;margin:0;text-align:center">
+        💳 Enter <strong id="acct-modal-amt">your balance</strong> as the payment amount below
+      </p>
     </div>
+    <iframe id="acct-stripe-frame" src="" style="width:100%;flex:1;border:none;min-height:520px" allow="payment *; camera *" loading="lazy"></iframe>
   </div>
 </div>
 
@@ -1147,87 +1153,69 @@ function showDayTrips(dateStr){
 }
 
 // ─── FINANCIAL / INTEGRATED ───
-function settleBalanceWithCard() {
-  if(currentUser.stripePaymentMethodId) {
-    payTotalBalance();
-  } else {
-    openCardModal();
+var STRIPE_PAYMENT_LINK = 'https://buy.stripe.com/bJefZg3NBegt8reaBJbjW01';
+
+function openStripePayModal(amt) {
+  var modal = document.getElementById('acct-stripe-modal');
+  var frame = document.getElementById('acct-stripe-frame');
+  var amtEl = document.getElementById('acct-modal-amt');
+  if (amt) {
+    amtEl.textContent = '$' + parseFloat(amt).toFixed(2);
+    // Show reminder on Pay tab
+    var rem = document.getElementById('acct-balance-reminder');
+    var remAmt = document.getElementById('acct-balance-amt');
+    if (rem) rem.style.display = 'block';
+    if (remAmt) remAmt.textContent = '$' + parseFloat(amt).toFixed(2);
   }
+  if (!frame.src || frame.src === 'about:blank') frame.src = STRIPE_PAYMENT_LINK;
+  modal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
 }
+
+function closeStripePayModal() {
+  document.getElementById('acct-stripe-modal').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+// Close on backdrop click
+document.addEventListener('click', function(e) {
+  var modal = document.getElementById('acct-stripe-modal');
+  if (e.target === modal) closeStripePayModal();
+});
+
+function settleBalanceWithCard() {
+  const confirmed = allTrips.filter(t => (t.status||'').toLowerCase()==='confirmed');
+  let total = 0; confirmed.forEach(t => total += parseFloat(t.price||0));
+  openStripePayModal(total > 0 ? total.toFixed(2) : null);
+}
+
+function openCardModal() { openStripePayModal(); }
 
 function payVenmo() {
   window.open('https://venmo.com/u/Ramon-Vargas-83', '_blank');
 }
 
 function renderSavedCardInfo(){
-  if(currentUser.cardLast4){
-    document.getElementById('no-card').style.display='none';
-    document.getElementById('card-display').style.display='block';
-    document.getElementById('card-brand').textContent = currentUser.cardBrand.toUpperCase();
-    document.getElementById('card-last4').textContent = currentUser.cardLast4;
-  } else {
-    document.getElementById('no-card').style.display='block';
-    document.getElementById('card-display').style.display='none';
+  // Show balance reminder if trips owed
+  const confirmed = allTrips.filter(t => (t.status||'').toLowerCase()==='confirmed');
+  let total = 0; confirmed.forEach(t => total += parseFloat(t.price||0));
+  var rem = document.getElementById('acct-balance-reminder');
+  var remAmt = document.getElementById('acct-balance-amt');
+  if (total > 0 && rem) {
+    rem.style.display = 'block';
+    if (remAmt) remAmt.textContent = '$' + total.toFixed(2);
   }
 }
-async function openCardModal(){
-  openM('m-card');
-  if(stripeCard) return;
-  stripeElements = stripe.elements();
-  stripeCard = stripeElements.create('card',{style:{base:{color:'#333',fontFamily:'Inter, sans-serif',fontSize:'15px'}}});
-  stripeCard.mount('#card-element');
+
+function payTrip(id, amt) {
+  openStripePayModal(amt);
 }
-async function saveCard(){
-  const btn=document.getElementById('save-card-btn'), err=document.getElementById('card-err');
-  btn.disabled=true; btn.textContent='Processing...'; err.textContent='';
-  try {
-    const getCust = funcs.httpsCallable('getStripeCustomer');
-    const {data:{customerId}} = await getCust({accountId:currentUser.id, email:currentUser.email, company:currentUser.name});
-    const getSecret = funcs.httpsCallable('createSetupIntent');
-    const {data:{clientSecret}} = await getSecret({customerId});
-    const {setupIntent, error} = await stripe.confirmCardSetup(clientSecret, {payment_method:{card:stripeCard}});
-    if(error) throw error;
-    const savePm = funcs.httpsCallable('savePaymentMethod');
-    await savePm({accountId:currentUser.id, paymentMethodId:setupIntent.payment_method});
-    toast('Card Saved Successfully'); closeM('m-card');
-  } catch(e){ err.textContent=e.message; }
-  btn.disabled=false; btn.textContent='Save Card to Profile';
-}
-async function payTrip(id, amt){
-  if(!currentUser.stripePaymentMethodId) return toast('Card Required. Visit Payments tab.');
-  if(!confirm(`Charge $${amt} to your saved card?`)) return;
-  toast('Processing Payment...');
-  try {
-    const charge = funcs.httpsCallable('chargeSavedCard');
-    const {data} = await charge({accountId:currentUser.id, amount:amt});
-    if(data.success){
-      await db.collection('clients').doc(currentUser.id).collection('trips').doc(id).update({status:'Completed'});
-      toast('Payment Approved');
-    } else toast('Payment Declined: '+data.status);
-  } catch(e){ toast(e.message); }
-}
-async function payTotalBalance(){
-   if(!currentUser) return;
-   const confirmed = allTrips.filter(t => (t.status||'').toLowerCase()==='confirmed');
-   let total = 0; confirmed.forEach(t => total += parseFloat(t.price||0));
-   if(total <= 0) return;
-   
-   if(currentUser.stripePaymentMethodId) {
-      if(!confirm(`Charge $${total.toFixed(2)} to your saved card for all outstanding invoices?`)) return;
-      toast(`Processing $${total.toFixed(2)}...`);
-      try {
-         const charge = funcs.httpsCallable('chargeSavedCard');
-         const {data} = await charge({accountId:currentUser.id, amount:total});
-         if(data.success){
-            for(const t of confirmed){
-               await db.collection('clients').doc(currentUser.id).collection('trips').doc(t.id).update({status:'Completed'});
-            }
-            toast('Full Balance Settled');
-         } else toast('Payment Failed');
-      } catch(e){ toast(e.message); }
-   } else {
-      openCardModal();
-   }
+
+function payTotalBalance() {
+  const confirmed = allTrips.filter(t => (t.status||'').toLowerCase()==='confirmed');
+  let total = 0; confirmed.forEach(t => total += parseFloat(t.price||0));
+  if (total <= 0) return toast('No outstanding balance.');
+  openStripePayModal(total.toFixed(2));
 }
 
 // ─── PDF / STATEMENTS ───

@@ -367,7 +367,7 @@ var _sess = null;
             <!-- Link to change card if one exists -->
             <div id="dash-manage-card" style="display:none;width:100%;text-align:right;margin-top:8px">
               <span id="dash-card-info" style="font-family:Inter,sans-serif;font-size:0.68rem;color:#888;margin-right:10px"></span>
-              <span onclick="openCardModal()" style="font-family:Inter,sans-serif;font-size:0.68rem;color:#775a19;cursor:pointer;font-weight:600;text-decoration:underline">Update Saved Card</span>
+              <span onclick="openCardModal(_accountBalance)" style="font-family:Inter,sans-serif;font-size:0.68rem;color:#775a19;cursor:pointer;font-weight:600;text-decoration:underline">Pay Now</span>
             </div>
           </div>
           <div style="padding:0.875rem 2rem;background:#fafafa;display:flex;align-items:center;gap:0.5rem">
@@ -1045,105 +1045,35 @@ var cardElement = elements.create('card', {
   }
 });
 
-function openCardModal(){
-  document.getElementById('card-modal').style.display = 'flex';
-  cardElement.mount('#card-element');
+var STRIPE_PAYMENT_LINK = 'https://buy.stripe.com/bJefZg3NBegt8reaBJbjW01';
+
+function openCardModal(amt) {
+  var modal = document.getElementById('card-modal');
+  var frame = document.getElementById('corp-stripe-frame');
+  var amtEl = document.getElementById('corp-modal-amt');
+  if (amt) amtEl.textContent = '$' + parseFloat(amt).toFixed(2);
+  if (!frame.src || frame.src === 'about:blank') frame.src = STRIPE_PAYMENT_LINK;
+  modal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
 }
 
-function closeCardModal(){
+function closeCardModal() {
   document.getElementById('card-modal').style.display = 'none';
-  cardElement.unmount();
+  document.body.style.overflow = '';
 }
+
+// Close on backdrop click
+document.addEventListener('click', function(e) {
+  if (e.target === document.getElementById('card-modal')) closeCardModal();
+});
 
 /* --- INTEGRATED PAYMENT LOGIC --- */
 function settleBalanceWithCard() {
-  if(_cardData) {
-    payWithSavedCard();
-  } else {
-    // If no card, open the integrated modal to save one first
-    openCardModal();
-  }
+  openCardModal(_accountBalance > 0 ? _accountBalance : null);
 }
 
 function payVenmo() {
   window.open('https://venmo.com/u/Ramon-Vargas-83', '_blank');
-}
-
-async function saveCard(){
-  const btn = document.getElementById('card-save-btn');
-  const errEl = document.getElementById('card-errors');
-  btn.disabled = true;
-  btn.textContent = 'Saving…';
-  errEl.textContent = '';
-
-  try {
-    const functions = firebase.functions();
-    
-    // 1. Ensure Stripe Customer exists
-    const getCust = functions.httpsCallable('getStripeCustomer');
-    const { data: { customerId } } = await getCust({ 
-      accountId: sess.accountId, 
-      email: sess.contactEmail,
-      company: sess.company
-    });
-
-    // 2. Get SetupIntent client secret
-    const getSecret = functions.httpsCallable('createSetupIntent');
-    const { data: { clientSecret } } = await getSecret({ customerId });
-
-    // 3. Confirm card setup with Stripe
-    const { setupIntent, error } = await stripe.confirmCardSetup(clientSecret, {
-      payment_method: { card: cardElement }
-    });
-
-    if (error) {
-      errEl.textContent = error.message;
-      btn.disabled = false;
-      btn.textContent = 'Authorize & Save Card →';
-      return;
-    }
-
-    // 4. Save PaymentMethod ID to Firestore account via Cloud Function
-    const savePM = functions.httpsCallable('savePaymentMethod');
-    await savePM({ accountId: sess.accountId, paymentMethodId: setupIntent.payment_method });
-
-    alert('Success! Your card has been saved securely for automated billing.');
-    closeCardModal();
-  } catch (err) {
-    console.error('Save Card Error:', err);
-    errEl.textContent = err.message || 'Payment setup failed. Please contact support.';
-    btn.disabled = false;
-    btn.textContent = 'Authorize & Save Card →';
-  }
-}
-
-async function payWithSavedCard(){
-  if(_accountBalance <= 0) return;
-  if(!confirm('Pay outstanding balance of $' + _accountBalance.toFixed(2) + ' using your saved card?')) return;
-
-  const btn = document.getElementById('dash-pay-stripe');
-  const label = document.getElementById('dash-stripe-label');
-  const originalLabel = label.textContent;
-  
-  btn.disabled = true;
-  label.textContent = 'Processing…';
-
-  try {
-    const charge = firebase.functions().httpsCallable('chargeSavedCard');
-    const { data } = await charge({ accountId: sess.accountId, amount: _accountBalance });
-
-    if(data.success){
-      alert('Payment successful! Your balance has been cleared.');
-    } else {
-      alert('Payment failed: ' + (data.status || 'Unknown error'));
-    }
-  } catch (err) {
-    console.error(err);
-    alert('Payment error: ' + err.message);
-  } finally {
-    btn.disabled = false;
-    label.textContent = originalLabel;
-  }
 }
 
 var tabTitles = {dash:'Dashboard',book:'Book a Ride',cal:'Calendar',trips:'Trips',team:'Team',pay:'Payments',stmt:'Statements',rewards:'Rewards',acct:'Account'};
@@ -2185,18 +2115,22 @@ async function toggleFav(inputId) {
   src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAtiBZ-MmvzTnOg3hDluVDCVy7mcersqe4&libraries=places&callback=initCorpMap">
 </script>
 
-<!-- ── CARD MODAL ── -->
-<div id="card-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9000;display:none;align-items:center;justify-content:center;padding:1rem">
-  <div style="background:#fff;width:100%;max-width:440px;padding:2.5rem;position:relative">
-    <button onclick="closeCardModal()" style="position:absolute;right:1rem;top:1rem;background:none;border:none;cursor:pointer"><span class="material-symbols-outlined">close</span></button>
-    <div style="font-family:'Work Sans',sans-serif;font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.18em;color:#775a19;margin-bottom:0.75rem">Secure Billing Integration</div>
-    <h2 style="font-family:'Times New Roman',serif;font-size:1.6rem;font-weight:700;margin-bottom:1rem">Save Card for Automated Billing</h2>
-    <p style="font-family:Inter,sans-serif;font-size:0.85rem;color:#666;line-height:1.6;margin-bottom:1.5rem">Save your card securely via Stripe to enable recurring bi-weekly or monthly payments.</p>
-    
-    <div id="card-element" style="padding:1rem;border:1px solid #e5e5e5;margin-bottom:1.25rem"></div>
-    <div id="card-errors" style="color:#d32f2f;font-size:0.75rem;margin-bottom:1rem"></div>
-    
-    <button class="btn-blk full" id="card-save-btn" onclick="saveCard()">Authorize &amp; Save Card →</button>
+<!-- ── STRIPE INLINE PAYMENT MODAL ── -->
+<div id="card-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:9000;align-items:center;justify-content:center;padding:1rem">
+  <div style="background:#fff;width:100%;max-width:520px;max-height:92vh;border-radius:6px;overflow:hidden;position:relative;display:flex;flex-direction:column;box-shadow:0 25px 60px rgba(0,0,0,0.35)">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:1rem 1.25rem;border-bottom:1px solid #eee;flex-shrink:0">
+      <div style="display:flex;align-items:center;gap:0.625rem">
+        <span class="material-symbols-outlined" style="font-size:18px;color:#775a19">lock</span>
+        <span style="font-family:'Times New Roman',serif;font-size:1rem;font-weight:700">Seacoast RVIP — Secure Payment</span>
+      </div>
+      <button onclick="closeCardModal()" style="background:none;border:none;cursor:pointer;color:#888;font-size:1.4rem;line-height:1;padding:0.25rem">✕</button>
+    </div>
+    <div style="background:#f9f6ef;padding:0.625rem 1.25rem;border-bottom:1px solid #f0e8cc;flex-shrink:0">
+      <p style="font-family:Inter,sans-serif;font-size:0.78rem;color:#775a19;margin:0;text-align:center">
+        💳 Enter <strong id="corp-modal-amt">your balance</strong> as the payment amount below
+      </p>
+    </div>
+    <iframe id="corp-stripe-frame" src="" style="width:100%;flex:1;border:none;min-height:520px" allow="payment *; camera *" loading="lazy"></iframe>
   </div>
 </div>
 </body>

@@ -289,12 +289,16 @@ window.addEventListener('DOMContentLoaded', checkWidth);
       <p class="text-xs text-on-surface-variant leading-relaxed mb-4">Pay instantly with Apple Pay or Google Pay — no card entry needed. Processed securely by Stripe.</p>
       <!-- Stripe Payment Request Button mounts here -->
       <div id="payment-request-btn-container" style="min-height:48px"></div>
-      <div id="apple-unavailable" style="display:none" class="text-xs text-gray-400 p-3 bg-gray-50 border border-gray-200 text-center">
-        Apple Pay / Google Pay not available in this browser.<br/>Please use the <strong>Card</strong> payment option instead.
+      <div id="apple-unavailable" style="display:none">
+        <p class="text-xs text-gray-500 mb-3 text-center">Apple Pay / Google Pay not available in this browser.</p>
+        <button onclick="openStripeModal()" class="action-btn" style="background:#000;color:white;border-bottom:4px solid #444">
+          <svg width="18" height="12" viewBox="0 0 60 28" fill="white"><path d="M11 6.5C10 7.7 8.4 8.6 6.8 8.5C6.6 6.9 7.4 5.2 8.3 4.1C9.3 3 11 2.2 12.4 2.1C12.6 3.8 11.9 5.4 11 6.5Z"/><path d="M12.4 8.8C10.1 8.7 8.1 10.1 7 10.1C5.9 10.1 4.2 8.9 2.3 8.9C-0.2 8.9-2.6 10.4-3.9 12.7C-6.5 17.3-4.6 24.2-2 27.9C-0.7 29.7 0.8 31.8 2.9 31.7C4.9 31.6 5.7 30.5 8.1 30.5C10.5 30.5 11.2 31.7 13.4 31.6C15.5 31.6 16.9 29.7 18.1 27.9C19.5 25.8 20.1 23.8 20.2 23.7C20.1 23.7 16 22 16 17.2C15.9 13.2 19.2 11.3 19.4 11.1C17.4 8.3 14.5 8.8 12.4 8.8Z"/></svg>
+          Pay with Apple Pay / Card →
+        </button>
       </div>
-      <div id="apple-success" style="display:none" class="p-4 mt-3 text-center" style="background:#f0fdf4;border:1px solid #bbf7d0">
-        <span class="material-symbols-outlined text-green-600 block mb-1" style="font-size:2rem">check_circle</span>
-        <p style="color:#166534;font-weight:700;font-family:'Times New Roman',serif">Payment Complete!</p>
+      <div id="apple-success" style="display:none;text-align:center;padding:1rem 0">
+        <span class="material-symbols-outlined" style="font-size:2.5rem;color:#2e7d32;display:block;margin-bottom:0.5rem">check_circle</span>
+        <p style="color:#166534;font-weight:700;font-family:'Times New Roman',serif;font-size:1.1rem">Payment Complete!</p>
         <p class="text-xs" style="color:#166534">Thank you — your ride is confirmed.</p>
       </div>
       <p class="text-center text-xs text-on-surface-variant mt-3">Powered by Stripe · 256-bit encryption</p>
@@ -307,25 +311,46 @@ window.addEventListener('DOMContentLoaded', checkWidth);
         <p class="font-label text-xs uppercase tracking-widest text-secondary font-bold">Secure Card Payment via Stripe</p>
       </div>
 
-      <!-- Card form -->
-      <div id="card-pay-form">
-        <div style="background:#fff;border:1px solid #e2e2e2;border-bottom:2px solid #c4c7c7;padding:0.875rem;margin-bottom:1rem">
-          <div id="stripe-card-element"><!-- Stripe mounts here --></div>
-        </div>
-        <div id="card-pay-error" style="display:none;color:#c62828;font-family:Inter,sans-serif;font-size:0.8rem;margin-bottom:0.75rem;padding:0.5rem;background:#fff8f8;border-left:3px solid #c62828"></div>
-        <button id="card-pay-btn" onclick="submitCardPayment()" class="action-btn" style="background:#000;color:white;border-bottom:4px solid #775a19">
-          <span class="material-symbols-outlined" style="font-size:18px">lock</span>
-          <span id="card-pay-label">Pay $<span id="card-amt">0</span> Securely</span>
-        </button>
-        <p class="text-center text-xs text-on-surface-variant mt-2">Powered by Stripe · 256-bit encryption · Card never stored on our servers</p>
+      <!-- Amount reminder -->
+      <div style="background:#f9f6ef;border:1px solid #e8d99a;padding:0.875rem 1rem;margin-bottom:1.25rem;display:flex;align-items:center;gap:0.75rem">
+        <span class="material-symbols-outlined" style="font-size:18px;color:#775a19">info</span>
+        <p style="font-family:Inter,sans-serif;font-size:0.82rem;color:#5a4010;margin:0">
+          Your total is <strong id="card-amt-reminder" style="font-size:1rem">$0</strong> — enter this amount on the next screen.
+        </p>
       </div>
 
-      <!-- Success state -->
-      <div id="card-pay-success" style="display:none;text-align:center;padding:1.5rem 0">
-        <span class="material-symbols-outlined" style="font-size:3rem;color:#2e7d32;display:block;margin-bottom:0.5rem">check_circle</span>
-        <p style="font-family:'Times New Roman',serif;font-size:1.4rem;font-weight:700;color:#000;margin-bottom:0.25rem">Payment Complete!</p>
-        <p style="font-size:0.85rem;color:#555">Thank you — your ride is confirmed.</p>
-        <p id="card-pay-conf" style="font-size:0.75rem;color:#999;margin-top:0.5rem;font-family:monospace"></p>
+      <button onclick="openStripeModal()" class="action-btn" style="background:#000;color:white;border-bottom:4px solid #775a19">
+        <span class="material-symbols-outlined" style="font-size:18px">lock</span>
+        Pay $<span id="card-amt">0</span> Securely →
+      </button>
+      <p class="text-center text-xs text-on-surface-variant mt-2">Powered by Stripe · 256-bit encryption · Visa · MC · Amex · Apple Pay</p>
+    </div>
+
+    <!-- ── STRIPE INLINE PAYMENT MODAL ── -->
+    <div id="stripe-pay-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:9999;align-items:center;justify-content:center;padding:1rem">
+      <div style="background:#fff;width:100%;max-width:520px;max-height:92vh;border-radius:6px;overflow:hidden;position:relative;display:flex;flex-direction:column;box-shadow:0 25px 60px rgba(0,0,0,0.35)">
+        <!-- Modal header -->
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:1rem 1.25rem;border-bottom:1px solid #eee;background:#fff;flex-shrink:0">
+          <div style="display:flex;align-items:center;gap:0.625rem">
+            <span class="material-symbols-outlined" style="font-size:18px;color:#775a19">lock</span>
+            <span style="font-family:'Times New Roman',serif;font-size:1rem;font-weight:700">Seacoast RVIP — Secure Checkout</span>
+          </div>
+          <button onclick="closeStripeModal()" style="background:none;border:none;cursor:pointer;color:#888;font-size:1.4rem;line-height:1;padding:0.25rem">✕</button>
+        </div>
+        <!-- Amount reminder inside modal -->
+        <div style="background:#f9f6ef;padding:0.625rem 1.25rem;border-bottom:1px solid #f0e8cc;flex-shrink:0">
+          <p style="font-family:Inter,sans-serif;font-size:0.78rem;color:#775a19;margin:0;text-align:center">
+            💳 Enter <strong id="modal-amt-display">$0</strong> as your payment amount below
+          </p>
+        </div>
+        <!-- Stripe iframe -->
+        <iframe
+          id="stripe-pay-frame"
+          src=""
+          style="width:100%;flex:1;border:none;min-height:520px"
+          allow="payment *; camera *"
+          loading="lazy"
+        ></iframe>
       </div>
     </div>
 
@@ -846,12 +871,40 @@ function formatCode(el) {
   document.getElementById('manual-error').classList.add('hidden');
 }
 
-// Render payment page
+// ── STRIPE MODAL (inline — no new tab) ──────────────────────────
+var STRIPE_PAYMENT_LINK = 'https://buy.stripe.com/bJefZg3NBegt8reaBJbjW01';
+
+function openStripeModal() {
+  var modal = document.getElementById('stripe-pay-modal');
+  var frame = document.getElementById('stripe-pay-frame');
+  // Load the iframe src only when opening (avoids loading on page load)
+  if (!frame.src || frame.src === 'about:blank' || frame.src === '') {
+    frame.src = STRIPE_PAYMENT_LINK;
+  }
+  modal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function closeStripeModal() {
+  var modal = document.getElementById('stripe-pay-modal');
+  modal.style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+// Close modal when clicking the dark backdrop
+document.addEventListener('click', function(e) {
+  var modal = document.getElementById('stripe-pay-modal');
+  if (e.target === modal) closeStripeModal();
+});
+
+// ── RENDER PAYMENT PAGE ──────────────────────────────────────────
 function renderPayment(code, b) {
   document.getElementById('greeting').textContent = 'Hi ' + b.name + '!';
   document.getElementById('price-display').textContent = '$' + b.price;
   document.getElementById('service-display').textContent = b.service;
   document.getElementById('card-amt').textContent = b.price;
+  document.getElementById('card-amt-reminder').textContent = '$' + b.price;
+  document.getElementById('modal-amt-display').textContent = '$' + b.price;
   document.getElementById('venmo-amt').textContent = '$' + b.price;
   document.getElementById('venmo-code').textContent = code;
   document.getElementById('cash-amt').textContent = '$' + b.price + ' cash';
