@@ -125,7 +125,8 @@ exports.chargeSavedCard = functions.runWith({ secrets: [stripeSecret] }).https.o
 });
 
 /**
- * Saves PM ID to Firestore.
+ * Saves PM ID to Firestore AND attaches it to the Stripe customer
+ * (required for future off-session charges via chargeSavedCard).
  */
 exports.savePaymentMethod = functions.runWith({ secrets: [stripeSecret] }).https.onCall(async (data, context) => {
   const stripe = require("stripe")(process.env.STRIPE_SECRET);
@@ -134,13 +135,29 @@ exports.savePaymentMethod = functions.runWith({ secrets: [stripeSecret] }).https
 
   let accountRef = admin.firestore().collection("corporate_accounts").doc(accountId);
   let accountDoc = await accountRef.get();
-  if(!accountDoc.exists) {
+  if (!accountDoc.exists) {
     accountRef = admin.firestore().collection("clients").doc(accountId);
     accountDoc = await accountRef.get();
   }
   if (!accountDoc.exists) throw new functions.https.HttpsError("not-found", "Account not found");
 
+  const accountData = accountDoc.data();
   const paymentMethod = await stripe.paymentMethods.retrieve(paymentMethodId);
+
+  // Attach PM to the Stripe customer so off-session charges work
+  if (accountData.stripeCustomerId) {
+    try {
+      await stripe.paymentMethods.attach(paymentMethodId, { customer: accountData.stripeCustomerId });
+      await stripe.customers.update(accountData.stripeCustomerId, {
+        invoice_settings: { default_payment_method: paymentMethodId }
+      });
+    } catch (e) {
+      // PM already attached is fine
+      if (!e.message || !e.message.includes("already been attached")) {
+        console.warn("PM attach warning:", e.message);
+      }
+    }
+  }
 
   await accountRef.update({
     stripePaymentMethodId: paymentMethodId,
@@ -152,26 +169,34 @@ exports.savePaymentMethod = functions.runWith({ secrets: [stripeSecret] }).https
 });
 
 /**
- * Creates a PaymentIntent for one-time guest payments (payment.html).
+ * Creates a PaymentIntent for on-page payments.
+ * Accepts optional customerId to associate the payment with a Stripe customer.
  */
 exports.createPaymentIntent = functions.runWith({ secrets: [stripeSecret] }).https.onCall(async (data, context) => {
   const stripe = require("stripe")(process.env.STRIPE_SECRET);
-  const { amount, bookingCode, customerName } = data;
+  const { amount, bookingCode, customerName, customerId } = data;
 
   if (!amount || amount <= 0) {
     throw new functions.https.HttpsError("invalid-argument", "Invalid amount");
   }
 
-  const paymentIntent = await stripe.paymentIntents.create({
+  const piData = {
     amount: Math.round(amount * 100),
     currency: "usd",
+    payment_method_types: ["card"],   // card-only — avoids Stripe Link INTERNAL errors
     metadata: {
       bookingCode: bookingCode || "",
       customerName: customerName || ""
     }
-  });
+  };
 
-  return { clientSecret: paymentIntent.client_secret };
+  // Associate with Stripe customer if provided (enables saving card later)
+  if (customerId) {
+    piData.customer = customerId;
+  }
+
+  const paymentIntent = await stripe.paymentIntents.create(piData);
+  return { clientSecret: paymentIntent.client_secret, paymentIntentId: paymentIntent.id };
 });
 
 /**

@@ -1033,66 +1033,98 @@ function renderDashBalance(){
   }
 }
 
-// ─── STRIPE EMBEDDED INTEGRATION (CORPORATE) ───
-var stripe     = Stripe('pk_live_51TDR9gAPjRVAZeaebc3zFuondJhpYccCrQQFW6ygR06CAQvtTsrU6qw6KtjIVr1A6mxaCiMcIbfxKs7IUbM94Vlr006GZuFXUv');
-var corpElems  = stripe.elements();
-var corpCardEl = null;  // Stripe card element
-var _corpPayAmt = 0;
+// ─── STRIPE EMBEDDED INTEGRATION — Payment Element (CORPORATE) ───
+var stripe          = Stripe('pk_live_51TDR9gAPjRVAZeaebc3zFuondJhpYccCrQQFW6ygR06CAQvtTsrU6qw6KtjIVr1A6mxaCiMcIbfxKs7IUbM94Vlr006GZuFXUv');
+var _corpStripeElems = null;  // elements instance tied to the PI
+var corpCardEl       = null;  // Payment Element
+var _corpPayAmt      = 0;
+var _corpClientSecret = null;
 
-function openCardModal(amt) {
+async function openCardModal(amt) {
   _corpPayAmt = parseFloat(amt) || 0;
   document.getElementById('corp-modal-amt').textContent = '$' + _corpPayAmt.toFixed(2);
-  document.getElementById('corp-pay-label').textContent = 'Pay $' + _corpPayAmt.toFixed(2);
 
-  // Reset states
+  // Reset UI
   document.getElementById('corp-pay-success').style.display = 'none';
   document.getElementById('corp-card-error').style.display  = 'none';
   var chk = document.getElementById('corp-save-card-chk');
   if (chk) chk.checked = false;
 
-  // Check for saved card in _cardData (loaded by loadAccountLive)
+  // Destroy previous Payment Element (each PI needs fresh elements instance)
+  if (corpCardEl) { try { corpCardEl.destroy(); } catch(e){} corpCardEl = null; }
+  _corpStripeElems  = null;
+  _corpClientSecret = null;
+
+  // Check for saved card
   var hasSaved = _cardData && _cardData.last4;
-  var savedSec = document.getElementById('corp-saved-card-section');
-  var newSec   = document.getElementById('corp-new-card-section');
-  savedSec.style.display = hasSaved ? 'block' : 'none';
-  newSec.style.display   = hasSaved ? 'none'  : 'block';
+  document.getElementById('corp-saved-card-section').style.display = hasSaved ? 'block' : 'none';
+  document.getElementById('corp-new-card-section').style.display   = hasSaved ? 'none'  : 'block';
 
   if (hasSaved) {
     var brand = (_cardData.brand || 'Card');
     brand = brand.charAt(0).toUpperCase() + brand.slice(1);
-    document.getElementById('corp-saved-card-label').textContent    = brand + ' ****' + _cardData.last4;
-    document.getElementById('corp-pay-saved-label').textContent     = 'Pay $' + _corpPayAmt.toFixed(2) + ' with Saved Card';
+    document.getElementById('corp-saved-card-label').textContent = brand + ' ****' + _cardData.last4;
+    document.getElementById('corp-pay-saved-label').textContent  = 'Pay $' + _corpPayAmt.toFixed(2) + ' with Saved Card';
   }
-
-  if (!hasSaved) _corpMountCard();
 
   document.getElementById('card-modal').style.display = 'flex';
   document.body.style.overflow = 'hidden';
+
+  if (!hasSaved) _corpMountPaymentElement();
 }
 
-function _corpMountCard() {
-  if (corpCardEl) return;
-  corpCardEl = corpElems.create('card', {
-    style: {
-      base: {
-        color: '#000', fontFamily: 'Inter, sans-serif',
-        fontSize: '15px', '::placeholder': { color: '#aaa' }
-      },
-      invalid: { color: '#c62828' }
-    }
-  });
-  corpCardEl.mount('#corp-card-element');
-  corpCardEl.on('change', function(e) {
-    var err = document.getElementById('corp-card-error');
-    if (e.error) { err.textContent = e.error.message; err.style.display = 'block'; }
-    else { err.style.display = 'none'; }
-  });
+async function _corpMountPaymentElement() {
+  var cardDiv = document.getElementById('corp-card-element');
+  var payBtn  = document.getElementById('corp-pay-btn');
+  var lbl     = document.getElementById('corp-pay-label');
+
+  payBtn.disabled = true;
+  lbl.textContent = 'Loading…';
+  cardDiv.innerHTML = '<div style="text-align:center;padding:1.5rem;color:#888;font-size:0.82rem">Loading secure payment form…</div>';
+
+  try {
+    // 1. Ensure Stripe customer exists
+    var custRes    = await funcs.httpsCallable('getStripeCustomer')({ accountId: sess.accountId, email: sess.contactEmail, company: sess.company });
+    var customerId = custRes.data.customerId;
+
+    // 2. Create PaymentIntent with customer attached
+    var piRes = await funcs.httpsCallable('createPaymentIntent')({
+      amount: _corpPayAmt,
+      bookingCode: sess.accountId,
+      customerName: sess.company,
+      customerId: customerId
+    });
+    _corpClientSecret = piRes.data.clientSecret;
+
+    // 3. Mount Payment Element (no INTERNAL error — bound to a specific PI)
+    cardDiv.innerHTML = '';
+    _corpStripeElems = stripe.elements({
+      clientSecret: _corpClientSecret,
+      appearance: {
+        theme: 'stripe',
+        variables: { fontFamily: 'Inter, sans-serif', colorPrimary: '#775a19', borderRadius: '2px', colorBackground: '#f9f9f9' }
+      }
+    });
+    corpCardEl = _corpStripeElems.create('payment', {
+      layout: { type: 'tabs', defaultCollapsed: false }
+    });
+    corpCardEl.mount('#corp-card-element');
+    payBtn.disabled = false;
+    lbl.textContent = 'Pay $' + _corpPayAmt.toFixed(2);
+
+  } catch(e) {
+    cardDiv.innerHTML = '';
+    document.getElementById('corp-card-error').textContent = 'Could not load payment form: ' + (e.message || 'Please try again.');
+    document.getElementById('corp-card-error').style.display = 'block';
+    payBtn.disabled = false;
+    lbl.textContent = 'Pay Now';
+  }
 }
 
 function corpShowNewCard() {
   document.getElementById('corp-saved-card-section').style.display = 'none';
   document.getElementById('corp-new-card-section').style.display   = 'block';
-  _corpMountCard();
+  if (!corpCardEl) _corpMountPaymentElement();
 }
 
 function closeCardModal() {
@@ -1115,7 +1147,7 @@ async function payWithCorpSavedCard() {
   try {
     var res = await funcs.httpsCallable('chargeSavedCard')({ accountId: sess.accountId, amount: _corpPayAmt });
     if (res.data && res.data.success) {
-      // Balance resets to 0 via Firestore onSnapshot in loadAccountLive()
+      // Balance auto-updates to $0 via onSnapshot in loadAccountLive()
       document.getElementById('corp-pay-success').style.display        = 'block';
       document.getElementById('corp-saved-card-section').style.display = 'none';
       setTimeout(closeCardModal, 3000);
@@ -1129,9 +1161,9 @@ async function payWithCorpSavedCard() {
   }
 }
 
-// Pay with new card (optionally save it)
+// Pay with new card using Payment Element
 async function corpSubmitPayment() {
-  if (!corpCardEl || !funcs || !sess) return;
+  if (!_corpStripeElems || !_corpClientSecret) return;
   var btn      = document.getElementById('corp-pay-btn');
   var lbl      = document.getElementById('corp-pay-label');
   var errEl    = document.getElementById('corp-card-error');
@@ -1142,41 +1174,46 @@ async function corpSubmitPayment() {
   errEl.style.display = 'none';
 
   try {
-    // Get / create Stripe customer
-    var custRes    = await funcs.httpsCallable('getStripeCustomer')({ accountId: sess.accountId, email: sess.contactEmail, company: sess.company });
-    var customerId = custRes.data.customerId;
+    // Confirm the PaymentIntent using the Payment Element
+    var result = await stripe.confirmPayment({
+      elements: _corpStripeElems,
+      confirmParams: { return_url: window.location.href },
+      redirect: 'if_required'
+    });
 
-    if (saveCard) {
-      // SetupIntent → save card → charge
-      var siRes = await funcs.httpsCallable('createSetupIntent')({ customerId });
-      var setup = await stripe.confirmCardSetup(siRes.data.clientSecret, { payment_method: { card: corpCardEl } });
-      if (setup.error) throw new Error(setup.error.message);
-
-      await funcs.httpsCallable('savePaymentMethod')({ accountId: sess.accountId, paymentMethodId: setup.setupIntent.payment_method });
-      var charge = await funcs.httpsCallable('chargeSavedCard')({ accountId: sess.accountId, amount: _corpPayAmt });
-      if (!charge.data || !charge.data.success) throw new Error('Charge did not succeed.');
-    } else {
-      // Direct PaymentIntent (no save)
-      var piRes  = await funcs.httpsCallable('createPaymentIntent')({ amount: _corpPayAmt, bookingCode: sess.accountId, customerName: sess.company });
-      var result = await stripe.confirmCardPayment(piRes.data.clientSecret, { payment_method: { card: corpCardEl } });
-      if (result.error) throw new Error(result.error.message);
-      if (result.paymentIntent.status !== 'succeeded') throw new Error('Payment not completed.');
-      // Manually zero out balance in Firestore (chargeSavedCard wasn't used)
-      if (db && sess.accountId) {
-        await db.collection('corporate_accounts').doc(sess.accountId).update({ balance: 0, lastPaymentDate: new Date().toISOString(), lastPaymentAmount: _corpPayAmt }).catch(function(){});
-      }
+    if (result.error) throw new Error(result.error.message);
+    if (!result.paymentIntent || result.paymentIntent.status !== 'succeeded') {
+      throw new Error('Payment not completed. Please try again.');
     }
 
-    // Balance auto-refreshes via onSnapshot in loadAccountLive()
+    // Save card if checkbox was checked
+    if (saveCard && result.paymentIntent.payment_method) {
+      try {
+        var pmId = (typeof result.paymentIntent.payment_method === 'string')
+          ? result.paymentIntent.payment_method
+          : result.paymentIntent.payment_method.id;
+        await funcs.httpsCallable('savePaymentMethod')({ accountId: sess.accountId, paymentMethodId: pmId });
+      } catch(e) { console.warn('Could not save card:', e.message); }
+    }
+
+    // Zero balance in Firestore — onSnapshot in loadAccountLive() updates UI instantly
+    if (db && sess.accountId) {
+      await db.collection('corporate_accounts').doc(sess.accountId).update({
+        balance: 0,
+        lastPaymentDate: new Date().toISOString(),
+        lastPaymentAmount: _corpPayAmt
+      }).catch(function(){});
+    }
+
     document.getElementById('corp-pay-success').style.display      = 'block';
     document.getElementById('corp-new-card-section').style.display = 'none';
     setTimeout(closeCardModal, 3000);
 
-  } catch (e) {
+  } catch(e) {
     errEl.textContent = e.message || 'Payment failed. Please try again.';
     errEl.style.display = 'block';
     btn.disabled = false;
-    lbl.textContent = 'Pay Now';
+    lbl.textContent = 'Pay $' + _corpPayAmt.toFixed(2);
   }
 }
 

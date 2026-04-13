@@ -567,8 +567,8 @@ try {
 // ─── STRIPE INIT ───────────────────────────────────────────────
 var STRIPE_PK = 'pk_live_51TDR9gAPjRVAZeaebc3zFuondJhpYccCrQQFW6ygR06CAQvtTsrU6qw6KtjIVr1A6mxaCiMcIbfxKs7IUbM94Vlr006GZuFXUv';
 var stripe = Stripe(STRIPE_PK);
-var stripeElements = stripe.elements();
-var stripeCardEl = null;       // card Element instance
+var stripeElements = stripe.elements();  // used only for Payment Request Button (Apple Pay)
+var stripeCardEl = null;       // Payment Element instance (set by initGuestPaymentElement)
 var paymentRequestBtn = null;  // Payment Request Button instance
 
 // ═══════════════════════════════════════════════════════════════
@@ -576,6 +576,8 @@ var paymentRequestBtn = null;  // Payment Request Button instance
 var currentCode = '';
 var currentBooking = null;
 var allBookings = {};
+var _guestPayElements = null;  // stripe.elements() instance (Payment Element)
+var _guestClientSecret = null; // PI client secret for the card section
 
 // States
 function showState(id) {
@@ -849,7 +851,52 @@ function formatCode(el) {
   document.getElementById('manual-error').classList.add('hidden');
 }
 
-// ── CARD SECTION mounts via renderPayment → stripeCardEl ────────
+// ── PAYMENT ELEMENT — pre-created when booking loads ─────────────
+async function initGuestPaymentElement(amount, code, name) {
+  var cardDiv = document.getElementById('stripe-card-element');
+  var payBtn  = document.getElementById('card-pay-btn');
+  if (payBtn) payBtn.disabled = true;
+
+  // Destroy any previous instance
+  if (stripeCardEl) { try { stripeCardEl.destroy(); } catch(e){} stripeCardEl = null; }
+  _guestPayElements  = null;
+  _guestClientSecret = null;
+
+  if (!funcs) return;
+  cardDiv.innerHTML = '<div style="text-align:center;padding:1.5rem;color:#888;font-size:0.8rem">Loading secure payment form…</div>';
+
+  try {
+    var res = await funcs.httpsCallable('createPaymentIntent')({
+      amount: amount,
+      bookingCode: code,
+      customerName: name
+    });
+    _guestClientSecret = res.data.clientSecret;
+
+    // Initialize elements with the client secret — bypasses the INTERNAL error
+    _guestPayElements = stripe.elements({
+      clientSecret: _guestClientSecret,
+      appearance: {
+        theme: 'stripe',
+        variables: {
+          fontFamily: 'Inter, sans-serif',
+          colorPrimary: '#775a19',
+          borderRadius: '2px',
+          colorBackground: '#f9f9f9'
+        }
+      }
+    });
+    stripeCardEl = _guestPayElements.create('payment', {
+      layout: { type: 'tabs', defaultCollapsed: false }
+    });
+    cardDiv.innerHTML = '';
+    stripeCardEl.mount('#stripe-card-element');
+    if (payBtn) payBtn.disabled = false;
+  } catch(e) {
+    cardDiv.innerHTML = '<p style="color:#c62828;font-size:0.8rem;text-align:center;padding:1rem">Could not load payment form — please refresh and try again.</p>';
+    console.error('Payment Element init error:', e);
+  }
+}
 
 // ── RENDER PAYMENT PAGE ──────────────────────────────────────────
 function renderPayment(code, b) {
@@ -881,30 +928,8 @@ function renderPayment(code, b) {
     return '<div class="detail-row"><span style="font-family:Work Sans,sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:#444748;min-width:90px;flex-shrink:0">'+r[0]+'</span><span style="font-size:0.875rem;color:#1a1c1c;text-align:right;font-family:Inter,sans-serif">'+r[1]+'</span></div>';
   }).join('');
 
-  // Mount Stripe Card Element (lazy — only once)
-  if (!stripeCardEl) {
-    stripeCardEl = stripeElements.create('card', {
-      style: {
-        base: {
-          color: '#1a1c1c',
-          fontFamily: 'Inter, sans-serif',
-          fontSize: '15px',
-          '::placeholder': { color: '#aaa' }
-        },
-        invalid: { color: '#c62828' }
-      }
-    });
-    stripeCardEl.mount('#stripe-card-element');
-    stripeCardEl.on('change', function(e) {
-      var errEl = document.getElementById('card-pay-error');
-      if (e.error) {
-        errEl.textContent = e.error.message;
-        errEl.style.display = 'block';
-      } else {
-        errEl.style.display = 'none';
-      }
-    });
-  }
+  // Pre-create PaymentIntent and mount Payment Element for card section
+  initGuestPaymentElement(b.price, code, b.name);
 
   // Set up Stripe Payment Request Button (Apple Pay / Google Pay)
   initPaymentRequestButton(b.price, code, b.name);
@@ -978,12 +1003,14 @@ function showApplePaySuccess() {
   if (trigger) trigger.style.display = 'block';
 }
 
-// ── CARD PAYMENT SUBMIT ────────────────────────────────────────
+// ── CARD PAYMENT SUBMIT (Payment Element) ─────────────────────
 async function submitCardPayment() {
-  if (!currentBooking || !stripeCardEl) return;
-  if (!funcs) { alert('Service unavailable. Please try again.'); return; }
+  if (!currentBooking || !_guestPayElements || !_guestClientSecret) {
+    alert('Payment form is still loading. Please wait a moment and try again.');
+    return;
+  }
 
-  var btn = document.getElementById('card-pay-btn');
+  var btn   = document.getElementById('card-pay-btn');
   var label = document.getElementById('card-pay-label');
   var errEl = document.getElementById('card-pay-error');
 
@@ -992,17 +1019,11 @@ async function submitCardPayment() {
   errEl.style.display = 'none';
 
   try {
-    // 1. Create PaymentIntent on the server
-    var createPI = funcs.httpsCallable('createPaymentIntent');
-    var res = await createPI({
-      amount: currentBooking.price,
-      bookingCode: currentCode,
-      customerName: currentBooking.name
-    });
-
-    // 2. Confirm the card payment fully inline (no redirect)
-    var result = await stripe.confirmCardPayment(res.data.clientSecret, {
-      payment_method: { card: stripeCardEl }
+    // Confirm using the Payment Element — no redirect for regular cards
+    var result = await stripe.confirmPayment({
+      elements: _guestPayElements,
+      confirmParams: { return_url: window.location.href },
+      redirect: 'if_required'
     });
 
     if (result.error) {
@@ -1010,13 +1031,14 @@ async function submitCardPayment() {
       errEl.style.display = 'block';
       btn.disabled = false;
       label.innerHTML = 'Pay $' + currentBooking.price + ' Securely';
-    } else if (result.paymentIntent.status === 'succeeded') {
-      // Show success inline
-      document.getElementById('card-pay-form').style.display = 'none';
+    } else if (result.paymentIntent && result.paymentIntent.status === 'succeeded') {
+      document.getElementById('card-pay-form').style.display   = 'none';
       document.getElementById('card-pay-success').style.display = 'block';
       document.getElementById('card-pay-conf').textContent = 'Confirmation: ' + currentCode;
       var trigger = document.getElementById('receipt-trigger');
       if (trigger) trigger.style.display = 'block';
+    } else {
+      throw new Error('Payment not completed. Please try again.');
     }
   } catch (e) {
     errEl.textContent = e.message || 'Payment failed. Please try again.';

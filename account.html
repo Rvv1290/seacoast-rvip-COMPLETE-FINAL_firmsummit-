@@ -1193,30 +1193,33 @@ function showDayTrips(dateStr){
   list.innerHTML = filtered.map(t => tripCard(t, true)).join('');
 }
 
-// ─── FINANCIAL / EMBEDDED STRIPE ───
-var acctStripe      = Stripe('pk_live_51TDR9gAPjRVAZeaebc3zFuondJhpYccCrQQFW6ygR06CAQvtTsrU6qw6KtjIVr1A6mxaCiMcIbfxKs7IUbM94Vlr006GZuFXUv');
-var acctStripeElems = acctStripe.elements();
-var acctCardEl      = null;   // Stripe card element instance
-var _acctPayAmt     = 0;      // amount being paid
+// ─── FINANCIAL / EMBEDDED STRIPE (Payment Element) ───────────────
+var acctStripe         = Stripe('pk_live_51TDR9gAPjRVAZeaebc3zFuondJhpYccCrQQFW6ygR06CAQvtTsrU6qw6KtjIVr1A6mxaCiMcIbfxKs7IUbM94Vlr006GZuFXUv');
+var _acctStripeElems   = null;  // elements instance tied to the PI (recreated each modal open)
+var acctCardEl         = null;  // Payment Element instance
+var _acctPayAmt        = 0;
+var _acctClientSecret  = null;
 
-function openStripePayModal(amt) {
+async function openStripePayModal(amt) {
   _acctPayAmt = parseFloat(amt) || 0;
   var modal = document.getElementById('acct-stripe-modal');
   document.getElementById('acct-modal-amt').textContent = '$' + _acctPayAmt.toFixed(2);
-  document.getElementById('acct-pay-label').textContent = 'Pay $' + _acctPayAmt.toFixed(2);
 
-  // Reset states
-  document.getElementById('acct-pay-success').style.display  = 'none';
-  document.getElementById('acct-card-error').style.display   = 'none';
+  // Reset UI
+  document.getElementById('acct-pay-success').style.display = 'none';
+  document.getElementById('acct-card-error').style.display  = 'none';
   var saveChk = document.getElementById('acct-save-card-chk');
   if (saveChk) saveChk.checked = false;
 
-  // Check for saved card on current user
+  // Destroy any previous Payment Element (each PI needs fresh elements)
+  if (acctCardEl) { try { acctCardEl.destroy(); } catch(e){} acctCardEl = null; }
+  _acctStripeElems  = null;
+  _acctClientSecret = null;
+
+  // Check for saved card
   var hasSaved = currentUser && currentUser.stripePaymentMethodId;
-  var savedSec = document.getElementById('acct-saved-card-section');
-  var newSec   = document.getElementById('acct-new-card-section');
-  savedSec.style.display = hasSaved ? 'block' : 'none';
-  newSec.style.display   = hasSaved ? 'none'  : 'block';
+  document.getElementById('acct-saved-card-section').style.display = hasSaved ? 'block' : 'none';
+  document.getElementById('acct-new-card-section').style.display   = hasSaved ? 'none'  : 'block';
 
   if (hasSaved) {
     var brand = (currentUser.cardBrand || 'Card');
@@ -1225,36 +1228,65 @@ function openStripePayModal(amt) {
     document.getElementById('acct-pay-saved-label').textContent  = 'Pay $' + _acctPayAmt.toFixed(2) + ' with Saved Card';
   }
 
-  // Mount card element if new-card section is visible and not yet mounted
-  if (!hasSaved) _acctMountCard();
-
   modal.style.display = 'flex';
   document.body.style.overflow = 'hidden';
+
+  // Mount Payment Element if showing new-card section
+  if (!hasSaved) _acctMountPaymentElement();
 }
 
-function _acctMountCard() {
-  if (acctCardEl) return; // already mounted
-  acctCardEl = acctStripeElems.create('card', {
-    style: {
-      base: {
-        color: '#1a1c1c', fontFamily: 'Inter, sans-serif',
-        fontSize: '15px', '::placeholder': { color: '#aaa' }
-      },
-      invalid: { color: '#c62828' }
-    }
-  });
-  acctCardEl.mount('#acct-card-element');
-  acctCardEl.on('change', function(e) {
-    var err = document.getElementById('acct-card-error');
-    if (e.error) { err.textContent = e.error.message; err.style.display = 'block'; }
-    else { err.style.display = 'none'; }
-  });
+async function _acctMountPaymentElement() {
+  var cardDiv = document.getElementById('acct-card-element');
+  var payBtn  = document.getElementById('acct-pay-btn');
+  var lbl     = document.getElementById('acct-pay-label');
+
+  payBtn.disabled = true;
+  lbl.textContent = 'Loading…';
+  cardDiv.innerHTML = '<div style="text-align:center;padding:1.5rem;color:#888;font-size:0.82rem">Loading secure payment form…</div>';
+
+  try {
+    // 1. Ensure Stripe customer exists
+    var custRes    = await funcs.httpsCallable('getStripeCustomer')({ accountId: currentUser.id, email: currentUser.email, company: currentUser.name });
+    var customerId = custRes.data.customerId;
+
+    // 2. Create PaymentIntent with customer attached
+    var piRes = await funcs.httpsCallable('createPaymentIntent')({
+      amount: _acctPayAmt,
+      bookingCode: currentUser.id,
+      customerName: currentUser.name,
+      customerId: customerId
+    });
+    _acctClientSecret = piRes.data.clientSecret;
+
+    // 3. Mount Payment Element (no INTERNAL error — tied to a specific PI)
+    cardDiv.innerHTML = '';
+    _acctStripeElems = acctStripe.elements({
+      clientSecret: _acctClientSecret,
+      appearance: {
+        theme: 'stripe',
+        variables: { fontFamily: 'Inter, sans-serif', colorPrimary: '#775a19', borderRadius: '2px', colorBackground: '#f9f9f9' }
+      }
+    });
+    acctCardEl = _acctStripeElems.create('payment', {
+      layout: { type: 'tabs', defaultCollapsed: false }
+    });
+    acctCardEl.mount('#acct-card-element');
+    payBtn.disabled = false;
+    lbl.textContent = 'Pay $' + _acctPayAmt.toFixed(2);
+
+  } catch(e) {
+    cardDiv.innerHTML = '';
+    document.getElementById('acct-card-error').textContent = 'Could not load payment form: ' + (e.message || 'Please try again.');
+    document.getElementById('acct-card-error').style.display = 'block';
+    payBtn.disabled = false;
+    lbl.textContent = 'Pay Now';
+  }
 }
 
 function acctShowNewCard() {
   document.getElementById('acct-saved-card-section').style.display = 'none';
   document.getElementById('acct-new-card-section').style.display   = 'block';
-  _acctMountCard();
+  if (!acctCardEl) _acctMountPaymentElement();
 }
 
 function closeStripePayModal() {
@@ -1266,7 +1298,7 @@ document.addEventListener('click', function(e) {
   if (e.target === document.getElementById('acct-stripe-modal')) closeStripePayModal();
 });
 
-// Pay using stored payment method (chargeSavedCard Cloud Function)
+// Pay using stored payment method
 async function payWithSavedCard() {
   if (!currentUser || !funcs) return;
   var btn = document.getElementById('acct-pay-saved-btn');
@@ -1277,13 +1309,12 @@ async function payWithSavedCard() {
   try {
     var res = await funcs.httpsCallable('chargeSavedCard')({ accountId: currentUser.id, amount: _acctPayAmt });
     if (res.data && res.data.success) {
-      // Mark confirmed trips as Completed so balance auto-resets via onSnapshot
       await _markTripsCompleted();
       document.getElementById('acct-pay-success').style.display        = 'block';
       document.getElementById('acct-saved-card-section').style.display = 'none';
       setTimeout(closeStripePayModal, 3000);
     } else {
-      throw new Error('Payment did not complete. Status: ' + (res.data && res.data.status));
+      throw new Error('Payment did not complete.');
     }
   } catch (e) {
     alert('Payment failed: ' + (e.message || 'Please try again.'));
@@ -1292,12 +1323,12 @@ async function payWithSavedCard() {
   }
 }
 
-// Pay with a new card (optionally save it)
+// Pay with new card using Payment Element
 async function acctSubmitPayment() {
-  if (!acctCardEl || !funcs || !currentUser) return;
-  var btn     = document.getElementById('acct-pay-btn');
-  var lbl     = document.getElementById('acct-pay-label');
-  var errEl   = document.getElementById('acct-card-error');
+  if (!_acctStripeElems || !_acctClientSecret) return;
+  var btn      = document.getElementById('acct-pay-btn');
+  var lbl      = document.getElementById('acct-pay-label');
+  var errEl    = document.getElementById('acct-card-error');
   var saveCard = document.getElementById('acct-save-card-chk').checked;
 
   btn.disabled = true;
@@ -1305,40 +1336,40 @@ async function acctSubmitPayment() {
   errEl.style.display = 'none';
 
   try {
-    // Step 1: ensure Stripe customer exists
-    var custRes    = await funcs.httpsCallable('getStripeCustomer')({ accountId: currentUser.id, email: currentUser.email, company: currentUser.name });
-    var customerId = custRes.data.customerId;
+    // Confirm the PaymentIntent using the Payment Element
+    var result = await acctStripe.confirmPayment({
+      elements: _acctStripeElems,
+      confirmParams: { return_url: window.location.href },
+      redirect: 'if_required'
+    });
 
-    if (saveCard) {
-      // Step 2a: SetupIntent → confirm → save PM → then charge
-      var siRes = await funcs.httpsCallable('createSetupIntent')({ customerId });
-      var setup = await acctStripe.confirmCardSetup(siRes.data.clientSecret, { payment_method: { card: acctCardEl } });
-      if (setup.error) throw new Error(setup.error.message);
-
-      await funcs.httpsCallable('savePaymentMethod')({ accountId: currentUser.id, paymentMethodId: setup.setupIntent.payment_method });
-
-      var charge = await funcs.httpsCallable('chargeSavedCard')({ accountId: currentUser.id, amount: _acctPayAmt });
-      if (!charge.data || !charge.data.success) throw new Error('Charge did not succeed.');
-    } else {
-      // Step 2b: direct PaymentIntent (no save)
-      var piRes  = await funcs.httpsCallable('createPaymentIntent')({ amount: _acctPayAmt, bookingCode: currentUser.id, customerName: currentUser.name });
-      var result = await acctStripe.confirmCardPayment(piRes.data.clientSecret, { payment_method: { card: acctCardEl } });
-      if (result.error) throw new Error(result.error.message);
-      if (result.paymentIntent.status !== 'succeeded') throw new Error('Payment not completed.');
+    if (result.error) throw new Error(result.error.message);
+    if (!result.paymentIntent || result.paymentIntent.status !== 'succeeded') {
+      throw new Error('Payment not completed. Please try again.');
     }
 
-    // Mark confirmed trips as Completed → balance recalculates via onSnapshot
+    // Save card if checkbox was checked
+    if (saveCard && result.paymentIntent.payment_method) {
+      try {
+        var pmId = (typeof result.paymentIntent.payment_method === 'string')
+          ? result.paymentIntent.payment_method
+          : result.paymentIntent.payment_method.id;
+        await funcs.httpsCallable('savePaymentMethod')({ accountId: currentUser.id, paymentMethodId: pmId });
+      } catch(e) { console.warn('Could not save card:', e.message); }
+    }
+
+    // Mark trips Completed → balance recalculates to $0 via onSnapshot
     await _markTripsCompleted();
 
-    document.getElementById('acct-pay-success').style.display       = 'block';
-    document.getElementById('acct-new-card-section').style.display  = 'none';
+    document.getElementById('acct-pay-success').style.display      = 'block';
+    document.getElementById('acct-new-card-section').style.display = 'none';
     setTimeout(closeStripePayModal, 3000);
 
-  } catch (e) {
+  } catch(e) {
     errEl.textContent = e.message || 'Payment failed. Please try again.';
     errEl.style.display = 'block';
     btn.disabled = false;
-    lbl.textContent = 'Pay Now';
+    lbl.textContent = 'Pay $' + _acctPayAmt.toFixed(2);
   }
 }
 
