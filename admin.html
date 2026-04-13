@@ -1936,8 +1936,10 @@
     function payEmail() {
       if (!curPayBk) return;
       var msg = document.getElementById('pay-msg').value;
-      var sub = encodeURIComponent('Seacoast RVIP — Ride Confirmed');
-      window.open('mailto:' + (curPayBk.email || curPayBk.phone) + '?subject=' + sub + '&body=' + encodeURIComponent(msg));
+      var sub = 'Seacoast RVIP — Ride Confirmed';
+      var email = curPayBk.email || '';
+      var gmailUrl = 'https://mail.google.com/mail/?view=cm&fs=1&to=' + encodeURIComponent(email) + '&su=' + encodeURIComponent(sub) + '&body=' + encodeURIComponent(msg);
+      window.open(gmailUrl, '_blank');
     }
     function payWA() {
       if (!curPayBk) return;
@@ -2056,10 +2058,10 @@
       if(!confirm('\u26a0\ufe0f DELETE CLIENT ACCOUNT\n\nPermanently delete "' + name + '" from the server?\n\nThis cannot be undone.')) return;
       if(!confirm('\ud83d\uded1 FINAL CONFIRMATION\n\nDelete "' + name + '"?\n\nClick OK to confirm.')) return;
       db.collection('clients').doc(id).delete().then(function(){
-        showToast('Client deleted.');
+        toast('Client deleted.');
         closeM('m-cli-detail');
         loadClients();
-      }).catch(function(err){ showToast('Error: '+err.message); });
+      }).catch(function(err){ toast('Error: '+err.message); });
     }
 
     async function openCliProfile(id) {
@@ -2771,7 +2773,7 @@
       } else {
         // Direct update for Reject/Reopen
         db.collection('corporate_accounts').doc(id).update({ status: newStatus, updatedAt: new Date().toISOString() }).then(function() {
-          showToast('Status changed to ' + newStatus);
+          toast('Status changed to ' + newStatus);
           loadCorporate();
         });
       }
@@ -2815,7 +2817,7 @@
       const msg = document.getElementById('ap-preview').textContent;
       const targetEmail = _apMsgData.contactEmail || _apMsgData.email;
 
-      if (!pwd || pwd.length < 6) { showToast('Password is too short.'); return; }
+      if (!pwd || pwd.length < 6) { toast('Password is too short.'); return; }
       
       btn.disabled = true;
       btn.textContent = 'Sending...';
@@ -2844,7 +2846,7 @@
           }
         }).catch(err => {
           console.error("Firestore Mail write failed:", err);
-          showToast("Cloud email trigger error: " + err.message);
+          toast("Cloud email trigger error: " + err.message);
         });
 
         // FormSubmit Fallback (Reliable Receipt to Admin)
@@ -2857,11 +2859,11 @@
         
         fetch('https://formsubmit.co/ajax/info@seacoastrvip.com', { method: 'POST', body: fd }).catch(() => {});
 
-        showToast('Approval saved and automation triggered!');
+        toast('Approval saved and automation triggered!');
         closeApModal();
         loadCorporate();
       } catch (e) {
-        showToast('Error saving: ' + e.message);
+        toast('Error saving: ' + e.message);
         btn.disabled = false;
         btn.textContent = 'Retry Sending';
       }
@@ -2872,15 +2874,18 @@
       const phone = (_apMsgData.contactPhone || _apMsgData.phone || '').replace(/\D/g, '');
       window.open(`sms:${phone}?&body=${encodeURIComponent(msg)}`);
       navigator.clipboard.writeText(msg);
-      showToast('Copied to clipboard + launching SMS...');
+      toast('Copied to clipboard + launching SMS...');
     }
 
     function launchApMail() {
       const msg = document.getElementById('ap-preview').textContent;
       const email = _apMsgData.contactEmail || _apMsgData.email || '';
-      window.open(`mailto:${email}?subject=Your Seacoast RVIP Credentials&body=${encodeURIComponent(msg)}`);
+      const sub = 'Your Seacoast RVIP Credentials';
+      const gmailUrl = 'https://mail.google.com/mail/?view=cm&fs=1&to=' + encodeURIComponent(email) + '&su=' + encodeURIComponent(sub) + '&body=' + encodeURIComponent(msg);
+      
+      window.open(gmailUrl, '_blank');
       navigator.clipboard.writeText(msg);
-      showToast('Copied to clipboard + launching Mail app...');
+      toast('Copied to clipboard + launching Gmail...');
     }
 
     function closeApModal() {
@@ -2924,7 +2929,7 @@
       var phone = document.getElementById('mm-phone').value.trim();
       var email = document.getElementById('mm-email').value.trim();
       var role = document.getElementById('mm-role').value.trim();
-      if (!name || !phone) { showToast('Name and phone are required'); return; }
+      if (!name || !phone) { toast('Name and phone are required'); return; }
       if (!db || !_modalCorpId) return;
       var member = { name: name, phone: phone, email: email, role: role, addedAt: new Date().toISOString() };
       db.collection('corporate_accounts').doc(_modalCorpId).get().then(function(doc) {
@@ -2933,14 +2938,14 @@
         members.push(member);
         return db.collection('corporate_accounts').doc(_modalCorpId).update({ members: members });
       }).then(function() {
-        showToast(name + ' added as member!');
+        toast(name + ' added as member!');
         document.getElementById('mm-name').value = '';
         document.getElementById('mm-phone').value = '';
         document.getElementById('mm-email').value = '';
         document.getElementById('mm-role').value = '';
         loadCorporate();
         setTimeout(function(){ openMemberModal(_modalCorpId); }, 500);
-      }).catch(function(e) { showToast('Error: ' + e.message); });
+      }).catch(function(e) { toast('Error: ' + e.message); });
     }
     function removeCorpMember(corpId, idx) {
       if (!confirm('Remove this member?')) return;
@@ -2951,7 +2956,7 @@
         members.splice(idx, 1);
         return db.collection('corporate_accounts').doc(corpId).update({ members: members });
       }).then(function() {
-        showToast('Member removed');
+        toast('Member removed');
         loadCorporate();
         setTimeout(function(){ openMemberModal(corpId); }, 500);
       });
@@ -3143,11 +3148,11 @@
       if(!_cdCorpId||!db) return;
       var tempPwd = prompt('Enter a new temporary password for this account:','Seacoast' + Math.floor(1000+Math.random()*9000) + '!');
       if(tempPwd===null) return;
-      if(tempPwd.length < 6){ showToast('Password must be at least 6 characters.'); return; }
+      if(tempPwd.length < 6){ toast('Password must be at least 6 characters.'); return; }
       db.collection('corporate_accounts').doc(_cdCorpId).update({password: tempPwd}).then(function(){
-        showToast('Password updated.');
+        toast('Password updated.');
         alert('\u2705 Password set!\n\nSend this to the client:\n\n' + tempPwd);
-      }).catch(function(err){ showToast('Error: '+err.message); });
+      }).catch(function(err){ toast('Error: '+err.message); });
     }
 
     function deleteCorpAccount(){
@@ -3156,20 +3161,20 @@
       if(!confirm('\u26a0\ufe0f DELETE CORPORATE ACCOUNT\n\nAre you sure you want to permanently delete "' + company + '" from the server?\n\nThis cannot be undone.')) return;
       if(!confirm('\ud83d\uded1 FINAL CONFIRMATION\n\nYou are about to permanently delete "' + company + '" and all associated data.\n\nClick OK to delete.')) return;
       db.collection('corporate_accounts').doc(_cdCorpId).delete().then(function(){
-        showToast('Account deleted.');
+        toast('Account deleted.');
         closeCorpDetail();
         loadCorporate();
-      }).catch(function(err){ showToast('Error: '+err.message); });
+      }).catch(function(err){ toast('Error: '+err.message); });
     }
 
     function awardBonusPoints(){
       if(!_cdCorpId||!db) return;
       var val = parseInt(document.getElementById('cd-bonus-input').value)||0;
-      if(val<=0){ showToast('Enter a number of points to award'); return; }
+      if(val<=0){ toast('Enter a number of points to award'); return; }
       var current = parseInt(document.getElementById('cd-bonus-display').textContent)||0;
       var newTotal = current + val;
       db.collection('corporate_accounts').doc(_cdCorpId).update({bonusPoints:newTotal}).then(function(){
-        showToast(val+' bonus point'+(val!==1?'s':'')+' awarded!');
+        toast(val+' bonus point'+(val!==1?'s':'')+' awarded!');
         document.getElementById('cd-bonus-display').textContent = newTotal;
         document.getElementById('cd-bonus-input').value='';
         // Recalculate tier display
@@ -3179,7 +3184,7 @@
         document.getElementById('cd-reward-pts').textContent=pts;
         document.getElementById('cd-reward-tier').textContent=tier.icon+' '+tier.name;
         document.getElementById('cd-tier-badge').textContent=tier.icon+' '+tier.name;
-      }).catch(function(err){ showToast('Error: '+err.message); });
+      }).catch(function(err){ toast('Error: '+err.message); });
     }
 
     function updateCorpBalance(){
