@@ -1375,12 +1375,23 @@ async function _acctMountPaymentElement() {
   cardDiv.innerHTML = '<div style="text-align:center;padding:1.5rem;color:#888;font-size:0.82rem">Loading secure payment form…</div>';
 
   try {
-    // Create PaymentIntent — no customer attached here (avoids stale customer ID errors)
-    // Customer is only fetched after payment when user wants to save their card
+    // Always get/create a valid Stripe customer first — this ensures the PM
+    // gets attached to the customer so it can be reused for future saved-card charges
+    var customerId = null;
+    try {
+      var custRes = await funcs.httpsCallable('getStripeCustomer')({
+        accountId: currentUser ? currentUser.id : '',
+        email: currentUser ? (currentUser.email || '') : '',
+        company: currentUser ? (currentUser.name || '') : ''
+      });
+      customerId = custRes.data.customerId;
+    } catch(custErr) { console.warn('Could not get Stripe customer:', custErr.message); }
+
     var piRes = await funcs.httpsCallable('createPaymentIntent')({
       amount: _acctPayAmt,
       bookingCode: currentUser ? (currentUser.id || '') : '',
-      customerName: currentUser ? (currentUser.name || '') : ''
+      customerName: currentUser ? (currentUser.name || '') : '',
+      customerId: customerId  // PM will be auto-attached to this customer on payment
     });
     _acctClientSecret = piRes.data.clientSecret;
 
@@ -1446,7 +1457,22 @@ async function payWithSavedCard() {
       throw new Error('Payment did not complete.');
     }
   } catch (e) {
-    alert('Payment failed: ' + (e.message || 'Please try again.'));
+    var msg = e.message || '';
+    if (msg === 'STALE_CARD' || msg.includes('STALE_CARD')) {
+      // Saved card is no longer usable — clear it from local state and show new card form
+      if (currentUser) { currentUser.stripePaymentMethodId = null; currentUser.cardBrand = null; currentUser.cardLast4 = null; }
+      document.getElementById('acct-saved-card-section').style.display = 'none';
+      document.getElementById('acct-new-card-section').style.display   = 'block';
+      document.getElementById('acct-card-error').textContent = 'Your saved card is no longer valid. Please enter a new card below.';
+      document.getElementById('acct-card-error').style.display = 'block';
+      _acctMountPaymentElement();
+    } else {
+      document.getElementById('acct-card-error').textContent = 'Payment failed: ' + (msg || 'Please try again.');
+      document.getElementById('acct-card-error').style.display = 'block';
+      document.getElementById('acct-saved-card-section').style.display = 'none';
+      document.getElementById('acct-new-card-section').style.display   = 'block';
+      _acctMountPaymentElement();
+    }
     btn.disabled = false;
     lbl.textContent = 'Pay $' + _acctPayAmt.toFixed(2) + ' with Saved Card';
   }
