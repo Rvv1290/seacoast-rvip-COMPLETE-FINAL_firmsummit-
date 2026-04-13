@@ -1938,8 +1938,7 @@
       var msg = document.getElementById('pay-msg').value;
       var sub = 'Seacoast RVIP — Ride Confirmed';
       var email = curPayBk.email || '';
-      var gmailUrl = 'https://mail.google.com/mail/u/info@seacoastrvip.com/?view=cm&fs=1&to=' + encodeURIComponent(email) + '&su=' + encodeURIComponent(sub) + '&body=' + encodeURIComponent(msg);
-      window.open(gmailUrl, '_blank');
+      window.open('mailto:' + (email || curPayBk.phone) + '?subject=' + encodeURIComponent(sub) + '&body=' + encodeURIComponent(msg));
     }
     function payWA() {
       if (!curPayBk) return;
@@ -2881,11 +2880,9 @@
       const msg = document.getElementById('ap-preview').textContent;
       const email = _apMsgData.contactEmail || _apMsgData.email || '';
       const sub = 'Your Seacoast RVIP Credentials';
-      const gmailUrl = 'https://mail.google.com/mail/u/info@seacoastrvip.com/?view=cm&fs=1&to=' + encodeURIComponent(email) + '&su=' + encodeURIComponent(sub) + '&body=' + encodeURIComponent(msg);
-      
-      window.open(gmailUrl, '_blank');
+      window.open(`mailto:${email}?subject=${encodeURIComponent(sub)}&body=${encodeURIComponent(msg)}`);
       navigator.clipboard.writeText(msg);
-      toast('Copied to clipboard + launching Gmail...');
+      toast('Copied to clipboard + launching Mail app...');
     }
 
     function closeApModal() {
