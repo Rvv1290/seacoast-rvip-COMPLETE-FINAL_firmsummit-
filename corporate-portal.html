@@ -1145,7 +1145,10 @@ async function payWithCorpSavedCard() {
   try {
     var res = await funcs.httpsCallable('chargeSavedCard')({ accountId: sess.accountId, amount: _corpPayAmt });
     if (res.data && res.data.success) {
-      // Balance auto-updates to $0 via onSnapshot in loadAccountLive()
+      // Immediately zero balance in memory so stat card + banner update without waiting for onSnapshot
+      _accountBalance = 0;
+      renderDashBalance();
+      if (typeof calcStats === 'function') calcStats();
       document.getElementById('corp-pay-success').style.display        = 'block';
       document.getElementById('corp-saved-card-section').style.display = 'none';
       setTimeout(closeCardModal, 3000);
@@ -1196,7 +1199,7 @@ async function corpSubmitPayment() {
       } catch(e) { console.warn('Could not save card:', e.message); }
     }
 
-    // Zero balance in Firestore — onSnapshot in loadAccountLive() updates UI instantly
+    // Zero balance in Firestore
     if (db && sess.accountId) {
       await db.collection('corporate_accounts').doc(sess.accountId).update({
         balance: 0,
@@ -1204,6 +1207,11 @@ async function corpSubmitPayment() {
         lastPaymentAmount: _corpPayAmt
       }).catch(function(){});
     }
+
+    // Immediately zero balance in memory so stat card + banner update without waiting for onSnapshot
+    _accountBalance = 0;
+    renderDashBalance();
+    if (typeof calcStats === 'function') calcStats();
 
     document.getElementById('corp-pay-success').style.display      = 'block';
     document.getElementById('corp-new-card-section').style.display = 'none';
@@ -1477,8 +1485,10 @@ function calcStats(){
   });
   document.getElementById('stat-month').textContent=monthCount;
   document.getElementById('stat-total').textContent=_trips.length;
-  document.getElementById('stat-bal').textContent='$'+totalBal.toFixed(2);
-  document.getElementById('pay-balance').textContent='$'+totalBal.toFixed(2);
+  // Use the live Firestore balance (_accountBalance) — not trip-price sum — so stat card stays in sync after payment
+  var livebal = (_accountBalance > 0) ? _accountBalance : 0;
+  document.getElementById('stat-bal').textContent='$'+livebal.toFixed(2);
+  document.getElementById('pay-balance').textContent='$'+livebal.toFixed(2);
   if(upcoming.length){
     var nxt=upcoming[0];
     var nd=new Date(nxt.date);
