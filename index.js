@@ -72,6 +72,8 @@ exports.createSetupIntent = functions.runWith({ secrets: [stripeSecret] }).https
 
 /**
  * Charges the saved payment method.
+ * If the PM is stale (used without customer attachment), clears it from Firestore
+ * and returns STALE_CARD so the frontend can prompt the user to re-enter.
  */
 exports.chargeSavedCard = functions.runWith({ secrets: [stripeSecret] }).https.onCall(async (data, context) => {
   const stripe = require("stripe")(process.env.STRIPE_SECRET);
@@ -121,7 +123,7 @@ exports.chargeSavedCard = functions.runWith({ secrets: [stripeSecret] }).https.o
           .where("corporateAccountId", "==", accountId)
           .where("status", "==", "Confirmed")
           .get();
-        
+
         const batch = admin.firestore().batch();
         bookingsSnap.forEach(doc => {
           batch.update(doc.ref, { status: "Completed", updatedAt: new Date().toISOString() });
@@ -134,15 +136,40 @@ exports.chargeSavedCard = functions.runWith({ secrets: [stripeSecret] }).https.o
       return { success: true, paymentIntentId: paymentIntent.id };
     }
     return { success: false, status: paymentIntent.status };
+
   } catch (error) {
-    console.error("chargeSavedCard Error:", error);
+    console.error("chargeSavedCard Error:", error.message);
+
+    // Detect stale/detached PM — clear it from Firestore so user can re-enter card
+    const isStaleCard = error.message && (
+      error.message.includes("must attach it to a Customer") ||
+      error.message.includes("previously used with a PaymentIntent without Customer") ||
+      error.message.includes("detached from a Customer") ||
+      error.message.includes("shared with a connected account without Customer")
+    );
+
+    if (isStaleCard) {
+      try {
+        await accountRef.update({
+          stripePaymentMethodId: admin.firestore.FieldValue.delete(),
+          cardBrand: admin.firestore.FieldValue.delete(),
+          cardLast4: admin.firestore.FieldValue.delete()
+        });
+        console.log("Cleared stale payment method for account:", accountId);
+      } catch (clearErr) {
+        console.warn("Could not clear stale PM:", clearErr.message);
+      }
+      throw new functions.https.HttpsError("failed-precondition", "STALE_CARD");
+    }
+
     throw new functions.https.HttpsError("internal", error.message);
   }
 });
 
 /**
- * Saves PM ID to Firestore AND attaches it to the Stripe customer
- * (required for future off-session charges via chargeSavedCard).
+ * Saves PM ID to Firestore AND attaches it to the Stripe customer.
+ * If the PM cannot be attached (was used without customer), rejects the save
+ * so the user is not left with a stale card stored.
  */
 exports.savePaymentMethod = functions.runWith({ secrets: [stripeSecret] }).https.onCall(async (data, context) => {
   const stripe = require("stripe")(process.env.STRIPE_SECRET);
@@ -168,8 +195,18 @@ exports.savePaymentMethod = functions.runWith({ secrets: [stripeSecret] }).https
         invoice_settings: { default_payment_method: paymentMethodId }
       });
     } catch (e) {
-      // PM already attached is fine
-      if (!e.message || !e.message.includes("already been attached")) {
+      // PM already attached to this customer — that's fine, continue saving
+      if (e.message && e.message.includes("already been attached")) {
+        console.log("PM already attached, continuing save.");
+      } else if (e.message && (
+        e.message.includes("must attach it to a Customer") ||
+        e.message.includes("previously used with a PaymentIntent without Customer") ||
+        e.message.includes("detached from a Customer")
+      )) {
+        // PM is stale — do NOT save it to Firestore
+        console.warn("PM is stale/unattachable, rejecting save:", e.message);
+        throw new functions.https.HttpsError("failed-precondition", "STALE_CARD");
+      } else {
         console.warn("PM attach warning:", e.message);
       }
     }
@@ -186,7 +223,8 @@ exports.savePaymentMethod = functions.runWith({ secrets: [stripeSecret] }).https
 
 /**
  * Creates a PaymentIntent for on-page payments.
- * Accepts optional customerId to associate the payment with a Stripe customer.
+ * Always requires a valid customerId so the PM is attached to the customer —
+ * this is required for future saved-card charges to work.
  */
 exports.createPaymentIntent = functions.runWith({ secrets: [stripeSecret] }).https.onCall(async (data, context) => {
   const stripe = require("stripe")(process.env.STRIPE_SECRET);
@@ -219,26 +257,3 @@ exports.createPaymentIntent = functions.runWith({ secrets: [stripeSecret] }).htt
     throw new functions.https.HttpsError("internal", "Could not create payment: " + stripeErr.message);
   }
 });
-
-/**
- * [TEMPLATE] AUTOMATED NOTIFICATION DISPATCHER
- * This function watches the 'notifications' collection and sends actual SMS/Emails.
- * To activate: npm install twilio @sendgrid/mail
- */
-/*
-exports.dispatchNotification = functions.firestore.document('notifications/{id}').onCreate(async (snap, context) => {
-  const data = snap.data();
-  console.log('Dispatching notification:', data.type);
-  
-  // 1. Send Email (using SendGrid)
-  // const sgMail = require('@sendgrid/mail');
-  // sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-  // await sgMail.send({ to: data.to, from: 'info@seacoastrvip.com', subject: 'Seacoast RVIP Account', text: data.content });
-
-  // 2. Send SMS (using Twilio)
-  // const twilio = require('twilio')(process.env.TWILIO_SID, process.env.TWILIO_TOKEN);
-  // await twilio.messages.create({ body: data.content, from: '+1XXXXXXXXXX', to: data.phone });
-
-  return snap.ref.update({ status: 'sent', sentAt: admin.firestore.FieldValue.serverTimestamp() });
-});
-*/
