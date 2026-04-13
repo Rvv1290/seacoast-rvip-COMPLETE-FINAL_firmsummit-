@@ -1938,7 +1938,7 @@
       var msg = document.getElementById('pay-msg').value;
       var sub = 'Seacoast RVIP — Ride Confirmed';
       var email = curPayBk.email || '';
-      var gmailUrl = 'https://mail.google.com/mail/?view=cm&fs=1&to=' + encodeURIComponent(email) + '&su=' + encodeURIComponent(sub) + '&body=' + encodeURIComponent(msg);
+      var gmailUrl = 'https://mail.google.com/mail/u/info@seacoastrvip.com/?view=cm&fs=1&to=' + encodeURIComponent(email) + '&su=' + encodeURIComponent(sub) + '&body=' + encodeURIComponent(msg);
       window.open(gmailUrl, '_blank');
     }
     function payWA() {
@@ -2881,7 +2881,7 @@
       const msg = document.getElementById('ap-preview').textContent;
       const email = _apMsgData.contactEmail || _apMsgData.email || '';
       const sub = 'Your Seacoast RVIP Credentials';
-      const gmailUrl = 'https://mail.google.com/mail/?view=cm&fs=1&to=' + encodeURIComponent(email) + '&su=' + encodeURIComponent(sub) + '&body=' + encodeURIComponent(msg);
+      const gmailUrl = 'https://mail.google.com/mail/u/info@seacoastrvip.com/?view=cm&fs=1&to=' + encodeURIComponent(email) + '&su=' + encodeURIComponent(sub) + '&body=' + encodeURIComponent(msg);
       
       window.open(gmailUrl, '_blank');
       navigator.clipboard.writeText(msg);
