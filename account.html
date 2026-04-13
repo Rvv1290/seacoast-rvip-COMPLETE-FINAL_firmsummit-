@@ -1245,20 +1245,16 @@ async function _acctMountPaymentElement() {
   cardDiv.innerHTML = '<div style="text-align:center;padding:1.5rem;color:#888;font-size:0.82rem">Loading secure payment form…</div>';
 
   try {
-    // 1. Ensure Stripe customer exists
-    var custRes    = await funcs.httpsCallable('getStripeCustomer')({ accountId: currentUser.id, email: currentUser.email, company: currentUser.name });
-    var customerId = custRes.data.customerId;
-
-    // 2. Create PaymentIntent with customer attached
+    // Create PaymentIntent — no customer attached here (avoids stale customer ID errors)
+    // Customer is only fetched after payment when user wants to save their card
     var piRes = await funcs.httpsCallable('createPaymentIntent')({
       amount: _acctPayAmt,
-      bookingCode: currentUser.id,
-      customerName: currentUser.name,
-      customerId: customerId
+      bookingCode: currentUser ? (currentUser.id || '') : '',
+      customerName: currentUser ? (currentUser.name || '') : ''
     });
     _acctClientSecret = piRes.data.clientSecret;
 
-    // 3. Mount Payment Element (no INTERNAL error — tied to a specific PI)
+    // Mount Payment Element — bound to this specific PI, no Link auto-fill issues
     cardDiv.innerHTML = '';
     _acctStripeElems = acctStripe.elements({
       clientSecret: _acctClientSecret,
@@ -1276,8 +1272,9 @@ async function _acctMountPaymentElement() {
 
   } catch(e) {
     cardDiv.innerHTML = '';
-    document.getElementById('acct-card-error').textContent = 'Could not load payment form: ' + (e.message || 'Please try again.');
+    document.getElementById('acct-card-error').textContent = 'Could not load payment form. Please try again or call (978) 255-3140.';
     document.getElementById('acct-card-error').style.display = 'block';
+    console.error('Payment form load error:', e.message);
     payBtn.disabled = false;
     lbl.textContent = 'Pay Now';
   }
@@ -1348,12 +1345,14 @@ async function acctSubmitPayment() {
       throw new Error('Payment not completed. Please try again.');
     }
 
-    // Save card if checkbox was checked
+    // Save card if checkbox was checked — get/create customer here, after payment
     if (saveCard && result.paymentIntent.payment_method) {
       try {
         var pmId = (typeof result.paymentIntent.payment_method === 'string')
           ? result.paymentIntent.payment_method
           : result.paymentIntent.payment_method.id;
+        // Ensure valid Stripe customer exists before saving PM
+        await funcs.httpsCallable('getStripeCustomer')({ accountId: currentUser.id, email: currentUser.email, company: currentUser.name });
         await funcs.httpsCallable('savePaymentMethod')({ accountId: currentUser.id, paymentMethodId: pmId });
       } catch(e) { console.warn('Could not save card:', e.message); }
     }

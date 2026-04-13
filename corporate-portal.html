@@ -1083,20 +1083,16 @@ async function _corpMountPaymentElement() {
   cardDiv.innerHTML = '<div style="text-align:center;padding:1.5rem;color:#888;font-size:0.82rem">Loading secure payment form…</div>';
 
   try {
-    // 1. Ensure Stripe customer exists
-    var custRes    = await funcs.httpsCallable('getStripeCustomer')({ accountId: sess.accountId, email: sess.contactEmail, company: sess.company });
-    var customerId = custRes.data.customerId;
-
-    // 2. Create PaymentIntent with customer attached
+    // Create PaymentIntent — no customer attached here (avoids stale customer ID errors)
+    // Customer is only fetched when user saves their card, after payment succeeds
     var piRes = await funcs.httpsCallable('createPaymentIntent')({
       amount: _corpPayAmt,
-      bookingCode: sess.accountId,
-      customerName: sess.company,
-      customerId: customerId
+      bookingCode: sess ? (sess.accountId || '') : '',
+      customerName: sess ? (sess.company || '') : ''
     });
     _corpClientSecret = piRes.data.clientSecret;
 
-    // 3. Mount Payment Element (no INTERNAL error — bound to a specific PI)
+    // Mount Payment Element — bound to this specific PI, no Link auto-fill issues
     cardDiv.innerHTML = '';
     _corpStripeElems = stripe.elements({
       clientSecret: _corpClientSecret,
@@ -1114,8 +1110,10 @@ async function _corpMountPaymentElement() {
 
   } catch(e) {
     cardDiv.innerHTML = '';
-    document.getElementById('corp-card-error').textContent = 'Could not load payment form: ' + (e.message || 'Please try again.');
+    var errMsg = e.message || 'Please try again.';
+    document.getElementById('corp-card-error').textContent = 'Could not load payment form. Please try again or call (978) 255-3140.';
     document.getElementById('corp-card-error').style.display = 'block';
+    console.error('Payment form load error:', errMsg);
     payBtn.disabled = false;
     lbl.textContent = 'Pay Now';
   }
@@ -1186,12 +1184,14 @@ async function corpSubmitPayment() {
       throw new Error('Payment not completed. Please try again.');
     }
 
-    // Save card if checkbox was checked
+    // Save card if checkbox was checked — get/create valid customer here, after payment
     if (saveCard && result.paymentIntent.payment_method) {
       try {
         var pmId = (typeof result.paymentIntent.payment_method === 'string')
           ? result.paymentIntent.payment_method
           : result.paymentIntent.payment_method.id;
+        // Ensure valid Stripe customer exists (validates/recreates stale IDs)
+        await funcs.httpsCallable('getStripeCustomer')({ accountId: sess.accountId, email: sess.contactEmail, company: sess.company });
         await funcs.httpsCallable('savePaymentMethod')({ accountId: sess.accountId, paymentMethodId: pmId });
       } catch(e) { console.warn('Could not save card:', e.message); }
     }

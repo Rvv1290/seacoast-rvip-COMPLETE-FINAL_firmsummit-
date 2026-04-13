@@ -6,36 +6,52 @@ admin.initializeApp();
 const stripeSecret = "STRIPE_SECRET"; // In v1 we use .runWith({ secrets: [...] })
 
 /**
- * Ensures a corporate account has a Stripe Customer ID.
+ * Ensures an account has a valid Stripe Customer ID.
+ * Verifies the stored ID still exists in Stripe (guards against stale/test IDs).
  */
 exports.getStripeCustomer = functions.runWith({ secrets: [stripeSecret] }).https.onCall(async (data, context) => {
   const stripe = require("stripe")(process.env.STRIPE_SECRET);
   const { accountId, email, company } = data;
-  
+
   if (!accountId) throw new functions.https.HttpsError("invalid-argument", "Missing Account ID");
 
   let accountRef = admin.firestore().collection("corporate_accounts").doc(accountId);
   let accountDoc = await accountRef.get();
 
-  // If not in corporate, check clients
   if (!accountDoc.exists) {
     accountRef = admin.firestore().collection("clients").doc(accountId);
     accountDoc = await accountRef.get();
   }
-
   if (!accountDoc.exists) throw new functions.https.HttpsError("not-found", "Account not found");
 
   const accountData = accountDoc.data();
-  if (accountData.stripeCustomerId) return { customerId: accountData.stripeCustomerId };
 
-  const customer = await stripe.customers.create({
-    email: email || accountData.contactEmail,
-    name: company || accountData.company,
-    metadata: { accountId: accountId }
-  });
+  // Verify the stored Stripe customer still exists (could be stale/from test mode)
+  if (accountData.stripeCustomerId) {
+    try {
+      const existing = await stripe.customers.retrieve(accountData.stripeCustomerId);
+      if (!existing.deleted) {
+        return { customerId: accountData.stripeCustomerId };
+      }
+      // Customer was deleted — fall through to create a new one
+    } catch (e) {
+      // Customer not found in Stripe — fall through to create a new one
+      console.warn("Stored Stripe customer not found, creating new one:", e.message);
+    }
+  }
 
-  await accountRef.update({ stripeCustomerId: customer.id });
-  return { customerId: customer.id };
+  try {
+    const customer = await stripe.customers.create({
+      email: email || accountData.contactEmail || "",
+      name: company || accountData.company || "",
+      metadata: { accountId: accountId }
+    });
+    await accountRef.update({ stripeCustomerId: customer.id });
+    return { customerId: customer.id };
+  } catch (stripeErr) {
+    console.error("Stripe customer create error:", stripeErr.message);
+    throw new functions.https.HttpsError("internal", "Could not create Stripe customer: " + stripeErr.message);
+  }
 });
 
 /**
@@ -190,13 +206,18 @@ exports.createPaymentIntent = functions.runWith({ secrets: [stripeSecret] }).htt
     }
   };
 
-  // Associate with Stripe customer if provided (enables saving card later)
-  if (customerId) {
+  // Associate with Stripe customer only if a valid ID is explicitly provided
+  if (customerId && typeof customerId === "string" && customerId.startsWith("cus_")) {
     piData.customer = customerId;
   }
 
-  const paymentIntent = await stripe.paymentIntents.create(piData);
-  return { clientSecret: paymentIntent.client_secret, paymentIntentId: paymentIntent.id };
+  try {
+    const paymentIntent = await stripe.paymentIntents.create(piData);
+    return { clientSecret: paymentIntent.client_secret, paymentIntentId: paymentIntent.id };
+  } catch (stripeErr) {
+    console.error("Stripe PaymentIntent create error:", stripeErr.message);
+    throw new functions.https.HttpsError("internal", "Could not create payment: " + stripeErr.message);
+  }
 });
 
 /**
