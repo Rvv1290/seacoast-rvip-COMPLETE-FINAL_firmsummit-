@@ -379,7 +379,7 @@ var _sess = null;
           </div>
         </div>
         <!-- Account Clear -->
-        <div id="dash-pay-clear" style="display:none;background:#f0fdf4;border-left:3px solid #22c55e;padding:0.875rem 1.25rem;display:flex;align-items:center;gap:0.75rem">
+        <div id="dash-pay-clear" style="display:none;background:#f0fdf4;border-left:3px solid #22c55e;padding:0.875rem 1.25rem;align-items:center;gap:0.75rem">
           <span style="color:#22c55e;font-size:1.2rem;line-height:1">✓</span>
           <div>
             <div style="font-family:'Work Sans',sans-serif;font-size:0.72rem;font-weight:700;color:#15803d;text-transform:uppercase;letter-spacing:0.06em">Account is current</div>
@@ -1027,7 +1027,7 @@ function renderDashBalance(){
     if(statBal) statBal.textContent = '$' + _accountBalance.toFixed(2);
   } else {
     due.style.display   = 'none';
-    clear.style.display = 'block';
+    clear.style.display = 'flex';   // was 'block' — matches the flexbox layout
     var statBal = document.getElementById('stat-bal');
     if(statBal) statBal.textContent = '$0.00';
   }

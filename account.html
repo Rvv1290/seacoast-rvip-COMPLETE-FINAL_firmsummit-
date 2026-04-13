@@ -493,7 +493,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
                <div id="acct-balance-reminder" style="display:none;background:#f9f6ef;border:1px solid #e8d99a;padding:0.75rem 1rem;margin-bottom:1.25rem;font-family:Inter,sans-serif;font-size:0.82rem;color:#5a4010">
                  Your balance: <strong id="acct-balance-amt" style="font-size:1rem">$0</strong> — enter this amount in Stripe.
                </div>
-               <button onclick="openStripePayModal()" class="btn-k" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px">
+               <button onclick="settleBalanceWithCard()" class="btn-k" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px">
                  <span class="material-symbols-outlined" style="font-size:17px">lock</span>
                  Pay Now via Stripe
                </button>
@@ -1060,6 +1060,18 @@ function updateDashboardUI(){
   renderRecentActivity();
   renderTripsList('all');
   renderInvoicesList(confirmed);
+
+  // Keep pay-tab balance reminder in sync with the stats balance
+  var rem    = document.getElementById('acct-balance-reminder');
+  var remAmt = document.getElementById('acct-balance-amt');
+  if (rem) {
+    if (balance > 0) {
+      rem.style.display = 'block';
+      if (remAmt) remAmt.textContent = '$' + balance.toFixed(2);
+    } else {
+      rem.style.display = 'none';
+    }
+  }
 }
 
 function updateLoyaltyUI(count){
@@ -1307,6 +1319,8 @@ async function payWithSavedCard() {
     var res = await funcs.httpsCallable('chargeSavedCard')({ accountId: currentUser.id, amount: _acctPayAmt });
     if (res.data && res.data.success) {
       await _markTripsCompleted();
+      // Immediately zero the balance display — don't wait for onSnapshot latency
+      _acctZeroBalanceDisplay();
       document.getElementById('acct-pay-success').style.display        = 'block';
       document.getElementById('acct-saved-card-section').style.display = 'none';
       setTimeout(closeStripePayModal, 3000);
@@ -1360,6 +1374,9 @@ async function acctSubmitPayment() {
     // Mark trips Completed → balance recalculates to $0 via onSnapshot
     await _markTripsCompleted();
 
+    // Immediately zero the balance display — don't wait for onSnapshot latency
+    _acctZeroBalanceDisplay();
+
     document.getElementById('acct-pay-success').style.display      = 'block';
     document.getElementById('acct-new-card-section').style.display = 'none';
     setTimeout(closeStripePayModal, 3000);
@@ -1370,6 +1387,34 @@ async function acctSubmitPayment() {
     btn.disabled = false;
     lbl.textContent = 'Pay $' + _acctPayAmt.toFixed(2);
   }
+}
+
+// Immediately zero all balance display elements after a successful payment
+function _acctZeroBalanceDisplay() {
+  // Stats bar balance
+  var statBal = document.getElementById('stat-balance');
+  if (statBal) statBal.textContent = '$0.00';
+  // Pay-now button in stats bar
+  var statPayBtn = document.getElementById('stat-pay-btn');
+  if (statPayBtn) statPayBtn.style.display = 'none';
+  // Pay box in dashboard
+  var payBox = document.getElementById('pay-box');
+  if (payBox) payBox.style.display = 'none';
+  // Balance reminder in pay tab
+  var rem = document.getElementById('acct-balance-reminder');
+  if (rem) rem.style.display = 'none';
+  // Modal amount label (so it reads $0 if reopened)
+  var modalAmt = document.getElementById('acct-modal-amt');
+  if (modalAmt) modalAmt.textContent = '$0.00';
+  // Also optimistically update allTrips so the stats recalc is instant
+  allTrips = allTrips.map(function(t) {
+    if ((t.status || '').toLowerCase() === 'confirmed') {
+      return Object.assign({}, t, { status: 'Completed' });
+    }
+    return t;
+  });
+  // Re-run the dashboard calc with the optimistic data
+  if (typeof updateDashboardUI === 'function') updateDashboardUI();
 }
 
 // Mark all confirmed trips Completed so the balance resets to $0 in the UI
