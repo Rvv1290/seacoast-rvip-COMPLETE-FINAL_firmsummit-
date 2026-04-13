@@ -79,7 +79,7 @@ body{font-family:'Inter',sans-serif;background:#f7f7f7;color:#1a1c1c;min-height:
 .book-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem}
 .book-full{grid-column:1/-1}
 .f-label{font-family:'Work Sans',sans-serif;font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#555;display:block;margin-bottom:0.4rem}
-.f-input{width:100%;padding:0.75rem 0;background:transparent;border:0;border-bottom:2px solid #e5e5e5;font-family:Inter,sans-serif;font-size:0.9rem;color:#000;transition:border-color 0.2s;outline:none}
+.f-input{width:100%;padding:0.75rem 0;background:transparent;border:0;border-bottom:2px solid #e5e5e5;font-family:Inter,sans-serif;font-size:16px;color:#000;transition:border-color 0.2s;outline:none}
 .f-input:focus{border-bottom-color:#775a19}
 .f-input::placeholder{color:#bbb}
 .f-group{margin-bottom:1.25rem}
@@ -149,9 +149,9 @@ body{font-family:'Inter',sans-serif;background:#f7f7f7;color:#1a1c1c;min-height:
 .reward-perk{font-family:Inter,sans-serif;font-size:0.72rem;color:rgba(255,255,255,0.6);margin-top:3px}
 /* ─── MOBILE ─── */
 @media(max-width:1000px){
-  .sidebar{display:none;position:fixed;top:0;left:-280px;width:280px;height:100vh;z-index:1000;transition:left 0.3s ease;background:#000}
+  .sidebar{display:none;position:fixed;top:0;left:-280px;width:280px;height:100vh;z-index:1001;transition:left 0.3s ease;background:#000}
   .sidebar.open{display:flex;left:0}
-  .sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:999}
+  .sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000}
   .sidebar-overlay.open{display:block}
   .main{margin-left:0}
   .topbar{padding:0.75rem 1rem}
@@ -1042,7 +1042,6 @@ var _corpClientSecret = null;
 
 async function openCardModal(amt) {
   _corpPayAmt = parseFloat(amt) || 0;
-  document.getElementById('corp-modal-amt').textContent = '$' + _corpPayAmt.toFixed(2);
 
   // Reset UI
   document.getElementById('corp-pay-success').style.display = 'none';
@@ -1055,21 +1054,96 @@ async function openCardModal(amt) {
   _corpStripeElems  = null;
   _corpClientSecret = null;
 
-  // Check for saved card
-  var hasSaved = _cardData && _cardData.last4;
-  document.getElementById('corp-saved-card-section').style.display = hasSaved ? 'block' : 'none';
-  document.getElementById('corp-new-card-section').style.display   = hasSaved ? 'none'  : 'block';
+  // Show tip step FIRST
+  document.getElementById('card-modal').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+  _corpShowTipStep(_corpPayAmt);
+}
 
+// ─── TIP STEP LOGIC (corporate-portal.html) ───
+var _corpBasePay = 0;
+var _corpTipAmt  = 0;
+
+function _corpShowTipStep(baseAmt) {
+  _corpBasePay = parseFloat(baseAmt) || 0;
+  _corpTipAmt  = parseFloat((_corpBasePay * 0.20).toFixed(2)); // default 20%
+
+  document.getElementById('corp-tip-base').textContent        = '$' + _corpBasePay.toFixed(2);
+  document.getElementById('corp-tip-sub-display').textContent = '$' + _corpBasePay.toFixed(2);
+  document.getElementById('corp-modal-amt').textContent       = '$' + _corpBasePay.toFixed(2);
+  _corpUpdateTipDisplay();
+
+  // Reset all buttons, highlight 20%
+  ['corp-tip-15','corp-tip-18','corp-tip-20','corp-tip-25','corp-tip-none','corp-tip-custom-btn'].forEach(function(id){
+    var el = document.getElementById(id); if (!el) return;
+    el.style.background = '#fff'; el.style.borderColor = '#e2e2e2'; el.style.color = id === 'corp-tip-none' ? '#888' : '#000';
+  });
+  var def = document.getElementById('corp-tip-20');
+  if (def) { def.style.background = '#775a19'; def.style.borderColor = '#775a19'; def.style.color = '#fff'; }
+  document.getElementById('corp-custom-tip-wrap').style.display = 'none';
+
+  // Show tip step, hide everything else
+  document.getElementById('corp-tip-step').style.display           = 'block';
+  document.getElementById('corp-saved-card-section').style.display = 'none';
+  document.getElementById('corp-new-card-section').style.display   = 'none';
+  document.getElementById('corp-pay-success').style.display        = 'none';
+}
+
+function corpSelectTip(pct) {
+  _corpTipAmt = parseFloat((_corpBasePay * pct).toFixed(2));
+  document.getElementById('corp-custom-tip-wrap').style.display = 'none';
+  var custom = document.getElementById('corp-custom-tip-input'); if (custom) custom.value = '';
+  var map = { 0.15:'corp-tip-15', 0.18:'corp-tip-18', 0.20:'corp-tip-20', 0.25:'corp-tip-25', 0:'corp-tip-none' };
+  ['corp-tip-15','corp-tip-18','corp-tip-20','corp-tip-25','corp-tip-none','corp-tip-custom-btn'].forEach(function(id){
+    var el = document.getElementById(id); if (!el) return;
+    el.style.background = '#fff'; el.style.borderColor = '#e2e2e2'; el.style.color = id === 'corp-tip-none' ? '#888' : '#000';
+  });
+  var selId = map[pct];
+  if (selId) { var sel = document.getElementById(selId); if (sel) { sel.style.background = '#775a19'; sel.style.borderColor = '#775a19'; sel.style.color = '#fff'; } }
+  _corpUpdateTipDisplay();
+}
+
+function corpToggleCustomTip() {
+  document.getElementById('corp-custom-tip-wrap').style.display = 'block';
+  var inp = document.getElementById('corp-custom-tip-input'); if (inp) { inp.value = ''; inp.focus(); }
+  ['corp-tip-15','corp-tip-18','corp-tip-20','corp-tip-25','corp-tip-none'].forEach(function(id){
+    var el = document.getElementById(id); if (!el) return;
+    el.style.background = '#fff'; el.style.borderColor = '#e2e2e2'; el.style.color = id === 'corp-tip-none' ? '#888' : '#000';
+  });
+  var cb = document.getElementById('corp-tip-custom-btn');
+  if (cb) { cb.style.background = '#775a19'; cb.style.borderColor = '#775a19'; cb.style.color = '#fff'; }
+  _corpTipAmt = 0; _corpUpdateTipDisplay();
+}
+
+function corpApplyCustomTip(val) {
+  var v = parseFloat(val);
+  _corpTipAmt = (!isNaN(v) && v >= 0) ? parseFloat(v.toFixed(2)) : 0;
+  _corpUpdateTipDisplay();
+}
+
+function _corpUpdateTipDisplay() {
+  var total = _corpBasePay + _corpTipAmt;
+  document.getElementById('corp-tip-display').textContent       = '$' + _corpTipAmt.toFixed(2);
+  document.getElementById('corp-tip-total-display').textContent = '$' + total.toFixed(2);
+}
+
+function corpConfirmTip() {
+  // Lock in base + tip as final charge amount
+  _corpPayAmt = parseFloat((_corpBasePay + _corpTipAmt).toFixed(2));
+  document.getElementById('corp-modal-amt').textContent = '$' + _corpPayAmt.toFixed(2);
+
+  // Hide tip step, reveal card entry
+  document.getElementById('corp-tip-step').style.display = 'none';
+
+  var hasSaved = _cardData && _cardData.last4;
   if (hasSaved) {
     var brand = (_cardData.brand || 'Card');
     brand = brand.charAt(0).toUpperCase() + brand.slice(1);
     document.getElementById('corp-saved-card-label').textContent = brand + ' ****' + _cardData.last4;
     document.getElementById('corp-pay-saved-label').textContent  = 'Pay $' + _corpPayAmt.toFixed(2) + ' with Saved Card';
   }
-
-  document.getElementById('card-modal').style.display = 'flex';
-  document.body.style.overflow = 'hidden';
-
+  document.getElementById('corp-saved-card-section').style.display = hasSaved ? 'block' : 'none';
+  document.getElementById('corp-new-card-section').style.display   = hasSaved ? 'none'  : 'block';
   if (!hasSaved) _corpMountPaymentElement();
 }
 
@@ -1083,12 +1157,23 @@ async function _corpMountPaymentElement() {
   cardDiv.innerHTML = '<div style="text-align:center;padding:1.5rem;color:#888;font-size:0.82rem">Loading secure payment form…</div>';
 
   try {
-    // Create PaymentIntent — no customer attached here (avoids stale customer ID errors)
-    // Customer is only fetched when user saves their card, after payment succeeds
+    // Always get/create a valid Stripe customer first — ensures the PM
+    // gets attached to the customer so it can be reused for future saved-card charges
+    var customerId = null;
+    try {
+      var custRes = await funcs.httpsCallable('getStripeCustomer')({
+        accountId: sess ? sess.accountId : '',
+        email: sess ? (sess.contactEmail || '') : '',
+        company: sess ? (sess.company || '') : ''
+      });
+      customerId = custRes.data.customerId;
+    } catch(custErr) { console.warn('Could not get Stripe customer:', custErr.message); }
+
     var piRes = await funcs.httpsCallable('createPaymentIntent')({
       amount: _corpPayAmt,
       bookingCode: sess ? (sess.accountId || '') : '',
-      customerName: sess ? (sess.company || '') : ''
+      customerName: sess ? (sess.company || '') : '',
+      customerId: customerId  // PM will be auto-attached to this customer on payment
     });
     _corpClientSecret = piRes.data.clientSecret;
 
@@ -1156,7 +1241,22 @@ async function payWithCorpSavedCard() {
       throw new Error('Payment did not complete.');
     }
   } catch (e) {
-    alert('Payment failed: ' + (e.message || 'Please try again.'));
+    var msg = e.message || '';
+    if (msg === 'STALE_CARD' || msg.includes('STALE_CARD')) {
+      // Saved card is no longer usable — clear local state and show new card form
+      _cardData = null;
+      document.getElementById('corp-saved-card-section').style.display = 'none';
+      document.getElementById('corp-new-card-section').style.display   = 'block';
+      document.getElementById('corp-card-error').textContent = 'Your saved card is no longer valid. Please enter a new card below.';
+      document.getElementById('corp-card-error').style.display = 'block';
+      _corpMountPaymentElement();
+    } else {
+      document.getElementById('corp-card-error').textContent = 'Payment failed: ' + (msg || 'Please try again.');
+      document.getElementById('corp-card-error').style.display = 'block';
+      document.getElementById('corp-saved-card-section').style.display = 'none';
+      document.getElementById('corp-new-card-section').style.display   = 'block';
+      _corpMountPaymentElement();
+    }
     btn.disabled = false;
     lbl.textContent = 'Pay $' + _corpPayAmt.toFixed(2) + ' with Saved Card';
   }
@@ -2277,8 +2377,8 @@ async function toggleFav(inputId) {
 
 <!-- ── STRIPE BUY BUTTON MODAL ── -->
 <!-- ── EMBEDDED STRIPE PAYMENT MODAL (CORPORATE) ── -->
-<div id="card-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:9000;align-items:center;justify-content:center;padding:1rem">
-  <div style="background:#fff;width:100%;max-width:480px;border-radius:6px;overflow:hidden;box-shadow:0 25px 60px rgba(0,0,0,0.35)">
+<div id="card-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:9000;align-items:center;justify-content:center;padding:1rem;overflow-y:auto">
+  <div style="background:#fff;width:100%;max-width:480px;border-radius:6px;overflow-y:auto;box-shadow:0 25px 60px rgba(0,0,0,0.35);max-height:90vh;margin:auto">
     <!-- Header -->
     <div style="display:flex;align-items:center;justify-content:space-between;padding:1rem 1.25rem;border-bottom:1px solid #eee">
       <div style="display:flex;align-items:center;gap:0.625rem">
@@ -2290,8 +2390,53 @@ async function toggleFav(inputId) {
     <!-- Amount -->
     <div style="background:#f9f6ef;padding:0.75rem 1.25rem;border-bottom:1px solid #f0e8cc;text-align:center">
       <p style="font-family:Inter,sans-serif;font-size:0.82rem;color:#775a19;margin:0">
-        💳 Outstanding balance: <strong id="corp-modal-amt" style="font-size:1rem">$0</strong>
+        💳 Amount due: <strong id="corp-modal-amt" style="font-size:1rem">$0</strong>
       </p>
+    </div>
+
+    <!-- ── TIP STEP ── -->
+    <div id="corp-tip-step" style="padding:1.5rem;display:none">
+      <div style="text-align:center;margin-bottom:1.25rem">
+        <div style="font-family:'Work Sans',sans-serif;font-size:0.58rem;font-weight:700;text-transform:uppercase;letter-spacing:0.14em;color:#775a19;margin-bottom:4px">Ride Total</div>
+        <div style="font-family:'Times New Roman',serif;font-size:2rem;font-weight:700;color:#000" id="corp-tip-base">$0.00</div>
+      </div>
+      <div style="font-family:'Work Sans',sans-serif;font-size:0.68rem;font-weight:700;color:#444;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.75rem;text-align:center">Add a Gratuity for Your Driver 🙏</div>
+      <!-- Preset tip buttons -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0.5rem;margin-bottom:0.5rem">
+        <button onclick="corpSelectTip(0.15)" id="corp-tip-15" style="padding:0.75rem 0.25rem;border:1.5px solid #e2e2e2;background:#fff;font-family:'Work Sans',sans-serif;font-size:0.78rem;font-weight:700;cursor:pointer;border-radius:3px;transition:all 0.15s;min-height:44px">15%</button>
+        <button onclick="corpSelectTip(0.18)" id="corp-tip-18" style="padding:0.75rem 0.25rem;border:1.5px solid #e2e2e2;background:#fff;font-family:'Work Sans',sans-serif;font-size:0.78rem;font-weight:700;cursor:pointer;border-radius:3px;transition:all 0.15s;min-height:44px">18%</button>
+        <button onclick="corpSelectTip(0.20)" id="corp-tip-20" style="padding:0.75rem 0.25rem;border:1.5px solid #775a19;background:#775a19;color:#fff;font-family:'Work Sans',sans-serif;font-size:0.78rem;font-weight:700;cursor:pointer;border-radius:3px;transition:all 0.15s;min-height:44px">20%</button>
+        <button onclick="corpSelectTip(0.25)" id="corp-tip-25" style="padding:0.75rem 0.25rem;border:1.5px solid #e2e2e2;background:#fff;font-family:'Work Sans',sans-serif;font-size:0.78rem;font-weight:700;cursor:pointer;border-radius:3px;transition:all 0.15s;min-height:44px">25%</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-bottom:1.25rem">
+        <button onclick="corpSelectTip(0)" id="corp-tip-none" style="padding:0.75rem;border:1.5px solid #e2e2e2;background:#fff;font-family:'Work Sans',sans-serif;font-size:0.72rem;font-weight:600;cursor:pointer;border-radius:3px;color:#888;transition:all 0.15s;min-height:44px">No Tip</button>
+        <button onclick="corpToggleCustomTip()" id="corp-tip-custom-btn" style="padding:0.75rem;border:1.5px solid #e2e2e2;background:#fff;font-family:'Work Sans',sans-serif;font-size:0.72rem;font-weight:600;cursor:pointer;border-radius:3px;color:#000;transition:all 0.15s;min-height:44px">Custom $</button>
+      </div>
+      <!-- Custom tip input -->
+      <div id="corp-custom-tip-wrap" style="display:none;margin-bottom:1.25rem">
+        <div style="display:flex;align-items:center;border-bottom:2px solid #775a19;padding-bottom:0.5rem;gap:0.5rem">
+          <span style="font-family:'Work Sans',sans-serif;font-size:1.1rem;font-weight:700;color:#775a19">$</span>
+          <input id="corp-custom-tip-input" type="number" min="0" step="0.01" placeholder="0.00"
+            style="flex:1;border:none;background:transparent;font-family:'Work Sans',sans-serif;font-size:16px;font-weight:700;color:#000;outline:none"
+            oninput="corpApplyCustomTip(this.value)"/>
+        </div>
+      </div>
+      <!-- Summary -->
+      <div style="background:#f9f6ef;border:1px solid #f0e8cc;border-radius:3px;padding:1rem;margin-bottom:1.25rem">
+        <div style="display:flex;justify-content:space-between;margin-bottom:0.4rem">
+          <span style="font-family:Inter,sans-serif;font-size:0.8rem;color:#888">Ride Total</span>
+          <span style="font-family:Inter,sans-serif;font-size:0.8rem;color:#333" id="corp-tip-sub-display">$0.00</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:0.5rem">
+          <span style="font-family:Inter,sans-serif;font-size:0.8rem;color:#888">Gratuity</span>
+          <span style="font-family:Inter,sans-serif;font-size:0.8rem;color:#775a19;font-weight:600" id="corp-tip-display">$0.00</span>
+        </div>
+        <div style="border-top:1px solid #f0e8cc;padding-top:0.5rem;display:flex;justify-content:space-between">
+          <span style="font-family:'Work Sans',sans-serif;font-size:0.82rem;font-weight:700;color:#000;text-transform:uppercase;letter-spacing:0.04em">Total Charge</span>
+          <span style="font-family:'Work Sans',sans-serif;font-size:0.95rem;font-weight:700;color:#000" id="corp-tip-total-display">$0.00</span>
+        </div>
+      </div>
+      <button onclick="corpConfirmTip()" style="width:100%;background:#000;color:#fff;border:none;border-bottom:3px solid #775a19;padding:1rem;font-family:'Work Sans',sans-serif;font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;cursor:pointer;min-height:44px">Continue to Payment →</button>
     </div>
 
     <div style="padding:1.5rem">
@@ -2313,7 +2458,7 @@ async function toggleFav(inputId) {
 
       <!-- New card form -->
       <div id="corp-new-card-section">
-        <div id="corp-card-element" style="background:#f9f9f9;border:1px solid #e2e2e2;border-bottom:2px solid #c4c7c7;padding:14px 12px;margin-bottom:0.875rem;border-radius:2px"></div>
+        <div id="corp-card-element" style="background:#f9f9f9;border:1px solid #e2e2e2;border-bottom:2px solid #c4c7c7;padding:14px 12px;margin-bottom:0.875rem;border-radius:2px;min-height:120px"></div>
         <div id="corp-card-error" style="display:none;color:#c62828;font-size:0.78rem;margin-bottom:0.75rem;padding:0.5rem 0.75rem;background:#fff5f5;border:1px solid #fecaca"></div>
         <label style="display:flex;align-items:center;gap:0.5rem;margin-bottom:1rem;cursor:pointer">
           <input type="checkbox" id="corp-save-card-chk" style="width:16px;height:16px;accent-color:#775a19;cursor:pointer">
