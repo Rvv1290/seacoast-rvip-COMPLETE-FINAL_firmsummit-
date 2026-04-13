@@ -152,6 +152,29 @@ exports.savePaymentMethod = functions.runWith({ secrets: [stripeSecret] }).https
 });
 
 /**
+ * Creates a PaymentIntent for one-time guest payments (payment.html).
+ */
+exports.createPaymentIntent = functions.runWith({ secrets: [stripeSecret] }).https.onCall(async (data, context) => {
+  const stripe = require("stripe")(process.env.STRIPE_SECRET);
+  const { amount, bookingCode, customerName } = data;
+
+  if (!amount || amount <= 0) {
+    throw new functions.https.HttpsError("invalid-argument", "Invalid amount");
+  }
+
+  const paymentIntent = await stripe.paymentIntents.create({
+    amount: Math.round(amount * 100),
+    currency: "usd",
+    metadata: {
+      bookingCode: bookingCode || "",
+      customerName: customerName || ""
+    }
+  });
+
+  return { clientSecret: paymentIntent.client_secret };
+});
+
+/**
  * [TEMPLATE] AUTOMATED NOTIFICATION DISPATCHER
  * This function watches the 'notifications' collection and sends actual SMS/Emails.
  * To activate: npm install twilio @sendgrid/mail

@@ -50,6 +50,10 @@ body{font-family:'Inter',sans-serif;background:#f9f9f9;margin:0;padding:0}
 /* Loading spinner */
 .spinner{width:40px;height:40px;border:3px solid #f3f3f3;border-top:3px solid #775a19;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto}
 @keyframes spin{to{transform:rotate(360deg)}}
+/* Inline spinner for buttons */
+.spinner-inline{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,0.4);border-top:2px solid white;border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:6px}
+/* Stripe card element container */
+#stripe-card-element .StripeElement{padding:2px 0}
 
 /* Pulse for loading text */
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
@@ -58,6 +62,9 @@ body{font-family:'Inter',sans-serif;background:#f9f9f9;margin:0;padding:0}
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script>
+<!-- Stripe.js -->
+<script src="https://js.stripe.com/v3/"></script>
 
   <!-- PWA -->
   <link rel="manifest" href="/manifest.json"/>
@@ -276,15 +283,21 @@ window.addEventListener('DOMContentLoaded', checkWidth);
       </div>
     </div>
 
-    <!-- APPLE PAY SECTION -->
+    <!-- APPLE PAY / GOOGLE PAY SECTION -->
     <div id="section-apple" class="section-hidden bg-white p-5 mb-5 shadow-sm" style="border-left:4px solid #000">
-      <p class="font-label text-xs uppercase tracking-widest font-bold mb-3" style="color:#000">Apple Pay via Stripe</p>
-      <p class="text-xs text-on-surface-variant leading-relaxed mb-4">Tap below → Stripe opens in Safari → Apple Pay button appears → Face ID → done in seconds.</p>
-      <div class="text-xs text-gray-400 mb-4 p-3 bg-gray-50 rounded">⚠️ Apple Pay only works in Safari on iPhone, iPad, or Mac with Touch ID.</div>
-      <a id="apple-btn" href="#" target="_blank" class="action-btn" style="background:#000;color:white;border-bottom:4px solid #444">
-        <svg width="20" height="12" viewBox="0 0 60 28" fill="white"><path d="M11 6.5C10 7.7 8.4 8.6 6.8 8.5C6.6 6.9 7.4 5.2 8.3 4.1C9.3 3 11 2.2 12.4 2.1C12.6 3.8 11.9 5.4 11 6.5Z"/><path d="M12.4 8.8C10.1 8.7 8.1 10.1 7 10.1C5.9 10.1 4.2 8.9 2.3 8.9C-0.2 8.9-2.6 10.4-3.9 12.7C-6.5 17.3-4.6 24.2-2 27.9C-0.7 29.7 0.8 31.8 2.9 31.7C4.9 31.6 5.7 30.5 8.1 30.5C10.5 30.5 11.2 31.7 13.4 31.6C15.5 31.6 16.9 29.7 18.1 27.9C19.5 25.8 20.1 23.8 20.2 23.7C20.1 23.7 16 22 16 17.2C15.9 13.2 19.2 11.3 19.4 11.1C17.4 8.3 14.5 8.8 12.4 8.8Z"/><text x="24" y="20" font-family="system-ui" font-size="13" font-weight="700" fill="white">Pay</text></svg>
-        Pay $<span id="apple-amt">0</span> with Apple Pay →
-      </a>
+      <p class="font-label text-xs uppercase tracking-widest font-bold mb-3" style="color:#000">Apple Pay / Google Pay</p>
+      <p class="text-xs text-on-surface-variant leading-relaxed mb-4">Pay instantly with Apple Pay or Google Pay — no card entry needed. Processed securely by Stripe.</p>
+      <!-- Stripe Payment Request Button mounts here -->
+      <div id="payment-request-btn-container" style="min-height:48px"></div>
+      <div id="apple-unavailable" style="display:none" class="text-xs text-gray-400 p-3 bg-gray-50 border border-gray-200 text-center">
+        Apple Pay / Google Pay not available in this browser.<br/>Please use the <strong>Card</strong> payment option instead.
+      </div>
+      <div id="apple-success" style="display:none" class="p-4 mt-3 text-center" style="background:#f0fdf4;border:1px solid #bbf7d0">
+        <span class="material-symbols-outlined text-green-600 block mb-1" style="font-size:2rem">check_circle</span>
+        <p style="color:#166534;font-weight:700;font-family:'Times New Roman',serif">Payment Complete!</p>
+        <p class="text-xs" style="color:#166534">Thank you — your ride is confirmed.</p>
+      </div>
+      <p class="text-center text-xs text-on-surface-variant mt-3">Powered by Stripe · 256-bit encryption</p>
     </div>
 
     <!-- CARD SECTION -->
@@ -293,12 +306,27 @@ window.addEventListener('DOMContentLoaded', checkWidth);
         <span class="material-symbols-outlined text-secondary" style="font-size:18px">lock</span>
         <p class="font-label text-xs uppercase tracking-widest text-secondary font-bold">Secure Card Payment via Stripe</p>
       </div>
-      <p class="text-xs text-on-surface-variant leading-relaxed mb-4">Tap below → secure Stripe checkout → enter card → paid. Takes 30 seconds.</p>
-      <a id="card-btn" href="#" target="_blank" class="action-btn" style="background:#000;color:white;border-bottom:4px solid #775a19">
-        <span class="material-symbols-outlined" style="font-size:18px">lock</span>
-        Pay $<span id="card-amt">0</span> Securely →
-      </a>
-      <p class="text-center text-xs text-on-surface-variant mt-2">Powered by Stripe · 256-bit encryption</p>
+
+      <!-- Card form -->
+      <div id="card-pay-form">
+        <div style="background:#fff;border:1px solid #e2e2e2;border-bottom:2px solid #c4c7c7;padding:0.875rem;margin-bottom:1rem">
+          <div id="stripe-card-element"><!-- Stripe mounts here --></div>
+        </div>
+        <div id="card-pay-error" style="display:none;color:#c62828;font-family:Inter,sans-serif;font-size:0.8rem;margin-bottom:0.75rem;padding:0.5rem;background:#fff8f8;border-left:3px solid #c62828"></div>
+        <button id="card-pay-btn" onclick="submitCardPayment()" class="action-btn" style="background:#000;color:white;border-bottom:4px solid #775a19">
+          <span class="material-symbols-outlined" style="font-size:18px">lock</span>
+          <span id="card-pay-label">Pay $<span id="card-amt">0</span> Securely</span>
+        </button>
+        <p class="text-center text-xs text-on-surface-variant mt-2">Powered by Stripe · 256-bit encryption · Card never stored on our servers</p>
+      </div>
+
+      <!-- Success state -->
+      <div id="card-pay-success" style="display:none;text-align:center;padding:1.5rem 0">
+        <span class="material-symbols-outlined" style="font-size:3rem;color:#2e7d32;display:block;margin-bottom:0.5rem">check_circle</span>
+        <p style="font-family:'Times New Roman',serif;font-size:1.4rem;font-weight:700;color:#000;margin-bottom:0.25rem">Payment Complete!</p>
+        <p style="font-size:0.85rem;color:#555">Thank you — your ride is confirmed.</p>
+        <p id="card-pay-conf" style="font-size:0.75rem;color:#999;margin-top:0.5rem;font-family:monospace"></p>
+      </div>
     </div>
 
     <!-- VENMO SECTION -->
@@ -521,20 +549,24 @@ var FB_CONFIG = {
 };
 
 var db = null;
+var funcs = null;
 try {
   if (!firebase.apps || !firebase.apps.length) {
     firebase.initializeApp(FB_CONFIG);
   }
   db = firebase.firestore();
+  funcs = firebase.functions();
   console.log('✅ Firebase connected');
 } catch(e) {
   console.log('Firebase init failed - using localStorage fallback');
 }
 
-
-// ⚠️ Replace with your Stripe Payment Link
-// dashboard.stripe.com → Payment Links → Create
-var STRIPE_LINK = 'https://checkout.square.site/merchant/MLXF7THRGCXJC/checkout/JPSFJKF4BYHK7TB6HWPVZIYP?src=sheet';
+// ─── STRIPE INIT ───────────────────────────────────────────────
+var STRIPE_PK = 'pk_live_51TDR9gAPjRVAZeaebc3zFuondJhpYccCrQQFW6ygR06CAQvtTsrU6qw6KtjIVr1A6mxaCiMcIbfxKs7IUbM94Vlr006GZuFXUv';
+var stripe = Stripe(STRIPE_PK);
+var stripeElements = stripe.elements();
+var stripeCardEl = null;       // card Element instance
+var paymentRequestBtn = null;  // Payment Request Button instance
 
 // ═══════════════════════════════════════════════════════════════
 
@@ -819,16 +851,11 @@ function renderPayment(code, b) {
   document.getElementById('greeting').textContent = 'Hi ' + b.name + '!';
   document.getElementById('price-display').textContent = '$' + b.price;
   document.getElementById('service-display').textContent = b.service;
-  document.getElementById('apple-amt').textContent = b.price;
   document.getElementById('card-amt').textContent = b.price;
   document.getElementById('venmo-amt').textContent = '$' + b.price;
   document.getElementById('venmo-code').textContent = code;
   document.getElementById('cash-amt').textContent = '$' + b.price + ' cash';
   document.getElementById('cash-code').textContent = code;
-
-  // Set Stripe links
-  document.getElementById('apple-btn').href = STRIPE_LINK;
-  document.getElementById('card-btn').href = STRIPE_LINK;
 
   // Venmo deep link
   document.getElementById('venmo-btn').href =
@@ -848,6 +875,150 @@ function renderPayment(code, b) {
   document.getElementById('ride-details-content').innerHTML = rows.map(function(r){
     return '<div class="detail-row"><span style="font-family:Work Sans,sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:#444748;min-width:90px;flex-shrink:0">'+r[0]+'</span><span style="font-size:0.875rem;color:#1a1c1c;text-align:right;font-family:Inter,sans-serif">'+r[1]+'</span></div>';
   }).join('');
+
+  // Mount Stripe Card Element (lazy — only once)
+  if (!stripeCardEl) {
+    stripeCardEl = stripeElements.create('card', {
+      style: {
+        base: {
+          color: '#1a1c1c',
+          fontFamily: 'Inter, sans-serif',
+          fontSize: '15px',
+          '::placeholder': { color: '#aaa' }
+        },
+        invalid: { color: '#c62828' }
+      }
+    });
+    stripeCardEl.mount('#stripe-card-element');
+    stripeCardEl.on('change', function(e) {
+      var errEl = document.getElementById('card-pay-error');
+      if (e.error) {
+        errEl.textContent = e.error.message;
+        errEl.style.display = 'block';
+      } else {
+        errEl.style.display = 'none';
+      }
+    });
+  }
+
+  // Set up Stripe Payment Request Button (Apple Pay / Google Pay)
+  initPaymentRequestButton(b.price, code, b.name);
+}
+
+// ── STRIPE PAYMENT REQUEST BUTTON (Apple Pay / Google Pay) ────
+function initPaymentRequestButton(amount, code, name) {
+  var pr = stripe.paymentRequest({
+    country: 'US',
+    currency: 'usd',
+    total: { label: 'Seacoast RVIP — ' + code, amount: Math.round(amount * 100) },
+    requestPayerName: false,
+    requestPayerEmail: false
+  });
+
+  var prButton = stripeElements.create('paymentRequestButton', {
+    paymentRequest: pr,
+    style: { paymentRequestButton: { type: 'default', theme: 'dark', height: '48px' } }
+  });
+
+  pr.canMakePayment().then(function(result) {
+    var container = document.getElementById('payment-request-btn-container');
+    var unavailable = document.getElementById('apple-unavailable');
+    if (result) {
+      prButton.mount('#payment-request-btn-container');
+      container.style.display = 'block';
+      if (unavailable) unavailable.style.display = 'none';
+    } else {
+      container.style.display = 'none';
+      if (unavailable) unavailable.style.display = 'block';
+    }
+  });
+
+  pr.on('paymentmethod', function(ev) {
+    if (!funcs) { ev.complete('fail'); return; }
+    var createPI = funcs.httpsCallable('createPaymentIntent');
+    createPI({ amount: amount, bookingCode: code, customerName: name })
+      .then(function(res) {
+        return stripe.confirmCardPayment(res.data.clientSecret, { payment_method: ev.paymentMethod.id }, { handleActions: false });
+      })
+      .then(function(result) {
+        if (result.error) {
+          ev.complete('fail');
+          alert('Payment failed: ' + result.error.message);
+        } else {
+          ev.complete('success');
+          if (result.paymentIntent.status === 'requires_action') {
+            stripe.confirmCardPayment(result.paymentIntent.client_secret).then(function(r) {
+              if (r.error) alert('Authentication failed: ' + r.error.message);
+              else showApplePaySuccess();
+            });
+          } else {
+            showApplePaySuccess();
+          }
+        }
+      })
+      .catch(function(err) {
+        ev.complete('fail');
+        alert('Payment error: ' + err.message);
+      });
+  });
+
+  paymentRequestBtn = pr;
+}
+
+function showApplePaySuccess() {
+  document.getElementById('payment-request-btn-container').style.display = 'none';
+  document.getElementById('apple-unavailable').style.display = 'none';
+  document.getElementById('apple-success').style.display = 'block';
+  var trigger = document.getElementById('receipt-trigger');
+  if (trigger) trigger.style.display = 'block';
+}
+
+// ── CARD PAYMENT SUBMIT ────────────────────────────────────────
+async function submitCardPayment() {
+  if (!currentBooking || !stripeCardEl) return;
+  if (!funcs) { alert('Service unavailable. Please try again.'); return; }
+
+  var btn = document.getElementById('card-pay-btn');
+  var label = document.getElementById('card-pay-label');
+  var errEl = document.getElementById('card-pay-error');
+
+  btn.disabled = true;
+  label.innerHTML = '<span class="spinner-inline"></span> Processing…';
+  errEl.style.display = 'none';
+
+  try {
+    // 1. Create PaymentIntent on the server
+    var createPI = funcs.httpsCallable('createPaymentIntent');
+    var res = await createPI({
+      amount: currentBooking.price,
+      bookingCode: currentCode,
+      customerName: currentBooking.name
+    });
+
+    // 2. Confirm the card payment fully inline (no redirect)
+    var result = await stripe.confirmCardPayment(res.data.clientSecret, {
+      payment_method: { card: stripeCardEl }
+    });
+
+    if (result.error) {
+      errEl.textContent = result.error.message;
+      errEl.style.display = 'block';
+      btn.disabled = false;
+      label.innerHTML = 'Pay $' + currentBooking.price + ' Securely';
+    } else if (result.paymentIntent.status === 'succeeded') {
+      // Show success inline
+      document.getElementById('card-pay-form').style.display = 'none';
+      document.getElementById('card-pay-success').style.display = 'block';
+      document.getElementById('card-pay-conf').textContent = 'Confirmation: ' + currentCode;
+      var trigger = document.getElementById('receipt-trigger');
+      if (trigger) trigger.style.display = 'block';
+    }
+  } catch (e) {
+    errEl.textContent = e.message || 'Payment failed. Please try again.';
+    errEl.style.display = 'block';
+    btn.disabled = false;
+    label.innerHTML = 'Pay $' + currentBooking.price + ' Securely';
+  }
 }
 
 // Payment method toggle

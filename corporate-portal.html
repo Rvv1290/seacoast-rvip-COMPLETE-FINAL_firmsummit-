@@ -1032,7 +1032,7 @@ function renderDashBalance(){
 }
 
 // ─── STRIPE INTEGRATION ───
-var stripe = Stripe('pk_test_51TDR9sA1R5g39IibVbtiHGPBv4s1rNsIV5fNoMR68INDxN98rTFkZFXDdqS3RlupdfPeMlt9xHTd3EyN9hclmvKV00L6AVRt0z');
+var stripe = Stripe('pk_live_51TDR9gAPjRVAZeaebc3zFuondJhpYccCrQQFW6ygR06CAQvtTsrU6qw6KtjIVr1A6mxaCiMcIbfxKs7IUbM94Vlr006GZuFXUv');
 var elements = stripe.elements();
 var cardElement = elements.create('card', {
   style: {
@@ -2184,17 +2184,6 @@ async function toggleFav(inputId) {
 <script async defer
   src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAtiBZ-MmvzTnOg3hDluVDCVy7mcersqe4&libraries=places&callback=initCorpMap">
 </script>
-    
-    <div id="card-element" style="padding:1rem;border:1px solid #eee;margin-bottom:1.5rem;background:#fcfcfc"></div>
-    <div id="card-errors" style="color:#ef4444;font-size:0.75rem;margin-bottom:1rem;min-height:1rem"></div>
-    
-    <button id="card-save-btn" onclick="saveCard()" class="btn-blk full">Save Card Info</button>
-    <p style="font-family:Inter,sans-serif;font-size:0.65rem;color:#888;margin-top:1.25rem;text-align:center;line-height:1.5">
-      <span class="material-symbols-outlined" style="font-size:12px;vertical-align:middle">lock</span>
-      Your card data is stored securely by **Stripe**. Seacoast RVIP never sees your full card number.
-    </p>
-  </div>
-</div>
 
 <!-- ── CARD MODAL ── -->
 <div id="card-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9000;display:none;align-items:center;justify-content:center;padding:1rem">
