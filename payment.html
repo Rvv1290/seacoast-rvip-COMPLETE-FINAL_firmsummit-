@@ -65,6 +65,8 @@ body{font-family:'Inter',sans-serif;background:#f9f9f9;margin:0;padding:0}
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script>
 <!-- Stripe.js -->
 <script src="https://js.stripe.com/v3/"></script>
+<!-- Stripe Buy Button -->
+<script async src="https://js.stripe.com/v3/buy-button.js"></script>
 
   <!-- PWA -->
   <link rel="manifest" href="/manifest.json"/>
@@ -326,31 +328,31 @@ window.addEventListener('DOMContentLoaded', checkWidth);
       <p class="text-center text-xs text-on-surface-variant mt-2">Powered by Stripe · 256-bit encryption · Visa · MC · Amex · Apple Pay</p>
     </div>
 
-    <!-- ── STRIPE INLINE PAYMENT MODAL ── -->
+    <!-- ── STRIPE BUY BUTTON MODAL ── -->
     <div id="stripe-pay-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:9999;align-items:center;justify-content:center;padding:1rem">
-      <div style="background:#fff;width:100%;max-width:520px;max-height:92vh;border-radius:6px;overflow:hidden;position:relative;display:flex;flex-direction:column;box-shadow:0 25px 60px rgba(0,0,0,0.35)">
+      <div style="background:#fff;width:100%;max-width:460px;border-radius:6px;overflow:hidden;position:relative;box-shadow:0 25px 60px rgba(0,0,0,0.35)">
         <!-- Modal header -->
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:1rem 1.25rem;border-bottom:1px solid #eee;background:#fff;flex-shrink:0">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:1rem 1.25rem;border-bottom:1px solid #eee">
           <div style="display:flex;align-items:center;gap:0.625rem">
             <span class="material-symbols-outlined" style="font-size:18px;color:#775a19">lock</span>
             <span style="font-family:'Times New Roman',serif;font-size:1rem;font-weight:700">Seacoast RVIP — Secure Checkout</span>
           </div>
           <button onclick="closeStripeModal()" style="background:none;border:none;cursor:pointer;color:#888;font-size:1.4rem;line-height:1;padding:0.25rem">✕</button>
         </div>
-        <!-- Amount reminder inside modal -->
-        <div style="background:#f9f6ef;padding:0.625rem 1.25rem;border-bottom:1px solid #f0e8cc;flex-shrink:0">
-          <p style="font-family:Inter,sans-serif;font-size:0.78rem;color:#775a19;margin:0;text-align:center">
-            💳 Enter <strong id="modal-amt-display">$0</strong> as your payment amount below
+        <!-- Amount reminder -->
+        <div style="background:#f9f6ef;padding:0.75rem 1.25rem;border-bottom:1px solid #f0e8cc">
+          <p style="font-family:Inter,sans-serif;font-size:0.82rem;color:#775a19;margin:0;text-align:center">
+            💳 Your total is <strong id="modal-amt-display" style="font-size:1rem">$0</strong> — enter this amount below
           </p>
         </div>
-        <!-- Stripe iframe -->
-        <iframe
-          id="stripe-pay-frame"
-          src=""
-          style="width:100%;flex:1;border:none;min-height:520px"
-          allow="payment *; camera *"
-          loading="lazy"
-        ></iframe>
+        <!-- Stripe Buy Button -->
+        <div style="padding:1.5rem;display:flex;justify-content:center">
+          <stripe-buy-button
+            buy-button-id="buy_btn_1TLb53APjRVAZeaeOSYbHrhC"
+            publishable-key="pk_live_51TDR9gAPjRVAZeaebc3zFuondJhpYccCrQQFW6ygR06CAQvtTsrU6qw6KtjIVr1A6mxaCiMcIbfxKs7IUbM94Vlr006GZuFXUv"
+          ></stripe-buy-button>
+        </div>
+        <p style="text-align:center;font-size:0.65rem;color:#aaa;padding:0 1.25rem 1rem">Visa · MC · Amex · Apple Pay · Google Pay · Klarna · Affirm</p>
       </div>
     </div>
 
