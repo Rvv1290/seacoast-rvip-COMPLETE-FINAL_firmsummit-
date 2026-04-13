@@ -10,18 +10,17 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script>
-<!-- Stripe Buy Button -->
-<script async src="https://js.stripe.com/v3/buy-button.js"></script>
 <script src="https://js.stripe.com/v3/"></script>
 <script>
 (function(){
   var c={apiKey:"AIzaSyDGel0ktZDQYcdlOuoZo4bAqZWCuGvOVbc",authDomain:"seacoast-rip.firebaseapp.com",projectId:"seacoast-rip",storageBucket:"seacoast-rip.firebasestorage.app",messagingSenderId:"684535453116",appId:"1:684535453116:web:922c843b5bad3b81ad47b9"};
-  try{if(!firebase.apps.length)firebase.initializeApp(c);window._db=firebase.firestore();}catch(e){window._db=null;}
+  try{if(!firebase.apps.length)firebase.initializeApp(c);window._db=firebase.firestore();window._funcs=firebase.functions();}catch(e){window._db=null;window._funcs=null;}
 })();
 </script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 .material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 300,'GRAD' 0,'opsz' 24}
+@keyframes corpSpin{to{transform:rotate(360deg)}}
 body{font-family:'Inter',sans-serif;background:#f7f7f7;color:#1a1c1c;min-height:100vh;display:flex;flex-direction:column}
 /* ─── LAYOUT ─── */
 .portal{display:flex;min-height:100vh}
@@ -932,7 +931,8 @@ var _sess = null;
 </nav>
 
 <script>
-var db = window._db;
+var db   = window._db;
+var funcs = window._funcs;
 var sess = _sess;
 var _trips = [];
 var _tripFilter = 'all';
@@ -1033,58 +1033,156 @@ function renderDashBalance(){
   }
 }
 
-// ─── STRIPE INTEGRATION ───
-var stripe = Stripe('pk_live_51TDR9gAPjRVAZeaebc3zFuondJhpYccCrQQFW6ygR06CAQvtTsrU6qw6KtjIVr1A6mxaCiMcIbfxKs7IUbM94Vlr006GZuFXUv');
-var elements = stripe.elements();
-var cardElement = elements.create('card', {
-  style: {
-    base: {
-      fontFamily: 'Inter, sans-serif',
-      fontSize: '16px',
-      color: '#000',
-      '::placeholder': { color: '#aaa' }
-    }
-  }
-});
-
-var STRIPE_BUY_BTN_ID = 'buy_btn_1TLb53APjRVAZeaeOSYbHrhC';
-var STRIPE_PUB_KEY    = 'pk_live_51TDR9gAPjRVAZeaebc3zFuondJhpYccCrQQFW6ygR06CAQvtTsrU6qw6KtjIVr1A6mxaCiMcIbfxKs7IUbM94Vlr006GZuFXUv';
+// ─── STRIPE EMBEDDED INTEGRATION (CORPORATE) ───
+var stripe     = Stripe('pk_live_51TDR9gAPjRVAZeaebc3zFuondJhpYccCrQQFW6ygR06CAQvtTsrU6qw6KtjIVr1A6mxaCiMcIbfxKs7IUbM94Vlr006GZuFXUv');
+var corpElems  = stripe.elements();
+var corpCardEl = null;  // Stripe card element
+var _corpPayAmt = 0;
 
 function openCardModal(amt) {
-  var modal     = document.getElementById('card-modal');
-  var container = document.getElementById('corp-stripe-btn-container');
-  var amtEl     = document.getElementById('corp-modal-amt');
+  _corpPayAmt = parseFloat(amt) || 0;
+  document.getElementById('corp-modal-amt').textContent = '$' + _corpPayAmt.toFixed(2);
+  document.getElementById('corp-pay-label').textContent = 'Pay $' + _corpPayAmt.toFixed(2);
 
-  // Show balance amount
-  if (amt) amtEl.textContent = '$' + parseFloat(amt).toFixed(2);
+  // Reset states
+  document.getElementById('corp-pay-success').style.display = 'none';
+  document.getElementById('corp-card-error').style.display  = 'none';
+  var chk = document.getElementById('corp-save-card-chk');
+  if (chk) chk.checked = false;
 
-  // Inject buy button dynamically so it initialises after modal is visible
-  container.innerHTML = '';
-  modal.style.display = 'flex';
+  // Check for saved card in _cardData (loaded by loadAccountLive)
+  var hasSaved = _cardData && _cardData.last4;
+  var savedSec = document.getElementById('corp-saved-card-section');
+  var newSec   = document.getElementById('corp-new-card-section');
+  savedSec.style.display = hasSaved ? 'block' : 'none';
+  newSec.style.display   = hasSaved ? 'none'  : 'block';
+
+  if (hasSaved) {
+    var brand = (_cardData.brand || 'Card');
+    brand = brand.charAt(0).toUpperCase() + brand.slice(1);
+    document.getElementById('corp-saved-card-label').textContent    = brand + ' ****' + _cardData.last4;
+    document.getElementById('corp-pay-saved-label').textContent     = 'Pay $' + _corpPayAmt.toFixed(2) + ' with Saved Card';
+  }
+
+  if (!hasSaved) _corpMountCard();
+
+  document.getElementById('card-modal').style.display = 'flex';
   document.body.style.overflow = 'hidden';
+}
 
-  setTimeout(function() {
-    var btn = document.createElement('stripe-buy-button');
-    btn.setAttribute('buy-button-id', STRIPE_BUY_BTN_ID);
-    btn.setAttribute('publishable-key', STRIPE_PUB_KEY);
-    container.appendChild(btn);
-  }, 80);
+function _corpMountCard() {
+  if (corpCardEl) return;
+  corpCardEl = corpElems.create('card', {
+    style: {
+      base: {
+        color: '#000', fontFamily: 'Inter, sans-serif',
+        fontSize: '15px', '::placeholder': { color: '#aaa' }
+      },
+      invalid: { color: '#c62828' }
+    }
+  });
+  corpCardEl.mount('#corp-card-element');
+  corpCardEl.on('change', function(e) {
+    var err = document.getElementById('corp-card-error');
+    if (e.error) { err.textContent = e.error.message; err.style.display = 'block'; }
+    else { err.style.display = 'none'; }
+  });
+}
+
+function corpShowNewCard() {
+  document.getElementById('corp-saved-card-section').style.display = 'none';
+  document.getElementById('corp-new-card-section').style.display   = 'block';
+  _corpMountCard();
 }
 
 function closeCardModal() {
   document.getElementById('card-modal').style.display = 'none';
-  document.getElementById('corp-stripe-btn-container').innerHTML = '';
   document.body.style.overflow = '';
 }
 
-// Close on backdrop click
 document.addEventListener('click', function(e) {
   if (e.target === document.getElementById('card-modal')) closeCardModal();
 });
 
-/* --- INTEGRATED PAYMENT LOGIC --- */
+// Pay with saved card via Cloud Function (auto-zeroes balance in Firestore)
+async function payWithCorpSavedCard() {
+  if (!sess || !sess.accountId || !funcs) return;
+  var btn = document.getElementById('corp-pay-saved-btn');
+  var lbl = document.getElementById('corp-pay-saved-label');
+  btn.disabled = true;
+  lbl.innerHTML = '<span style="display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,0.35);border-top:2px solid white;border-radius:50%;animation:corpSpin 0.7s linear infinite;vertical-align:middle;margin-right:6px"></span>Processing…';
+
+  try {
+    var res = await funcs.httpsCallable('chargeSavedCard')({ accountId: sess.accountId, amount: _corpPayAmt });
+    if (res.data && res.data.success) {
+      // Balance resets to 0 via Firestore onSnapshot in loadAccountLive()
+      document.getElementById('corp-pay-success').style.display        = 'block';
+      document.getElementById('corp-saved-card-section').style.display = 'none';
+      setTimeout(closeCardModal, 3000);
+    } else {
+      throw new Error('Payment did not complete.');
+    }
+  } catch (e) {
+    alert('Payment failed: ' + (e.message || 'Please try again.'));
+    btn.disabled = false;
+    lbl.textContent = 'Pay $' + _corpPayAmt.toFixed(2) + ' with Saved Card';
+  }
+}
+
+// Pay with new card (optionally save it)
+async function corpSubmitPayment() {
+  if (!corpCardEl || !funcs || !sess) return;
+  var btn      = document.getElementById('corp-pay-btn');
+  var lbl      = document.getElementById('corp-pay-label');
+  var errEl    = document.getElementById('corp-card-error');
+  var saveCard = document.getElementById('corp-save-card-chk').checked;
+
+  btn.disabled = true;
+  lbl.innerHTML = '<span style="display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,0.35);border-top:2px solid white;border-radius:50%;animation:corpSpin 0.7s linear infinite;vertical-align:middle;margin-right:6px"></span>Processing…';
+  errEl.style.display = 'none';
+
+  try {
+    // Get / create Stripe customer
+    var custRes    = await funcs.httpsCallable('getStripeCustomer')({ accountId: sess.accountId, email: sess.contactEmail, company: sess.company });
+    var customerId = custRes.data.customerId;
+
+    if (saveCard) {
+      // SetupIntent → save card → charge
+      var siRes = await funcs.httpsCallable('createSetupIntent')({ customerId });
+      var setup = await stripe.confirmCardSetup(siRes.data.clientSecret, { payment_method: { card: corpCardEl } });
+      if (setup.error) throw new Error(setup.error.message);
+
+      await funcs.httpsCallable('savePaymentMethod')({ accountId: sess.accountId, paymentMethodId: setup.setupIntent.payment_method });
+      var charge = await funcs.httpsCallable('chargeSavedCard')({ accountId: sess.accountId, amount: _corpPayAmt });
+      if (!charge.data || !charge.data.success) throw new Error('Charge did not succeed.');
+    } else {
+      // Direct PaymentIntent (no save)
+      var piRes  = await funcs.httpsCallable('createPaymentIntent')({ amount: _corpPayAmt, bookingCode: sess.accountId, customerName: sess.company });
+      var result = await stripe.confirmCardPayment(piRes.data.clientSecret, { payment_method: { card: corpCardEl } });
+      if (result.error) throw new Error(result.error.message);
+      if (result.paymentIntent.status !== 'succeeded') throw new Error('Payment not completed.');
+      // Manually zero out balance in Firestore (chargeSavedCard wasn't used)
+      if (db && sess.accountId) {
+        await db.collection('corporate_accounts').doc(sess.accountId).update({ balance: 0, lastPaymentDate: new Date().toISOString(), lastPaymentAmount: _corpPayAmt }).catch(function(){});
+      }
+    }
+
+    // Balance auto-refreshes via onSnapshot in loadAccountLive()
+    document.getElementById('corp-pay-success').style.display      = 'block';
+    document.getElementById('corp-new-card-section').style.display = 'none';
+    setTimeout(closeCardModal, 3000);
+
+  } catch (e) {
+    errEl.textContent = e.message || 'Payment failed. Please try again.';
+    errEl.style.display = 'block';
+    btn.disabled = false;
+    lbl.textContent = 'Pay Now';
+  }
+}
+
+/* --- PAYMENT WRAPPERS --- */
 function settleBalanceWithCard() {
-  openCardModal(_accountBalance > 0 ? _accountBalance : null);
+  openCardModal(_accountBalance > 0 ? _accountBalance : 0);
 }
 
 function payVenmo() {
@@ -2131,8 +2229,10 @@ async function toggleFav(inputId) {
 </script>
 
 <!-- ── STRIPE BUY BUTTON MODAL ── -->
+<!-- ── EMBEDDED STRIPE PAYMENT MODAL (CORPORATE) ── -->
 <div id="card-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:9000;align-items:center;justify-content:center;padding:1rem">
-  <div style="background:#fff;width:100%;max-width:460px;border-radius:6px;overflow:hidden;position:relative;box-shadow:0 25px 60px rgba(0,0,0,0.35)">
+  <div style="background:#fff;width:100%;max-width:480px;border-radius:6px;overflow:hidden;box-shadow:0 25px 60px rgba(0,0,0,0.35)">
+    <!-- Header -->
     <div style="display:flex;align-items:center;justify-content:space-between;padding:1rem 1.25rem;border-bottom:1px solid #eee">
       <div style="display:flex;align-items:center;gap:0.625rem">
         <span class="material-symbols-outlined" style="font-size:18px;color:#775a19">lock</span>
@@ -2140,13 +2240,52 @@ async function toggleFav(inputId) {
       </div>
       <button onclick="closeCardModal()" style="background:none;border:none;cursor:pointer;color:#888;font-size:1.4rem;line-height:1;padding:0.25rem">✕</button>
     </div>
-    <div style="background:#f9f6ef;padding:0.75rem 1.25rem;border-bottom:1px solid #f0e8cc">
-      <p style="font-family:Inter,sans-serif;font-size:0.82rem;color:#775a19;margin:0;text-align:center">
-        💳 Outstanding balance: <strong id="corp-modal-amt" style="font-size:1rem">$0</strong> — enter this amount below
+    <!-- Amount -->
+    <div style="background:#f9f6ef;padding:0.75rem 1.25rem;border-bottom:1px solid #f0e8cc;text-align:center">
+      <p style="font-family:Inter,sans-serif;font-size:0.82rem;color:#775a19;margin:0">
+        💳 Outstanding balance: <strong id="corp-modal-amt" style="font-size:1rem">$0</strong>
       </p>
     </div>
-    <div id="corp-stripe-btn-container" style="padding:1.5rem;display:flex;justify-content:center;min-height:80px;align-items:center"></div>
-    <p style="text-align:center;font-size:0.65rem;color:#aaa;padding:0 1.25rem 1rem">Visa · MC · Amex · Apple Pay · Google Pay · Klarna · Affirm</p>
+
+    <div style="padding:1.5rem">
+      <!-- Saved card section -->
+      <div id="corp-saved-card-section" style="display:none;margin-bottom:1rem">
+        <div style="background:#f0fdf4;border:1px solid #bbf7d0;padding:0.75rem 1rem;margin-bottom:0.875rem;display:flex;align-items:center;gap:0.75rem;border-radius:3px">
+          <span class="material-symbols-outlined" style="font-size:20px;color:#15803d">credit_card</span>
+          <div>
+            <div id="corp-saved-card-label" style="font-family:Inter,sans-serif;font-size:0.8rem;font-weight:600;color:#15803d">Saved Card</div>
+            <div style="font-family:Inter,sans-serif;font-size:0.7rem;color:#166534">Tap below to pay instantly</div>
+          </div>
+        </div>
+        <button id="corp-pay-saved-btn" onclick="payWithCorpSavedCard()" style="width:100%;background:#000;color:white;border:none;border-bottom:3px solid #775a19;padding:1rem;font-family:'Work Sans',sans-serif;font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:0.5rem;margin-bottom:0.5rem">
+          <span class="material-symbols-outlined" style="font-size:16px">lock</span>
+          <span id="corp-pay-saved-label">Pay with Saved Card</span>
+        </button>
+        <button onclick="corpShowNewCard()" style="width:100%;background:none;border:none;color:#888;font-family:Inter,sans-serif;font-size:0.72rem;cursor:pointer;padding:0.4rem;text-decoration:underline">Use a different card</button>
+      </div>
+
+      <!-- New card form -->
+      <div id="corp-new-card-section">
+        <div id="corp-card-element" style="background:#f9f9f9;border:1px solid #e2e2e2;border-bottom:2px solid #c4c7c7;padding:14px 12px;margin-bottom:0.875rem;border-radius:2px"></div>
+        <div id="corp-card-error" style="display:none;color:#c62828;font-size:0.78rem;margin-bottom:0.75rem;padding:0.5rem 0.75rem;background:#fff5f5;border:1px solid #fecaca"></div>
+        <label style="display:flex;align-items:center;gap:0.5rem;margin-bottom:1rem;cursor:pointer">
+          <input type="checkbox" id="corp-save-card-chk" style="width:16px;height:16px;accent-color:#775a19;cursor:pointer">
+          <span style="font-family:Inter,sans-serif;font-size:0.75rem;color:#444">Save card for future payments</span>
+        </label>
+        <button id="corp-pay-btn" onclick="corpSubmitPayment()" style="width:100%;background:#000;color:white;border:none;border-bottom:3px solid #775a19;padding:1rem;font-family:'Work Sans',sans-serif;font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:0.5rem">
+          <span class="material-symbols-outlined" style="font-size:16px">lock</span>
+          <span id="corp-pay-label">Pay Now</span>
+        </button>
+      </div>
+
+      <!-- Success state -->
+      <div id="corp-pay-success" style="display:none;text-align:center;padding:1.5rem 0">
+        <span class="material-symbols-outlined" style="font-size:3rem;color:#2e7d32;display:block;margin-bottom:0.75rem">check_circle</span>
+        <p style="font-family:'Times New Roman',serif;font-size:1.3rem;font-weight:700;color:#166534;margin-bottom:0.25rem">Payment Complete!</p>
+        <p style="font-family:Inter,sans-serif;font-size:0.8rem;color:#166534">Your balance has been updated.</p>
+      </div>
+    </div>
+    <p style="text-align:center;font-size:0.65rem;color:#aaa;padding:0 1.25rem 1rem">Secured by Stripe · 256-bit encryption · Visa · MC · Amex</p>
   </div>
 </div>
 </body>

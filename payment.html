@@ -65,8 +65,6 @@ body{font-family:'Inter',sans-serif;background:#f9f9f9;margin:0;padding:0}
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script>
 <!-- Stripe.js -->
 <script src="https://js.stripe.com/v3/"></script>
-<!-- Stripe Buy Button -->
-<script async src="https://js.stripe.com/v3/buy-button.js"></script>
 
   <!-- PWA -->
   <link rel="manifest" href="/manifest.json"/>
@@ -293,9 +291,9 @@ window.addEventListener('DOMContentLoaded', checkWidth);
       <div id="payment-request-btn-container" style="min-height:48px"></div>
       <div id="apple-unavailable" style="display:none">
         <p class="text-xs text-gray-500 mb-3 text-center">Apple Pay / Google Pay not available in this browser.</p>
-        <button onclick="openStripeModal()" class="action-btn" style="background:#000;color:white;border-bottom:4px solid #444">
-          <svg width="18" height="12" viewBox="0 0 60 28" fill="white"><path d="M11 6.5C10 7.7 8.4 8.6 6.8 8.5C6.6 6.9 7.4 5.2 8.3 4.1C9.3 3 11 2.2 12.4 2.1C12.6 3.8 11.9 5.4 11 6.5Z"/><path d="M12.4 8.8C10.1 8.7 8.1 10.1 7 10.1C5.9 10.1 4.2 8.9 2.3 8.9C-0.2 8.9-2.6 10.4-3.9 12.7C-6.5 17.3-4.6 24.2-2 27.9C-0.7 29.7 0.8 31.8 2.9 31.7C4.9 31.6 5.7 30.5 8.1 30.5C10.5 30.5 11.2 31.7 13.4 31.6C15.5 31.6 16.9 29.7 18.1 27.9C19.5 25.8 20.1 23.8 20.2 23.7C20.1 23.7 16 22 16 17.2C15.9 13.2 19.2 11.3 19.4 11.1C17.4 8.3 14.5 8.8 12.4 8.8Z"/></svg>
-          Pay with Apple Pay / Card →
+        <button onclick="selectPay('card')" class="action-btn" style="background:#000;color:white;border-bottom:4px solid #444">
+          <span class="material-symbols-outlined" style="font-size:18px">credit_card</span>
+          Pay with Card →
         </button>
       </div>
       <div id="apple-success" style="display:none;text-align:center;padding:1rem 0">
@@ -310,46 +308,29 @@ window.addEventListener('DOMContentLoaded', checkWidth);
     <div id="section-card" class="section-hidden bg-white p-5 mb-5 border-l-4 border-secondary shadow-sm">
       <div class="flex items-center gap-2 mb-3">
         <span class="material-symbols-outlined text-secondary" style="font-size:18px">lock</span>
-        <p class="font-label text-xs uppercase tracking-widest text-secondary font-bold">Secure Card Payment via Stripe</p>
+        <p class="font-label text-xs uppercase tracking-widest text-secondary font-bold">Secure Card Payment</p>
       </div>
 
-      <!-- Amount reminder -->
-      <div style="background:#f9f6ef;border:1px solid #e8d99a;padding:0.875rem 1rem;margin-bottom:1.25rem;display:flex;align-items:center;gap:0.75rem">
-        <span class="material-symbols-outlined" style="font-size:18px;color:#775a19">info</span>
-        <p style="font-family:Inter,sans-serif;font-size:0.82rem;color:#5a4010;margin:0">
-          Your total is <strong id="card-amt-reminder" style="font-size:1rem">$0</strong> — enter this amount on the next screen.
-        </p>
+      <!-- Inline Stripe card form -->
+      <div id="card-pay-form">
+        <div id="stripe-card-element" style="background:#f9f9f9;border:1px solid #e2e2e2;border-bottom:2px solid #c4c7c7;padding:14px 12px;margin-bottom:1rem;border-radius:2px"></div>
+        <div id="card-pay-error" style="display:none;color:#c62828;font-size:0.8rem;margin-bottom:0.75rem;padding:0.625rem 0.75rem;background:#fff5f5;border:1px solid #fecaca"></div>
+        <button id="card-pay-btn" onclick="submitCardPayment()" class="action-btn" style="background:#000;color:white;border-bottom:4px solid #775a19">
+          <span class="material-symbols-outlined" style="font-size:18px">lock</span>
+          <span id="card-pay-label">Pay $<span id="card-amt">0</span> Securely</span>
+        </button>
       </div>
 
-      <button onclick="openStripeModal()" class="action-btn" style="background:#000;color:white;border-bottom:4px solid #775a19">
-        <span class="material-symbols-outlined" style="font-size:18px">lock</span>
-        Pay $<span id="card-amt">0</span> Securely →
-      </button>
-      <p class="text-center text-xs text-on-surface-variant mt-2">Powered by Stripe · 256-bit encryption · Visa · MC · Amex · Apple Pay</p>
+      <!-- Success state -->
+      <div id="card-pay-success" style="display:none;text-align:center;padding:2rem 0">
+        <span class="material-symbols-outlined" style="font-size:3rem;color:#2e7d32;display:block;margin-bottom:0.75rem">check_circle</span>
+        <p style="font-family:'Times New Roman',serif;font-size:1.3rem;font-weight:700;color:#166534;margin-bottom:0.5rem">Payment Complete!</p>
+        <p id="card-pay-conf" style="font-size:0.8rem;color:#166534"></p>
+      </div>
+
+      <p class="text-center text-xs text-on-surface-variant mt-3">Powered by Stripe · 256-bit encryption · Visa · MC · Amex · Apple Pay</p>
     </div>
 
-    <!-- ── STRIPE BUY BUTTON MODAL ── -->
-    <div id="stripe-pay-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:9999;align-items:center;justify-content:center;padding:1rem">
-      <div style="background:#fff;width:100%;max-width:460px;border-radius:6px;overflow:hidden;position:relative;box-shadow:0 25px 60px rgba(0,0,0,0.35)">
-        <!-- Modal header -->
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:1rem 1.25rem;border-bottom:1px solid #eee">
-          <div style="display:flex;align-items:center;gap:0.625rem">
-            <span class="material-symbols-outlined" style="font-size:18px;color:#775a19">lock</span>
-            <span style="font-family:'Times New Roman',serif;font-size:1rem;font-weight:700">Seacoast RVIP — Secure Checkout</span>
-          </div>
-          <button onclick="closeStripeModal()" style="background:none;border:none;cursor:pointer;color:#888;font-size:1.4rem;line-height:1;padding:0.25rem">✕</button>
-        </div>
-        <!-- Amount reminder -->
-        <div style="background:#f9f6ef;padding:0.75rem 1.25rem;border-bottom:1px solid #f0e8cc">
-          <p style="font-family:Inter,sans-serif;font-size:0.82rem;color:#775a19;margin:0;text-align:center">
-            💳 Your total is <strong id="modal-amt-display" style="font-size:1rem">$0</strong> — enter this amount below
-          </p>
-        </div>
-        <!-- Stripe Buy Button injected dynamically on open -->
-        <div id="pay-stripe-btn-container" style="padding:1.5rem;display:flex;justify-content:center;min-height:80px;align-items:center"></div>
-        <p style="text-align:center;font-size:0.65rem;color:#aaa;padding:0 1.25rem 1rem">Visa · MC · Amex · Apple Pay · Google Pay · Klarna · Affirm</p>
-      </div>
-    </div>
 
     <!-- VENMO SECTION -->
     <div id="section-venmo" class="section-hidden bg-white p-5 mb-5 border-l-4 border-secondary shadow-sm">
@@ -868,37 +849,7 @@ function formatCode(el) {
   document.getElementById('manual-error').classList.add('hidden');
 }
 
-// ── STRIPE MODAL (inline — no new tab) ──────────────────────────
-var STRIPE_BUY_BTN_ID = 'buy_btn_1TLb53APjRVAZeaeOSYbHrhC';
-var STRIPE_PUB_KEY    = 'pk_live_51TDR9gAPjRVAZeaebc3zFuondJhpYccCrQQFW6ygR06CAQvtTsrU6qw6KtjIVr1A6mxaCiMcIbfxKs7IUbM94Vlr006GZuFXUv';
-
-function openStripeModal() {
-  var modal     = document.getElementById('stripe-pay-modal');
-  var container = document.getElementById('pay-stripe-btn-container');
-
-  // Inject buy button dynamically so it initialises after modal is visible
-  container.innerHTML = '';
-  modal.style.display = 'flex';
-  document.body.style.overflow = 'hidden';
-
-  setTimeout(function() {
-    var btn = document.createElement('stripe-buy-button');
-    btn.setAttribute('buy-button-id', STRIPE_BUY_BTN_ID);
-    btn.setAttribute('publishable-key', STRIPE_PUB_KEY);
-    container.appendChild(btn);
-  }, 80);
-}
-
-function closeStripeModal() {
-  document.getElementById('stripe-pay-modal').style.display = 'none';
-  document.getElementById('pay-stripe-btn-container').innerHTML = '';
-  document.body.style.overflow = '';
-}
-
-// Close modal when clicking the dark backdrop
-document.addEventListener('click', function(e) {
-  if (e.target === document.getElementById('stripe-pay-modal')) closeStripeModal();
-});
+// ── CARD SECTION mounts via renderPayment → stripeCardEl ────────
 
 // ── RENDER PAYMENT PAGE ──────────────────────────────────────────
 function renderPayment(code, b) {
@@ -906,8 +857,6 @@ function renderPayment(code, b) {
   document.getElementById('price-display').textContent = '$' + b.price;
   document.getElementById('service-display').textContent = b.service;
   document.getElementById('card-amt').textContent = b.price;
-  document.getElementById('card-amt-reminder').textContent = '$' + b.price;
-  document.getElementById('modal-amt-display').textContent = '$' + b.price;
   document.getElementById('venmo-amt').textContent = '$' + b.price;
   document.getElementById('venmo-code').textContent = code;
   document.getElementById('cash-amt').textContent = '$' + b.price + ' cash';

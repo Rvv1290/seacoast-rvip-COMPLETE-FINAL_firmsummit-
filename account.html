@@ -11,11 +11,10 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script>
 <script src="https://js.stripe.com/v3/"></script>
-<!-- Stripe Buy Button -->
-<script async src="https://js.stripe.com/v3/buy-button.js"></script>
 <style>
 :root{--gold:#C9A84C;--gold-dark:#775a19;--bg:#ffffff;--sidebar:#fcfcfc;--card:#ffffff;--border:#eeeeee;--text:#1a1a1a;--text-sec:#666666}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+@keyframes spin{to{transform:rotate(360deg)}}
 body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
 .material-symbols-outlined{font-variation-settings:"FILL" 0,"wght" 300,"GRAD" 0,"opsz" 24}
 
@@ -595,22 +594,63 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 </div>
 
 <!-- STRIPE BUY BUTTON MODAL -->
+<!-- ── EMBEDDED STRIPE PAYMENT MODAL ── -->
 <div id="acct-stripe-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:9999;align-items:center;justify-content:center;padding:1rem">
-  <div style="background:#fff;width:100%;max-width:460px;border-radius:6px;overflow:hidden;position:relative;box-shadow:0 25px 60px rgba(0,0,0,0.35)">
+  <div style="background:#fff;width:100%;max-width:480px;border-radius:6px;overflow:hidden;box-shadow:0 25px 60px rgba(0,0,0,0.35)">
+    <!-- Header -->
     <div style="display:flex;align-items:center;justify-content:space-between;padding:1rem 1.25rem;border-bottom:1px solid #eee">
       <div style="display:flex;align-items:center;gap:0.625rem">
-        <span class="material-symbols-outlined" style="font-size:18px;color:var(--gold-dark)">lock</span>
+        <span class="material-symbols-outlined" style="font-size:18px;color:#775a19">lock</span>
         <span style="font-family:'Times New Roman',serif;font-size:1rem;font-weight:700">Seacoast RVIP — Secure Payment</span>
       </div>
       <button onclick="closeStripePayModal()" style="background:none;border:none;cursor:pointer;color:#888;font-size:1.4rem;line-height:1;padding:0.25rem">✕</button>
     </div>
-    <div style="background:#f9f6ef;padding:0.75rem 1.25rem;border-bottom:1px solid #f0e8cc">
-      <p style="font-family:Inter,sans-serif;font-size:0.82rem;color:#775a19;margin:0;text-align:center">
-        💳 Your balance is <strong id="acct-modal-amt" style="font-size:1rem">$0</strong> — enter this amount below
+    <!-- Amount -->
+    <div style="background:#f9f6ef;padding:0.75rem 1.25rem;border-bottom:1px solid #f0e8cc;text-align:center">
+      <p style="font-family:Inter,sans-serif;font-size:0.82rem;color:#775a19;margin:0">
+        💳 Amount due: <strong id="acct-modal-amt" style="font-size:1rem">$0</strong>
       </p>
     </div>
-    <div id="acct-stripe-btn-container" style="padding:1.5rem;display:flex;justify-content:center;min-height:80px;align-items:center"></div>
-    <p style="text-align:center;font-size:0.65rem;color:#aaa;padding:0 1.25rem 1rem">Visa · MC · Amex · Apple Pay · Google Pay · Klarna · Affirm</p>
+
+    <div style="padding:1.5rem">
+      <!-- Saved card section -->
+      <div id="acct-saved-card-section" style="display:none;margin-bottom:1rem">
+        <div style="background:#f0fdf4;border:1px solid #bbf7d0;padding:0.75rem 1rem;margin-bottom:0.875rem;display:flex;align-items:center;gap:0.75rem;border-radius:3px">
+          <span class="material-symbols-outlined" style="font-size:20px;color:#15803d">credit_card</span>
+          <div>
+            <div id="acct-saved-card-label" style="font-family:Inter,sans-serif;font-size:0.8rem;font-weight:600;color:#15803d">Saved Card</div>
+            <div style="font-family:Inter,sans-serif;font-size:0.7rem;color:#166534">Tap below to pay instantly</div>
+          </div>
+        </div>
+        <button id="acct-pay-saved-btn" onclick="payWithSavedCard()" style="width:100%;background:#000;color:white;border:none;border-bottom:3px solid #775a19;padding:1rem;font-family:'Work Sans',sans-serif;font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:0.5rem;margin-bottom:0.5rem">
+          <span class="material-symbols-outlined" style="font-size:16px">lock</span>
+          <span id="acct-pay-saved-label">Pay with Saved Card</span>
+        </button>
+        <button onclick="acctShowNewCard()" style="width:100%;background:none;border:none;color:#888;font-family:Inter,sans-serif;font-size:0.72rem;cursor:pointer;padding:0.4rem;text-decoration:underline">Use a different card</button>
+      </div>
+
+      <!-- New card form -->
+      <div id="acct-new-card-section">
+        <div id="acct-card-element" style="background:#f9f9f9;border:1px solid #e2e2e2;border-bottom:2px solid #c4c7c7;padding:14px 12px;margin-bottom:0.875rem;border-radius:2px"></div>
+        <div id="acct-card-error" style="display:none;color:#c62828;font-size:0.78rem;margin-bottom:0.75rem;padding:0.5rem 0.75rem;background:#fff5f5;border:1px solid #fecaca"></div>
+        <label style="display:flex;align-items:center;gap:0.5rem;margin-bottom:1rem;cursor:pointer">
+          <input type="checkbox" id="acct-save-card-chk" style="width:16px;height:16px;accent-color:#775a19;cursor:pointer">
+          <span style="font-family:Inter,sans-serif;font-size:0.75rem;color:#444">Save card for future payments</span>
+        </label>
+        <button id="acct-pay-btn" onclick="acctSubmitPayment()" style="width:100%;background:#000;color:white;border:none;border-bottom:3px solid #775a19;padding:1rem;font-family:'Work Sans',sans-serif;font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:0.5rem">
+          <span class="material-symbols-outlined" style="font-size:16px">lock</span>
+          <span id="acct-pay-label">Pay Now</span>
+        </button>
+      </div>
+
+      <!-- Success state -->
+      <div id="acct-pay-success" style="display:none;text-align:center;padding:1.5rem 0">
+        <span class="material-symbols-outlined" style="font-size:3rem;color:#2e7d32;display:block;margin-bottom:0.75rem">check_circle</span>
+        <p style="font-family:'Times New Roman',serif;font-size:1.3rem;font-weight:700;color:#166534;margin-bottom:0.25rem">Payment Complete!</p>
+        <p style="font-family:Inter,sans-serif;font-size:0.8rem;color:#166534">Your balance has been updated.</p>
+      </div>
+    </div>
+    <p style="text-align:center;font-size:0.65rem;color:#aaa;padding:0 1.25rem 1rem">Secured by Stripe · 256-bit encryption · Visa · MC · Amex</p>
   </div>
 </div>
 
@@ -644,8 +684,6 @@ if(!firebase.apps.length) firebase.initializeApp(FB_CFG);
 const db = firebase.firestore();
 const auth = firebase.auth();
 const funcs = firebase.functions();
-const stripe = Stripe('pk_live_51TDR9gAPjRVAZeaebc3zFuondJhpYccCrQQFW6ygR06CAQvtTsrU6qw6KtjIVr1A6mxaCiMcIbfxKs7IUbM94Vlr006GZuFXUv');
-
 // Keep user signed in across browser sessions
 auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
 
@@ -1155,61 +1193,180 @@ function showDayTrips(dateStr){
   list.innerHTML = filtered.map(t => tripCard(t, true)).join('');
 }
 
-// ─── FINANCIAL / INTEGRATED ───
-var STRIPE_BUY_BTN_ID = 'buy_btn_1TLb53APjRVAZeaeOSYbHrhC';
-var STRIPE_PUB_KEY    = 'pk_live_51TDR9gAPjRVAZeaebc3zFuondJhpYccCrQQFW6ygR06CAQvtTsrU6qw6KtjIVr1A6mxaCiMcIbfxKs7IUbM94Vlr006GZuFXUv';
+// ─── FINANCIAL / EMBEDDED STRIPE ───
+var acctStripe      = Stripe('pk_live_51TDR9gAPjRVAZeaebc3zFuondJhpYccCrQQFW6ygR06CAQvtTsrU6qw6KtjIVr1A6mxaCiMcIbfxKs7IUbM94Vlr006GZuFXUv');
+var acctStripeElems = acctStripe.elements();
+var acctCardEl      = null;   // Stripe card element instance
+var _acctPayAmt     = 0;      // amount being paid
 
 function openStripePayModal(amt) {
-  var modal     = document.getElementById('acct-stripe-modal');
-  var container = document.getElementById('acct-stripe-btn-container');
-  var amtEl     = document.getElementById('acct-modal-amt');
+  _acctPayAmt = parseFloat(amt) || 0;
+  var modal = document.getElementById('acct-stripe-modal');
+  document.getElementById('acct-modal-amt').textContent = '$' + _acctPayAmt.toFixed(2);
+  document.getElementById('acct-pay-label').textContent = 'Pay $' + _acctPayAmt.toFixed(2);
 
-  if (amt) {
-    amtEl.textContent = '$' + parseFloat(amt).toFixed(2);
-    var rem    = document.getElementById('acct-balance-reminder');
-    var remAmt = document.getElementById('acct-balance-amt');
-    if (rem)    rem.style.display = 'block';
-    if (remAmt) remAmt.textContent = '$' + parseFloat(amt).toFixed(2);
+  // Reset states
+  document.getElementById('acct-pay-success').style.display  = 'none';
+  document.getElementById('acct-card-error').style.display   = 'none';
+  var saveChk = document.getElementById('acct-save-card-chk');
+  if (saveChk) saveChk.checked = false;
+
+  // Check for saved card on current user
+  var hasSaved = currentUser && currentUser.stripePaymentMethodId;
+  var savedSec = document.getElementById('acct-saved-card-section');
+  var newSec   = document.getElementById('acct-new-card-section');
+  savedSec.style.display = hasSaved ? 'block' : 'none';
+  newSec.style.display   = hasSaved ? 'none'  : 'block';
+
+  if (hasSaved) {
+    var brand = (currentUser.cardBrand || 'Card');
+    brand = brand.charAt(0).toUpperCase() + brand.slice(1);
+    document.getElementById('acct-saved-card-label').textContent = brand + ' ****' + (currentUser.cardLast4 || '');
+    document.getElementById('acct-pay-saved-label').textContent  = 'Pay $' + _acctPayAmt.toFixed(2) + ' with Saved Card';
   }
 
-  // Inject buy button dynamically so it initialises after modal is visible
-  container.innerHTML = '';
+  // Mount card element if new-card section is visible and not yet mounted
+  if (!hasSaved) _acctMountCard();
+
   modal.style.display = 'flex';
   document.body.style.overflow = 'hidden';
+}
 
-  setTimeout(function() {
-    var btn = document.createElement('stripe-buy-button');
-    btn.setAttribute('buy-button-id', STRIPE_BUY_BTN_ID);
-    btn.setAttribute('publishable-key', STRIPE_PUB_KEY);
-    container.appendChild(btn);
-  }, 80);
+function _acctMountCard() {
+  if (acctCardEl) return; // already mounted
+  acctCardEl = acctStripeElems.create('card', {
+    style: {
+      base: {
+        color: '#1a1c1c', fontFamily: 'Inter, sans-serif',
+        fontSize: '15px', '::placeholder': { color: '#aaa' }
+      },
+      invalid: { color: '#c62828' }
+    }
+  });
+  acctCardEl.mount('#acct-card-element');
+  acctCardEl.on('change', function(e) {
+    var err = document.getElementById('acct-card-error');
+    if (e.error) { err.textContent = e.error.message; err.style.display = 'block'; }
+    else { err.style.display = 'none'; }
+  });
+}
+
+function acctShowNewCard() {
+  document.getElementById('acct-saved-card-section').style.display = 'none';
+  document.getElementById('acct-new-card-section').style.display   = 'block';
+  _acctMountCard();
 }
 
 function closeStripePayModal() {
   document.getElementById('acct-stripe-modal').style.display = 'none';
-  document.getElementById('acct-stripe-btn-container').innerHTML = '';
   document.body.style.overflow = '';
 }
 
-// Close on backdrop click
 document.addEventListener('click', function(e) {
   if (e.target === document.getElementById('acct-stripe-modal')) closeStripePayModal();
 });
 
+// Pay using stored payment method (chargeSavedCard Cloud Function)
+async function payWithSavedCard() {
+  if (!currentUser || !funcs) return;
+  var btn = document.getElementById('acct-pay-saved-btn');
+  var lbl = document.getElementById('acct-pay-saved-label');
+  btn.disabled = true;
+  lbl.innerHTML = '<span style="display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,0.35);border-top:2px solid white;border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:6px"></span>Processing…';
+
+  try {
+    var res = await funcs.httpsCallable('chargeSavedCard')({ accountId: currentUser.id, amount: _acctPayAmt });
+    if (res.data && res.data.success) {
+      // Mark confirmed trips as Completed so balance auto-resets via onSnapshot
+      await _markTripsCompleted();
+      document.getElementById('acct-pay-success').style.display        = 'block';
+      document.getElementById('acct-saved-card-section').style.display = 'none';
+      setTimeout(closeStripePayModal, 3000);
+    } else {
+      throw new Error('Payment did not complete. Status: ' + (res.data && res.data.status));
+    }
+  } catch (e) {
+    alert('Payment failed: ' + (e.message || 'Please try again.'));
+    btn.disabled = false;
+    lbl.textContent = 'Pay $' + _acctPayAmt.toFixed(2) + ' with Saved Card';
+  }
+}
+
+// Pay with a new card (optionally save it)
+async function acctSubmitPayment() {
+  if (!acctCardEl || !funcs || !currentUser) return;
+  var btn     = document.getElementById('acct-pay-btn');
+  var lbl     = document.getElementById('acct-pay-label');
+  var errEl   = document.getElementById('acct-card-error');
+  var saveCard = document.getElementById('acct-save-card-chk').checked;
+
+  btn.disabled = true;
+  lbl.innerHTML = '<span style="display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,0.35);border-top:2px solid white;border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:6px"></span>Processing…';
+  errEl.style.display = 'none';
+
+  try {
+    // Step 1: ensure Stripe customer exists
+    var custRes    = await funcs.httpsCallable('getStripeCustomer')({ accountId: currentUser.id, email: currentUser.email, company: currentUser.name });
+    var customerId = custRes.data.customerId;
+
+    if (saveCard) {
+      // Step 2a: SetupIntent → confirm → save PM → then charge
+      var siRes = await funcs.httpsCallable('createSetupIntent')({ customerId });
+      var setup = await acctStripe.confirmCardSetup(siRes.data.clientSecret, { payment_method: { card: acctCardEl } });
+      if (setup.error) throw new Error(setup.error.message);
+
+      await funcs.httpsCallable('savePaymentMethod')({ accountId: currentUser.id, paymentMethodId: setup.setupIntent.payment_method });
+
+      var charge = await funcs.httpsCallable('chargeSavedCard')({ accountId: currentUser.id, amount: _acctPayAmt });
+      if (!charge.data || !charge.data.success) throw new Error('Charge did not succeed.');
+    } else {
+      // Step 2b: direct PaymentIntent (no save)
+      var piRes  = await funcs.httpsCallable('createPaymentIntent')({ amount: _acctPayAmt, bookingCode: currentUser.id, customerName: currentUser.name });
+      var result = await acctStripe.confirmCardPayment(piRes.data.clientSecret, { payment_method: { card: acctCardEl } });
+      if (result.error) throw new Error(result.error.message);
+      if (result.paymentIntent.status !== 'succeeded') throw new Error('Payment not completed.');
+    }
+
+    // Mark confirmed trips as Completed → balance recalculates via onSnapshot
+    await _markTripsCompleted();
+
+    document.getElementById('acct-pay-success').style.display       = 'block';
+    document.getElementById('acct-new-card-section').style.display  = 'none';
+    setTimeout(closeStripePayModal, 3000);
+
+  } catch (e) {
+    errEl.textContent = e.message || 'Payment failed. Please try again.';
+    errEl.style.display = 'block';
+    btn.disabled = false;
+    lbl.textContent = 'Pay Now';
+  }
+}
+
+// Mark all confirmed trips Completed so the balance resets to $0 in the UI
+async function _markTripsCompleted() {
+  if (!db || !currentUser) return;
+  const confirmed = allTrips.filter(t => (t.status || '').toLowerCase() === 'confirmed');
+  for (const t of confirmed) {
+    const upd = { status: 'Completed', updatedAt: new Date().toISOString() };
+    try { await db.collection('bookings').doc(t.id).update(upd); } catch(e) {}
+    try { await db.collection('clients').doc(currentUser.id).collection('trips').doc(t.id).update(upd); } catch(e) {}
+  }
+}
+
 function settleBalanceWithCard() {
   const confirmed = allTrips.filter(t => (t.status||'').toLowerCase()==='confirmed');
   let total = 0; confirmed.forEach(t => total += parseFloat(t.price||0));
-  openStripePayModal(total > 0 ? total.toFixed(2) : null);
+  openStripePayModal(total > 0 ? total.toFixed(2) : '0');
 }
 
-function openCardModal() { openStripePayModal(); }
+function openCardModal() { settleBalanceWithCard(); }
 
 function payVenmo() {
   window.open('https://venmo.com/u/Ramon-Vargas-83', '_blank');
 }
 
-function renderSavedCardInfo(){
-  // Show balance reminder if trips owed
+function renderSavedCardInfo() {
+  // Update balance reminder display
   const confirmed = allTrips.filter(t => (t.status||'').toLowerCase()==='confirmed');
   let total = 0; confirmed.forEach(t => total += parseFloat(t.price||0));
   var rem = document.getElementById('acct-balance-reminder');
@@ -1217,6 +1374,16 @@ function renderSavedCardInfo(){
   if (total > 0 && rem) {
     rem.style.display = 'block';
     if (remAmt) remAmt.textContent = '$' + total.toFixed(2);
+  } else if (rem) {
+    rem.style.display = 'none';
+  }
+  // Show saved card chip if present
+  var cardInfo = document.getElementById('acct-saved-card-info');
+  if (cardInfo && currentUser && currentUser.stripePaymentMethodId) {
+    var brand = (currentUser.cardBrand || 'Card');
+    brand = brand.charAt(0).toUpperCase() + brand.slice(1);
+    cardInfo.textContent = brand + ' ****' + (currentUser.cardLast4 || '');
+    cardInfo.style.display = 'inline';
   }
 }
 
