@@ -74,6 +74,17 @@ body{font-family:'Inter',sans-serif;background:#f7f7f7;color:#1a1c1c;min-height:
 .trip-meta{font-family:Inter,sans-serif;font-size:0.75rem;color:#888}
 .trip-map-wrap{width:100%;margin-top:0.85rem;border:1px solid #ececec;border-radius:4px;overflow:hidden;background:#f3f3f3}
 .trip-map-frame{display:block;width:100%;height:165px;border:0}
+.trip-link-btn{font-family:'Work Sans',sans-serif;font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#775a19;cursor:pointer;text-decoration:none;background:none;border:none;padding:0}
+.stop-list{display:flex;flex-direction:column;gap:0.65rem}
+.stop-row{display:flex;align-items:center;gap:0.5rem}
+.stop-row .f-input{flex:1}
+.stop-rm{background:none;border:1px solid #ddd;color:#777;padding:0.35rem 0.6rem;font-family:'Work Sans',sans-serif;font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;cursor:pointer}
+.stop-rm:hover{border-color:#b91c1c;color:#b91c1c}
+.stop-add{margin-top:0.65rem;background:none;border:1px dashed #c9a84c;color:#775a19;padding:0.5rem 0.75rem;font-family:'Work Sans',sans-serif;font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;cursor:pointer}
+.edit-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.72);z-index:12000;align-items:flex-start;justify-content:center;padding:2rem 1rem;overflow-y:auto}
+.edit-modal-card{background:#fff;width:100%;max-width:760px;border-left:4px solid #775a19;box-shadow:0 18px 50px rgba(0,0,0,0.35)}
+.edit-modal-head{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.25rem;border-bottom:1px solid #eee}
+.edit-modal-body{padding:1.25rem}
 .bdg{display:inline-block;padding:2px 8px;border-radius:12px;font-family:'Work Sans',sans-serif;font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em}
 .bdg-pen{background:#fef3c7;color:#92400e}
 .bdg-con{background:#dcfce7;color:#166534}
@@ -181,6 +192,7 @@ body{font-family:'Inter',sans-serif;background:#f7f7f7;color:#1a1c1c;min-height:
   .topbar-right{display:none}
   .trip-actions{align-items:flex-start}
   .trip-map-frame{height:150px}
+  .stop-row{flex-direction:column;align-items:stretch}
 }
 @media(min-width:1001px){.mob-nav{display:none}.mob-menu-btn{display:none!important}}
 
@@ -464,6 +476,11 @@ var _sess = null;
               <input class="f-input" id="b-dest" type="text" placeholder="Airport, hotel, venue…" autocomplete="off"/>
               <button class="fav-btn" onclick="toggleFav('b-dest')" title="Save to Favorites"><span class="material-symbols-outlined" style="font-size:20px">star</span></button>
               <div class="addr-chips" id="fav-dest-chips"></div>
+            </div>
+            <div class="f-group book-full">
+              <label class="f-label">Additional Stops <span style="text-transform:none;letter-spacing:0;color:#999;font-weight:500">(optional)</span></label>
+              <div id="b-stops-list" class="stop-list"></div>
+              <button type="button" class="stop-add" onclick="addBookingStop()">+ Add Stop</button>
             </div>
             <div class="f-group book-full">
               <label class="f-label">Service Type</label>
@@ -1620,8 +1637,13 @@ function tripCard(t){
   var dateStr=d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'});
   var bdg=t.status==='Confirmed'?'<span class="bdg bdg-con">Confirmed</span>':t.status==='Completed'?'<span class="bdg bdg-com">Completed</span>':'<span class="bdg bdg-pen">Pending</span>';
   var cls=t.status==='Confirmed'?'confirmed':t.status==='Completed'?'completed':'pending';
+  var tripId = encodeURIComponent(t.id||t._docId||'');
+  var canEdit = t.status!=='Completed' && !!tripId;
   var time12='';
   if(t.time){var p=t.time.split(':'),h=parseInt(p[0]),m=p[1],ampm=h>=12?'PM':'AM';h=h%12||12;time12=h+':'+m+' '+ampm;}
+  var stopCount = Array.isArray(t.stopList) ? t.stopList.length : 0;
+  if(!stopCount && t.stops && typeof t.stops==='string') stopCount = t.stops.split('|').map(function(s){return s.trim();}).filter(Boolean).length;
+  var stopMeta = stopCount ? (' · '+stopCount+' stop'+(stopCount>1?'s':'')) : '';
   var routeMap='';
   if(t.pickup&&t.destination){
     var mapSrc='https://maps.google.com/maps?saddr='+encodeURIComponent(t.pickup)+'&daddr='+encodeURIComponent(t.destination)+'&output=embed';
@@ -1630,10 +1652,11 @@ function tripCard(t){
   return '<div class="trip-card '+cls+'">'+
     '<div class="trip-head"><div class="trip-main"><div class="trip-date">'+dateStr+(time12?' · '+time12:'')+'</div>'+
     '<div class="trip-route">'+escH(t.pickup||'—')+' → '+escH(t.destination||'—')+'</div>'+
-    '<div class="trip-meta">'+escH(t.name||'')+(t.service?' · '+escH(t.service):'')+(t.vehicle?' · '+escH(t.vehicle):'')+(t.price?' · <strong>'+escH(t.price+'')+'</strong>':'')+'</div></div>'+
+    '<div class="trip-meta">'+escH(t.name||'')+(t.service?' · '+escH(t.service):'')+(t.vehicle?' · '+escH(t.vehicle):'')+stopMeta+(t.price?' · <strong>'+escH(t.price+'')+'</strong>':'')+'</div></div>'+
     '<div class="trip-actions">'+bdg+
-    (t.status==='Completed'?'<span style="font-family:\'Work Sans\',sans-serif;font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#775a19;cursor:pointer" onclick="rebookTrip(\''+escH(t.pickup||'')+'\',\''+escH(t.destination||'')+'\',\''+escH(t.service||'')+'\',\''+escH(t.name||'')+'\',\''+escH(t.phone||'')+'\')">↻ Rebook</span>':'')+
-    (t.pickup?'<a href="https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(t.pickup||'')+'" target="_blank" style="font-family:\'Work Sans\',sans-serif;font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#775a19;text-decoration:none">Navigate</a>':'')+'</div></div>'+
+    (canEdit?'<button type="button" class="trip-link-btn" onclick="openEditTrip(\''+tripId+'\')">Edit</button>':'')+
+    (t.status==='Completed'?'<span class="trip-link-btn" onclick="rebookTrip(\''+escH(t.pickup||'')+'\',\''+escH(t.destination||'')+'\',\''+escH(t.service||'')+'\',\''+escH(t.name||'')+'\',\''+escH(t.phone||'')+'\')">↻ Rebook</span>':'')+
+    (t.pickup?'<a href="https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(t.pickup||'')+'" target="_blank" class="trip-link-btn">Navigate</a>':'')+'</div></div>'+
     routeMap+'</div>';
 }
 
@@ -1734,6 +1757,32 @@ function bToggleTos(){
   arrow.textContent=open?'▼ Read & Accept':'▲ Close';
 }
 
+function addBookingStop(v){
+  var list=document.getElementById('b-stops-list');
+  if(!list) return;
+  var row=document.createElement('div');
+  row.className='stop-row';
+  row.innerHTML='<input class="f-input" type="text" placeholder="Stop address" value="'+escH(v||'')+'" />'+
+    '<button type="button" class="stop-rm" onclick="removeStopRow(this)">Remove</button>';
+  list.appendChild(row);
+}
+
+function removeStopRow(btn){
+  var row=btn&&btn.closest('.stop-row');
+  if(row) row.remove();
+}
+
+function collectStopInputs(listId){
+  var list=document.getElementById(listId);
+  if(!list) return [];
+  var vals=[];
+  list.querySelectorAll('input').forEach(function(i){
+    var v=(i.value||'').trim();
+    if(v) vals.push(v);
+  });
+  return vals;
+}
+
 // Legacy — kept in case referenced elsewhere
 function selVeh(el,val){}
 
@@ -1748,6 +1797,7 @@ function submitBooking(){
   var time=document.getElementById('b-time').value;
   var pickup=document.getElementById('b-pickup').value.trim();
   var dest=document.getElementById('b-dest').value.trim();
+  var stopList=collectStopInputs('b-stops-list');
   if(!name||!phone||!date||!time||!pickup||!dest){
     err.textContent='Please fill in all required fields.';err.style.display='block';return;
   }
@@ -1772,6 +1822,8 @@ function submitBooking(){
     vehicle:veh,
     passengers:document.getElementById('b-pass').value,
     luggage:document.getElementById('b-luggage').value,
+    stopList:stopList,
+    stops:stopList.join(' | '),
     notes:document.getElementById('b-notes').value.trim(),
     poNumber:document.getElementById('b-po').value.trim(),
     corporateAccountId:sess.accountId,
@@ -1785,6 +1837,9 @@ function submitBooking(){
     if(success){
       ok.style.display='block';
       ['b-name','b-phone','b-email','b-date','b-time','b-pickup','b-dest','b-notes','b-po'].forEach(function(id){document.getElementById(id).value='';});
+      var stopWrap=document.getElementById('b-stops-list');
+      if(stopWrap) stopWrap.innerHTML='';
+      addBookingStop();
       _trips.unshift(booking);
       renderDashUpcoming();calcStats();buildCal();
       // Email admin
@@ -1797,6 +1852,7 @@ function submitBooking(){
       fd.append('Pickup',pickup);fd.append('Destination',dest);
       fd.append('Service',booking.service);fd.append('Vehicle',veh);
       fd.append('Passengers',booking.passengers);fd.append('Luggage',booking.luggage);
+      fd.append('Stops',booking.stops||'N/A');
       fd.append('PO Number',booking.poNumber||'N/A');
       fetch('https://formsubmit.co/ajax/info@seacoastrvip.com',{method:'POST',body:fd,headers:{'Accept':'application/json'}}).catch(function(){});
     } else {
@@ -1840,6 +1896,120 @@ function rebookTrip(pickup,dest,service,name,phone){
       for(var i=0;i<sel.options.length;i++){if(sel.options[i].value===service){sel.selectedIndex=i;break;}}
     }
   },100);
+}
+
+// ─── EDIT TRIP ───
+var _editingTripKey = null;
+
+function getTripByKey(key){
+  return _trips.find(function(t){ return (t._docId===key || t.id===key); }) || null;
+}
+
+function normalizeStops(t){
+  if(t && Array.isArray(t.stopList)) return t.stopList.filter(Boolean);
+  if(t && Array.isArray(t.stops)) return t.stops.filter(Boolean);
+  if(t && typeof t.stops==='string') return t.stops.split('|').map(function(s){return s.trim();}).filter(Boolean);
+  return [];
+}
+
+function openEditTrip(encodedKey){
+  var key = decodeURIComponent(encodedKey||'');
+  var trip = getTripByKey(key);
+  if(!trip){ alert('Trip not found. Please refresh and try again.'); return; }
+  _editingTripKey = key;
+  document.getElementById('e-name').value = trip.name || '';
+  document.getElementById('e-phone').value = trip.phone || '';
+  document.getElementById('e-email').value = trip.email || '';
+  document.getElementById('e-date').value = trip.date || '';
+  document.getElementById('e-time').value = trip.time || '';
+  document.getElementById('e-pickup').value = trip.pickup || '';
+  document.getElementById('e-dest').value = trip.destination || '';
+  document.getElementById('e-service').value = trip.service || '';
+  document.getElementById('e-vehicle').value = trip.vehicle || '';
+  document.getElementById('e-passengers').value = trip.passengers || '';
+  document.getElementById('e-luggage').value = trip.luggage || '';
+  document.getElementById('e-notes').value = trip.notes || '';
+  document.getElementById('e-po').value = trip.poNumber || '';
+  var stopList = normalizeStops(trip);
+  renderEditStops(stopList);
+  document.getElementById('edit-trip-err').style.display='none';
+  document.getElementById('edit-trip-ok').style.display='none';
+  document.getElementById('edit-trip-modal').style.display='flex';
+}
+
+function closeEditTrip(){
+  _editingTripKey = null;
+  document.getElementById('edit-trip-modal').style.display='none';
+}
+
+function addEditStop(v){
+  var list=document.getElementById('e-stops-list');
+  if(!list) return;
+  var row=document.createElement('div');
+  row.className='stop-row';
+  row.innerHTML='<input class="f-input" type="text" placeholder="Stop address" value="'+escH(v||'')+'" />'+
+    '<button type="button" class="stop-rm" onclick="removeStopRow(this)">Remove</button>';
+  list.appendChild(row);
+}
+
+function renderEditStops(stops){
+  var list=document.getElementById('e-stops-list');
+  if(!list) return;
+  list.innerHTML='';
+  (stops||[]).forEach(function(s){ addEditStop(s); });
+}
+
+async function saveEditedTrip(){
+  var err=document.getElementById('edit-trip-err');
+  var ok=document.getElementById('edit-trip-ok');
+  var btn=document.getElementById('edit-trip-save-btn');
+  err.style.display='none'; ok.style.display='none';
+  if(!_editingTripKey){ err.textContent='No trip selected.'; err.style.display='block'; return; }
+  var trip=getTripByKey(_editingTripKey);
+  if(!trip){ err.textContent='Trip not found. Refresh and try again.'; err.style.display='block'; return; }
+
+  var payload={
+    name:document.getElementById('e-name').value.trim(),
+    phone:document.getElementById('e-phone').value.trim(),
+    email:document.getElementById('e-email').value.trim(),
+    date:document.getElementById('e-date').value,
+    time:document.getElementById('e-time').value,
+    pickup:document.getElementById('e-pickup').value.trim(),
+    destination:document.getElementById('e-dest').value.trim(),
+    service:document.getElementById('e-service').value.trim(),
+    vehicle:document.getElementById('e-vehicle').value.trim(),
+    passengers:document.getElementById('e-passengers').value.trim(),
+    luggage:document.getElementById('e-luggage').value.trim(),
+    notes:document.getElementById('e-notes').value.trim(),
+    poNumber:document.getElementById('e-po').value.trim(),
+    stopList:collectStopInputs('e-stops-list')
+  };
+  payload.stops = payload.stopList.join(' | ');
+
+  if(!payload.name || !payload.phone || !payload.date || !payload.time || !payload.pickup || !payload.destination){
+    err.textContent='Please fill all required fields.'; err.style.display='block'; return;
+  }
+
+  payload.updatedAt = new Date().toISOString();
+  btn.disabled=true; btn.textContent='Saving…';
+  try{
+    var docId = trip._docId || trip.id;
+    if(db && docId) await db.collection('bookings').doc(docId).update(payload);
+    Object.assign(trip, payload);
+    renderDashUpcoming();
+    renderTrips();
+    renderPayments();
+    calcStats();
+    buildCal();
+    ok.textContent='Reservation updated successfully.';
+    ok.style.display='block';
+    setTimeout(closeEditTrip, 700);
+  }catch(e){
+    err.textContent = e.message || 'Could not update reservation.';
+    err.style.display='block';
+  }finally{
+    btn.disabled=false; btn.textContent='Save Changes';
+  }
 }
 
 // ─── NET-30 STATEMENT ───
@@ -2382,6 +2552,15 @@ async function toggleFav(inputId) {
   if(el) el.addEventListener('input', () => renderFavoriteChips(id));
 });
 
+document.addEventListener('keydown', function(e){
+  if(e.key==='Escape'){
+    var modal=document.getElementById('edit-trip-modal');
+    if(modal&&modal.style.display==='flex') closeEditTrip();
+  }
+});
+
+addBookingStop();
+
 // Stripe Integration (Pure)
 </script>
 <script async defer
@@ -2390,6 +2569,48 @@ async function toggleFav(inputId) {
 
 <!-- ── STRIPE BUY BUTTON MODAL ── -->
 <!-- ── EMBEDDED STRIPE PAYMENT MODAL (CORPORATE) ── -->
+<div id="edit-trip-modal" class="edit-modal" onclick="if(event.target===this) closeEditTrip()">
+  <div class="edit-modal-card">
+    <div class="edit-modal-head">
+      <div>
+        <div style="font-family:'Times New Roman',serif;font-size:1.12rem;font-weight:700;color:#000">Modify Reservation</div>
+        <div style="font-family:Inter,sans-serif;font-size:0.72rem;color:#888">Update time, places, service, and notes.</div>
+      </div>
+      <button type="button" onclick="closeEditTrip()" style="background:none;border:none;font-size:1.25rem;color:#666;cursor:pointer">✕</button>
+    </div>
+    <div class="edit-modal-body">
+      <div id="edit-trip-err" class="alert-err" style="display:none"></div>
+      <div id="edit-trip-ok" class="alert-ok" style="display:none"></div>
+      <div class="book-grid">
+        <div class="f-group"><label class="f-label">Passenger Name *</label><input id="e-name" class="f-input" type="text"/></div>
+        <div class="f-group"><label class="f-label">Phone *</label><input id="e-phone" class="f-input" type="tel"/></div>
+        <div class="f-group"><label class="f-label">Email</label><input id="e-email" class="f-input" type="email"/></div>
+        <div class="f-group"><label class="f-label">Service</label><input id="e-service" class="f-input" type="text"/></div>
+        <div class="f-group"><label class="f-label">Vehicle</label><input id="e-vehicle" class="f-input" type="text"/></div>
+        <div class="f-group"><label class="f-label">Passengers</label><input id="e-passengers" class="f-input" type="text"/></div>
+        <div class="f-group"><label class="f-label">Luggage</label><input id="e-luggage" class="f-input" type="text"/></div>
+        <div class="f-group"><!-- spacer --></div>
+        <div class="f-group"><label class="f-label">Date *</label><input id="e-date" class="f-input" type="date"/></div>
+        <div class="f-group"><label class="f-label">Time *</label><input id="e-time" class="f-input" type="time"/></div>
+        <div class="f-group book-full"><label class="f-label">Pickup *</label><input id="e-pickup" class="f-input" type="text"/></div>
+        <div class="f-group book-full"><label class="f-label">Destination *</label><input id="e-dest" class="f-input" type="text"/></div>
+        <div class="f-group book-full">
+          <label class="f-label">Additional Stops</label>
+          <div id="e-stops-list" class="stop-list"></div>
+          <button type="button" class="stop-add" onclick="addEditStop()">+ Add Stop</button>
+        </div>
+        <div class="f-group"><label class="f-label">PO / Reference #</label><input id="e-po" class="f-input" type="text"/></div>
+        <div class="f-group"><!-- spacer --></div>
+        <div class="f-group book-full"><label class="f-label">Special Instructions</label><textarea id="e-notes" class="f-input" rows="2" style="resize:vertical"></textarea></div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:0.6rem;margin-top:0.75rem;flex-wrap:wrap">
+        <button type="button" class="btn-out" onclick="closeEditTrip()" style="margin-left:0">Cancel</button>
+        <button type="button" class="btn-blk" id="edit-trip-save-btn" onclick="saveEditedTrip()">Save Changes</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div id="card-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:9000;align-items:center;justify-content:center;padding:1rem;overflow-y:auto">
   <div style="background:#fff;width:100%;max-width:480px;border-radius:6px;overflow-y:auto;box-shadow:0 25px 60px rgba(0,0,0,0.35);max-height:90vh;margin:auto">
     <!-- Header -->
