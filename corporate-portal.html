@@ -2148,6 +2148,29 @@ function bookForMember(idx){
 // ─── CORPORATE MAP / AUTOCOMPLETE ───
 var _corpMap, _corpDirSvc, _corpDirRenderer, _corpACPickup, _corpACDest;
 var _corpPickupPlace = null, _corpDestPlace = null;
+var _corpStopACInstances = [];
+
+function corpAcOpts(){
+  return {
+    types:['geocode','establishment'],
+    componentRestrictions:{country:'us'},
+    fields:['geometry','formatted_address','name']
+  };
+}
+
+function attachStopAutocomplete(inputEl){
+  if(!inputEl || inputEl.dataset.acBound==='1') return;
+  if(typeof google==='undefined' || !google.maps || !google.maps.places) return;
+  var ac = new google.maps.places.Autocomplete(inputEl, corpAcOpts());
+  inputEl.dataset.acBound='1';
+  _corpStopACInstances.push(ac);
+}
+
+function bindStopAutocompletes(){
+  document.querySelectorAll('#b-stops-list input, #e-stops-list input').forEach(function(inp){
+    attachStopAutocomplete(inp);
+  });
+}
 
 function initCorpMap(){
   if(_corpMap) return; // already initialized
@@ -2174,7 +2197,7 @@ function initCorpMap(){
   });
   _corpDirRenderer.setMap(_corpMap);
 
-  var acOpts = {types:['geocode','establishment'],componentRestrictions:{country:'us'},fields:['geometry','formatted_address','name']};
+  var acOpts = corpAcOpts();
   _corpACPickup = new google.maps.places.Autocomplete(document.getElementById('b-pickup'), acOpts);
   _corpACDest   = new google.maps.places.Autocomplete(document.getElementById('b-dest'),   acOpts);
 
@@ -2186,6 +2209,8 @@ function initCorpMap(){
     _corpDestPlace = _corpACDest.getPlace();
     if(_corpDestPlace.geometry) tryCorpRoute();
   });
+
+  bindStopAutocompletes();
 }
 
 function tryCorpRoute(){
