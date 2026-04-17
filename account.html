@@ -162,6 +162,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .btn-social{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;padding:0.75rem;border:1px solid #ddd;background:#fff;color:#000;font-family:'Work Sans',sans-serif;font-size:0.75rem;font-weight:600;cursor:pointer;transition:0.2s}
 .btn-social:hover{background:#f9f9f9;border-color:#bbb}
 .btn-social img{width:18px;height:18px}
+.auth-help{font-size:0.74rem;color:#777;line-height:1.5;margin-top:0.35rem}
 
 .divider{display:flex;align-items:center;text-align:center;margin-bottom:1.5rem;color:#ccc;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.15em}
 .divider::before, .divider::after{content:'';flex:1;border-bottom:1px solid #eee}
@@ -211,18 +212,19 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
         <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google"/>
         Continue with Google
       </button>
-      <button onclick="doSocialAuth('apple')" class="btn-social">
+      <button id="apple-auth-btn" onclick="doSocialAuth('apple')" class="btn-social" style="display:none">
         <img src="https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg" alt="Apple"/>
         Continue with Apple
       </button>
+      <p class="auth-help">Quick sign-in options are simplified to reduce confusion: Google or Phone login.</p>
     </div>
 
-    <div class="divider">Or use your credentials</div>
+    <div class="divider">Or use your phone credentials</div>
 
     <!-- Login Method Toggle -->
     <!-- Login View Tabs -->
     <div id="view-login">
-      <div style="display:flex;margin-bottom:2rem;border:1px solid var(--border);border-radius:4px;overflow:hidden">
+      <div style="display:none;margin-bottom:2rem;border:1px solid var(--border);border-radius:4px;overflow:hidden">
         <button id="tab-phone-btn" onclick="switchLoginTab('phone')" style="flex:1;padding:0.75rem;font-family:'Work Sans',sans-serif;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;background:#000;color:#fff;border:none;cursor:pointer;transition:0.2s">📱 Phone</button>
         <button id="tab-email-btn" onclick="switchLoginTab('email')" style="flex:1;padding:0.75rem;font-family:'Work Sans',sans-serif;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;background:transparent;color:#888;border:none;cursor:pointer;transition:0.2s">✉️ Email</button>
       </div>
@@ -773,6 +775,12 @@ function showAuthMode(mode) {
   
   document.getElementById('toggle-login-btn').classList.toggle('active', isLogin);
   document.getElementById('toggle-signup-btn').classList.toggle('active', !isLogin);
+
+  // Keep login simple by default: Phone method visible, Email method hidden.
+  if (isLogin) {
+    document.getElementById('login-phone-method').style.display = 'block';
+    document.getElementById('login-email-method').style.display = 'none';
+  }
 }
 
 async function doSocialAuth(providerName) {
@@ -794,7 +802,11 @@ async function doSocialAuth(providerName) {
       localStorage.setItem('rvip-social-pending', providerName);
       await auth.signInWithRedirect(provider);
     } catch (e) {
-      alert('Authentication failed: ' + e.message);
+      if (providerName === 'apple' && e.code === 'auth/operation-not-allowed') {
+        alert('Apple Sign-In is not enabled in Firebase Auth yet. Enable provider "apple.com" in Firebase Console > Authentication > Sign-in method, then try again.');
+      } else {
+        alert('Authentication failed: ' + e.message);
+      }
     }
     return; // page will reload after redirect completes
   }
@@ -809,10 +821,18 @@ async function doSocialAuth(providerName) {
         localStorage.setItem('rvip-social-pending', providerName);
         await auth.signInWithRedirect(provider);
       } catch (e2) {
-        alert('Authentication failed: ' + e2.message);
+        if (providerName === 'apple' && e2.code === 'auth/operation-not-allowed') {
+          alert('Apple Sign-In is not enabled in Firebase Auth yet. Enable provider "apple.com" in Firebase Console > Authentication > Sign-in method, then try again.');
+        } else {
+          alert('Authentication failed: ' + e2.message);
+        }
       }
     } else {
-      alert('Authentication failed: ' + e.message);
+      if (providerName === 'apple' && e.code === 'auth/operation-not-allowed') {
+        alert('Apple Sign-In is not enabled in Firebase Auth yet. Enable provider "apple.com" in Firebase Console > Authentication > Sign-in method, then try again.');
+      } else {
+        alert('Authentication failed: ' + e.message);
+      }
     }
   }
 }
@@ -853,6 +873,10 @@ auth.getRedirectResult().then(function(result) {
     console.warn('Redirect result error:', e.message);
   }
 });
+
+// Apple provider is currently disabled in this project, so keep it hidden to avoid user confusion.
+var appleBtn = document.getElementById('apple-auth-btn');
+if (appleBtn) appleBtn.style.display = 'none';
 
 async function doSignup() {
   const name = document.getElementById('reg-name').value.trim();

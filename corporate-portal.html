@@ -1645,10 +1645,16 @@ function tripCard(t){
   if(t.time){var p=t.time.split(':'),h=parseInt(p[0]),m=p[1],ampm=h>=12?'PM':'AM';h=h%12||12;time12=h+':'+m+' '+ampm;}
   var stopCount = Array.isArray(t.stopList) ? t.stopList.length : 0;
   if(!stopCount && t.stops && typeof t.stops==='string') stopCount = t.stops.split('|').map(function(s){return s.trim();}).filter(Boolean).length;
+  var stopList = Array.isArray(t.stopList) ? t.stopList.filter(Boolean) : [];
+  if(!stopList.length && t.stops && typeof t.stops==='string') stopList = t.stops.split('|').map(function(s){return s.trim();}).filter(Boolean);
   var stopMeta = stopCount ? (' · '+stopCount+' stop'+(stopCount>1?'s':'')) : '';
   var routeMap='';
+  var navUrl='';
   if(t.pickup&&t.destination){
-    var mapSrc='https://maps.google.com/maps?saddr='+encodeURIComponent(t.pickup)+'&daddr='+encodeURIComponent(t.destination)+'&output=embed';
+    var routeParts = stopList.concat([t.destination]).filter(Boolean);
+    var routeDest = routeParts.join('+to:');
+    var mapSrc='https://maps.google.com/maps?saddr='+encodeURIComponent(t.pickup)+'&daddr='+encodeURIComponent(routeDest)+'&output=embed';
+    navUrl='https://www.google.com/maps/dir/?api=1&origin='+encodeURIComponent(t.pickup)+'&destination='+encodeURIComponent(t.destination)+(stopList.length?'&waypoints='+encodeURIComponent(stopList.join('|')):'');
     routeMap='<div class="trip-map-wrap"><iframe class="trip-map-frame" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="'+mapSrc+'" title="Trip route map"></iframe></div>';
   }
   return '<div class="trip-card '+cls+'">'+
@@ -1658,7 +1664,7 @@ function tripCard(t){
     '<div class="trip-actions">'+bdg+
     (canEdit?'<button type="button" class="trip-link-btn" onclick="openEditTrip(\''+tripId+'\')">Edit</button>':'')+
     (t.status==='Completed'?'<span class="trip-link-btn" onclick="rebookTrip(\''+escH(t.pickup||'')+'\',\''+escH(t.destination||'')+'\',\''+escH(t.service||'')+'\',\''+escH(t.name||'')+'\',\''+escH(t.phone||'')+'\')">↻ Rebook</span>':'')+
-    (t.pickup?'<a href="https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(t.pickup||'')+'" target="_blank" class="trip-link-btn">Navigate</a>':'')+'</div></div>'+
+    (navUrl?'<a href="'+navUrl+'" target="_blank" class="trip-link-btn">Navigate</a>':'')+'</div></div>'+
     routeMap+'</div>';
 }
 
