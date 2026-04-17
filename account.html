@@ -77,6 +77,24 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 
 .t-info{display:flex;flex-wrap:wrap;gap:1.25rem;font-size:0.82rem;color:var(--text-sec)}
 .t-actions{display:flex;flex-direction:column;align-items:flex-end;gap:0.75rem}
+.trip-map-wrap{width:100%;margin-top:0.85rem;border:1px solid #ececec;border-radius:4px;overflow:hidden;background:#f3f3f3}
+.trip-map-frame{display:block;width:100%;height:160px;border:0}
+
+/* ─── BOOK TAB ─── */
+.book-layout{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:1.5rem;align-items:start}
+.book-card{background:#fff;border:1px solid var(--border);padding:1.5rem}
+.book-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.book-full{grid-column:1 / -1}
+.book-map-wrap{background:#111;min-height:420px;position:sticky;top:90px;border:1px solid #222}
+.book-map{width:100%;height:100%;min-height:420px}
+.stop-list{display:flex;flex-direction:column;gap:0.65rem}
+.stop-row{display:flex;align-items:center;gap:0.5rem}
+.stop-row .f-input{flex:1}
+.stop-rm{background:none;border:1px solid #ddd;color:#777;padding:0.35rem 0.6rem;font-family:'Work Sans',sans-serif;font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;cursor:pointer}
+.stop-rm:hover{border-color:#b91c1c;color:#b91c1c}
+.stop-add{margin-top:0.65rem;background:none;border:1px dashed #c9a84c;color:#775a19;padding:0.5rem 0.75rem;font-family:'Work Sans',sans-serif;font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;cursor:pointer}
+.trip-link-btn{font-family:'Work Sans',sans-serif;font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#775a19;cursor:pointer;text-decoration:none;background:none;border:none;padding:0}
+.pac-container{z-index:13050!important}
 
 /* ─── CALENDAR ─── */
 .cal-grid{display:grid;grid-template-columns:repeat(7, 1fr);border:1px solid var(--border);border-top:none}
@@ -137,6 +155,9 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
   .pay-box-row{flex-direction:column;align-items:flex-start}
   .pay-box-btns{flex-direction:column;width:100%}
   .pay-box-btns .btn-k,.pay-box-btns .btn-v{width:100%;justify-content:center}
+  .book-layout{grid-template-columns:1fr}
+  .book-grid{grid-template-columns:1fr}
+  .book-map-wrap{position:relative;top:0;min-height:300px}
 }
 @media(max-width:480px){
   .dash-grid{grid-template-columns:1fr}
@@ -364,11 +385,12 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 
       <nav class="side-nav">
         <a href="#" class="side-link active" onclick="showTab('tab-dash',this)"><span class="material-symbols-outlined">analytics</span>Overview</a>
+        <a href="#" class="side-link" onclick="showTab('tab-book',this)"><span class="material-symbols-outlined">add_circle</span>Book Ride</a>
         <a href="#" class="side-link" onclick="showTab('tab-cal',this)"><span class="material-symbols-outlined">calendar_month</span>My Calendar</a>
         <a href="#" class="side-link" onclick="showTab('tab-trips',this)"><span class="material-symbols-outlined">list_alt</span>Trip History</a>
         <a href="#" class="side-link" onclick="showTab('tab-pay',this)"><span class="material-symbols-outlined">payments</span>Statements & Pay</a>
         <a href="#" class="side-link" onclick="openEditProfile()"><span class="material-symbols-outlined">settings</span>Account Settings</a>
-        <a href="schedule.html" class="side-link" style="margin-top:1.5rem;color:var(--gold-dark)"><span class="material-symbols-outlined">add_circle</span>Request New Ride</a>
+        <a href="#" class="side-link" onclick="showTab('tab-book',this)" style="margin-top:1.5rem;color:var(--gold-dark)"><span class="material-symbols-outlined">add_circle</span>Request New Ride</a>
       </nav>
 
       <div style="margin-top:auto;padding-top:1.5rem;border-top:1px solid var(--border)">
@@ -461,6 +483,48 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
             <button onclick="showTab('tab-trips')" class="btn-out" style="padding:0.4rem 0.8rem;font-size:0.6rem">View All</button>
           </div>
           <div id="recent-list"></div>
+        </div>
+      </div>
+
+      <!-- Tab: My Calendar -->
+      <div id="tab-book" class="tab-panel">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2rem;flex-wrap:wrap;gap:1rem">
+          <h2 style="font-family:'Times New Roman',serif;font-size:2.2rem;color:#000">Book a Ride</h2>
+          <span style="font-size:0.75rem;color:#777">Create and manage your own reservations directly here.</span>
+        </div>
+        <div id="acct-book-ok" style="display:none;margin-bottom:1rem;padding:0.75rem 1rem;background:#f0fdf4;border-left:3px solid #10b981;color:#047857;font-size:0.82rem"></div>
+        <div id="acct-book-err" style="display:none;margin-bottom:1rem;padding:0.75rem 1rem;background:#fef2f2;border-left:3px solid #ef4444;color:#b91c1c;font-size:0.82rem"></div>
+
+        <div class="book-layout">
+          <div class="book-card">
+            <div class="book-grid">
+              <div class="f-group"><label class="f-label">Passenger Name *</label><input id="bk-name" class="f-input" type="text"/></div>
+              <div class="f-group"><label class="f-label">Phone *</label><input id="bk-phone" class="f-input" type="tel" oninput="fmtPhone(this)"/></div>
+              <div class="f-group book-full"><label class="f-label">Email</label><input id="bk-email" class="f-input" type="email"/></div>
+              <div class="f-group"><label class="f-label">Date *</label><input id="bk-date" class="f-input" type="date"/></div>
+              <div class="f-group"><label class="f-label">Pickup Time *</label><input id="bk-time" class="f-input" type="time"/></div>
+              <div class="f-group book-full"><label class="f-label">Pickup Location *</label><input id="bk-pickup" class="f-input" type="text" autocomplete="off"/></div>
+              <div class="f-group book-full"><label class="f-label">Destination *</label><input id="bk-dest" class="f-input" type="text" autocomplete="off"/></div>
+              <div class="f-group book-full">
+                <label class="f-label">Additional Stops</label>
+                <div id="bk-stops-list" class="stop-list"></div>
+                <button type="button" class="stop-add" onclick="addAccountStop()">+ Add Stop</button>
+              </div>
+              <div class="f-group"><label class="f-label">Service</label><input id="bk-service" class="f-input" type="text" placeholder="Airport Transfer"/></div>
+              <div class="f-group"><label class="f-label">Vehicle</label><input id="bk-vehicle" class="f-input" type="text" placeholder="Luxury Black SUV"/></div>
+              <div class="f-group"><label class="f-label">Passengers</label><input id="bk-passengers" class="f-input" type="text" value="1"/></div>
+              <div class="f-group"><label class="f-label">Luggage</label><input id="bk-luggage" class="f-input" type="text" value="0"/></div>
+              <div class="f-group book-full"><label class="f-label">Special Instructions</label><textarea id="bk-notes" class="f-input" rows="2" style="resize:vertical"></textarea></div>
+            </div>
+            <div style="display:flex;justify-content:flex-end;gap:0.75rem;flex-wrap:wrap">
+              <button type="button" class="btn-out" onclick="clearAccountBookingForm()">Clear</button>
+              <button type="button" id="bk-submit-btn" class="btn-k" onclick="submitAccountBooking()">Request Ride →</button>
+            </div>
+          </div>
+
+          <div class="book-map-wrap">
+            <div id="acct-book-map" class="book-map"></div>
+          </div>
         </div>
       </div>
 
@@ -614,6 +678,43 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
   </div>
 </div>
 
+<!-- MODAL: Edit Reservation -->
+<div class="overlay" id="m-edit-trip" style="z-index:12000">
+  <div class="modal" style="max-width:760px">
+    <div class="modal-hd">
+      <h3 style="font-family:'Times New Roman',serif;font-size:1.3rem">Modify Reservation</h3>
+      <button onclick="closeM('m-edit-trip')" style="background:none;border:none;cursor:pointer"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <div class="modal-bd">
+      <div id="edit-trip-err" style="display:none;padding:10px;background:#fef2f2;border-left:3px solid #ef4444;color:#b91c1c;font-size:0.8rem;margin-bottom:1rem"></div>
+      <div id="edit-trip-ok" style="display:none;padding:10px;background:#f0fdf4;border-left:3px solid #10b981;color:#047857;font-size:0.8rem;margin-bottom:1rem"></div>
+      <div class="book-grid">
+        <div class="f-group"><label class="f-label">Passenger Name *</label><input id="e-name" class="f-input" type="text"/></div>
+        <div class="f-group"><label class="f-label">Phone *</label><input id="e-phone" class="f-input" type="tel" oninput="fmtPhone(this)"/></div>
+        <div class="f-group book-full"><label class="f-label">Email</label><input id="e-email" class="f-input" type="email"/></div>
+        <div class="f-group"><label class="f-label">Date *</label><input id="e-date" class="f-input" type="date"/></div>
+        <div class="f-group"><label class="f-label">Time *</label><input id="e-time" class="f-input" type="time"/></div>
+        <div class="f-group book-full"><label class="f-label">Pickup *</label><input id="e-pickup" class="f-input" type="text" autocomplete="off"/></div>
+        <div class="f-group book-full"><label class="f-label">Destination *</label><input id="e-dest" class="f-input" type="text" autocomplete="off"/></div>
+        <div class="f-group book-full">
+          <label class="f-label">Additional Stops</label>
+          <div id="e-stops-list" class="stop-list"></div>
+          <button type="button" class="stop-add" onclick="addEditStop()">+ Add Stop</button>
+        </div>
+        <div class="f-group"><label class="f-label">Service</label><input id="e-service" class="f-input" type="text"/></div>
+        <div class="f-group"><label class="f-label">Vehicle</label><input id="e-vehicle" class="f-input" type="text"/></div>
+        <div class="f-group"><label class="f-label">Passengers</label><input id="e-passengers" class="f-input" type="text"/></div>
+        <div class="f-group"><label class="f-label">Luggage</label><input id="e-luggage" class="f-input" type="text"/></div>
+        <div class="f-group book-full"><label class="f-label">Special Instructions</label><textarea id="e-notes" class="f-input" rows="2" style="resize:vertical"></textarea></div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:0.75rem;flex-wrap:wrap;margin-top:0.75rem">
+        <button type="button" class="btn-out" onclick="closeM('m-edit-trip')">Cancel</button>
+        <button type="button" id="edit-trip-save-btn" class="btn-k" onclick="saveEditedTrip()">Save Changes</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- STRIPE BUY BUTTON MODAL -->
 <!-- ── EMBEDDED STRIPE PAYMENT MODAL ── -->
 <div id="acct-stripe-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:9999;align-items:center;justify-content:center;padding:1rem;overflow-y:auto">
@@ -725,6 +826,9 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
   <button class="mbn-item active" id="mbn-dash" onclick="showTab('tab-dash',null);setMbnActive(this)">
     <span class="material-symbols-outlined">analytics</span>Overview
   </button>
+  <button class="mbn-item" id="mbn-book" onclick="showTab('tab-book',null);setMbnActive(this)">
+    <span class="material-symbols-outlined">add_circle</span>Book
+  </button>
   <button class="mbn-item" id="mbn-cal" onclick="showTab('tab-cal',null);setMbnActive(this)">
     <span class="material-symbols-outlined">calendar_month</span>Calendar
   </button>
@@ -758,6 +862,11 @@ let allTrips = [];
 let _calDate = new Date();
 let _tripFilter = 'all';
 let stripeElements = null, stripeCard = null;
+let _editingTripId = null;
+
+// Account booking map/autocomplete
+let _acctMap, _acctDirSvc, _acctDirRenderer, _acctACPickup, _acctACDest;
+let _acctPickupPlace = null, _acctDestPlace = null;
 
 // OTP flow state
 let _pendingPhone = null;
@@ -1186,6 +1295,8 @@ async function initDashboard(){
       renderSavedCardInfo();
     }
   });
+
+  initAccountBookingForm();
 }
 
 function updateDashboardUI(){
@@ -1291,26 +1402,38 @@ function renderInvoicesList(list){
 }
 
 function tripCard(t, showBtns=false){
+  const stops = Array.isArray(t.stopList) ? t.stopList.filter(Boolean) : (typeof t.stops==='string' ? t.stops.split('|').map(s=>s.trim()).filter(Boolean) : []);
+  const stopMeta = stops.length ? ` · ${stops.length} stop${stops.length>1?'s':''}` : '';
+  const routeParts = stops.concat([t.destination]).filter(Boolean);
+  const routeDest = routeParts.join('+to:');
+  const mapSrc = (t.pickup && t.destination) ? `https://maps.google.com/maps?saddr=${encodeURIComponent(t.pickup)}&daddr=${encodeURIComponent(routeDest)}&output=embed` : '';
+  const navUrl = (t.pickup && t.destination)
+    ? `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(t.pickup)}&destination=${encodeURIComponent(t.destination)}${stops.length?`&waypoints=${encodeURIComponent(stops.join('|'))}`:''}`
+    : '';
+  const canEdit = (t.status||'').toLowerCase() !== 'completed';
   return `
-    <div class="trip-card">
-      <div class="t-main">
+    <div class="trip-card" style="flex-wrap:wrap;align-items:flex-start">
+      <div class="t-main" style="min-width:240px">
         <div class="t-header">
-          <span class="t-service">${t.service||'Private Hire'}</span>
-          <span class="t-status ts-${(t.status||'pending').toLowerCase()}">${t.status||'Scheduled'}</span>
+          <span class="t-service">${escH(t.service||'Private Hire')}</span>
+          <span class="t-status ts-${(t.status||'pending').toLowerCase()}">${escH(t.status||'Scheduled')}</span>
         </div>
         <div class="t-info">
-          <span><span class="material-symbols-outlined" style="font-size:14px">calendar_today</span>${t.date} at ${t.time}</span>
-          <span><span class="material-symbols-outlined" style="font-size:14px">pin_drop</span>${t.pickup}</span>
+          <span><span class="material-symbols-outlined" style="font-size:14px">calendar_today</span>${escH(t.date||'')} at ${escH(t.time||'')}</span>
+          <span><span class="material-symbols-outlined" style="font-size:14px">pin_drop</span>${escH(t.pickup||'—')} → ${escH(t.destination||'—')}${stopMeta}</span>
         </div>
       </div>
       <div class="t-actions">
         ${t.price?`<div style="font-weight:700">$${parseFloat(t.price).toFixed(2)}</div>`:''}
         ${showBtns?`
-          <div style="display:flex;gap:8px">
-             <button onclick="rebook('${t.id}')" class="btn-out" style="padding:4px 8px;font-size:0.55rem">Rebook</button>
-             <button onclick="receiptPDF('${t.id}')" class="btn-out" style="padding:4px 8px;font-size:0.55rem">Receipt</button>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
+             ${canEdit?`<button onclick="openEditTrip('${t.id}')" class="trip-link-btn">Edit</button>`:''}
+             <button onclick="rebook('${t.id}')" class="trip-link-btn">Rebook</button>
+             ${navUrl?`<a href="${navUrl}" target="_blank" class="trip-link-btn">Navigate</a>`:''}
+             <button onclick="receiptPDF('${t.id}')" class="trip-link-btn">Receipt</button>
           </div>`:''}
       </div>
+      ${mapSrc?`<div class="trip-map-wrap"><iframe class="trip-map-frame" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="${mapSrc}" title="Trip route map"></iframe></div>`:''}
     </div>
   `;
 }
@@ -1358,6 +1481,279 @@ function showDayTrips(dateStr){
   el.style.display = 'block';
   document.getElementById('cal-selected-day').textContent = new Date(dateStr+'T12:00:00').toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
   list.innerHTML = filtered.map(t => tripCard(t, true)).join('');
+}
+
+// ─── ACCOUNT BOOKING / RESERVATIONS ───
+function initAccountBookingForm(){
+  if(!currentUser) return;
+  var today = new Date().toISOString().split('T')[0];
+  var dEl = document.getElementById('bk-date');
+  if(dEl){ dEl.min = today; if(!dEl.value) dEl.value = today; }
+  document.getElementById('bk-name').value = currentUser.name || '';
+  document.getElementById('bk-phone').value = currentUser.phone || '';
+  document.getElementById('bk-email').value = currentUser.email || '';
+  if(!document.querySelector('#bk-stops-list .stop-row')) addAccountStop();
+  bindStopAutocompletes();
+}
+
+function collectStops(listId){
+  var list=document.getElementById(listId);
+  if(!list) return [];
+  var vals=[];
+  list.querySelectorAll('input').forEach(function(i){
+    var v=(i.value||'').trim();
+    if(v) vals.push(v);
+  });
+  return vals;
+}
+
+function removeStopRow(btn){
+  var row=btn&&btn.closest('.stop-row');
+  if(row) row.remove();
+}
+
+function addAccountStop(v){
+  var list=document.getElementById('bk-stops-list');
+  if(!list) return;
+  var row=document.createElement('div');
+  row.className='stop-row';
+  row.innerHTML='<input class="f-input" type="text" placeholder="Stop address" autocomplete="off" value="'+escH(v||'')+'" />'+
+    '<button type="button" class="stop-rm" onclick="removeStopRow(this)">Remove</button>';
+  list.appendChild(row);
+  attachStopAutocomplete(row.querySelector('input'));
+}
+
+function clearAccountBookingForm(){
+  ['bk-date','bk-time','bk-pickup','bk-dest','bk-notes'].forEach(function(id){ var e=document.getElementById(id); if(e) e.value=''; });
+  document.getElementById('bk-service').value='Airport Transfer';
+  document.getElementById('bk-vehicle').value='Luxury Black SUV';
+  document.getElementById('bk-passengers').value='1';
+  document.getElementById('bk-luggage').value='0';
+  var stopList=document.getElementById('bk-stops-list');
+  if(stopList) stopList.innerHTML='';
+  addAccountStop();
+  var today = new Date().toISOString().split('T')[0];
+  var dEl = document.getElementById('bk-date');
+  if(dEl){ dEl.min=today; dEl.value=today; }
+  var ok=document.getElementById('acct-book-ok'), err=document.getElementById('acct-book-err');
+  if(ok) ok.style.display='none';
+  if(err) err.style.display='none';
+}
+
+async function submitAccountBooking(){
+  var btn=document.getElementById('bk-submit-btn');
+  var ok=document.getElementById('acct-book-ok');
+  var err=document.getElementById('acct-book-err');
+  ok.style.display='none'; err.style.display='none';
+
+  var booking={
+    id:'rvip_'+Date.now(),
+    code:'RVIP'+Math.floor(10000+Math.random()*90000),
+    name:document.getElementById('bk-name').value.trim(),
+    phone:document.getElementById('bk-phone').value.trim(),
+    email:document.getElementById('bk-email').value.trim(),
+    date:document.getElementById('bk-date').value,
+    time:document.getElementById('bk-time').value,
+    pickup:document.getElementById('bk-pickup').value.trim(),
+    destination:document.getElementById('bk-dest').value.trim(),
+    service:document.getElementById('bk-service').value.trim() || 'Airport Transfer',
+    vehicle:document.getElementById('bk-vehicle').value.trim() || 'Luxury Black SUV',
+    passengers:document.getElementById('bk-passengers').value.trim() || '1',
+    luggage:document.getElementById('bk-luggage').value.trim() || '0',
+    notes:document.getElementById('bk-notes').value.trim(),
+    stopList:collectStops('bk-stops-list'),
+    status:'Pending',
+    source:'account-portal',
+    clientId:currentUser ? currentUser.id : '',
+    createdAt:new Date().toISOString()
+  };
+  booking.stops = booking.stopList.join(' | ');
+
+  if(!booking.name || !booking.phone || !booking.date || !booking.time || !booking.pickup || !booking.destination){
+    err.textContent='Please fill all required fields.';
+    err.style.display='block';
+    return;
+  }
+
+  btn.disabled=true; btn.textContent='Booking…';
+  try{
+    await db.collection('bookings').doc(booking.id).set(booking);
+    allTrips.unshift(booking);
+    updateDashboardUI();
+    buildCal();
+    ok.textContent='Ride request submitted. You can edit it from Trip History.';
+    ok.style.display='block';
+    clearAccountBookingForm();
+    setTimeout(function(){ if(ok.style.display!=='none') ok.style.display='block'; }, 0);
+    showTab('tab-trips', null);
+  }catch(e){
+    err.textContent=e.message || 'Could not submit booking. Try again.';
+    err.style.display='block';
+  }
+  btn.disabled=false; btn.textContent='Request Ride →';
+}
+
+function openEditTrip(tripId){
+  var t = allTrips.find(function(x){ return x.id===tripId; });
+  if(!t) return toast('Trip not found');
+  _editingTripId = tripId;
+  document.getElementById('e-name').value=t.name||'';
+  document.getElementById('e-phone').value=t.phone||'';
+  document.getElementById('e-email').value=t.email||'';
+  document.getElementById('e-date').value=t.date||'';
+  document.getElementById('e-time').value=t.time||'';
+  document.getElementById('e-pickup').value=t.pickup||'';
+  document.getElementById('e-dest').value=t.destination||'';
+  document.getElementById('e-service').value=t.service||'';
+  document.getElementById('e-vehicle').value=t.vehicle||'';
+  document.getElementById('e-passengers').value=t.passengers||'';
+  document.getElementById('e-luggage').value=t.luggage||'';
+  document.getElementById('e-notes').value=t.notes||'';
+  var stops = Array.isArray(t.stopList) ? t.stopList.filter(Boolean) : (typeof t.stops==='string' ? t.stops.split('|').map(function(s){return s.trim();}).filter(Boolean) : []);
+  var wrap=document.getElementById('e-stops-list');
+  wrap.innerHTML='';
+  stops.forEach(function(s){ addEditStop(s); });
+  if(!wrap.querySelector('.stop-row')) addEditStop();
+  document.getElementById('edit-trip-err').style.display='none';
+  document.getElementById('edit-trip-ok').style.display='none';
+  openM('m-edit-trip');
+  setTimeout(bindStopAutocompletes, 60);
+}
+
+function addEditStop(v){
+  var list=document.getElementById('e-stops-list');
+  if(!list) return;
+  var row=document.createElement('div');
+  row.className='stop-row';
+  row.innerHTML='<input class="f-input" type="text" placeholder="Stop address" autocomplete="off" value="'+escH(v||'')+'" />'+
+    '<button type="button" class="stop-rm" onclick="removeStopRow(this)">Remove</button>';
+  list.appendChild(row);
+  attachStopAutocomplete(row.querySelector('input'));
+}
+
+async function saveEditedTrip(){
+  var err=document.getElementById('edit-trip-err');
+  var ok=document.getElementById('edit-trip-ok');
+  var btn=document.getElementById('edit-trip-save-btn');
+  err.style.display='none'; ok.style.display='none';
+  if(!_editingTripId){ err.textContent='No trip selected.'; err.style.display='block'; return; }
+
+  var payload={
+    name:document.getElementById('e-name').value.trim(),
+    phone:document.getElementById('e-phone').value.trim(),
+    email:document.getElementById('e-email').value.trim(),
+    date:document.getElementById('e-date').value,
+    time:document.getElementById('e-time').value,
+    pickup:document.getElementById('e-pickup').value.trim(),
+    destination:document.getElementById('e-dest').value.trim(),
+    service:document.getElementById('e-service').value.trim(),
+    vehicle:document.getElementById('e-vehicle').value.trim(),
+    passengers:document.getElementById('e-passengers').value.trim(),
+    luggage:document.getElementById('e-luggage').value.trim(),
+    notes:document.getElementById('e-notes').value.trim(),
+    stopList:collectStops('e-stops-list'),
+    updatedAt:new Date().toISOString()
+  };
+  payload.stops = payload.stopList.join(' | ');
+  if(!payload.name || !payload.phone || !payload.date || !payload.time || !payload.pickup || !payload.destination){
+    err.textContent='Please fill all required fields.'; err.style.display='block'; return;
+  }
+
+  btn.disabled=true; btn.textContent='Saving…';
+  try{
+    await db.collection('bookings').doc(_editingTripId).update(payload);
+    var idx = allTrips.findIndex(function(x){ return x.id===_editingTripId; });
+    if(idx>=0) allTrips[idx] = Object.assign({}, allTrips[idx], payload);
+    updateDashboardUI();
+    buildCal();
+    ok.textContent='Reservation updated successfully.';
+    ok.style.display='block';
+    setTimeout(function(){ closeM('m-edit-trip'); }, 650);
+  }catch(e){
+    err.textContent=e.message || 'Could not update reservation.';
+    err.style.display='block';
+  }
+  btn.disabled=false; btn.textContent='Save Changes';
+}
+
+function rebook(tripId){
+  const t = allTrips.find(x => x.id === tripId);
+  if(!t) return toast('Trip not found.');
+  showTab('tab-book', null);
+  document.querySelectorAll('.side-link').forEach(l => l.classList.remove('active'));
+  var bkLink = Array.from(document.querySelectorAll('.side-link')).find(function(l){ return l.textContent.toLowerCase().includes('book ride'); });
+  if(bkLink) bkLink.classList.add('active');
+
+  document.getElementById('bk-name').value = t.name || currentUser.name || '';
+  document.getElementById('bk-phone').value = t.phone || currentUser.phone || '';
+  document.getElementById('bk-email').value = t.email || currentUser.email || '';
+  document.getElementById('bk-date').value = t.date || '';
+  document.getElementById('bk-time').value = t.time || '';
+  document.getElementById('bk-pickup').value = t.pickup || '';
+  document.getElementById('bk-dest').value = t.destination || '';
+  document.getElementById('bk-service').value = t.service || '';
+  document.getElementById('bk-vehicle').value = t.vehicle || '';
+  document.getElementById('bk-passengers').value = t.passengers || '1';
+  document.getElementById('bk-luggage').value = t.luggage || '0';
+  document.getElementById('bk-notes').value = t.notes || '';
+  var stops = Array.isArray(t.stopList) ? t.stopList.filter(Boolean) : (typeof t.stops==='string' ? t.stops.split('|').map(function(s){return s.trim();}).filter(Boolean) : []);
+  var list = document.getElementById('bk-stops-list'); list.innerHTML='';
+  stops.forEach(function(s){ addAccountStop(s); });
+  if(!list.querySelector('.stop-row')) addAccountStop();
+  bindStopAutocompletes();
+  tryAcctRoute();
+}
+
+function initAcctMap(){
+  if(_acctMap || typeof google==='undefined' || !google.maps) return;
+  var mapEl = document.getElementById('acct-book-map');
+  if(!mapEl) return;
+  _acctMap = new google.maps.Map(mapEl, {
+    center:{lat:43.0718,lng:-70.7626},
+    zoom:9,
+    styles:[
+      {featureType:'all',elementType:'geometry',stylers:[{color:'#1a1a1a'}]},
+      {featureType:'water',elementType:'geometry',stylers:[{color:'#0a0a0a'}]},
+      {featureType:'road',elementType:'geometry',stylers:[{color:'#2a2a2a'}]},
+      {featureType:'poi',elementType:'labels',stylers:[{visibility:'off'}]},
+      {featureType:'all',elementType:'labels.text.fill',stylers:[{color:'#ffffff'}]},
+      {featureType:'all',elementType:'labels.text.stroke',stylers:[{color:'#000000'},{weight:2}]},
+      {featureType:'administrative.locality',elementType:'labels.text.fill',stylers:[{color:'#C9A84C'}]}
+    ]
+  });
+  _acctDirSvc = new google.maps.DirectionsService();
+  _acctDirRenderer = new google.maps.DirectionsRenderer({ suppressMarkers:false, polylineOptions:{strokeColor:'#C9A84C',strokeWeight:4,strokeOpacity:0.9} });
+  _acctDirRenderer.setMap(_acctMap);
+  const acOpts = {types:['geocode','establishment'],componentRestrictions:{country:'us'},fields:['geometry','formatted_address','name']};
+  _acctACPickup = new google.maps.places.Autocomplete(document.getElementById('bk-pickup'), acOpts);
+  _acctACDest = new google.maps.places.Autocomplete(document.getElementById('bk-dest'), acOpts);
+  _acctACPickup.addListener('place_changed', function(){ _acctPickupPlace = _acctACPickup.getPlace(); tryAcctRoute(); });
+  _acctACDest.addListener('place_changed', function(){ _acctDestPlace = _acctACDest.getPlace(); tryAcctRoute(); });
+  bindStopAutocompletes();
+}
+
+function attachStopAutocomplete(inputEl){
+  if(!inputEl || inputEl.dataset.acBound==='1') return;
+  if(typeof google==='undefined' || !google.maps || !google.maps.places) return;
+  var ac = new google.maps.places.Autocomplete(inputEl, {types:['geocode','establishment'],componentRestrictions:{country:'us'},fields:['geometry','formatted_address','name']});
+  inputEl.dataset.acBound='1';
+  ac.addListener('place_changed', tryAcctRoute);
+}
+
+function bindStopAutocompletes(){
+  document.querySelectorAll('#bk-stops-list input, #e-stops-list input').forEach(function(inp){ attachStopAutocomplete(inp); });
+}
+
+function tryAcctRoute(){
+  if(!_acctDirSvc || !_acctDirRenderer) return;
+  var pickup=(document.getElementById('bk-pickup')||{}).value||'';
+  var dest=(document.getElementById('bk-dest')||{}).value||'';
+  if(!pickup || !dest) return;
+  var stops = collectStops('bk-stops-list').map(function(s){ return { location:s, stopover:true }; });
+  _acctDirSvc.route({ origin:pickup, destination:dest, waypoints:stops, travelMode:google.maps.TravelMode.DRIVING, optimizeWaypoints:false }, function(result,status){
+    if(status!=='OK') return;
+    _acctDirRenderer.setDirections(result);
+  });
 }
 
 // ─── FINANCIAL / EMBEDDED STRIPE (Payment Element) ───────────────
@@ -1764,22 +2160,6 @@ function filterTrips(filter, el){
   renderTripsList(filter);
 }
 
-// ─── REBOOK ───
-function rebook(tripId){
-  const t = allTrips.find(x => x.id === tripId);
-  if(!t) return toast('Trip not found.');
-  localStorage.setItem('rvip-rebook', JSON.stringify({
-    name: currentUser.name || '',
-    phone: currentUser.phone || '',
-    email: currentUser.email || '',
-    service: t.service || '',
-    pickup: t.pickup || '',
-    destination: t.destination || '',
-    vehicle: t.vehicle || ''
-  }));
-  window.location.href = 'schedule.html?rebook=1';
-}
-
 // ─── LOGIN TAB SWITCH ───
 function switchLoginTab(tab){
   const isPhone = tab === 'phone';
@@ -1991,11 +2371,19 @@ function showTab(id, link){
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('on'));
   document.getElementById(id).classList.add('on');
   if(link){ document.querySelectorAll('.side-link').forEach(l=>l.classList.remove('active')); link.classList.add('active'); }
+  if(id==='tab-book'){
+    setTimeout(function(){
+      if(!_acctMap && typeof google!=='undefined' && google.maps) initAcctMap();
+      if(_acctMap){ google.maps.event.trigger(_acctMap,'resize'); tryAcctRoute(); }
+      bindStopAutocompletes();
+    },80);
+  }
 }
 function openM(id){ document.getElementById(id).style.display='flex'; }
 function closeM(id){ document.getElementById(id).style.display='none'; }
 function toast(m){ const e=document.getElementById('toast'); e.textContent=m; e.style.display='block'; setTimeout(()=>e.style.display='none',3500); }
 function showErr(id, m){ const e=document.getElementById(id); e.textContent=m; e.style.display='block'; }
+function escH(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
 function backToPhone(){
   document.getElementById('step-phone').style.display='block';
   document.getElementById('step-otp').style.display='none';
@@ -2014,6 +2402,16 @@ function formatIdentityInput(el){
   if(v.includes('@')) return; // keep email raw
   fmtPhone(el);
 }
+
+document.addEventListener('focusin', function(e){
+  var t=e.target;
+  if(!t || t.tagName!=='INPUT') return;
+  if(t.closest('#bk-stops-list') || t.closest('#e-stops-list')) attachStopAutocomplete(t);
+});
+
+document.addEventListener('keydown', function(e){
+  if(e.key==='Escape' && document.getElementById('m-edit-trip').style.display==='flex') closeM('m-edit-trip');
+});
 function openEditProfile(){
   document.getElementById('p-name').value = currentUser.name;
   document.getElementById('p-email').value = currentUser.email || '';
@@ -2055,6 +2453,9 @@ window.addEventListener('load', function(){
 
 const stmtMonth = document.getElementById('stmt-month');
 if(stmtMonth) stmtMonth.value = new Date().getMonth();
+</script>
+<script async defer
+  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAtiBZ-MmvzTnOg3hDluVDCVy7mcersqe4&libraries=places&callback=initAcctMap">
 </script>
 </body>
 </html>
