@@ -85,6 +85,7 @@ body{font-family:'Inter',sans-serif;background:#f7f7f7;color:#1a1c1c;min-height:
 .edit-modal-card{background:#fff;width:100%;max-width:760px;border-left:4px solid #775a19;box-shadow:0 18px 50px rgba(0,0,0,0.35)}
 .edit-modal-head{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.25rem;border-bottom:1px solid #eee}
 .edit-modal-body{padding:1.25rem}
+.pac-container{z-index:13050!important}
 .bdg{display:inline-block;padding:2px 8px;border-radius:12px;font-family:'Work Sans',sans-serif;font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em}
 .bdg-pen{background:#fef3c7;color:#92400e}
 .bdg-con{background:#dcfce7;color:#166534}
@@ -1428,6 +1429,7 @@ function goTab(id, el){
     setTimeout(function(){
       // Lazy-init if Maps API already loaded but map not yet created
       if(!_corpMap && typeof google!=='undefined' && google.maps) initCorpMap();
+      bindStopAutocompletes();
       // Trigger resize so the map fills the full sticky column
       if(_corpMap){
         google.maps.event.trigger(_corpMap,'resize');
@@ -1762,9 +1764,10 @@ function addBookingStop(v){
   if(!list) return;
   var row=document.createElement('div');
   row.className='stop-row';
-  row.innerHTML='<input class="f-input" type="text" placeholder="Stop address" value="'+escH(v||'')+'" />'+
+  row.innerHTML='<input class="f-input" type="text" placeholder="Stop address" autocomplete="off" value="'+escH(v||'')+'" />'+
     '<button type="button" class="stop-rm" onclick="removeStopRow(this)">Remove</button>';
   list.appendChild(row);
+  attachStopAutocomplete(row.querySelector('input'));
 }
 
 function removeStopRow(btn){
@@ -1935,6 +1938,7 @@ function openEditTrip(encodedKey){
   document.getElementById('edit-trip-err').style.display='none';
   document.getElementById('edit-trip-ok').style.display='none';
   document.getElementById('edit-trip-modal').style.display='flex';
+  setTimeout(bindStopAutocompletes, 80);
 }
 
 function closeEditTrip(){
@@ -1947,9 +1951,10 @@ function addEditStop(v){
   if(!list) return;
   var row=document.createElement('div');
   row.className='stop-row';
-  row.innerHTML='<input class="f-input" type="text" placeholder="Stop address" value="'+escH(v||'')+'" />'+
+  row.innerHTML='<input class="f-input" type="text" placeholder="Stop address" autocomplete="off" value="'+escH(v||'')+'" />'+
     '<button type="button" class="stop-rm" onclick="removeStopRow(this)">Remove</button>';
   list.appendChild(row);
+  attachStopAutocomplete(row.querySelector('input'));
 }
 
 function renderEditStops(stops){
@@ -2581,6 +2586,14 @@ document.addEventListener('keydown', function(e){
   if(e.key==='Escape'){
     var modal=document.getElementById('edit-trip-modal');
     if(modal&&modal.style.display==='flex') closeEditTrip();
+  }
+});
+
+document.addEventListener('focusin', function(e){
+  var t=e.target;
+  if(!t || t.tagName!=='INPUT') return;
+  if(t.closest('#b-stops-list') || t.closest('#e-stops-list')){
+    attachStopAutocomplete(t);
   }
 });
 
