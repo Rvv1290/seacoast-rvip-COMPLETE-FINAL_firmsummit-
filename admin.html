@@ -450,6 +450,38 @@
       .g2a {
         grid-column: 1
       }
+
+      /* ── Admin calendar: compact cells on mobile ── */
+      .cal-cell {
+        padding: 0.35rem !important;
+        min-height: 56px !important;
+      }
+      .cal-day-num {
+        font-size: 0.75rem !important;
+        margin-bottom: 2px !important;
+      }
+
+      /* ── Corporate detail modal: full-screen on mobile ── */
+      #corp-detail-modal > div {
+        width: 100% !important;
+        margin: 0 !important;
+        min-height: 100vh;
+        border-radius: 0;
+      }
+      #corp-detail-modal > div > div:nth-child(2) {
+        padding: 1rem !important;
+      }
+      #corp-detail-modal .corp-stats-grid {
+        grid-template-columns: repeat(3, 1fr) !important;
+        overflow-x: auto;
+      }
+
+      /* ── Corp member modal: fit screen ── */
+      #corp-member-modal > div {
+        width: 96% !important;
+        max-width: 96% !important;
+        padding: 1.25rem !important;
+      }
     }
 
     /* --- NEW FEATURES CSS --- */
@@ -825,7 +857,7 @@
               </div>
 
               <!-- Stats -->
-              <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:0.75rem;margin-bottom:1.75rem">
+              <div class="corp-stats-grid" style="display:grid;grid-template-columns:repeat(5,1fr);gap:0.75rem;margin-bottom:1.75rem">
                 <div class="sbox" style="border-bottom:3px solid #000;text-align:center;padding:0.875rem"><div id="cd-stat-total" style="font-size:1.4rem;font-weight:700">0</div><div style="font-size:0.65rem;color:#888;margin-top:2px">Total Trips</div></div>
                 <div class="sbox" style="border-bottom:3px solid #10b981;text-align:center;padding:0.875rem"><div id="cd-stat-done" style="font-size:1.4rem;font-weight:700;color:#10b981">0</div><div style="font-size:0.65rem;color:#888;margin-top:2px">Completed</div></div>
                 <div class="sbox" style="border-bottom:3px solid #f59e0b;text-align:center;padding:0.875rem"><div id="cd-stat-pend" style="font-size:1.4rem;font-weight:700;color:#f59e0b">0</div><div style="font-size:0.65rem;color:#888;margin-top:2px">Pending</div></div>
@@ -1689,23 +1721,22 @@
       bks.forEach(function(b){ if(b.date){ if(!tripMap[b.date]) tripMap[b.date]=[]; tripMap[b.date].push(b); }});
 
       var headers = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-      var html = headers.map(function(h){ return '<div style="background:#f9f9f9;padding:0.75rem;text-align:center;font-family:\'Work Sans\',sans-serif;font-size:0.6rem;font-weight:700;text-transform:uppercase;color:#aaa;border-bottom:1px solid #eee">'+h+'</div>'; }).join('');
-      
+      var html = headers.map(function(h){ return '<div style="background:#f9f9f9;padding:0.5rem 0.25rem;text-align:center;font-family:\'Work Sans\',sans-serif;font-size:0.6rem;font-weight:700;text-transform:uppercase;color:#aaa;border-bottom:1px solid #eee">'+h+'</div>'; }).join('');
+
       var first = new Date(year, month, 1).getDay();
       var last = new Date(year, month + 1, 0).getDate();
-      for(var i=0; i<first; i++) html += '<div style="padding:1rem;border-bottom:1px solid #eee;border-right:1px solid #eee;background:#fafafa"></div>';
-      
+      for(var i=0; i<first; i++) html += '<div class="cal-cell" style="border-bottom:1px solid #eee;border-right:1px solid #eee;background:#fafafa;padding:1rem;min-height:100px"></div>';
+
       var today = new Date().toISOString().split('T')[0];
       for(var d=1; d<=last; d++) {
         var dateStr = year + '-' + String(month+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
         var trips = tripMap[dateStr] || [];
         var isToday = dateStr === today;
-        var hasTrips = trips.length > 0;
         var sel = _adminSelectedDate === dateStr ? 'background:#775a19;color:#fff' : (isToday ? 'background:#fdfaf4;color:#775a19' : '');
-        
-        html += '<div onclick="selectAdminDate(\''+dateStr+'\')" style="padding:1rem;min-height:100px;border-bottom:1px solid #eee;border-right:1px solid #eee;cursor:pointer;'+sel+'">' +
-          '<div style="font-weight:700;font-size:0.85rem;margin-bottom:0.5rem">'+d+'</div>' +
-          trips.map(function(t){ 
+
+        html += '<div class="cal-cell" onclick="selectAdminDate(\''+dateStr+'\')" style="padding:1rem;min-height:100px;border-bottom:1px solid #eee;border-right:1px solid #eee;cursor:pointer;'+sel+'">' +
+          '<div class="cal-day-num" style="font-weight:700;font-size:0.85rem;margin-bottom:0.5rem">'+d+'</div>' +
+          trips.map(function(t){
             var color = t.status === 'Pending' ? '#f59e0b' : '#1d4ed8';
             return '<div style="font-size:0.62rem;padding:2px 4px;margin-bottom:2px;background:'+color+'20;color:'+color+';border-radius:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">🚗 '+e(t.name)+'</div>';
           }).join('') +

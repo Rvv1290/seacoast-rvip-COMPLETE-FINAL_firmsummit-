@@ -2,8 +2,105 @@ const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 admin.initializeApp();
 
+// Secret names for Firebase Secret Manager
+const stripeSecret        = "STRIPE_SECRET";
+const calendarCredsSecret = "GOOGLE_CALENDAR_CREDS"; // Service account JSON (stringified)
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GOOGLE CALENDAR SYNC
+// Auto-creates a Google Calendar event when a booking is confirmed.
+//
+// SETUP REQUIRED (one-time):
+//   1. Create a Google Cloud service account with "Google Calendar API" enabled.
+//   2. Share your Google Calendar with the service account email (Editor permission).
+//   3. Store the service account JSON as a Firebase Secret named GOOGLE_CALENDAR_CREDS.
+//   4. Set your Calendar ID in the GOOGLE_CALENDAR_ID env var or hardcode below.
+// ─────────────────────────────────────────────────────────────────────────────
+exports.syncBookingToCalendar = functions
+  .runWith({ secrets: [calendarCredsSecret] })
+  .firestore.document("bookings/{bookingId}")
+  .onWrite(async (change, context) => {
+    const before = change.before.exists ? change.before.data() : null;
+    const after  = change.after.exists  ? change.after.data()  : null;
+
+    if (!after) return; // Booking deleted — optionally delete calendar event
+
+    const wasConfirmed = before && before.status === "Confirmed";
+    const isConfirmed  = after.status === "Confirmed";
+    const bookingId    = context.params.bookingId;
+
+    // Only act when status first becomes Confirmed
+    if (wasConfirmed || !isConfirmed) return;
+
+    const credsJson = process.env.GOOGLE_CALENDAR_CREDS;
+    if (!credsJson) {
+      console.warn("GOOGLE_CALENDAR_CREDS secret not set — skipping calendar sync");
+      return;
+    }
+
+    try {
+      const { google } = require("googleapis");
+      const creds = JSON.parse(credsJson);
+      const auth = new google.auth.GoogleAuth({
+        credentials: creds,
+        scopes: ["https://www.googleapis.com/auth/calendar.events"],
+      });
+      const calendar = google.calendar({ version: "v3", auth });
+
+      const calendarId = process.env.GOOGLE_CALENDAR_ID || "primary";
+
+      // Build date/time — fallback to all-day if no time
+      const dateStr = after.date || new Date().toISOString().split("T")[0];
+      const timeStr = after.time && after.time !== "TBD" ? after.time : null;
+      let start, end;
+      if (timeStr) {
+        const startISO = `${dateStr}T${timeStr}:00`;
+        const endDate  = new Date(startISO);
+        endDate.setHours(endDate.getHours() + 2); // assume 2-hour window
+        start = { dateTime: startISO, timeZone: "America/New_York" };
+        end   = { dateTime: endDate.toISOString(), timeZone: "America/New_York" };
+      } else {
+        start = { date: dateStr };
+        end   = { date: dateStr };
+      }
+
+      const stops = after.stops ? `\nStops: ${after.stops}` : "";
+      const timeTbd = after.pickupTimeTBD ? "\n⚠️ Pickup time TBD — confirm with client" : "";
+
+      const event = {
+        summary: `🚗 ${after.name || "Ride"} — ${after.service || "Transfer"}${after.company ? ` (${after.company})` : ""}`,
+        description:
+          `Passenger: ${after.name || "—"}\n` +
+          `Phone: ${after.phone || "—"}\n` +
+          `Email: ${after.email || "—"}\n` +
+          `Pickup: ${after.pickup || "—"}\n` +
+          `Drop-off: ${after.destination || "—"}` +
+          stops + timeTbd +
+          `\n\nPassengers: ${after.passengers || 1}\n` +
+          `Vehicle: ${after.vehicle || "—"}\n` +
+          `Booking Code: ${after.code || bookingId}`,
+        start,
+        end,
+        colorId: "9", // blueberry
+        reminders: {
+          useDefault: false,
+          overrides: [
+            { method: "popup", minutes: 60 },
+            { method: "popup", minutes: 15 },
+          ],
+        },
+      };
+
+      const result = await calendar.events.insert({ calendarId, requestBody: event });
+      await change.after.ref.update({ googleCalendarEventId: result.data.id });
+      console.log("Calendar event created:", result.data.id, "for booking:", bookingId);
+    } catch (err) {
+      console.error("Calendar sync error:", err.message);
+    }
+  });
+
 // STRIPE VERSION 1 CALLABLES
-const stripeSecret = "STRIPE_SECRET"; // In v1 we use .runWith({ secrets: [...] })
+
 
 /**
  * Ensures an account has a valid Stripe Customer ID.

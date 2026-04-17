@@ -63,8 +63,16 @@ body{font-family:'Inter',sans-serif;background-color:#f9f9f9}
 .v-card input[type="radio"]:checked+label{border-bottom-color:#775a19;background:white}
 
 /* Passenger buttons */
-.p-btn{transition:all 0.15s;width:3rem;height:3rem;border-radius:50%;border:1px solid #c4c7c7;font-weight:700;font-size:0.875rem;font-family:'Work Sans',sans-serif;cursor:pointer;background:white}
+.p-btn{transition:all 0.15s;width:3rem;height:3rem;border-radius:50%;border:1px solid #c4c7c7;font-weight:700;font-size:0.875rem;font-family:'Work Sans',sans-serif;cursor:pointer;background:white;min-width:44px;min-height:44px}
 .p-btn.sel{background:#000;color:white;border-color:#000}
+
+/* Mobile: larger touch targets & readable inputs */
+@media(max-width:640px){
+  .f-input{font-size:16px;min-height:44px}
+  input[type="date"],.f-input[type="date"],input[type="time"],.f-input[type="time"]{min-height:44px;font-size:16px}
+  .v-card label{padding:1.25rem}
+  .pay-card label{padding:1.25rem 0.75rem;min-height:70px}
+}
 
 /* Inputs */
 .f-input{width:100%;background:#f3f3f3;border:0;border-bottom:2px solid #c4c7c7;padding:0.75rem 0;font-family:'Inter',sans-serif;font-size:1rem;transition:all 0.2s;outline:none}
@@ -130,24 +138,27 @@ function saveBookingToFirebase(data) {
   if (!window._db) return;
   var id = 'bk_' + Date.now().toString();
   var doc = {
-    id:          id,
-    code:        data.code        || '',
-    name:        data.name        || '',
-    phone:       data.phone       || '',
-    email:       data.email       || '',
-    service:     data.service     || '',
-    date:        data.date        || '',
-    time:        data.time        || '',
-    pickup:      data.pickup      || '',
-    destination: data.destination || '',
-    vehicle:     data.vehicle     || '',
-    passengers:  String(data.passengers || '1'),
-    price:       parseFloat(data.amount) || 0,
-    notes:       data.notes       || '',
-    status:      'Pending',
-    source:      'website-form',
-    createdAt:   new Date().toISOString(),
-    tosAcceptedAt: data.tosAcceptedAt || null
+    id:             id,
+    code:           data.code           || '',
+    name:           data.name           || '',
+    phone:          data.phone          || '',
+    email:          data.email          || '',
+    company:        data.company        || '',
+    service:        data.service        || '',
+    date:           data.date           || '',
+    time:           data.time           || '',
+    pickupTimeTBD:  data.pickupTimeTBD  || false,
+    pickup:         data.pickup         || '',
+    destination:    data.destination    || '',
+    stops:          data.stops          || '',
+    vehicle:        data.vehicle        || '',
+    passengers:     String(data.passengers || '1'),
+    price:          parseFloat(data.amount) || 0,
+    notes:          data.notes          || '',
+    status:         'Pending',
+    source:         'website-form',
+    createdAt:      new Date().toISOString(),
+    tosAcceptedAt:  data.tosAcceptedAt  || null
   };
   
   // Attach client info if logged in
@@ -308,7 +319,7 @@ window.addEventListener('DOMContentLoaded', checkWidth);
   <!-- ═══════════════════════════════════════ -->
   <!-- LEFT — BOOKING FORM -->
   <!-- ═══════════════════════════════════════ -->
-  <section class="w-full md:w-1/2 px-8 md:px-14 py-12 overflow-y-auto">
+  <section class="w-full md:w-1/2 px-4 md:px-8 lg:px-14 py-8 md:py-12 overflow-y-auto">
 
     <div class="mb-10">
       <span class="font-label text-secondary uppercase tracking-widest text-xs font-semibold mb-2 block">The Ride You Can Count On</span>
@@ -385,6 +396,10 @@ CONFIDENTIALITY NOTICE: This communication is intended solely for the named reci
                 oninput="document.getElementById('reply-email').value=this.value"/>
             </div>
           </div>
+          <div>
+            <label class="f-label">Company Name <span class="text-zinc-500 font-normal">(Leave blank if personal ride)</span></label>
+            <input class="f-input" name="Company Name" id="field-company" type="text" placeholder="e.g. Acme Corp — leave blank if personal"/>
+          </div>
         </div>
       </div>
 
@@ -436,8 +451,8 @@ CONFIDENTIALITY NOTICE: This communication is intended solely for the named reci
               </select>
             </div>
             <div>
-              <label class="f-label">Flight Number</label>
-              <input class="f-input" name="Flight Number" type="text" placeholder="AA 1234"/>
+              <label class="f-label">Flight Number <span class="text-zinc-500 font-normal">(we'll track delays)</span></label>
+              <input class="f-input" name="Flight Number" type="text" placeholder="AA 1234" style="text-transform:uppercase"/>
             </div>
           </div>
           <div class="grid grid-cols-2 gap-5">
@@ -447,7 +462,12 @@ CONFIDENTIALITY NOTICE: This communication is intended solely for the named reci
             </div>
             <div>
               <label class="f-label">Pickup Time *</label>
-              <input class="f-input" name="Pickup Time" type="time" required/>
+              <input class="f-input" id="pickup-time-input" name="Pickup Time" type="time" required/>
+              <label style="display:flex;align-items:center;gap:6px;margin-top:6px;cursor:pointer;font-family:Inter,sans-serif;font-size:0.75rem;color:#444748">
+                <input type="checkbox" id="time-tbd-check" onchange="toggleTimeTBD(this)" style="accent-color:#775a19;width:15px;height:15px"/>
+                TBD — Admin will confirm pickup time
+              </label>
+              <input type="hidden" name="Pickup Time TBD" id="hid-time-tbd" value="No"/>
             </div>
           </div>
 
@@ -470,6 +490,19 @@ CONFIDENTIALITY NOTICE: This communication is intended solely for the named reci
               <span class="material-symbols-outlined absolute right-0 bottom-3 text-on-surface-variant text-lg">location_on</span>
             </div>
           </div>
+
+          <!-- ADDITIONAL STOPS (up to 3) -->
+          <div id="stops-section">
+            <div style="margin-bottom:0.5rem;display:flex;align-items:center;justify-content:space-between">
+              <label class="f-label" style="margin:0">Additional Stops <span class="text-zinc-500 font-normal">(Optional — up to 3)</span></label>
+              <button type="button" id="add-stop-btn" onclick="addStop()"
+                style="font-family:'Work Sans',sans-serif;font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#775a19;background:none;border:1px solid #775a19;padding:4px 10px;cursor:pointer">
+                + Add Stop
+              </button>
+            </div>
+            <div id="stops-list"></div>
+          </div>
+          <input type="hidden" name="Additional Stops" id="hid-stops" value=""/>
 
           <!-- Route preview strip (shows after both addresses entered) -->
           <div id="route-card" class="p-4 shadow-sm">
@@ -592,7 +625,7 @@ CONFIDENTIALITY NOTICE: This communication is intended solely for the named reci
           <p style="margin-bottom:1rem">A reservation is not confirmed until you receive written confirmation by email or text. You are responsible for ensuring all booking details are accurate. Change requests must be made at least 24 hours before pickup and are subject to availability.</p>
 
           <p style="font-weight:700;color:#1a1c1c;margin-bottom:0.35rem">4. Pricing and Payment</p>
-          <p style="margin-bottom:1rem">All fares are flat-rate and confirmed at the time of booking. We do not charge surge pricing. Payment is accepted by credit card (Square) and Venmo. Full payment is due at or before the time of service. Additional charges may apply for extended wait times, vehicle cleaning, or tolls and airport fees not included in your quoted fare.</p>
+          <p style="margin-bottom:1rem">All fares are flat-rate and confirmed at the time of booking. We do not charge surge pricing. Payment is accepted by credit/debit card (Stripe), Venmo, or cash on arrival. Full payment is due at or before the time of service. Additional charges may apply for extended wait times, vehicle cleaning, or tolls and airport fees not included in your quoted fare.</p>
 
           <p style="font-weight:700;color:#1a1c1c;margin-bottom:0.35rem">5. Cancellation &amp; Refund Policy</p>
           <div style="background:#f9f9f9;border-left:3px solid #775a19;padding:0.75rem 1rem;margin-bottom:1rem">
@@ -645,9 +678,10 @@ CONFIDENTIALITY NOTICE: This communication is intended solely for the named reci
         <input type="hidden" id="tos-timestamp" name="ToS Accepted At" value="">
       </div>
 
-      <!-- SUBMIT -->
-      <button type="submit" id="sub-btn"
-        class="w-full bg-primary text-white py-5 font-headline font-black text-xl uppercase tracking-tight hover:bg-zinc-900 transition-all border-b-4 border-secondary active:scale-[0.98]">
+      <!-- SUBMIT — disabled until ToS is accepted -->
+      <button type="submit" id="sub-btn" disabled
+        class="w-full bg-primary text-white py-5 font-headline font-black text-xl uppercase tracking-tight border-b-4 border-secondary active:scale-[0.98]"
+        style="opacity:0.4;cursor:not-allowed;transition:opacity 0.2s">
         Request My Ride →
       </button>
       <p class="text-center text-xs text-on-surface-variant mt-4">
@@ -1028,6 +1062,10 @@ function handleSubmit(e) {
   var tosTs = document.getElementById('tos-timestamp');
   if (tosTs) tosTs.value = new Date().toISOString();
 
+  // Collect stops into hidden field
+  var stopsHid = document.getElementById('hid-stops');
+  if (stopsHid) stopsHid.value = collectStops();
+
   btn.textContent = 'Sending...';
   btn.disabled = true;
 
@@ -1087,16 +1125,21 @@ function generateCode() {
 
 function saveBookingToStorage(code) {
   var form = document.getElementById('book-form');
+  var stopsStr = collectStops();
+  var timeTBD  = (document.getElementById('hid-time-tbd') || {}).value === 'Yes — Admin will confirm';
   var data = {
     code: code,
     name: form.querySelector('[name="Full Name"]') ? form.querySelector('[name="Full Name"]').value : '',
     phone: form.querySelector('[name="Phone"]') ? form.querySelector('[name="Phone"]').value : '',
     email: form.querySelector('[name="Email"]') ? form.querySelector('[name="Email"]').value : '',
+    company: form.querySelector('[name="Company Name"]') ? form.querySelector('[name="Company Name"]').value : '',
     service: form.querySelector('[name="Service Type"]') ? form.querySelector('[name="Service Type"]').value : '',
     date: form.querySelector('[name="Date"]') ? form.querySelector('[name="Date"]').value : '',
-    time: form.querySelector('[name="Pickup Time"]') ? form.querySelector('[name="Pickup Time"]').value : '',
+    time: timeTBD ? 'TBD' : (form.querySelector('[name="Pickup Time"]') ? form.querySelector('[name="Pickup Time"]').value : ''),
+    pickupTimeTBD: timeTBD,
     pickup: (document.getElementById('pickup-input') || form.querySelector('[name="Pickup Address"]') || {value:''}).value,
     destination: (document.getElementById('dest-input') || form.querySelector('[name="Destination"]') || {value:''}).value,
+    stops: stopsStr,
     notes: form.querySelector('[name="Special Requests"]') ? form.querySelector('[name="Special Requests"]').value : '',
     vehicle: document.querySelector('[name="Vehicle Class"]:checked') ? document.querySelector('[name="Vehicle Class"]:checked').value : 'Black SUV Luxury',
     passengers: document.getElementById('hid-pass') ? document.getElementById('hid-pass').value : '1',
@@ -1163,6 +1206,82 @@ function showError() {
   var btn = document.getElementById('sub-btn');
   btn.textContent = 'Request My Ride →';
   btn.disabled = false;
+}
+
+// ─── TOS GATE — enable button only when checkbox is checked ─────
+document.addEventListener('DOMContentLoaded', function() {
+  var tosCheck = document.getElementById('tos-check');
+  var subBtn   = document.getElementById('sub-btn');
+  function syncBtn() {
+    var checked = tosCheck && tosCheck.checked;
+    subBtn.disabled = !checked;
+    subBtn.style.opacity = checked ? '1' : '0.4';
+    subBtn.style.cursor  = checked ? 'pointer' : 'not-allowed';
+  }
+  if (tosCheck) { tosCheck.addEventListener('change', syncBtn); syncBtn(); }
+});
+
+// ─── PICKUP TIME TBD ──────────────────────────────────────────────
+function toggleTimeTBD(cb) {
+  var inp = document.getElementById('pickup-time-input');
+  var hid = document.getElementById('hid-time-tbd');
+  if (cb.checked) {
+    inp.removeAttribute('required');
+    inp.value = '';
+    inp.disabled = true;
+    inp.style.opacity = '0.35';
+    hid.value = 'Yes — Admin will confirm';
+  } else {
+    inp.setAttribute('required', 'required');
+    inp.disabled = false;
+    inp.style.opacity = '1';
+    hid.value = 'No';
+  }
+}
+
+// ─── MULTI-STOP ───────────────────────────────────────────────────
+var _stopCount = 0;
+function addStop() {
+  if (_stopCount >= 3) { alert('Maximum 3 additional stops allowed.'); return; }
+  _stopCount++;
+  var n = _stopCount;
+  var list = document.getElementById('stops-list');
+  var div  = document.createElement('div');
+  div.id = 'stop-row-' + n;
+  div.style.cssText = 'display:flex;gap:8px;align-items:flex-end;margin-bottom:0.75rem';
+  div.innerHTML =
+    '<div style="flex:1">' +
+      '<label class="f-label">Stop ' + n + ' Address' +
+        (n === 1 ? '' : '') +
+        ' <span style="font-weight:400;color:#aaa;font-size:0.6rem">(passenger name if corporate)</span>' +
+      '</label>' +
+      '<input class="f-input stop-input" id="stop-addr-' + n + '" type="text" placeholder="Address or landmark…"/>' +
+      '<input class="f-input" id="stop-name-' + n + '" type="text" placeholder="Passenger name at this stop (optional)" style="margin-top:6px;font-size:0.82rem"/>' +
+    '</div>' +
+    '<button type="button" onclick="removeStop(' + n + ')" ' +
+      'style="background:none;border:1px solid #e2e2e2;padding:8px;cursor:pointer;color:#888;flex-shrink:0;margin-bottom:2px" ' +
+      'title="Remove stop">✕</button>';
+  list.appendChild(div);
+  if (_stopCount >= 3) document.getElementById('add-stop-btn').style.display = 'none';
+}
+function removeStop(n) {
+  var el = document.getElementById('stop-row-' + n);
+  if (el) el.remove();
+  _stopCount--;
+  document.getElementById('add-stop-btn').style.display = '';
+}
+function collectStops() {
+  var parts = [];
+  for (var i = 1; i <= 3; i++) {
+    var aEl = document.getElementById('stop-addr-' + i);
+    var nEl = document.getElementById('stop-name-' + i);
+    if (aEl && aEl.value.trim()) {
+      var s = 'Stop ' + i + ': ' + aEl.value.trim();
+      if (nEl && nEl.value.trim()) s += ' (' + nEl.value.trim() + ')';
+      parts.push(s);
+    }
+  }
+  return parts.join(' | ');
 }
 
 window.addEventListener('DOMContentLoaded', function() {

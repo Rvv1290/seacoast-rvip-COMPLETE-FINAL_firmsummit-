@@ -285,6 +285,25 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
     <div id="recaptcha-container"></div>
 
     <!-- ── EMAIL METHOD ── -->
+    <div id="login-email-method" style="display:none">
+      <div id="step-email">
+        <div class="f-group">
+          <label class="f-label">Email Address</label>
+          <input id="email-login-inp" type="email" class="f-input" placeholder="your@email.com" onkeydown="if(event.key==='Enter')document.getElementById('email-pwd-inp').focus()"/>
+        </div>
+        <div class="f-group">
+          <label class="f-label">Password</label>
+          <input id="email-pwd-inp" type="password" class="f-input" placeholder="Enter your password" onkeydown="if(event.key==='Enter')doEmailLogin()"/>
+        </div>
+        <div id="email-err" style="display:none;color:#d32f2f;font-size:0.8rem;margin-bottom:1rem"></div>
+        <button id="email-login-btn" onclick="doEmailLogin()" class="btn-k" style="width:100%">Sign In →</button>
+        <button onclick="sendForgotPwdLink('email')" style="width:100%;margin-top:0.75rem;background:transparent;border:none;color:#888;font-size:0.85rem;cursor:pointer;text-decoration:underline;padding:0.75rem 0;min-height:44px">Forgot Password?</button>
+      </div>
+      <div id="step-email-sent" style="display:none;background:#f9f9f9;padding:1.25rem;border-left:4px solid #775a19;font-size:0.85rem;color:#444">
+        A sign-in link has been sent to your email. Click it to log in securely.
+      </div>
+    </div><!-- /login-email-method -->
+
     </div><!-- /view-login -->
 
     <!-- Signup View -->
@@ -762,36 +781,78 @@ async function doSocialAuth(providerName) {
     provider = new firebase.auth.GoogleAuthProvider();
   } else if (providerName === 'apple') {
     provider = new firebase.auth.OAuthProvider('apple.com');
+    provider.addScope('email');
+    provider.addScope('name');
   } else return;
+
+  // On mobile Safari / iOS, signInWithPopup is blocked — use redirect instead
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+  if (isMobile) {
+    try {
+      // Store intent so we can resume after redirect
+      localStorage.setItem('rvip-social-pending', providerName);
+      await auth.signInWithRedirect(provider);
+    } catch (e) {
+      alert('Authentication failed: ' + e.message);
+    }
+    return; // page will reload after redirect completes
+  }
 
   try {
     const result = await auth.signInWithPopup(provider);
-    const user = result.user;
-    
-    // Check if client exists in Firestore
-    const snap = await db.collection('clients').where('email', '==', user.email).limit(1).get();
-    if (!snap.empty) {
-      let client; snap.forEach(d => client = {id: d.id, ...d.data()});
-      loginUser(client);
-    } else {
-      // Auto-create account for social users
-      const ref = db.collection('clients').doc();
-      const data = {
-        name: user.displayName || 'New Rider',
-        email: user.email,
-        phone: user.phoneNumber || '',
-        status: 'Approved',
-        createdAt: new Date().toISOString(),
-        authProvider: providerName
-      };
-      await ref.set(data);
-      loginUser({id: ref.id, ...data});
-      toast(`Welcome, ${data.name}!`);
-    }
+    await handleSocialResult(result, providerName);
   } catch (e) {
-    alert('Authentication failed: ' + e.message);
+    if (e.code === 'auth/popup-blocked' || e.code === 'auth/popup-closed-by-user') {
+      // Fallback to redirect if popup was blocked
+      try {
+        localStorage.setItem('rvip-social-pending', providerName);
+        await auth.signInWithRedirect(provider);
+      } catch (e2) {
+        alert('Authentication failed: ' + e2.message);
+      }
+    } else {
+      alert('Authentication failed: ' + e.message);
+    }
   }
 }
+
+async function handleSocialResult(result, providerName) {
+  const user = result.user;
+  const snap = await db.collection('clients').where('email', '==', user.email).limit(1).get();
+  if (!snap.empty) {
+    let client; snap.forEach(d => client = {id: d.id, ...d.data()});
+    loginUser(client);
+  } else {
+    const ref = db.collection('clients').doc();
+    const data = {
+      name: user.displayName || 'New Rider',
+      email: user.email || '',
+      phone: user.phoneNumber || '',
+      status: 'Approved',
+      createdAt: new Date().toISOString(),
+      authProvider: providerName
+    };
+    await ref.set(data);
+    loginUser({id: ref.id, ...data});
+    toast(`Welcome, ${data.name}!`);
+  }
+}
+
+// Handle redirect result on page load (for mobile Apple/Google sign-in)
+auth.getRedirectResult().then(function(result) {
+  if (result && result.user) {
+    const providerName = localStorage.getItem('rvip-social-pending') || 'google';
+    localStorage.removeItem('rvip-social-pending');
+    handleSocialResult(result, providerName).catch(function(e) {
+      alert('Sign-in error: ' + e.message);
+    });
+  }
+}).catch(function(e) {
+  if (e.code !== 'auth/no-current-user') {
+    console.warn('Redirect result error:', e.message);
+  }
+});
 
 async function doSignup() {
   const name = document.getElementById('reg-name').value.trim();
@@ -936,8 +997,17 @@ async function startMigration(){
     _pendingClient = client;
     
     // Trigger Phone Auth
-    if(window._recaptchaVerifier) try{ window._recaptchaVerifier.clear(); }catch(e){}
-    window._recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', { size:'invisible' });
+    try {
+      if(window._recaptchaVerifier) { window._recaptchaVerifier.clear(); window._recaptchaVerifier = null; }
+    } catch(e) { window._recaptchaVerifier = null; }
+    // Recreate the container so reCAPTCHA doesn't complain about a used element
+    var rcEl = document.getElementById('recaptcha-container');
+    if(rcEl) { rcEl.innerHTML = ''; }
+    window._recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
+      size: 'invisible',
+      callback: function() {},
+      'expired-callback': function() { window._recaptchaVerifier = null; }
+    });
     
     const prov = new firebase.auth.PhoneAuthProvider();
     _confirmationResult = await firebase.auth().signInWithPhoneNumber(phone, window._recaptchaVerifier);
@@ -991,8 +1061,16 @@ async function saveInitialPassword(){
 async function resendOTP(){
   document.getElementById('otp-inp').value='';
   document.getElementById('otp-err').style.display='none';
-  if(window._recaptchaVerifier){ try{ window._recaptchaVerifier.clear(); }catch(e){} }
-  window._recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', { size:'invisible' });
+  try {
+    if(window._recaptchaVerifier){ window._recaptchaVerifier.clear(); window._recaptchaVerifier = null; }
+  } catch(e) { window._recaptchaVerifier = null; }
+  var rcEl2 = document.getElementById('recaptcha-container');
+  if(rcEl2) rcEl2.innerHTML = '';
+  window._recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
+    size: 'invisible',
+    callback: function() {},
+    'expired-callback': function() { window._recaptchaVerifier = null; }
+  });
   try {
     _confirmationResult = await auth.signInWithPhoneNumber(_pendingPhone, window._recaptchaVerifier);
     toast('New code sent.');

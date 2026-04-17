@@ -63,12 +63,17 @@ body{font-family:'Inter',sans-serif;background:#f7f7f7;color:#1a1c1c;min-height:
 .sec-sub{font-family:Inter,sans-serif;font-size:0.75rem;color:#888;margin-top:2px}
 /* ─── TRIP CARDS ─── */
 .trip-card{background:#fff;border-left:3px solid #e2e2e2;padding:1.1rem 1.25rem;margin-bottom:0.75rem;display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.trip-head{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap;width:100%}
+.trip-main{min-width:240px;flex:1}
+.trip-actions{display:flex;flex-direction:column;align-items:flex-end;gap:0.5rem;flex-shrink:0}
 .trip-card.pending{border-left-color:#f59e0b}
 .trip-card.confirmed{border-left-color:#22c55e}
 .trip-card.completed{border-left-color:#888}
 .trip-date{font-family:'Work Sans',sans-serif;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#775a19;margin-bottom:3px}
 .trip-route{font-family:Inter,sans-serif;font-size:0.88rem;font-weight:600;color:#000;margin-bottom:2px}
 .trip-meta{font-family:Inter,sans-serif;font-size:0.75rem;color:#888}
+.trip-map-wrap{width:100%;margin-top:0.85rem;border:1px solid #ececec;border-radius:4px;overflow:hidden;background:#f3f3f3}
+.trip-map-frame{display:block;width:100%;height:165px;border:0}
 .bdg{display:inline-block;padding:2px 8px;border-radius:12px;font-family:'Work Sans',sans-serif;font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em}
 .bdg-pen{background:#fef3c7;color:#92400e}
 .bdg-con{background:#dcfce7;color:#166534}
@@ -174,6 +179,8 @@ body{font-family:'Inter',sans-serif;background:#f7f7f7;color:#1a1c1c;min-height:
 @media(max-width:480px){
   .stat-row{grid-template-columns:1fr}
   .topbar-right{display:none}
+  .trip-actions{align-items:flex-start}
+  .trip-map-frame{height:150px}
 }
 @media(min-width:1001px){.mob-nav{display:none}.mob-menu-btn{display:none!important}}
 
@@ -1615,13 +1622,19 @@ function tripCard(t){
   var cls=t.status==='Confirmed'?'confirmed':t.status==='Completed'?'completed':'pending';
   var time12='';
   if(t.time){var p=t.time.split(':'),h=parseInt(p[0]),m=p[1],ampm=h>=12?'PM':'AM';h=h%12||12;time12=h+':'+m+' '+ampm;}
+  var routeMap='';
+  if(t.pickup&&t.destination){
+    var mapSrc='https://maps.google.com/maps?saddr='+encodeURIComponent(t.pickup)+'&daddr='+encodeURIComponent(t.destination)+'&output=embed';
+    routeMap='<div class="trip-map-wrap"><iframe class="trip-map-frame" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="'+mapSrc+'" title="Trip route map"></iframe></div>';
+  }
   return '<div class="trip-card '+cls+'">'+
-    '<div><div class="trip-date">'+dateStr+(time12?' · '+time12:'')+'</div>'+
+    '<div class="trip-head"><div class="trip-main"><div class="trip-date">'+dateStr+(time12?' · '+time12:'')+'</div>'+
     '<div class="trip-route">'+escH(t.pickup||'—')+' → '+escH(t.destination||'—')+'</div>'+
     '<div class="trip-meta">'+escH(t.name||'')+(t.service?' · '+escH(t.service):'')+(t.vehicle?' · '+escH(t.vehicle):'')+(t.price?' · <strong>'+escH(t.price+'')+'</strong>':'')+'</div></div>'+
-    '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.5rem;flex-shrink:0">'+bdg+
+    '<div class="trip-actions">'+bdg+
     (t.status==='Completed'?'<span style="font-family:\'Work Sans\',sans-serif;font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#775a19;cursor:pointer" onclick="rebookTrip(\''+escH(t.pickup||'')+'\',\''+escH(t.destination||'')+'\',\''+escH(t.service||'')+'\',\''+escH(t.name||'')+'\',\''+escH(t.phone||'')+'\')">↻ Rebook</span>':'')+
-    (t.pickup?'<a href="https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(t.pickup||'')+'" target="_blank" style="font-family:\'Work Sans\',sans-serif;font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#775a19;text-decoration:none">Navigate</a>':'')+'</div></div>';
+    (t.pickup?'<a href="https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(t.pickup||'')+'" target="_blank" style="font-family:\'Work Sans\',sans-serif;font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#775a19;text-decoration:none">Navigate</a>':'')+'</div></div>'+
+    routeMap+'</div>';
 }
 
 function renderTrips(){
