@@ -2572,6 +2572,11 @@ async function saveProfile(){
 
 // ─── AUTO LOGIN (check localStorage session) ───
 (function(){
+  // Email link from forgot-password flow takes priority over saved session
+  if(auth.isSignInWithEmailLink(window.location.href)){
+    checkEmailLink();
+    return;
+  }
   const saved = localStorage.getItem('rvip-client-id');
   if(saved && db){
     db.collection('clients').doc(saved).get().then(d=>{
