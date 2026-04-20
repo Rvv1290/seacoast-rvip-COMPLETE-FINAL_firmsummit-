@@ -615,17 +615,37 @@
           <div style="font-size:.6rem;text-transform:uppercase;letter-spacing:.08em;color:#aaa">Admin · <span id="today-lbl"></span></div>
         </div>
         
-        <!-- NEW: Global Search & Filter Bar -->
-        <div style="display:flex;gap:0.5rem;flex:1;max-width:500px;margin:0 1rem">
-          <div style="position:relative;flex:1">
+        <!-- Global Search & Filter Bar -->
+        <div style="display:flex;gap:0.5rem;flex:1;max-width:700px;margin:0 1rem;flex-wrap:wrap">
+          <div style="position:relative;flex:2;min-width:160px">
             <span class="material-symbols-outlined" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:18px;color:#aaa">search</span>
-            <input type="text" id="admin-search" oninput="renderBks()" placeholder="Search guest, phone, or code…" style="width:100%;padding:0.6rem 0.6rem 0.6rem 2.2rem;border:1.5px solid #eee;border-radius:4px;font-family:Inter,sans-serif;font-size:0.8rem;outline:none;transition:border-color 0.2s" onfocus="this.style.borderColor='#775a19'" onblur="this.style.borderColor='#eee'"/>
+            <input type="text" id="admin-search" oninput="renderBks()" placeholder="Client name, phone, or code…" style="width:100%;padding:0.6rem 0.6rem 0.6rem 2.2rem;border:1.5px solid #eee;border-radius:4px;font-family:Inter,sans-serif;font-size:0.8rem;outline:none;transition:border-color 0.2s" onfocus="this.style.borderColor='#775a19'" onblur="this.style.borderColor='#eee'"/>
           </div>
-          <select id="admin-filter-service" onchange="renderBks()" style="padding:0.6rem;border:1.5px solid #eee;border-radius:4px;font-family:Inter,sans-serif;font-size:0.8rem;outline:none;background:#fff;cursor:pointer">
-            <option value="">All Services</option>
-            <option value="Black SUV Luxury">Black SUV Luxury</option>
-            <option value="Black Sedan Luxury">Black Sedan Luxury</option>
+          <select id="admin-filter-status" onchange="renderBks()" style="padding:0.6rem;border:1.5px solid #eee;border-radius:4px;font-family:Inter,sans-serif;font-size:0.8rem;outline:none;background:#fff;cursor:pointer;min-width:130px">
+            <option value="">All Statuses</option>
+            <option value="Pending">Pending</option>
+            <option value="Confirmed">Confirmed (Unpaid)</option>
+            <option value="Paid">Paid</option>
+            <option value="Completed">Completed</option>
+            <option value="Cancelled">Cancelled</option>
+          </select>
+          <select id="admin-filter-service" onchange="renderBks()" style="padding:0.6rem;border:1.5px solid #eee;border-radius:4px;font-family:Inter,sans-serif;font-size:0.8rem;outline:none;background:#fff;cursor:pointer;min-width:130px">
+            <option value="">All Ride Types</option>
+            <option value="Airport">Airport Transfer</option>
+            <option value="New York">New York Transfer</option>
+            <option value="Concert">Concert / Live Event</option>
+            <option value="Night Out">Night Out</option>
+            <option value="Casino">Casino Run</option>
+            <option value="Special Event">Special Event</option>
+            <option value="Medical">Medical Appointment</option>
+            <option value="Black SUV">Black SUV Luxury</option>
+            <option value="Black Sedan">Black Sedan Luxury</option>
             <option value="Mercedes Sprinter">Mercedes Sprinter</option>
+          </select>
+          <select id="admin-filter-sort" onchange="renderBks()" style="padding:0.6rem;border:1.5px solid #eee;border-radius:4px;font-family:Inter,sans-serif;font-size:0.8rem;outline:none;background:#fff;cursor:pointer;min-width:120px">
+            <option value="recent">Most Recent</option>
+            <option value="oldest">Oldest First</option>
+            <option value="name">Client Name A–Z</option>
           </select>
         </div>
 
@@ -666,9 +686,8 @@
     <div class="wrap">
       <div class="tabs">
         <button class="tab on" onclick="goTab('all',this)">All Rides</button>
-        <button class="tab" onclick="goTab('pending',this)" style="color:#d97706">Pending ●</button>
         <button class="tab" onclick="goTab('confirmed',this)" style="color:#1d4ed8">Active Schedule</button>
-        <button class="tab" onclick="goTab('awaiting',this)" style="color:#775a19">Awaiting Pay</button>
+        <button class="tab" onclick="goTab('pending-payments',this)" style="color:#d97706;font-weight:700">Pending Payments <span id="pending-pay-badge" style="display:inline-block;background:#d97706;color:#fff;border-radius:10px;font-size:0.55rem;padding:1px 6px;margin-left:4px;vertical-align:middle">0</span></button>
         <button class="tab" onclick="goTab('done',this)">Completed</button>
         <button class="tab" onclick="goTab('calendar',this)" style="color:#000;font-weight:800"><span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle;margin-right:4px">calendar_month</span>Calendar</button>
         <button class="tab" onclick="goTab('clients',this)" style="color:#7c3aed;font-weight:700">Clients</button>
@@ -1541,39 +1560,53 @@
       var up = bks.filter(function (b) { return b.status === 'Confirmed' || b.status === 'Pending'; }).length;
       var rev = bks.filter(function (b) { return b.status === 'Paid' || b.status === 'Completed'; })
         .reduce(function (s, b) { return s + (parseFloat(b.price) || 0); }, 0);
-      var aw = bks.filter(function (b) { return b.status === 'Confirmed'; }).length;
+      var pendingPayCount = bks.filter(function (b) { return b.status === 'Pending' || b.status === 'Confirmed'; }).length;
       document.getElementById('s1').textContent = bks.length;
       document.getElementById('s2').textContent = up;
       document.getElementById('s3').textContent = '$' + rev.toFixed(0);
-      document.getElementById('s4').textContent = aw;
+      document.getElementById('s4').textContent = pendingPayCount;
+      var badge = document.getElementById('pending-pay-badge');
+      if (badge) badge.textContent = pendingPayCount;
 
       var list = bks.filter(function (b) {
         // 1. Status Tab Filter
-        if (curTab === 'pending') if (b.status !== 'Pending') return false;
         if (curTab === 'confirmed') if (b.status !== 'Confirmed') return false;
-        if (curTab === 'awaiting') if (b.status !== 'Confirmed') return false;
+        if (curTab === 'pending-payments') if (b.status !== 'Pending' && b.status !== 'Confirmed') return false;
         if (curTab === 'done') if (b.status !== 'Paid' && b.status !== 'Completed') return false;
-        
-        // 2. Search Query (Name, Phone, Code)
+
+        // 2. Search Query (Name, Phone, Code, Email)
         var s = document.getElementById('admin-search')?.value.toLowerCase() || '';
         if (s) {
-          var match = (b.name||'').toLowerCase().includes(s) || (b.phone||'').includes(s) || (b.code||'').toLowerCase().includes(s);
+          var match = (b.name||'').toLowerCase().includes(s)
+            || (b.phone||'').includes(s)
+            || (b.code||'').toLowerCase().includes(s)
+            || (b.email||'').toLowerCase().includes(s);
           if (!match) return false;
         }
 
-        // 3. Service Filter
-        var fsv = document.getElementById('admin-filter-service')?.value || '';
-        if (fsv && b.service !== fsv) return false;
+        // 3. Status filter dropdown
+        var fst = document.getElementById('admin-filter-status')?.value || '';
+        if (fst && b.status !== fst) return false;
 
-        // 4. Calendar Date Selection (if active)
+        // 4. Car/Service type filter
+        var fsv = document.getElementById('admin-filter-service')?.value || '';
+        if (fsv && !(b.service||'').toLowerCase().includes(fsv.toLowerCase())) return false;
+
+        // 5. Calendar Date Selection (if active)
         if (curTab === 'calendar' && _adminSelectedDate) {
           if (b.date !== _adminSelectedDate) return false;
         }
 
         return true;
-      }).sort(function (a, b) { 
-        // SORT BY DATE DESCENDING (Most recent first)
-        return new Date(b.date + ' ' + (b.time || '23:59')) - new Date(a.date + ' ' + (a.time || '23:59')); 
+      });
+
+      // Sort
+      var sortVal = document.getElementById('admin-filter-sort')?.value || 'recent';
+      list = list.sort(function (a, b) {
+        if (sortVal === 'name') return (a.name||'').localeCompare(b.name||'');
+        if (sortVal === 'oldest') return new Date(a.date + ' ' + (a.time||'00:00')) - new Date(b.date + ' ' + (b.time||'00:00'));
+        // default: recent first
+        return new Date(b.date + ' ' + (b.time||'23:59')) - new Date(a.date + ' ' + (a.time||'23:59'));
       });
 
       var lEl = document.getElementById('bk-list'), eEl = document.getElementById('bk-empty');

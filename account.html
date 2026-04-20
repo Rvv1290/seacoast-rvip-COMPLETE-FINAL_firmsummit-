@@ -59,6 +59,14 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .stat-val{font-family:'Times New Roman',serif;font-size:2.4rem;font-weight:700;color:#000}
 .stat-lbl{font-family:'Work Sans',sans-serif;font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:var(--text-sec)}
 
+/* ─── MOBILE DASHBOARD ─── */
+.dash-welcome{margin-bottom:1.5rem}
+.dash-stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.25rem}
+.stat-card-sm{background:#fff;border:1px solid var(--border);padding:1.1rem 1rem;display:flex;flex-direction:column;gap:2px;transition:0.2s}
+.stat-card-sm:hover{border-color:var(--gold)}
+.stat-val-sm{font-family:'Times New Roman',serif;font-size:1.8rem;font-weight:700;color:#000;line-height:1.1;margin-top:4px}
+.loyalty-overview-card{background:#fff;border:1px solid var(--border);border-top:3px solid var(--gold);padding:1.25rem 1.5rem;margin-bottom:1.25rem}
+
 .loyalty-box{margin-top:1.5rem;text-align:left}
 .l-bar{height:4px;background:#eee;border-radius:2px;overflow:hidden;margin:8px 0}
 .l-fill{height:100%;background:var(--gold);width:0%;transition:1.2s ease-out}
@@ -162,11 +170,22 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 @media(max-width:480px){
   .dash-grid{grid-template-columns:1fr}
   .stat-val{font-size:2rem}
+  .dash-welcome h1{font-size:1.6rem!important}
+  .dash-welcome p{font-size:0.82rem!important}
+  .dash-stats-row{grid-template-columns:repeat(3,1fr);gap:0.5rem}
+  .stat-card-sm{padding:0.85rem 0.65rem}
+  .stat-val-sm{font-size:1.35rem}
+  .stat-lbl{font-size:0.55rem;letter-spacing:0.06em}
+  .loyalty-overview-card{padding:1rem}
   .login-card{padding:2rem 1.25rem}
   .tier-cards-row{flex-direction:column}
   .nav{padding:0 1rem}
   .nav-logo{font-size:1.1rem}
   .mbn-item{font-size:0.6rem}
+}
+@media(max-width:360px){
+  .dash-stats-row{grid-template-columns:1fr 1fr;gap:0.5rem}
+  .stat-val-sm{font-size:1.2rem}
 }
 @media(max-width:360px){
   .nav{gap:0.5rem}
@@ -245,9 +264,9 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
     <!-- Login Method Toggle -->
     <!-- Login View Tabs -->
     <div id="view-login">
-      <div style="display:none;margin-bottom:2rem;border:1px solid var(--border);border-radius:4px;overflow:hidden">
-        <button id="tab-phone-btn" onclick="switchLoginTab('phone')" style="flex:1;padding:0.75rem;font-family:'Work Sans',sans-serif;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;background:#000;color:#fff;border:none;cursor:pointer;transition:0.2s">📱 Phone</button>
-        <button id="tab-email-btn" onclick="switchLoginTab('email')" style="flex:1;padding:0.75rem;font-family:'Work Sans',sans-serif;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;background:transparent;color:#888;border:none;cursor:pointer;transition:0.2s">✉️ Email</button>
+      <div style="display:flex;margin-bottom:2rem;border:1px solid var(--border);border-radius:4px;overflow:hidden">
+        <button id="tab-phone-btn" onclick="switchLoginTab('phone')" style="flex:1;padding:0.75rem;font-family:'Work Sans',sans-serif;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;background:#000;color:#fff;border:none;cursor:pointer;transition:0.2s">Phone / Password</button>
+        <button id="tab-email-btn" onclick="switchLoginTab('email')" style="flex:1;padding:0.75rem;font-family:'Work Sans',sans-serif;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;background:transparent;color:#888;border:none;cursor:pointer;transition:0.2s">Email / Password</button>
       </div>
 
     <!-- ── PHONE METHOD ── -->
@@ -411,79 +430,83 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
       
       <!-- Tab: Dashboard / Overview -->
       <div id="tab-dash" class="tab-panel on">
-        <div style="margin-bottom:3rem">
-          <h1 id="welcome-msg" style="font-family:'Times New Roman',serif;font-size:2.8rem;color:#000;margin-bottom:0.75rem">Welcome, User</h1>
-          <p style="color:var(--text-sec);font-size:1.05rem;line-height:1.6">Your personalized travel summary and status.</p>
+
+        <!-- Welcome Header -->
+        <div class="dash-welcome">
+          <h1 id="welcome-msg" style="font-family:'Times New Roman',serif;font-size:2.2rem;color:#000;margin-bottom:0.25rem">Welcome, User</h1>
+          <p style="color:var(--text-sec);font-size:0.9rem;line-height:1.6">Your travel summary and loyalty status.</p>
         </div>
 
-        <div class="dash-grid">
-          <div class="stat-card">
+        <!-- Stat Cards Row — compact, horizontal scroll on mobile -->
+        <div class="dash-stats-row">
+          <div class="stat-card-sm">
             <div class="stat-lbl">Total Trips</div>
-            <div class="stat-val" id="stat-total">0</div>
+            <div class="stat-val-sm" id="stat-total">0</div>
           </div>
-          <div class="stat-card">
+          <div class="stat-card-sm">
             <div class="stat-lbl">Loyalty Points</div>
-            <div class="stat-val" id="stat-loyalty" style="color:var(--gold-dark)">0</div>
+            <div class="stat-val-sm" id="stat-loyalty" style="color:var(--gold-dark)">0</div>
           </div>
-          <div class="stat-card">
-            <div class="stat-lbl">Outstanding Balance</div>
-            <div class="stat-val" id="stat-balance" style="color:#d32f2f">$0.00</div>
-            <button id="stat-pay-btn" onclick="payTotalBalance()" class="btn-k" style="display:none;margin-top:1rem;padding:0.5rem 1rem;font-size:0.65rem">Pay Now →</button>
+          <div class="stat-card-sm">
+            <div class="stat-lbl">Balance Due</div>
+            <div class="stat-val-sm" id="stat-balance" style="color:#d32f2f">$0.00</div>
+            <button id="stat-pay-btn" onclick="payTotalBalance()" class="btn-k" style="display:none;margin-top:0.6rem;padding:0.4rem 0.8rem;font-size:0.6rem;width:100%">Pay Now →</button>
           </div>
         </div>
 
-        <!-- Loyalty Rewards Program -->
-        <div style="margin-bottom:3rem">
-          <h3 style="font-family:'Work Sans',sans-serif;font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:var(--text-sec);margin-bottom:1.25rem">Loyalty Rewards Program</h3>
-          <div class="tier-cards-row" style="display:flex;gap:1rem;margin-bottom:1rem">
-            <div class="tier-card" id="tier-member">
-              <span class="material-symbols-outlined" style="font-size:28px;color:#888">person</span>
-              <div>
-                <div class="tier-badge-label" style="color:#555">Member</div>
-                <div class="tier-req">0 – 9 trips</div>
-              </div>
+        <!-- Loyalty Tier — compact single card -->
+        <div class="loyalty-overview-card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;flex-wrap:wrap;gap:0.5rem">
+            <span style="font-family:'Work Sans',sans-serif;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:var(--text-sec)">Loyalty Rewards</span>
+            <div style="display:flex;gap:0.5rem;align-items:center">
+              <span id="tier-badge-dash" style="font-family:'Work Sans',sans-serif;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--gold-dark);background:rgba(201,168,76,0.1);padding:3px 10px;border-radius:20px">Member</span>
             </div>
-            <div class="tier-card" id="tier-silver">
-              <span class="material-symbols-outlined" style="font-size:28px;color:#aaa">workspace_premium</span>
-              <div>
-                <div class="tier-badge-label" style="color:#888">Silver</div>
-                <div class="tier-req">10 – 24 trips</div>
+          </div>
+          <div class="l-bar" style="margin-bottom:0.5rem"><div class="l-fill" id="loyalty-bar-dash"></div></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.5rem">
+            <p id="rewards-status-msg" style="font-size:0.75rem;color:var(--text-sec);margin:0">Loading rewards status...</p>
+            <div style="display:flex;gap:1.5rem">
+              <div style="text-align:center">
+                <div style="font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#aaa">Member</div>
+                <div style="font-size:0.65rem;color:#888">0–9</div>
               </div>
-            </div>
-            <div class="tier-card" id="tier-gold">
-              <span class="material-symbols-outlined" style="font-size:28px;color:var(--gold)">star</span>
-              <div>
-                <div class="tier-badge-label" style="color:var(--gold-dark)">Gold</div>
-                <div class="tier-req">25+ trips</div>
+              <div style="text-align:center">
+                <div style="font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#888">Silver</div>
+                <div style="font-size:0.65rem;color:#888">10–24</div>
+              </div>
+              <div style="text-align:center">
+                <div style="font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--gold-dark)">Gold</div>
+                <div style="font-size:0.65rem;color:var(--gold-dark)">25+</div>
               </div>
             </div>
           </div>
-          <p id="rewards-status-msg" style="font-size:0.78rem;color:var(--text-sec)">Loading rewards status...</p>
         </div>
 
-        <!-- Balance Quick Pay -->
-        <div id="pay-box" style="display:none;background:#fcfcfc;border:1px solid var(--border);padding:2.5rem;margin-bottom:3rem">
-           <div class="pay-box-row" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:2rem">
-              <div>
-                 <h3 style="font-family:'Times New Roman',serif;font-size:1.6rem;margin-bottom:0.5rem">Unpaid Balance</h3>
-                 <p style="color:var(--text-sec);font-size:0.85rem">You have outstanding invoices totaling <strong id="pay-total-lbl">$0.00</strong>.</p>
-              </div>
-              <div class="pay-box-btns" style="display:flex;gap:1rem;flex-wrap:wrap">
-                 <button onclick="settleBalanceWithCard()" class="btn-k">Pay Total with Card →</button>
-                 <button onclick="payVenmo()" class="btn-v" style="border:none;cursor:pointer">
-                    <span class="material-symbols-outlined">savings</span>Pay with Venmo
-                 </button>
-              </div>
-           </div>
+        <!-- Balance Quick Pay (shown only when balance > 0) -->
+        <div id="pay-box" style="display:none;background:#fffbf0;border:1px solid #ffe082;border-left:4px solid var(--gold);padding:1.25rem 1.5rem;margin-bottom:1.5rem;border-radius:2px">
+          <div class="pay-box-row" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem">
+            <div>
+              <div style="font-family:'Work Sans',sans-serif;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#775a19;margin-bottom:4px">Unpaid Balance</div>
+              <div style="font-family:'Times New Roman',serif;font-size:1.5rem;color:#000">Amount due: <strong id="pay-total-lbl">$0.00</strong></div>
+            </div>
+            <div class="pay-box-btns" style="display:flex;gap:0.75rem;flex-wrap:wrap">
+              <button onclick="settleBalanceWithCard()" class="btn-k" style="font-size:0.65rem;padding:0.6rem 1.2rem">Pay with Card →</button>
+              <button onclick="payVenmo()" class="btn-v" style="border:none;cursor:pointer;font-size:0.65rem;padding:0.6rem 1.2rem">
+                <span class="material-symbols-outlined" style="font-size:14px">savings</span>Venmo
+              </button>
+            </div>
+          </div>
         </div>
 
-        <div style="margin-top:2rem">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem">
-            <h3 style="font-family:'Work Sans',sans-serif;font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:var(--text-sec)">Recent Activity</h3>
+        <!-- Recent Activity — always at the bottom -->
+        <div style="margin-top:1.5rem">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem">
+            <h3 style="font-family:'Work Sans',sans-serif;font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:var(--text-sec);margin:0">Recent Trips</h3>
             <button onclick="showTab('tab-trips')" class="btn-out" style="padding:0.4rem 0.8rem;font-size:0.6rem">View All</button>
           </div>
           <div id="recent-list"></div>
         </div>
+
       </div>
 
       <!-- Tab: My Calendar -->
@@ -510,7 +533,22 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
                 <div id="bk-stops-list" class="stop-list"></div>
                 <button type="button" class="stop-add" onclick="addAccountStop()">+ Add Stop</button>
               </div>
-              <div class="f-group"><label class="f-label">Service</label><input id="bk-service" class="f-input" type="text" placeholder="Airport Transfer"/></div>
+              <div class="f-group"><label class="f-label">Service Type</label>
+                <select id="bk-service" class="f-input">
+                  <option value="">Select...</option>
+                  <option value="Airport Transfer — BOS Logan">✈ Airport Transfer — Boston Logan (BOS)</option>
+                  <option value="Airport Transfer — MHT Manchester">✈ Airport Transfer — Manchester (MHT)</option>
+                  <option value="New York Transfer (NY)">🗽 New York Transfer (NY)</option>
+                  <option value="Hotel Transfer">🏨 Hotel Transfer</option>
+                  <option value="Night Out">🌆 Night Out</option>
+                  <option value="Concert / Live Event">🎵 Concert / Live Event</option>
+                  <option value="Casino Run">🎰 Casino Run</option>
+                  <option value="Special Event / Gala">🎭 Special Event / Gala</option>
+                  <option value="Medical Appointment">🏥 Medical Appointment</option>
+                  <option value="Multi-Stop">📍 Multi-Stop</option>
+                  <option value="Other / Custom">⚙ Other / Custom</option>
+                </select>
+              </div>
               <div class="f-group"><label class="f-label">Vehicle</label><input id="bk-vehicle" class="f-input" type="text" placeholder="Luxury Black SUV"/></div>
               <div class="f-group"><label class="f-label">Passengers</label><input id="bk-passengers" class="f-input" type="text" value="1"/></div>
               <div class="f-group"><label class="f-label">Luggage</label><input id="bk-luggage" class="f-input" type="text" value="0"/></div>
@@ -861,6 +899,28 @@ let currentUser = null;
 let allTrips = [];
 let _calDate = new Date();
 let _tripFilter = 'all';
+
+// ─── FRIENDLY AUTH ERRORS ───
+function friendlyAuthError(e) {
+  const map = {
+    'auth/invalid-email':              'Please enter a valid email address.',
+    'auth/user-not-found':             'No account found with that email.',
+    'auth/invalid-credential':         'Incorrect email or password.',
+    'auth/wrong-password':             'Incorrect password. Try again or use Forgot Password.',
+    'auth/email-already-in-use':       'An account with this email already exists. Please sign in.',
+    'auth/weak-password':              'Password must be at least 6 characters.',
+    'auth/too-many-requests':          'Too many attempts. Please wait a few minutes and try again.',
+    'auth/network-request-failed':     'Network error. Please check your connection and try again.',
+    'auth/popup-closed-by-user':       'Sign-in window was closed. Please try again.',
+    'auth/popup-blocked':              'Pop-up was blocked by your browser. Please allow pop-ups for this site.',
+    'auth/cancelled-popup-request':    'Sign-in cancelled. Please try again.',
+    'auth/account-exists-with-different-credential': 'An account already exists with this email using a different sign-in method (Google or Apple). Please use that method.',
+    'auth/operation-not-allowed':      'This sign-in method is not enabled. Please contact support.',
+    'auth/invalid-action-code':        'This link has expired or already been used. Please request a new one.',
+    'auth/expired-action-code':        'This link has expired. Please request a new password reset.',
+  };
+  return map[e.code] || e.message || 'Something went wrong. Please try again.';
+}
 let stripeElements = null, stripeCard = null;
 let _editingTripId = null;
 
@@ -896,75 +956,93 @@ async function doSocialAuth(providerName) {
   let provider;
   if (providerName === 'google') {
     provider = new firebase.auth.GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: 'select_account' });
   } else if (providerName === 'apple') {
     provider = new firebase.auth.OAuthProvider('apple.com');
     provider.addScope('email');
     provider.addScope('name');
   } else return;
 
-  // On mobile Safari / iOS, signInWithPopup is blocked — use redirect instead
+  const socialErr = document.getElementById('social-auth-err');
+  if (socialErr) socialErr.style.display = 'none';
+
   const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
   if (isMobile) {
     try {
-      // Store intent so we can resume after redirect
       localStorage.setItem('rvip-social-pending', providerName);
       await auth.signInWithRedirect(provider);
     } catch (e) {
-      if (providerName === 'apple' && e.code === 'auth/operation-not-allowed') {
-        alert('Apple Sign-In is not enabled in Firebase Auth yet. Enable provider "apple.com" in Firebase Console > Authentication > Sign-in method, then try again.');
-      } else {
-        alert('Authentication failed: ' + e.message);
-      }
+      showSocialError(friendlyAuthError(e));
     }
-    return; // page will reload after redirect completes
+    return;
   }
 
   try {
     const result = await auth.signInWithPopup(provider);
     await handleSocialResult(result, providerName);
   } catch (e) {
-    if (e.code === 'auth/popup-blocked' || e.code === 'auth/popup-closed-by-user') {
-      // Fallback to redirect if popup was blocked
+    if (e.code === 'auth/popup-blocked' || e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') {
       try {
         localStorage.setItem('rvip-social-pending', providerName);
         await auth.signInWithRedirect(provider);
       } catch (e2) {
-        if (providerName === 'apple' && e2.code === 'auth/operation-not-allowed') {
-          alert('Apple Sign-In is not enabled in Firebase Auth yet. Enable provider "apple.com" in Firebase Console > Authentication > Sign-in method, then try again.');
-        } else {
-          alert('Authentication failed: ' + e2.message);
-        }
+        showSocialError(friendlyAuthError(e2));
       }
     } else {
-      if (providerName === 'apple' && e.code === 'auth/operation-not-allowed') {
-        alert('Apple Sign-In is not enabled in Firebase Auth yet. Enable provider "apple.com" in Firebase Console > Authentication > Sign-in method, then try again.');
-      } else {
-        alert('Authentication failed: ' + e.message);
-      }
+      showSocialError(friendlyAuthError(e));
     }
   }
 }
 
+function showSocialError(msg) {
+  let el = document.getElementById('social-auth-err');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'social-auth-err';
+    el.style.cssText = 'color:#b91c1c;font-size:0.8rem;background:#fef2f2;border-left:3px solid #ef4444;padding:10px;margin-top:0.75rem;border-radius:2px';
+    document.querySelector('.social-auth').appendChild(el);
+  }
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
 async function handleSocialResult(result, providerName) {
   const user = result.user;
-  const snap = await db.collection('clients').where('email', '==', user.email).limit(1).get();
-  if (!snap.empty) {
-    let client; snap.forEach(d => client = {id: d.id, ...d.data()});
+  const email = user.email || '';
+
+  // Look up existing Firestore doc by email (if we have one) or by Firebase UID
+  let client = null;
+  if (email) {
+    const snap = await db.collection('clients').where('email', '==', email).limit(1).get();
+    if (!snap.empty) snap.forEach(d => client = {id: d.id, ...d.data()});
+  }
+  if (!client) {
+    const uidSnap = await db.collection('clients').where('firebaseUid', '==', user.uid).limit(1).get();
+    if (!uidSnap.empty) uidSnap.forEach(d => client = {id: d.id, ...d.data()});
+  }
+
+  if (client) {
+    // Update firebaseUid if missing (links legacy record to Firebase Auth)
+    if (!client.firebaseUid) {
+      await db.collection('clients').doc(client.id).update({ firebaseUid: user.uid });
+    }
     loginUser(client);
   } else {
+    // New user — create Firestore profile
     const ref = db.collection('clients').doc();
     const data = {
       name: user.displayName || 'New Rider',
-      email: user.email || '',
+      email: email,
       phone: user.phoneNumber || '',
+      firebaseUid: user.uid,
       status: 'Approved',
       createdAt: new Date().toISOString(),
       authProvider: providerName
     };
     await ref.set(data);
     loginUser({id: ref.id, ...data});
-    toast(`Welcome, ${data.name}!`);
+    toast(`Welcome, ${data.name}! Your account has been created.`);
   }
 }
 
@@ -974,12 +1052,12 @@ auth.getRedirectResult().then(function(result) {
     const providerName = localStorage.getItem('rvip-social-pending') || 'google';
     localStorage.removeItem('rvip-social-pending');
     handleSocialResult(result, providerName).catch(function(e) {
-      alert('Sign-in error: ' + e.message);
+      showSocialError(friendlyAuthError(e));
     });
   }
 }).catch(function(e) {
-  if (e.code !== 'auth/no-current-user') {
-    console.warn('Redirect result error:', e.message);
+  if (e.code && e.code !== 'auth/no-current-user') {
+    showSocialError(friendlyAuthError(e));
   }
 });
 
@@ -992,39 +1070,70 @@ async function doSignup() {
   const btn = document.getElementById('reg-btn');
 
   err.style.display = 'none';
-  if (!name || !email || !phone || !pwd) { 
-    err.textContent = 'All fields are required.'; err.style.display = 'block'; return; 
+  if (!name || !email || !phone || !pwd) {
+    err.textContent = 'All fields are required.'; err.style.display = 'block'; return;
   }
-  if (pwd.length < 6) { 
-    err.textContent = 'Password must be at least 6 characters.'; err.style.display = 'block'; return; 
+  if (pwd.length < 6) {
+    err.textContent = 'Password must be at least 6 characters.'; err.style.display = 'block'; return;
   }
 
   btn.disabled = true; btn.textContent = 'Creating Account...';
 
   try {
-    // Check if email or phone already exists
-    const emailSnap = await db.collection('clients').where('email', '==', email).limit(1).get();
+    // Check if phone already exists in Firestore
     const phoneSnap = await db.collection('clients').where('phone', '==', phone).limit(1).get();
-    
-    if (!emailSnap.empty) {
-      err.textContent = 'An account with this email already exists.';
+    if (!phoneSnap.empty) {
+      err.textContent = 'An account with this phone number already exists. Please sign in instead.';
       err.style.display = 'block';
-    } else if (!phoneSnap.empty) {
-      err.textContent = 'An account with this phone number already exists.';
-      err.style.display = 'block';
-    } else {
-      const ref = db.collection('clients').doc();
-      const data = {
-        name, email, phone, password: pwd,
-        status: 'Approved', // Direct access for self-signup
-        createdAt: new Date().toISOString()
-      };
-      await ref.set(data);
-      loginUser({id: ref.id, ...data});
-      toast('Account created! Welcome to RVIP.');
+      btn.disabled = false; btn.textContent = 'Create My Account →';
+      return;
     }
+
+    // Create Firebase Auth account (enables real password reset emails)
+    let firebaseUser = null;
+    try {
+      const cred = await auth.createUserWithEmailAndPassword(email, pwd);
+      firebaseUser = cred.user;
+      await firebaseUser.updateProfile({ displayName: name });
+    } catch (authErr) {
+      if (authErr.code === 'auth/email-already-in-use') {
+        // Firebase Auth account already exists — just sign them in
+        try {
+          const cred = await auth.signInWithEmailAndPassword(email, pwd);
+          firebaseUser = cred.user;
+        } catch (signInErr) {
+          err.textContent = 'An account with this email already exists. Please sign in instead.';
+          err.style.display = 'block';
+          btn.disabled = false; btn.textContent = 'Create My Account →';
+          return;
+        }
+      } else {
+        throw authErr;
+      }
+    }
+
+    // Check Firestore for existing email doc
+    const emailSnap = await db.collection('clients').where('email', '==', email).limit(1).get();
+    if (!emailSnap.empty) {
+      let client; emailSnap.forEach(d => client = {id: d.id, ...d.data()});
+      loginUser(client);
+      toast('Welcome back, ' + client.name + '!');
+      return;
+    }
+
+    // Create Firestore doc (no plain-text password stored)
+    const ref = db.collection('clients').doc();
+    const data = {
+      name, email, phone,
+      status: 'Approved',
+      createdAt: new Date().toISOString(),
+      authProvider: 'email'
+    };
+    await ref.set(data);
+    loginUser({id: ref.id, ...data});
+    toast('Account created! Welcome to Seacoast RVIP.');
   } catch (e) {
-    err.textContent = e.message;
+    err.textContent = friendlyAuthError(e);
     err.style.display = 'block';
   }
   btn.disabled = false; btn.textContent = 'Create My Account →';
@@ -1351,20 +1460,19 @@ function updateLoyaltyUI(count){
   document.getElementById('tier-badge').textContent = tier;
   document.getElementById('loyalty-msg').textContent = msg;
 
-  // Update rewards tier cards on overview
-  ['member','silver','gold'].forEach(t => {
-    const el = document.getElementById('tier-'+t);
-    if(el) el.classList.remove('active-tier');
-  });
+  // Sync dashboard loyalty bar + badge
+  const dashBar = document.getElementById('loyalty-bar-dash');
+  if(dashBar) dashBar.style.width = pct + '%';
+  const dashBadge = document.getElementById('tier-badge-dash');
+  if(dashBadge) dashBadge.textContent = tier;
+
   const activeTier = count>=25?'gold':(count>=10?'silver':'member');
-  const activeEl = document.getElementById('tier-'+activeTier);
-  if(activeEl) activeEl.classList.add('active-tier');
 
   // Rewards status message
   const statusEl = document.getElementById('rewards-status-msg');
   if(statusEl){
     const tierLabel = activeTier.charAt(0).toUpperCase()+activeTier.slice(1);
-    statusEl.innerHTML = `<strong>${count} trips completed</strong> &mdash; Current status: <strong style="color:var(--gold-dark)">${tierLabel}</strong>. ${msg}.`;
+    statusEl.innerHTML = `<strong>${count} trips</strong> &mdash; Status: <strong style="color:var(--gold-dark)">${tierLabel}</strong>. ${msg}.`;
   }
 }
 
@@ -2180,22 +2288,42 @@ async function doEmailLogin(){
   const pwd = document.getElementById('email-pwd-inp').value.trim();
   const err = document.getElementById('email-err');
   err.style.display='none';
-  if(!email || !email.includes('@')) { err.textContent='Please enter a valid email.'; err.style.display='block'; return; }
+  if(!email || !email.includes('@')) { err.textContent='Please enter a valid email address.'; err.style.display='block'; return; }
   if(!pwd) { err.textContent='Please enter your password.'; err.style.display='block'; return; }
   const btn = document.getElementById('email-login-btn');
   btn.disabled=true; btn.textContent='Signing In...';
   try {
-    const snap = await db.collection('clients').where('email','==',email).limit(1).get();
-    if(snap.empty){ err.textContent='Incorrect email or password.'; err.style.display='block'; btn.disabled=false; btn.textContent='Sign In →'; return; }
-    let client; snap.forEach(d=>client={id:d.id, ...d.data()});
-    if(!client.password){
-        err.innerHTML='Account found, but <strong>no password is set</strong>.<br>Please use the <strong>Phone</strong> tab to set your initial password.';
-        err.style.display='block'; btn.disabled=false; btn.textContent='Sign In →'; return;
+    // Try Firebase Auth first (accounts created after the update)
+    try {
+      await auth.signInWithEmailAndPassword(email, pwd);
+    } catch(firebaseErr) {
+      if(firebaseErr.code === 'auth/user-not-found' || firebaseErr.code === 'auth/invalid-credential') {
+        // Legacy account — check Firestore plain-text password
+        const snap = await db.collection('clients').where('email','==',email).limit(1).get();
+        if(snap.empty){ err.textContent='No account found with that email. Please create an account.'; err.style.display='block'; btn.disabled=false; btn.textContent='Sign In →'; return; }
+        let client; snap.forEach(d=>client={id:d.id, ...d.data()});
+        if(!client.password){
+          err.innerHTML='This account uses Google or Apple sign-in. Please use one of those buttons above.';
+          err.style.display='block'; btn.disabled=false; btn.textContent='Sign In →'; return;
+        }
+        if(client.password !== pwd){ err.textContent='Incorrect email or password.'; err.style.display='block'; btn.disabled=false; btn.textContent='Sign In →'; return; }
+        loginUser(client);
+        return;
+      } else {
+        throw firebaseErr;
+      }
     }
-    if(client.password !== pwd){ err.textContent='Incorrect email or password.'; err.style.display='block'; btn.disabled=false; btn.textContent='Sign In →'; return; }
-    loginUser(client);
+    // Firebase Auth succeeded — find or create Firestore doc
+    const snap = await db.collection('clients').where('email','==',email).limit(1).get();
+    if(!snap.empty){
+      let client; snap.forEach(d=>client={id:d.id, ...d.data()});
+      loginUser(client);
+    } else {
+      err.textContent='Account not found. Please create an account first.';
+      err.style.display='block';
+    }
   } catch(e){
-    err.textContent = e.message || 'Error occurred.';
+    err.textContent = friendlyAuthError(e);
     err.style.display = 'block';
   }
   btn.disabled=false; btn.textContent='Sign In →';
@@ -2277,39 +2405,53 @@ async function submitForgotPwd() {
   const err = document.getElementById('forgot-err');
   const succ = document.getElementById('forgot-succ');
   const btn = document.getElementById('forgot-submit-btn');
-  
+
   err.style.display = 'none';
   succ.style.display = 'none';
-  
+
   if(!email || !email.includes('@')) { err.textContent = "Please enter a valid email address."; err.style.display = 'block'; return; }
-  
+
   btn.textContent = 'Sending...';
   btn.disabled = true;
-  
+
+  const returnUrl = window.location.origin + '/account.html';
+
   try {
-    const actionCodeSettings = { 
-      url: window.location.href, 
-      handleCodeInApp: true 
-    };
-    await auth.sendSignInLinkToEmail(email, actionCodeSettings);
-    localStorage.setItem('rvip-email-signin', email);
-    
-    // Tag user for forced password reset
-    const snaps = await db.collection('clients').where('email','==',email).get();
-    snaps.forEach(d => { db.collection('clients').doc(d.id).update({ passwordResetRequired: true }); });
-    
-    succ.textContent = "Check your email! A secure sign-in link has been sent to " + email;
+    // Try Firebase Auth password reset first (works for accounts created via email/password)
+    await auth.sendPasswordResetEmail(email, { url: returnUrl });
+    succ.innerHTML = `
+      <strong>Password reset email sent!</strong><br>
+      Check your inbox at <strong>${email}</strong> for a link from Seacoast RVIP.<br>
+      <span style="font-size:0.75rem;color:#555;margin-top:4px;display:block">
+        Don't see it? Check your <strong>Spam</strong> or <strong>Junk</strong> folder.
+        The email comes from <em>noreply@seacoastrvip.com</em>.
+      </span>`;
     succ.style.display = 'block';
   } catch(error) {
-    let msg = error.message;
-    if (msg.includes('auth/requests-from-referer')) {
-       // Extract the actual domain being blocked from the error string
-       const matchedDomain = msg.match(/referer-(.*?)-are/);
-       const domainStr = matchedDomain ? matchedDomain[1] : "your current URL";
-       msg = `Configuration Error: ${domainStr} is not yet authorized. Please add it to Firebase Auth > Settings > Authorized Domains. Check Google Cloud Console API Key restrictions as well.`;
+    if(error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
+      // Legacy account (pre-Firebase Auth) — send a sign-in link instead
+      try {
+        const actionCodeSettings = { url: returnUrl, handleCodeInApp: true };
+        await auth.sendSignInLinkToEmail(email, actionCodeSettings);
+        localStorage.setItem('rvip-email-signin', email);
+        // Tag for forced password change on next login
+        const snaps = await db.collection('clients').where('email','==',email).get();
+        snaps.forEach(d => db.collection('clients').doc(d.id).update({ passwordResetRequired: true }));
+        succ.innerHTML = `
+          <strong>Sign-in link sent!</strong><br>
+          Check your inbox at <strong>${email}</strong> and click the link to sign in and reset your password.<br>
+          <span style="font-size:0.75rem;color:#555;margin-top:4px;display:block">
+            Don't see it? Check your <strong>Spam</strong> or <strong>Junk</strong> folder.
+          </span>`;
+        succ.style.display = 'block';
+      } catch(linkErr) {
+        err.textContent = friendlyAuthError(linkErr);
+        err.style.display = 'block';
+      }
+    } else {
+      err.textContent = friendlyAuthError(error);
+      err.style.display = 'block';
     }
-    err.textContent = msg;
-    err.style.display = 'block';
   } finally {
     btn.textContent = 'Send Reset Link';
     btn.disabled = false;

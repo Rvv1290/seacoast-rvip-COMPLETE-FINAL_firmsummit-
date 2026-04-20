@@ -280,6 +280,12 @@ window.addEventListener('DOMContentLoaded', checkWidth);
           <span class="font-body text-xs text-on-surface-variant">Pay on arrival</span>
         </a>
 
+        <a id="btn-bank" onclick="selectPay('bank');return false" href="#" class="pay-btn" style="grid-column:span 2">
+          <span class="material-symbols-outlined text-secondary" style="font-size:2.25rem">account_balance</span>
+          <span class="font-label text-sm font-bold uppercase tracking-wider text-primary">Bank Account (ACH)</span>
+          <span class="font-body text-xs text-on-surface-variant">Direct bank transfer · No card needed</span>
+        </a>
+
       </div>
     </div>
 
@@ -313,7 +319,7 @@ window.addEventListener('DOMContentLoaded', checkWidth);
 
       <!-- Inline Stripe card form -->
       <div id="card-pay-form">
-        <div id="stripe-card-element" style="background:#f9f9f9;border:1px solid #e2e2e2;border-bottom:2px solid #c4c7c7;padding:14px 12px;margin-bottom:1rem;border-radius:2px"></div>
+        <div id="stripe-card-element" style="background:#f9f9f9;border:1px solid #e2e2e2;border-bottom:2px solid #c4c7c7;padding:14px 12px;margin-bottom:1rem;border-radius:2px;min-height:120px"></div>
         <div id="card-pay-error" style="display:none;color:#c62828;font-size:0.8rem;margin-bottom:0.75rem;padding:0.625rem 0.75rem;background:#fff5f5;border:1px solid #fecaca"></div>
         <button id="card-pay-btn" onclick="submitCardPayment()" class="action-btn" style="background:#000;color:white;border-bottom:4px solid #775a19">
           <span class="material-symbols-outlined" style="font-size:18px">lock</span>
@@ -382,6 +388,35 @@ window.addEventListener('DOMContentLoaded', checkWidth);
     </div>
 
     
+    <!-- BANK ACCOUNT (ACH) SECTION -->
+    <div id="section-bank" class="section-hidden bg-white p-5 mb-5 shadow-sm" style="border-left:4px solid #C9A84C">
+      <div class="flex items-center gap-2 mb-3">
+        <span class="material-symbols-outlined" style="font-size:18px;color:#775a19">account_balance</span>
+        <p class="font-label text-xs uppercase tracking-widest font-bold" style="color:#775a19">Bank Account Transfer (ACH)</p>
+      </div>
+      <p class="text-xs text-on-surface-variant leading-relaxed mb-4">Pay directly from your checking or savings account. Secure, no card needed. Processed by Stripe — your bank info is never stored by us.</p>
+
+      <div id="bank-pay-form">
+        <div style="margin-bottom:1rem">
+          <label style="font-family:'Work Sans',sans-serif;font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#775a19;display:block;margin-bottom:6px">Account Holder Name</label>
+          <input id="bank-holder-name" type="text" placeholder="Full name as on bank account" style="width:100%;padding:0.75rem;border:1px solid #eee;font-family:Inter,sans-serif;font-size:0.9rem;outline:none;box-sizing:border-box" onfocus="this.style.borderColor='#C9A84C'" onblur="this.style.borderColor='#eee'"/>
+        </div>
+        <div id="bank-element" style="background:#f9f9f9;border:1px solid #e2e2e2;border-bottom:2px solid #c4c7c7;padding:14px 12px;margin-bottom:1rem;border-radius:2px;min-height:48px"></div>
+        <div id="bank-pay-error" style="display:none;color:#c62828;font-size:0.8rem;margin-bottom:0.75rem;padding:0.625rem 0.75rem;background:#fff5f5;border:1px solid #fecaca"></div>
+        <button id="bank-pay-btn" onclick="submitBankPayment()" class="action-btn" style="background:#000;color:white;border-bottom:4px solid #775a19">
+          <span class="material-symbols-outlined" style="font-size:18px">account_balance</span>
+          <span id="bank-pay-label">Pay $<span id="bank-amt">0</span> via Bank →</span>
+        </button>
+        <p class="text-center text-xs text-on-surface-variant mt-3">ACH payments may take 1–3 business days to settle. Your booking is confirmed immediately.</p>
+      </div>
+
+      <div id="bank-pay-success" style="display:none;text-align:center;padding:2rem 0">
+        <span class="material-symbols-outlined" style="font-size:3rem;color:#2e7d32;display:block;margin-bottom:0.75rem">check_circle</span>
+        <p style="font-family:'Times New Roman',serif;font-size:1.3rem;font-weight:700;color:#166534;margin-bottom:0.5rem">Bank Transfer Initiated!</p>
+        <p id="bank-pay-conf" style="font-size:0.8rem;color:#166534">Your payment is being processed. Your ride is confirmed.</p>
+      </div>
+    </div>
+
     <!-- RECEIPT BUTTON - shown after selecting payment -->
     <div id="receipt-trigger" style="display:none;margin-top:1rem;text-align:center">
       <button onclick="openReceipt()" style="background:white;border:1px solid #775a19;color:#775a19;font-family:'Work Sans',sans-serif;font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;padding:0.75rem 1.5rem;cursor:pointer;display:inline-flex;align-items:center;gap:6px">
@@ -1050,17 +1085,68 @@ async function submitCardPayment() {
 
 // Payment method toggle
 function selectPay(method) {
-  ['apple','card','venmo','cash'].forEach(function(m){
-    document.getElementById('btn-'+m).classList.remove('selected');
-    document.getElementById('section-'+m).classList.remove('section-visible');
-    document.getElementById('section-'+m).classList.add('section-hidden');
+  ['apple','card','venmo','cash','bank'].forEach(function(m){
+    var btn = document.getElementById('btn-'+m);
+    var sec = document.getElementById('section-'+m);
+    if(btn) btn.classList.remove('selected');
+    if(sec){ sec.classList.remove('section-visible'); sec.classList.add('section-hidden'); }
   });
-  document.getElementById('btn-'+method).classList.add('selected');
-  document.getElementById('section-'+method).classList.remove('section-hidden');
-  document.getElementById('section-'+method).classList.add('section-visible');
+  var selBtn = document.getElementById('btn-'+method);
+  var selSec = document.getElementById('section-'+method);
+  if(selBtn) selBtn.classList.add('selected');
+  if(selSec){ selSec.classList.remove('section-hidden'); selSec.classList.add('section-visible'); }
+  if(method === 'bank') initBankElement();
   setTimeout(function(){
-    document.getElementById('section-'+method).scrollIntoView({behavior:'smooth',block:'nearest'});
+    if(selSec) selSec.scrollIntoView({behavior:'smooth',block:'nearest'});
   },50);
+}
+
+// ── BANK ACCOUNT (ACH) PAYMENT ────────────────────────────────
+var _bankElement = null;
+var _bankInitialized = false;
+
+function initBankElement() {
+  if(_bankInitialized || !stripe || !currentBooking) return;
+  var amount = Math.round((parseFloat(currentBooking.price)||0)*100);
+  document.getElementById('bank-amt').textContent = currentBooking.price || '0';
+  var createPI = funcs ? firebase.functions().httpsCallable('createPaymentIntent') : null;
+  if(!createPI) { document.getElementById('bank-pay-error').textContent='Payment service unavailable.'; document.getElementById('bank-pay-error').style.display='block'; return; }
+  createPI({ amount: amount, bookingCode: currentBooking.code, customerName: currentBooking.name, paymentMethodTypes: ['us_bank_account'] })
+    .then(function(res){
+      var elements = stripe.elements({ clientSecret: res.data.clientSecret });
+      _bankElement = elements.create('usBankAccount');
+      _bankElement.mount('#bank-element');
+      _bankInitialized = true;
+      window._bankClientSecret = res.data.clientSecret;
+    })
+    .catch(function(err){
+      document.getElementById('bank-pay-error').textContent = err.message || 'Could not load bank form.';
+      document.getElementById('bank-pay-error').style.display = 'block';
+    });
+}
+
+async function submitBankPayment() {
+  var name = document.getElementById('bank-holder-name').value.trim();
+  var errEl = document.getElementById('bank-pay-error');
+  errEl.style.display = 'none';
+  if(!name){ errEl.textContent='Please enter the account holder name.'; errEl.style.display='block'; return; }
+  if(!_bankElement || !window._bankClientSecret){ errEl.textContent='Bank form not ready. Please wait a moment.'; errEl.style.display='block'; return; }
+  var btn = document.getElementById('bank-pay-btn');
+  btn.disabled = true; btn.querySelector('#bank-pay-label').textContent = 'Processing…';
+  var result = await stripe.confirmUsBankAccountPayment(window._bankClientSecret, {
+    payment_method: { us_bank_account: _bankElement, billing_details: { name: name } }
+  });
+  if(result.error){
+    errEl.textContent = result.error.message;
+    errEl.style.display = 'block';
+    btn.disabled = false; document.getElementById('bank-pay-label').innerHTML = 'Pay $<span id="bank-amt">' + (currentBooking.price||'0') + '</span> via Bank →';
+  } else {
+    document.getElementById('bank-pay-form').style.display = 'none';
+    document.getElementById('bank-pay-success').style.display = 'block';
+    if(currentBooking && currentBooking.id){
+      try{ await firebase.firestore().collection('bookings').doc(currentBooking.id).update({ status:'Confirmed', paymentMethod:'Bank ACH', paymentNote:'ACH initiated — pending settlement' }); }catch(e){}
+    }
+  }
 }
 
 // Details accordion
