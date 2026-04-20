@@ -966,18 +966,11 @@ async function doSocialAuth(providerName) {
   const socialErr = document.getElementById('social-auth-err');
   if (socialErr) socialErr.style.display = 'none';
 
-  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-
-  if (isMobile) {
-    try {
-      localStorage.setItem('rvip-social-pending', providerName);
-      await auth.signInWithRedirect(provider);
-    } catch (e) {
-      showSocialError(friendlyAuthError(e));
-    }
-    return;
-  }
-
+  // Use popup for all devices. iPad already worked because iOS 13+ Safari sends
+  // a desktop UA (no "iPad" string), bypassing the old isMobile redirect path.
+  // iPhone redirect was broken by Safari ITP blocking third-party cookies during
+  // the OAuth round-trip. Popup works on modern iOS; the catch block below
+  // falls back to redirect only if the popup is actually blocked.
   try {
     const result = await auth.signInWithPopup(provider);
     await handleSocialResult(result, providerName);
