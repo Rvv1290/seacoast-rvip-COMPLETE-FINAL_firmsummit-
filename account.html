@@ -259,17 +259,11 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
       <p class="auth-help">Quick sign-in options are simplified to reduce confusion: Google, Apple, or Phone/Email login.</p>
     </div>
 
-    <div class="divider">Or use phone or email credentials</div>
+    <div class="divider">Or sign in with phone or email</div>
 
-    <!-- Login Method Toggle -->
-    <!-- Login View Tabs -->
     <div id="view-login">
-      <div style="display:flex;margin-bottom:2rem;border:1px solid var(--border);border-radius:4px;overflow:hidden">
-        <button id="tab-phone-btn" onclick="switchLoginTab('phone')" style="flex:1;padding:0.75rem;font-family:'Work Sans',sans-serif;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;background:#000;color:#fff;border:none;cursor:pointer;transition:0.2s">Phone / Password</button>
-        <button id="tab-email-btn" onclick="switchLoginTab('email')" style="flex:1;padding:0.75rem;font-family:'Work Sans',sans-serif;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;background:transparent;color:#888;border:none;cursor:pointer;transition:0.2s">Email / Password</button>
-      </div>
 
-    <!-- ── PHONE METHOD ── -->
+    <!-- ── UNIFIED LOGIN ── -->
     <div id="login-phone-method">
       <div id="step-phone">
         <div class="f-group">
@@ -325,26 +319,6 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 
     </div><!-- /login-phone-method -->
     <div id="recaptcha-container"></div>
-
-    <!-- ── EMAIL METHOD ── -->
-    <div id="login-email-method" style="display:none">
-      <div id="step-email">
-        <div class="f-group">
-          <label class="f-label">Email Address</label>
-          <input id="email-login-inp" type="email" class="f-input" placeholder="your@email.com" onkeydown="if(event.key==='Enter')document.getElementById('email-pwd-inp').focus()"/>
-        </div>
-        <div class="f-group">
-          <label class="f-label">Password</label>
-          <input id="email-pwd-inp" type="password" class="f-input" placeholder="Enter your password" onkeydown="if(event.key==='Enter')doEmailLogin()"/>
-        </div>
-        <div id="email-err" style="display:none;color:#d32f2f;font-size:0.8rem;margin-bottom:1rem"></div>
-        <button id="email-login-btn" onclick="doEmailLogin()" class="btn-k" style="width:100%">Sign In →</button>
-        <button onclick="sendForgotPwdLink('email')" style="width:100%;margin-top:0.75rem;background:transparent;border:none;color:#888;font-size:0.85rem;cursor:pointer;text-decoration:underline;padding:0.75rem 0;min-height:44px">Forgot Password?</button>
-      </div>
-      <div id="step-email-sent" style="display:none;background:#f9f9f9;padding:1.25rem;border-left:4px solid #775a19;font-size:0.85rem;color:#444">
-        A sign-in link has been sent to your email. Click it to log in securely.
-      </div>
-    </div><!-- /login-email-method -->
 
     </div><!-- /view-login -->
 
@@ -946,10 +920,8 @@ function showAuthMode(mode) {
   document.getElementById('toggle-login-btn').classList.toggle('active', isLogin);
   document.getElementById('toggle-signup-btn').classList.toggle('active', !isLogin);
 
-  // Keep login simple by default: Phone method visible, Email method hidden.
   if (isLogin) {
     document.getElementById('login-phone-method').style.display = 'block';
-    document.getElementById('login-email-method').style.display = 'none';
   }
 }
 
@@ -2262,19 +2234,7 @@ function filterTrips(filter, el){
   renderTripsList(filter);
 }
 
-// ─── LOGIN TAB SWITCH ───
-function switchLoginTab(tab){
-  const isPhone = tab === 'phone';
-  document.getElementById('login-phone-method').style.display = isPhone ? 'block' : 'none';
-  document.getElementById('login-email-method').style.display = isPhone ? 'none' : 'block';
-  document.getElementById('tab-phone-btn').style.cssText += isPhone ? ';background:#000;color:#fff' : ';background:transparent;color:#888';
-  document.getElementById('tab-email-btn').style.cssText += isPhone ? ';background:transparent;color:#888' : ';background:#000;color:#fff';
-  // Reset email steps when switching back
-  if(isPhone){
-    document.getElementById('step-email').style.display='block';
-    document.getElementById('step-email-sent').style.display='none';
-  }
-}
+function switchLoginTab(){}
 
 // ─── EMAIL LOGIN ───
 async function doEmailLogin(){
@@ -2383,7 +2343,7 @@ async function forceChangeClientPwd(){
 // ─── FORGOT PASSWORD ───
 function sendForgotPwdLink(type) {
   let initialEmail = '';
-  if (type === 'email') initialEmail = document.getElementById('email-login-inp').value.trim();
+  if (type === 'email') initialEmail = document.getElementById('phone-inp').value.trim();
   if (type === 'identity') {
     const v = document.getElementById('phone-inp').value.trim();
     if (v.includes('@')) initialEmail = v;
@@ -2472,9 +2432,6 @@ async function checkEmailLink(){
       // New user — show create profile, pre-fill email
       document.getElementById('pg-login').style.display='flex';
       document.getElementById('login-phone-method').style.display='none';
-      document.getElementById('login-email-method').style.display='none';
-      document.getElementById('tab-phone-btn').style.display='none';
-      document.getElementById('tab-email-btn').style.display='none';
       document.getElementById('step-newuser').style.display='block';
       document.getElementById('email-inp').value = email;
       _pendingIsNewUser = true;
