@@ -1336,7 +1336,24 @@ async function initDashboard(){
   document.getElementById('welcome-msg').textContent = `Welcome, ${currentUser.name.split(' ')[0]}`;
   const parts = currentUser.name.split(' ');
   document.getElementById('avatar-initials').textContent = (parts[0][0] + (parts[1]?parts[1][0]:'')).toUpperCase();
-  
+
+  // Auto-link corporate account on first login so future queries are scoped
+  // correctly — prevents old test bookings with matching email/phone from
+  // inflating the trip list.
+  if (!currentUser.corporateAccountId && currentUser.email) {
+    try {
+      const corpSnap = await db.collection('corporate_accounts')
+        .where('contactEmail', '==', currentUser.email)
+        .where('status', 'in', ['Approved', 'Active'])
+        .limit(1).get();
+      if (!corpSnap.empty) {
+        const corpId = corpSnap.docs[0].id;
+        await db.collection('clients').doc(currentUser.id).update({ corporateAccountId: corpId });
+        currentUser.corporateAccountId = corpId;
+      }
+    } catch(e) {}
+  }
+
   // Real-time Listeners with Merging Logic
   const tripMap = new Map();
   const mergeTrips = (snapshot) => {
@@ -1355,16 +1372,23 @@ async function initDashboard(){
 
   // 1. Subcollection (assigned trips)
   db.collection('clients').doc(currentUser.id).collection('trips').orderBy('date','desc').onSnapshot(mergeTrips);
-  
-  // 2. Global bookings (matching email)
-  if (currentUser.email) {
-    db.collection('bookings').where('email', '==', currentUser.email).onSnapshot(mergeTrips);
-  }
-  // 3. Global bookings (matching phone)
-  if (currentUser.phone) {
-    const rawPh = currentUser.phone.replace(/\D/g,'');
-    if (rawPh) {
-      db.collection('bookings').where('phone', '==', currentUser.phone).onSnapshot(mergeTrips);
+
+  if (currentUser.corporateAccountId) {
+    // Corporate client: scope to this corporate account only. This matches
+    // exactly what the admin sees and excludes unrelated test bookings that
+    // happen to share the same email or phone number.
+    db.collection('bookings').where('corporateAccountId', '==', currentUser.corporateAccountId).onSnapshot(mergeTrips);
+  } else {
+    // 2. Global bookings (matching email)
+    if (currentUser.email) {
+      db.collection('bookings').where('email', '==', currentUser.email).onSnapshot(mergeTrips);
+    }
+    // 3. Global bookings (matching phone)
+    if (currentUser.phone) {
+      const rawPh = currentUser.phone.replace(/\D/g,'');
+      if (rawPh) {
+        db.collection('bookings').where('phone', '==', currentUser.phone).onSnapshot(mergeTrips);
+      }
     }
   }
 
