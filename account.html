@@ -1342,7 +1342,11 @@ async function initDashboard(){
   const mergeTrips = (snapshot) => {
     snapshot.forEach(d => {
       const trip = { id: d.id, ...d.data() };
-      tripMap.set(trip.id, trip);
+      // When a subcollection trip was assigned from a booking it carries a
+      // bookingId field. Key by that so the same trip loaded from both the
+      // subcollection and the bookings-by-email/phone query doesn't appear twice.
+      const key = trip.bookingId || trip.id;
+      tripMap.set(key, trip);
     });
     allTrips = Array.from(tripMap.values()).sort((a,b) => new Date(b.date + ' ' + b.time) - new Date(a.date + ' ' + a.time));
     updateDashboardUI();
