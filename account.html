@@ -993,6 +993,8 @@ async function handleSocialResult(result, providerName) {
     if (!client.firebaseUid) {
       await db.collection('clients').doc(client.id).update({ firebaseUid: user.uid });
     }
+    // Tag any unlinked personal bookings so admin can see them in the client profile
+    _linkPersonalBookings(client.id, email, user.phoneNumber || '');
     loginUser(client);
   } else {
     // New user — create Firestore profile
@@ -1007,9 +1009,37 @@ async function handleSocialResult(result, providerName) {
       authProvider: providerName
     };
     await ref.set(data);
-    loginUser({id: ref.id, ...data});
+    const newClient = {id: ref.id, ...data};
+    // Tag any pre-existing personal bookings with the new client ID
+    _linkPersonalBookings(ref.id, email, user.phoneNumber || '');
+    loginUser(newClient);
     toast(`Welcome, ${data.name}! Your account has been created.`);
   }
+}
+
+// Tags personal (non-corporate) bookings that match email or phone with the
+// client's ID so admin can see them in the client profile view.
+async function _linkPersonalBookings(clientId, email, phone) {
+  if (!db || (!email && !phone)) return;
+  try {
+    const batch = db.batch();
+    let linked = 0;
+    const check = (snap) => {
+      snap.forEach(d => {
+        const data = d.data();
+        if (!data.corporateAccountId && data.clientId !== clientId) {
+          batch.update(d.ref, { clientId });
+          linked++;
+        }
+      });
+    };
+    if (email) check(await db.collection('bookings').where('email', '==', email).get());
+    if (phone) {
+      const raw = phone.replace(/\D/g, '');
+      if (raw) check(await db.collection('bookings').where('phone', '==', phone).get());
+    }
+    if (linked > 0) await batch.commit();
+  } catch(e) { console.warn('_linkPersonalBookings:', e.message); }
 }
 
 // Handle redirect result on page load (for mobile Apple/Google sign-in)
@@ -1412,10 +1442,20 @@ function updateDashboardUI(){
   document.getElementById('stat-total').textContent = allTrips.length;
   document.getElementById('stat-loyalty').textContent = completed;
   
-  // Balance: use admin-managed Firestore field when present, else sum confirmed trips
-  let balance = (typeof currentUser.balance === 'number')
-    ? currentUser.balance
-    : confirmed.reduce((s, t) => s + parseFloat(t.price || 0), 0);
+  // Balance: use admin-managed Firestore field when present; otherwise sum
+  // confirmed trips since the last payment date (so completed monthly cycles
+  // don't inflate the current balance).
+  let balance;
+  if (typeof currentUser.balance === 'number') {
+    balance = currentUser.balance;
+  } else if (currentUser.lastPaymentDate) {
+    const since = new Date(currentUser.lastPaymentDate);
+    balance = confirmed
+      .filter(t => new Date(t.date) >= since)
+      .reduce((s, t) => s + parseFloat(t.price || 0), 0);
+  } else {
+    balance = confirmed.reduce((s, t) => s + parseFloat(t.price || 0), 0);
+  }
   document.getElementById('stat-balance').textContent = `$${balance.toFixed(2)}`;
   
   if(balance > 0){
@@ -1992,7 +2032,8 @@ async function _acctMountPaymentElement() {
       var custRes = await funcs.httpsCallable('getStripeCustomer')({
         accountId: currentUser ? currentUser.id : '',
         email: currentUser ? (currentUser.email || '') : '',
-        company: currentUser ? (currentUser.name || '') : ''
+        company: currentUser ? (currentUser.name || '') : '',
+        collection: 'clients'
       });
       customerId = custRes.data.customerId;
     } catch(custErr) { console.warn('Could not get Stripe customer:', custErr.message); }
@@ -2055,7 +2096,7 @@ async function payWithSavedCard() {
   lbl.innerHTML = '<span style="display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,0.35);border-top:2px solid white;border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:6px"></span>Processing…';
 
   try {
-    var res = await funcs.httpsCallable('chargeSavedCard')({ accountId: currentUser.id, amount: _acctPayAmt });
+    var res = await funcs.httpsCallable('chargeSavedCard')({ accountId: currentUser.id, amount: _acctPayAmt, collection: 'clients' });
     if (res.data && res.data.success) {
       await _markTripsCompleted();
       // Immediately zero the balance display — don't wait for onSnapshot latency
@@ -2120,8 +2161,8 @@ async function acctSubmitPayment() {
           ? result.paymentIntent.payment_method
           : result.paymentIntent.payment_method.id;
         // Ensure valid Stripe customer exists before saving PM
-        await funcs.httpsCallable('getStripeCustomer')({ accountId: currentUser.id, email: currentUser.email, company: currentUser.name });
-        await funcs.httpsCallable('savePaymentMethod')({ accountId: currentUser.id, paymentMethodId: pmId });
+        await funcs.httpsCallable('getStripeCustomer')({ accountId: currentUser.id, email: currentUser.email, company: currentUser.name, collection: 'clients' });
+        await funcs.httpsCallable('savePaymentMethod')({ accountId: currentUser.id, paymentMethodId: pmId, collection: 'clients' });
       } catch(e) { console.warn('Could not save card:', e.message); }
     }
 
@@ -2180,13 +2221,26 @@ async function _markTripsCompleted() {
     try { await db.collection('bookings').doc(t.id).update(upd); } catch(e) {}
     try { await db.collection('clients').doc(currentUser.id).collection('trips').doc(t.id).update(upd); } catch(e) {}
   }
-  // Zero the admin-managed balance field so both sources agree
-  try { await db.collection('clients').doc(currentUser.id).update({ balance: 0 }); } catch(e) {}
+  // Zero balance and record payment date so the next billing period starts clean
+  try {
+    await db.collection('clients').doc(currentUser.id).update({
+      balance: 0,
+      lastPaymentDate: new Date().toISOString()
+    });
+    currentUser.balance = 0;
+    currentUser.lastPaymentDate = new Date().toISOString();
+  } catch(e) {}
 }
 
 function settleBalanceWithCard() {
-  const confirmed = allTrips.filter(t => (t.status||'').toLowerCase()==='confirmed');
-  let total = 0; confirmed.forEach(t => total += parseFloat(t.price||0));
+  // Use admin-managed balance when available; otherwise derive from confirmed trips
+  let total;
+  if (typeof currentUser.balance === 'number') {
+    total = currentUser.balance;
+  } else {
+    const confirmed = allTrips.filter(t => (t.status||'').toLowerCase()==='confirmed');
+    total = confirmed.reduce((s, t) => s + parseFloat(t.price||0), 0);
+  }
   openStripePayModal(total > 0 ? total.toFixed(2) : '0');
 }
 
