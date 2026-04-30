@@ -1234,7 +1234,34 @@
             </div>
           </div>
         </div>
-        <div style="font-family:'Times New Roman',serif;font-weight:700;font-size:1.1rem;margin-bottom:1rem;border-bottom:1px solid #eee;padding-bottom:.5rem">Trip History</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;border-bottom:1px solid #eee;padding-bottom:.5rem">
+          <div style="font-family:'Times New Roman',serif;font-weight:700;font-size:1.1rem">Trip History</div>
+          <button onclick="openAddTripToClient()" class="btn bgn" style="padding:.35rem .75rem;font-size:0.75rem"><span class="material-symbols-outlined" style="font-size:14px;vertical-align:middle">add</span> Add Trip</button>
+        </div>
+        <div id="cli-add-trip-form" style="display:none;background:#f9f9f9;border:1px solid #eee;padding:1rem;margin-bottom:1rem">
+          <div class="g2" style="gap:.75rem;margin-bottom:.75rem">
+            <div><label class="flbl">Date</label><input id="cat-date" class="finp" type="date"/></div>
+            <div><label class="flbl">Time</label><input id="cat-time" class="finp" type="time" value="09:00"/></div>
+            <div><label class="flbl">Service</label>
+              <select id="cat-service" class="finp">
+                <option>Airport Transfer</option><option>Private Hire</option><option>Corporate Transfer</option><option>Event Transport</option><option>Hourly Charter</option>
+              </select>
+            </div>
+            <div><label class="flbl">Price ($)</label><input id="cat-price" class="finp" type="number" min="0" step="0.01" placeholder="0.00"/></div>
+            <div><label class="flbl">Pickup</label><input id="cat-pickup" class="finp" placeholder="Pickup address"/></div>
+            <div><label class="flbl">Destination</label><input id="cat-dest" class="finp" placeholder="Drop-off address"/></div>
+            <div><label class="flbl">Passengers</label><input id="cat-pax" class="finp" type="number" min="1" max="12" value="1"/></div>
+            <div><label class="flbl">Status</label>
+              <select id="cat-status" class="finp">
+                <option value="Confirmed">Confirmed</option><option value="Pending">Pending</option><option value="Completed">Completed</option>
+              </select>
+            </div>
+          </div>
+          <div style="display:flex;gap:.5rem">
+            <button onclick="saveAddTripToClient()" class="btn bgn" style="padding:.4rem .9rem;font-size:.8rem">Save Trip</button>
+            <button onclick="document.getElementById('cli-add-trip-form').style.display='none'" class="btn bo" style="padding:.4rem .9rem;font-size:.8rem">Cancel</button>
+          </div>
+        </div>
         <div id="cli-trips-list">
           <div class="empty"><span class="material-symbols-outlined">directions_car</span><div style="font-size:.8rem">Loading trips...</div></div>
         </div>
@@ -2174,19 +2201,24 @@
         
         openM('m-cli-detail');
         
-        // Load trips
+        // Load trips — merge subcollection + global bookings tagged with clientId
+        var seen = {}, trips = [];
         var tSnap = await db.collection('clients').doc(id).collection('trips').orderBy('date','desc').limit(50).get();
-        if(tSnap.empty) {
+        tSnap.forEach(function(tdoc) { if(!seen[tdoc.id]){ seen[tdoc.id]=true; var t=tdoc.data(); t._id=tdoc.id; trips.push(t); } });
+        var bSnap = await db.collection('bookings').where('clientId','==',id).limit(100).get();
+        bSnap.forEach(function(bdoc) { if(!seen[bdoc.id]){ seen[bdoc.id]=true; var t=bdoc.data(); t._id=bdoc.id; trips.push(t); } });
+        trips.sort(function(a,b){ return new Date(b.date||0)-new Date(a.date||0); });
+
+        if(trips.length === 0) {
           document.getElementById('cli-trips-list').innerHTML = '<div style="padding:1.5rem;text-align:center;color:#999;font-size:0.8rem">No trip history found.</div>';
         } else {
           var html = '<div style="background:#fff;border:1px solid #eee">';
-          tSnap.forEach(function(tdoc) {
-            var t = tdoc.data();
+          trips.forEach(function(t) {
             var statusColor = (t.status === 'Completed') ? '#10b981' : (t.status === 'Confirmed' ? '#3b82f6' : '#f59e0b');
             html += '<div style="padding:1rem;border-bottom:1px solid #f3f3f3;display:flex;justify-content:space-between;align-items:center">' +
               '<div>' +
               '<div style="font-weight:600;font-size:0.85rem">' + (t.date || '—') + ' · ' + (t.service || 'Private Hire') + '</div>' +
-              '<div style="font-size:0.72rem;color:#777">' + (t.pickup || '—').substring(0,30) + '... → ' + (t.destination || '—').substring(0,30) + '...</div>' +
+              '<div style="font-size:0.72rem;color:#777">' + (t.pickup || '').substring(0,30) + ' → ' + (t.destination || '').substring(0,30) + '</div>' +
               '</div>' +
               '<div style="text-align:right">' +
               '<div style="font-weight:700;color:'+statusColor+'">$' + (parseFloat(t.price)||0).toFixed(2) + '</div>' +
@@ -2229,6 +2261,54 @@
         closeM('m-cli-detail');
         loadClients();
       } catch(e) { toast('Error saving profile: ' + e.message); }
+    }
+
+    function openAddTripToClient() {
+      var form = document.getElementById('cli-add-trip-form');
+      form.style.display = form.style.display === 'none' ? 'block' : 'none';
+      // Default date to today
+      if (!document.getElementById('cat-date').value) {
+        document.getElementById('cat-date').value = new Date().toISOString().split('T')[0];
+      }
+    }
+
+    async function saveAddTripToClient() {
+      var clientId = document.getElementById('cli-detail-id').value;
+      if (!clientId || !db) return;
+      var date    = document.getElementById('cat-date').value;
+      var time    = document.getElementById('cat-time').value;
+      var service = document.getElementById('cat-service').value;
+      var price   = parseFloat(document.getElementById('cat-price').value) || 0;
+      var pickup  = document.getElementById('cat-pickup').value.trim();
+      var dest    = document.getElementById('cat-dest').value.trim();
+      var pax     = parseInt(document.getElementById('cat-pax').value) || 1;
+      var status  = document.getElementById('cat-status').value;
+      if (!date || !pickup || !dest) return toast('Date, pickup, and destination are required');
+      var trip = {
+        date, time, service, price, pickup, destination: dest,
+        passengers: pax, status, clientId,
+        createdAt: new Date().toISOString(),
+        source: 'admin-added'
+      };
+      // Get client email/phone to tag the booking so the client portal can find it
+      try {
+        var cDoc = await db.collection('clients').doc(clientId).get();
+        if (cDoc.exists) {
+          var cd = cDoc.data();
+          if (cd.email) trip.email = cd.email;
+          if (cd.phone) trip.phone = cd.phone;
+          if (cd.name)  trip.name  = cd.name;
+        }
+      } catch(e) {}
+      try {
+        var ref = await db.collection('bookings').add(trip);
+        // Also write to subcollection for legacy compatibility
+        await db.collection('clients').doc(clientId).collection('trips').doc(ref.id).set(trip);
+        toast('Trip added successfully');
+        document.getElementById('cli-add-trip-form').style.display = 'none';
+        // Reload trip list
+        openCliProfile(clientId);
+      } catch(e) { toast('Error adding trip: ' + e.message); }
     }
 
     async function approveClient(id) {
