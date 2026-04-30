@@ -21,4 +21,4 @@ jobs:
         working-directory: functions
 
       - name: Deploy Hosting + Functions
-        run: npx firebase-tools@latest deploy --only hosting,functions --project seacoast-rip --token "${{ secrets.FIREBASE_TOKEN }}"
+        run: npx firebase-tools@latest deploy --only hosting,functions --project seacoast-rip --token "${{ secrets.FIREBASE_TOKEN }}" --force
