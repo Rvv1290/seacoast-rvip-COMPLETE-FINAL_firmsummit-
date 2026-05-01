@@ -81,6 +81,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .ts-pending{background:#fff8e1;color:#f57c00} /* Amber */
 .ts-upcoming, .ts-confirmed{background:#e3f2fd;color:#1976d2} /* Blue */
 .ts-completed{background:#e8f5e9;color:#2e7d32} /* Green */
+.ts-cancelled{background:#fef2f2;color:#c62828} /* Red */
 .ts-cancelled{background:#ffebee;color:#c62828} /* Red */
 
 .t-info{display:flex;flex-wrap:wrap;gap:1.25rem;font-size:0.82rem;color:var(--text-sec)}
@@ -1554,13 +1555,15 @@ function tripCard(t, showBtns=false){
   const navUrl = (t.pickup && t.destination)
     ? `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(t.pickup)}&destination=${encodeURIComponent(t.destination)}${stops.length?`&waypoints=${encodeURIComponent(stops.join('|'))}`:''}`
     : '';
-  const canEdit = (t.status||'').toLowerCase() !== 'completed';
+  const statusLow = (t.status||'').toLowerCase();
+  const canEdit   = !['completed','cancelled'].includes(statusLow);
+  const canCancel = ['confirmed','upcoming','scheduled','pending'].includes(statusLow);
   return `
     <div class="trip-card" style="flex-wrap:wrap;align-items:flex-start">
       <div class="t-main" style="min-width:240px">
         <div class="t-header">
           <span class="t-service">${escH(t.service||'Private Hire')}</span>
-          <span class="t-status ts-${(t.status||'pending').toLowerCase()}">${escH(t.status||'Scheduled')}</span>
+          <span class="t-status ts-${statusLow}">${escH(t.status||'Scheduled')}</span>
         </div>
         <div class="t-info">
           <span><span class="material-symbols-outlined" style="font-size:14px">calendar_today</span>${escH(t.date||'')} at ${escH(t.time||'')}</span>
@@ -1571,7 +1574,8 @@ function tripCard(t, showBtns=false){
         ${t.price?`<div style="font-weight:700">$${parseFloat(t.price).toFixed(2)}</div>`:''}
         ${showBtns?`
           <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
-             ${canEdit?`<button onclick="openEditTrip('${t.id}')" class="trip-link-btn">Edit</button>`:''}
+             ${canEdit?`<button onclick="openEditTrip('${t.id}')" class="trip-link-btn">Modify</button>`:''}
+             ${canCancel?`<button onclick="cancelTrip('${t.id}')" class="trip-link-btn" style="color:#c62828;border-color:#c62828">Cancel</button>`:''}
              <button onclick="rebook('${t.id}')" class="trip-link-btn">Rebook</button>
              ${navUrl?`<a href="${navUrl}" target="_blank" class="trip-link-btn">Navigate</a>`:''}
              <button onclick="receiptPDF('${t.id}')" class="trip-link-btn">Receipt</button>
@@ -1806,6 +1810,8 @@ async function saveEditedTrip(){
   btn.disabled=true; btn.textContent='Saving…';
   try{
     await db.collection('bookings').doc(_editingTripId).update(payload);
+    // Also update subcollection if the trip lives there
+    try { await db.collection('clients').doc(currentUser.id).collection('trips').doc(_editingTripId).update(payload); } catch(e){}
     var idx = allTrips.findIndex(function(x){ return x.id===_editingTripId; });
     if(idx>=0) allTrips[idx] = Object.assign({}, allTrips[idx], payload);
     updateDashboardUI();
@@ -1818,6 +1824,25 @@ async function saveEditedTrip(){
     err.style.display='block';
   }
   btn.disabled=false; btn.textContent='Save Changes';
+}
+
+async function cancelTrip(tripId) {
+  var t = allTrips.find(function(x){ return x.id === tripId; });
+  if (!t) return;
+  var msg = 'Cancel your ' + (t.service || 'ride') + ' on ' + (t.date || '') + (t.time ? ' at ' + t.time : '') + '?\n\nThis cannot be undone.';
+  if (!confirm(msg)) return;
+  var upd = { status: 'Cancelled', cancelledAt: new Date().toISOString(), cancelledBy: 'client' };
+  try {
+    await db.collection('bookings').doc(tripId).update(upd);
+    try { await db.collection('clients').doc(currentUser.id).collection('trips').doc(tripId).update(upd); } catch(e){}
+    var idx = allTrips.findIndex(function(x){ return x.id === tripId; });
+    if (idx >= 0) allTrips[idx] = Object.assign({}, allTrips[idx], upd);
+    updateDashboardUI();
+    buildCal();
+    toast('Reservation cancelled.');
+  } catch(e) {
+    toast('Could not cancel — please call (978) 255-3140.');
+  }
 }
 
 function rebook(tripId){
