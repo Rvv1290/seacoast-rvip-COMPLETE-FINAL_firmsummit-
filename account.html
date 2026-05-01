@@ -82,6 +82,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .ts-upcoming, .ts-confirmed{background:#e3f2fd;color:#1976d2} /* Blue */
 .ts-completed{background:#e8f5e9;color:#2e7d32} /* Green */
 .ts-cancelled{background:#fef2f2;color:#c62828} /* Red */
+.ts-paid{background:#e8f5e9;color:#2e7d32} /* Green — same as completed */
 .ts-cancelled{background:#ffebee;color:#c62828} /* Red */
 
 .t-info{display:flex;flex-wrap:wrap;gap:1.25rem;font-size:0.82rem;color:var(--text-sec)}
@@ -1435,7 +1436,8 @@ async function initDashboard(){
 }
 
 function updateDashboardUI(){
-  const completed = allTrips.filter(t => (t.status||'').toLowerCase()==='completed').length;
+  const completed = allTrips.filter(t => ['completed','paid'].includes((t.status||'').toLowerCase())).length;
+  // Only 'Confirmed' (unpaid) trips count toward outstanding balance
   const confirmed = allTrips.filter(t => (t.status||'').toLowerCase()==='confirmed');
   const upcoming  = allTrips.filter(t => ['upcoming','scheduled','pending','confirmed'].includes((t.status||'').toLowerCase())).length;
   
@@ -1556,7 +1558,7 @@ function tripCard(t, showBtns=false){
     ? `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(t.pickup)}&destination=${encodeURIComponent(t.destination)}${stops.length?`&waypoints=${encodeURIComponent(stops.join('|'))}`:''}`
     : '';
   const statusLow = (t.status||'').toLowerCase();
-  const canEdit   = !['completed','cancelled'].includes(statusLow);
+  const canEdit   = !['completed','cancelled','paid'].includes(statusLow);
   const canCancel = ['confirmed','upcoming','scheduled','pending'].includes(statusLow);
   return `
     <div class="trip-card" style="flex-wrap:wrap;align-items:flex-start">
