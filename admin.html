@@ -1923,18 +1923,25 @@
     async function fbSync(bk) {
       if (!db) return;
       try {
-        // 1. Check if we need to update Corporate Balance
-        // Logic: Status is 'Confirmed' AND it's a corporate account AND hasn't been added yet
-        if (bk.status === 'Confirmed' && bk.corporateAccountId && !bk.balanceAdded) {
-          try {
-            var price = parseFloat(bk.price) || 0;
-            if (price > 0) {
+        // 1. Corporate balance — increment when Confirmed (once), decrement when Paid
+        if (bk.corporateAccountId) {
+          var price = parseFloat(bk.price) || 0;
+          if (bk.status === 'Confirmed' && !bk.balanceAdded && price > 0) {
+            try {
               await db.collection('corporate_accounts').doc(bk.corporateAccountId).update({
                 balance: firebase.firestore.FieldValue.increment(price)
               });
-              bk.balanceAdded = true; // Mark as added to prevent double charge
-            }
-          } catch(e) { console.warn('Corp Balance Update Error:', e.message); }
+              bk.balanceAdded = true;
+            } catch(e) { console.warn('Corp Balance +:', e.message); }
+          }
+          if (bk.status === 'Paid' && bk.balanceAdded && price > 0) {
+            try {
+              await db.collection('corporate_accounts').doc(bk.corporateAccountId).update({
+                balance: firebase.firestore.FieldValue.increment(-price),
+                lastPaymentDate: new Date().toISOString()
+              });
+            } catch(e) { console.warn('Corp Balance -:', e.message); }
+          }
         }
 
         await db.collection('bookings').doc(bk.id).set({
@@ -1956,25 +1963,35 @@
         // AUTO-SYNC TO CLIENT TRIPS
         if (bk.status && ['Confirmed', 'Paid', 'Completed', 'Upcoming'].indexOf(bk.status.trim()) !== -1) {
           var raw = (bk.phone || '').replace(/\D/g, '');
+          var cid = null;
+
+          // Find client by phone
           if (raw.length >= 7) {
             var ph = raw.length === 10 ? '+1' + raw : (raw.length === 11 && raw[0] === '1' ? '+' + raw : '+' + raw);
-            var cid = null, fmts = [ph, raw, '+1' + raw.slice(-10)];
+            var fmts = [ph, raw, '+1' + raw.slice(-10)];
             for (var i = 0; i < fmts.length && !cid; i++) {
               var s = await db.collection('clients').where('phone', '==', fmts[i]).limit(1).get();
               if (!s.empty) s.forEach(function (d) { cid = d.id; });
             }
-            if (!cid) {
-              var ref = db.collection('clients').doc(); cid = ref.id;
-              await ref.set({ 
-                phone: ph, 
-                name: bk.name || '', 
-                email: bk.email || '', 
-                address: bk.pickup || '', 
-                createdAt: new Date().toISOString(), 
-                createdByAdmin: true,
-                status: 'Pending' // New clients start as Pending
-              });
-            }
+          }
+          // Fall back to email lookup
+          if (!cid && bk.email) {
+            var es = await db.collection('clients').where('email', '==', bk.email).limit(1).get();
+            if (!es.empty) es.forEach(function(d){ cid = d.id; });
+          }
+
+          if (!cid && raw.length >= 7) {
+            var ph2 = raw.length === 10 ? '+1' + raw : '+' + raw;
+            var ref = db.collection('clients').doc(); cid = ref.id;
+            await ref.set({
+              phone: ph2, name: bk.name || '', email: bk.email || '',
+              address: bk.pickup || '', createdAt: new Date().toISOString(),
+              createdByAdmin: true, status: 'Pending'
+            });
+          }
+
+          if (cid) {
+            // Sync status to subcollection trip
             var tripsSnap = await db.collection('clients').doc(cid).collection('trips').where('bookingId', '==', bk.id).limit(1).get();
             var tripData = {
               bookingId: bk.id,
@@ -1988,6 +2005,28 @@
             } else {
               tripData.addedAt = new Date().toISOString();
               await db.collection('clients').doc(cid).collection('trips').add(tripData);
+            }
+
+            // When marked Paid: recalculate and update clients/{id}.balance
+            // so the client dashboard reflects the payment immediately
+            if (bk.status === 'Paid') {
+              try {
+                // Sum all remaining Confirmed bookings for this client
+                var remaining = 0;
+                var corpId = bk.corporateAccountId || null;
+                var balSnaps = corpId
+                  ? [await db.collection('bookings').where('corporateAccountId','==',corpId).where('status','==','Confirmed').get()]
+                  : [
+                      await db.collection('bookings').where('email','==',bk.email||'').where('status','==','Confirmed').get(),
+                      await db.collection('bookings').where('phone','==',bk.phone||'').where('status','==','Confirmed').get()
+                    ];
+                var seenIds = {};
+                balSnaps.forEach(function(snap){ snap.forEach(function(d){ if(!seenIds[d.id]){ seenIds[d.id]=true; remaining += parseFloat(d.data().price||0); } }); });
+                await db.collection('clients').doc(cid).update({
+                  balance: remaining,
+                  lastPaymentDate: new Date().toISOString()
+                });
+              } catch(e) { console.warn('Balance sync on paid:', e.message); }
             }
           }
         }
