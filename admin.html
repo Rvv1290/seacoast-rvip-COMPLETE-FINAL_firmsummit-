@@ -2209,20 +2209,24 @@
         bSnap.forEach(function(bdoc) { if(!seen[bdoc.id]){ seen[bdoc.id]=true; var t=bdoc.data(); t._id=bdoc.id; trips.push(t); } });
         trips.sort(function(a,b){ return new Date(b.date||0)-new Date(a.date||0); });
 
+        // Store trips on the element so the delete handler can reload
+        document.getElementById('cli-trips-list').dataset.clientId = id;
+
         if(trips.length === 0) {
           document.getElementById('cli-trips-list').innerHTML = '<div style="padding:1.5rem;text-align:center;color:#999;font-size:0.8rem">No trip history found.</div>';
         } else {
           var html = '<div style="background:#fff;border:1px solid #eee">';
           trips.forEach(function(t) {
-            var statusColor = (t.status === 'Completed') ? '#10b981' : (t.status === 'Confirmed' ? '#3b82f6' : '#f59e0b');
-            html += '<div style="padding:1rem;border-bottom:1px solid #f3f3f3;display:flex;justify-content:space-between;align-items:center">' +
-              '<div>' +
-              '<div style="font-weight:600;font-size:0.85rem">' + (t.date || '—') + ' · ' + (t.service || 'Private Hire') + '</div>' +
-              '<div style="font-size:0.72rem;color:#777">' + (t.pickup || '').substring(0,30) + ' → ' + (t.destination || '').substring(0,30) + '</div>' +
+            var statusColor = (t.status === 'Completed') ? '#10b981' : (t.status === 'Confirmed' ? '#3b82f6' : (t.status === 'Cancelled' ? '#dc2626' : '#f59e0b'));
+            html += '<div style="padding:0.75rem 1rem;border-bottom:1px solid #f3f3f3;display:flex;justify-content:space-between;align-items:center;gap:0.5rem">' +
+              '<div style="flex:1;min-width:0">' +
+              '<div style="font-weight:600;font-size:0.85rem">' + e(t.date || '—') + ' · ' + e(t.service || 'Private Hire') + '</div>' +
+              '<div style="font-size:0.72rem;color:#777;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + e((t.pickup||'').substring(0,30)) + ' → ' + e((t.destination||'').substring(0,30)) + '</div>' +
               '</div>' +
-              '<div style="text-align:right">' +
+              '<div style="text-align:right;flex-shrink:0">' +
               '<div style="font-weight:700;color:'+statusColor+'">$' + (parseFloat(t.price)||0).toFixed(2) + '</div>' +
-              '<div style="font-size:0.6rem;text-transform:uppercase;font-weight:700;color:#aaa">' + (t.status || 'Pending') + '</div>' +
+              '<div style="font-size:0.6rem;text-transform:uppercase;font-weight:700;color:#aaa;margin-bottom:4px">' + e(t.status || 'Pending') + '</div>' +
+              '<button onclick="adminDeleteTrip(\''+t._id+'\',\''+id+'\')" style="font-size:0.65rem;padding:2px 8px;background:#fff;border:1px solid #dc2626;color:#dc2626;cursor:pointer;font-family:Inter,sans-serif;border-radius:2px">Delete</button>' +
               '</div>' +
               '</div>';
           });
@@ -2309,6 +2313,20 @@
         // Reload trip list
         openCliProfile(clientId);
       } catch(e) { toast('Error adding trip: ' + e.message); }
+    }
+
+    async function adminDeleteTrip(tripId, clientId) {
+      if (!tripId || !db) return;
+      if (!confirm('Permanently delete this trip from the client\'s history?')) return;
+      try {
+        // Delete from bookings collection
+        try { await db.collection('bookings').doc(tripId).delete(); } catch(e) {}
+        // Delete from client subcollection
+        try { await db.collection('clients').doc(clientId).collection('trips').doc(tripId).delete(); } catch(e) {}
+        toast('Trip deleted');
+        // Reload the trip list
+        openCliProfile(clientId);
+      } catch(e) { toast('Error deleting trip: ' + e.message); }
     }
 
     async function approveClient(id) {
