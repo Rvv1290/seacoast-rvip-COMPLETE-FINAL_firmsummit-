@@ -657,44 +657,6 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
               </div>
             </div>
 
-            <!-- STEP 04 -->
-            <div style="margin-bottom:2.5rem">
-              <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:6px">
-                <span style="font-family:'Work Sans',sans-serif;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:#775a19">Step 04</span>
-                <h3 style="font-family:'Times New Roman',serif;font-size:1.5rem;font-weight:700;color:#000;margin:0">How You'll Pay</h3>
-              </div>
-              <p style="font-family:Inter,sans-serif;font-size:0.75rem;color:#444748;margin:0 0 1.25rem">No charge until your ride is confirmed.</p>
-              <div class="book-grid">
-                <div class="pay-card">
-                  <input type="radio" name="bk-payment" id="bk-p-card" value="Credit/Debit Card" checked/>
-                  <label for="bk-p-card">
-                    <span class="material-symbols-outlined" style="color:#775a19;font-size:1.75rem">credit_card</span>
-                    <span style="font-family:'Work Sans',sans-serif;font-size:0.72rem;font-weight:700;text-transform:uppercase;color:#000">Card</span>
-                    <span style="font-family:Inter,sans-serif;font-size:0.7rem;color:#444748">Visa · MC · Amex</span>
-                  </label>
-                </div>
-                <div class="pay-card">
-                  <input type="radio" name="bk-payment" id="bk-p-venmo" value="Venmo"/>
-                  <label for="bk-p-venmo">
-                    <div style="width:28px;height:28px;border-radius:6px;background:#008CFF;display:flex;align-items:center;justify-content:center"><span style="color:white;font-weight:900;font-size:13px;font-family:sans-serif">V</span></div>
-                    <span style="font-family:'Work Sans',sans-serif;font-size:0.72rem;font-weight:700;text-transform:uppercase;color:#000">Venmo</span>
-                    <span style="font-family:Inter,sans-serif;font-size:0.7rem;color:#444748">@SeacoastRVIP</span>
-                  </label>
-                </div>
-                <div class="pay-card">
-                  <input type="radio" name="bk-payment" id="bk-p-cash" value="Cash on Arrival"/>
-                  <label for="bk-p-cash">
-                    <span class="material-symbols-outlined" style="color:#775a19;font-size:1.75rem">payments</span>
-                    <span style="font-family:'Work Sans',sans-serif;font-size:0.72rem;font-weight:700;text-transform:uppercase;color:#000">Cash</span>
-                    <span style="font-family:Inter,sans-serif;font-size:0.7rem;color:#444748">Pay on arrival</span>
-                  </label>
-                </div>
-              </div>
-              <div id="bk-pay-note" style="margin-top:1rem;padding:1rem;background:#f3f3f3;border-left:2px solid #775a19;font-family:Inter,sans-serif;font-size:0.78rem;color:#444748;line-height:1.6">
-                <strong style="color:#000">Card:</strong> We'll send a secure payment link after confirming your booking.
-              </div>
-            </div>
-
             <!-- TOS ACCORDION -->
             <div style="margin-bottom:1.5rem;border:1px solid #e2e2e2">
               <button type="button" id="bk-tos-toggle" onclick="bkToggleTos()" style="width:100%;background:#f3f3f3;border:0;padding:1rem 1.25rem;font-family:'Work Sans',sans-serif;font-size:0.73rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;text-align:left;cursor:pointer;display:flex;justify-content:space-between;align-items:center;color:#1a1c1c">
@@ -1876,13 +1838,6 @@ function bkTosSyncBtn(){
   var ok=cb&&cb.checked;
   btn.disabled=!ok; btn.style.opacity=ok?'1':'0.4'; btn.style.cursor=ok?'pointer':'not-allowed';
 }
-// Wire payment note changes for the booking form
-document.addEventListener('DOMContentLoaded', function(){
-  var payNotes={'Credit/Debit Card':'<strong style="color:#000">Card:</strong> We\'ll send a secure payment link after confirming your booking.','Venmo':'<strong style="color:#000">Venmo:</strong> After confirmation, send to @SeacoastRVIP. Include your name + ride date.','Cash on Arrival':'<strong style="color:#000">Cash:</strong> Pay your driver on arrival. Please have the exact amount ready.'};
-  document.querySelectorAll('[name="bk-payment"]').forEach(function(r){
-    r.addEventListener('change',function(){ var n=document.getElementById('bk-pay-note'); if(n) n.innerHTML=payNotes[this.value]||''; });
-  });
-});
 
 function collectStops(listId){
   var list=document.getElementById(listId);
@@ -1919,8 +1874,6 @@ function clearAccountBookingForm(){
   document.querySelectorAll('#bk-pass-btns .p-btn').forEach(function(b,i){ b.classList.toggle('sel',i===0); });
   var lhid=document.getElementById('bk-hid-lug'); if(lhid) lhid.value='0';
   document.querySelectorAll('#bk-lug-btns .p-btn').forEach(function(b,i){ b.classList.toggle('sel',i===0); });
-  var pc=document.getElementById('bk-p-card'); if(pc) pc.checked=true;
-  var pn=document.getElementById('bk-pay-note'); if(pn) pn.innerHTML='<strong style="color:#000">Card:</strong> We\'ll send a secure payment link after confirming your booking.';
   var tbdCb=document.getElementById('bk-time-tbd'); if(tbdCb){ tbdCb.checked=false; bkToggleTimeTBD(tbdCb); }
   var tosChk=document.getElementById('bk-tos-check'); if(tosChk){ tosChk.checked=false; bkTosSyncBtn(); }
   var stopList=document.getElementById('bk-stops-list'); if(stopList) stopList.innerHTML='';
@@ -1964,7 +1917,7 @@ async function submitAccountBooking(){
     passengers:(document.getElementById('bk-hid-pass')||{value:'1'}).value||'1',
     luggage:(document.getElementById('bk-hid-lug')||{value:'0'}).value||'0',
     flightNumber:(document.getElementById('bk-flight')||{value:''}).value.trim(),
-    paymentMethod:(document.querySelector('[name="bk-payment"]:checked')||{value:'Credit/Debit Card'}).value,
+
     notes:(document.getElementById('bk-notes')||{value:''}).value.trim(),
     stopList:collectStops('bk-stops-list'),
     status:'Pending', source:'account-portal',
