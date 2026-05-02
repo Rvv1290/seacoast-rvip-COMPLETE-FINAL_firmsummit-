@@ -1086,7 +1086,7 @@
   <div class="ov" id="m-add">
     <div class="modal" style="max-width:580px">
       <div class="mhd">
-        <h3 id="add-title">New Booking</h3><button class="mx" onclick="closeM('m-add')">✕</button>
+        <h3 id="add-title">New Booking</h3><button class="mx" onclick="closeMAdd()">✕</button>
       </div>
       <div class="mbdy">
         <input type="hidden" id="eid" />
@@ -1166,7 +1166,7 @@
           </div>
         </div>
         <div style="display:flex;gap:.75rem;justify-content:flex-end">
-          <button onclick="closeM('m-add')" class="btn bo">Cancel</button>
+          <button onclick="closeMAdd()" class="btn bo">Cancel</button>
           <button onclick="saveBk()" class="btn bk" style="padding:.625rem 2rem">Save Booking</button>
         </div>
       </div>
@@ -2336,6 +2336,7 @@
       var cem   = document.getElementById('cpr-em').value.trim();
       _addForClientId  = cid;
       _editForClientId = null;
+      closeM('m-cli-detail');
       // Clear the main booking form
       document.getElementById('add-title').textContent = 'Add Trip — ' + (cname || 'Client');
       document.getElementById('eid').value = '';
@@ -2367,6 +2368,7 @@
     function openEditTripForClient(tripId, clientId, tripJson) {
       _addForClientId  = clientId;
       _editForClientId = tripId;
+      closeM('m-cli-detail');
       var t = {};
       try { t = JSON.parse(tripJson); } catch(ex) {}
       document.getElementById('add-title').textContent = 'Edit Trip';
@@ -2717,6 +2719,13 @@
     // ─────────────────────────────────────────────
     function openM(id) { document.getElementById(id).classList.add('open'); document.body.style.overflow = 'hidden'; }
     function closeM(id) { document.getElementById(id).classList.remove('open'); document.body.style.overflow = ''; }
+    function closeMAdd() {
+      closeM('m-add');
+      // Return to client profile if we came from there
+      var cid = _addForClientId || _editForClientId;
+      _addForClientId = null; _editForClientId = null;
+      if (cid) openCliProfile(cid);
+    }
     function toast(msg) { var t = document.getElementById('toast'); t.textContent = msg; t.style.display = 'block'; setTimeout(function () { t.style.display = 'none'; }, 3000); }
     function fbErrHTML(extra) {
       return '<div style="background:#fef2f2;border-left:3px solid #dc2626;padding:1.25rem;font-size:.83rem;color:#b91c1c">' +
