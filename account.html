@@ -100,6 +100,19 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .stop-list{display:flex;flex-direction:column;gap:0.65rem}
 .stop-row{display:flex;align-items:center;gap:0.5rem}
 .stop-row .f-input{flex:1}
+/* Vehicle cards */
+.v-card input[type="radio"]{display:none}
+.v-card label{display:block;cursor:pointer;border-bottom:2px solid transparent;transition:all 0.2s;background:#f3f3f3;padding:1rem}
+.v-card input[type="radio"]:checked+label{border-bottom-color:#775a19;background:white}
+.v-card label:hover{background:white}
+/* Payment method cards */
+.pay-card input[type="radio"]{display:none}
+.pay-card label{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1.2rem 0.75rem;border:1.5px solid #e2e2e2;cursor:pointer;transition:all 0.2s;background:white;gap:6px;text-align:center}
+.pay-card input[type="radio"]:checked+label{border-color:#775a19;background:#fdfaf4}
+.pay-card label:hover{border-color:#775a19}
+/* Passenger / luggage selector buttons */
+.p-btn{transition:all 0.15s;width:3rem;height:3rem;border-radius:50%;border:1px solid #c4c7c7;font-weight:700;font-size:0.875rem;font-family:'Work Sans',sans-serif;cursor:pointer;background:white;min-width:44px;min-height:44px}
+.p-btn.sel{background:#000;color:white;border-color:#000}
 .stop-rm{background:none;border:1px solid #ddd;color:#777;padding:0.35rem 0.6rem;font-family:'Work Sans',sans-serif;font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;cursor:pointer}
 .stop-rm:hover{border-color:#b91c1c;color:#b91c1c}
 .stop-add{margin-top:0.65rem;background:none;border:1px dashed #c9a84c;color:#775a19;padding:0.5rem 0.75rem;font-family:'Work Sans',sans-serif;font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;cursor:pointer}
@@ -485,57 +498,247 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 
       </div>
 
-      <!-- Tab: My Calendar -->
+      <!-- Tab: Book a Ride -->
       <div id="tab-book" class="tab-panel">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2rem;flex-wrap:wrap;gap:1rem">
-          <h2 style="font-family:'Times New Roman',serif;font-size:2.2rem;color:#000">Book a Ride</h2>
-          <span style="font-size:0.75rem;color:#777">Create and manage your own reservations directly here.</span>
-        </div>
-        <div id="acct-book-ok" style="display:none;margin-bottom:1rem;padding:0.75rem 1rem;background:#f0fdf4;border-left:3px solid #10b981;color:#047857;font-size:0.82rem"></div>
+        <div id="acct-book-ok" style="display:none;margin-bottom:1.5rem;padding:1.25rem 1.5rem;background:#f0fdf4;border-left:3px solid #10b981;color:#047857;font-size:0.85rem;line-height:1.6"></div>
         <div id="acct-book-err" style="display:none;margin-bottom:1rem;padding:0.75rem 1rem;background:#fef2f2;border-left:3px solid #ef4444;color:#b91c1c;font-size:0.82rem"></div>
 
         <div class="book-layout">
-          <div class="book-card">
-            <div class="book-grid">
-              <div class="f-group"><label class="f-label">Passenger Name *</label><input id="bk-name" class="f-input" type="text"/></div>
-              <div class="f-group"><label class="f-label">Phone *</label><input id="bk-phone" class="f-input" type="tel" oninput="fmtPhone(this)"/></div>
-              <div class="f-group book-full"><label class="f-label">Email</label><input id="bk-email" class="f-input" type="email"/></div>
-              <div class="f-group"><label class="f-label">Date *</label><input id="bk-date" class="f-input" type="date"/></div>
-              <div class="f-group"><label class="f-label">Pickup Time *</label><input id="bk-time" class="f-input" type="time"/></div>
-              <div class="f-group book-full"><label class="f-label">Pickup Location *</label><input id="bk-pickup" class="f-input" type="text" autocomplete="off"/></div>
-              <div class="f-group book-full"><label class="f-label">Destination *</label><input id="bk-dest" class="f-input" type="text" autocomplete="off"/></div>
-              <div class="f-group book-full">
-                <label class="f-label">Additional Stops</label>
-                <div id="bk-stops-list" class="stop-list"></div>
-                <button type="button" class="stop-add" onclick="addAccountStop()">+ Add Stop</button>
-              </div>
-              <div class="f-group"><label class="f-label">Service Type</label>
-                <select id="bk-service" class="f-input">
-                  <option value="">Select...</option>
-                  <option value="Airport Transfer — BOS Logan">✈ Airport Transfer — Boston Logan (BOS)</option>
-                  <option value="Airport Transfer — MHT Manchester">✈ Airport Transfer — Manchester (MHT)</option>
-                  <option value="New York Transfer (NY)">🗽 New York Transfer (NY)</option>
-                  <option value="Hotel Transfer">🏨 Hotel Transfer</option>
-                  <option value="Night Out">🌆 Night Out</option>
-                  <option value="Concert / Live Event">🎵 Concert / Live Event</option>
-                  <option value="Casino Run">🎰 Casino Run</option>
-                  <option value="Special Event / Gala">🎭 Special Event / Gala</option>
-                  <option value="Medical Appointment">🏥 Medical Appointment</option>
-                  <option value="Multi-Stop">📍 Multi-Stop</option>
-                  <option value="Other / Custom">⚙ Other / Custom</option>
-                </select>
-              </div>
-              <div class="f-group"><label class="f-label">Vehicle</label><input id="bk-vehicle" class="f-input" type="text" placeholder="Luxury Black SUV"/></div>
-              <div class="f-group"><label class="f-label">Passengers</label><input id="bk-passengers" class="f-input" type="text" value="1"/></div>
-              <div class="f-group"><label class="f-label">Luggage</label><input id="bk-luggage" class="f-input" type="text" value="0"/></div>
-              <div class="f-group book-full"><label class="f-label">Special Instructions</label><textarea id="bk-notes" class="f-input" rows="2" style="resize:vertical"></textarea></div>
+          <!-- LEFT: FORM -->
+          <div>
+            <!-- Header -->
+            <div style="margin-bottom:2.5rem">
+              <span style="font-family:'Work Sans',sans-serif;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.15em;color:#775a19;display:block;margin-bottom:0.5rem">The Ride You Can Count On</span>
+              <h2 style="font-family:'Times New Roman',serif;font-size:2.5rem;font-weight:700;color:#000;margin:0 0 0.5rem">Reservation</h2>
+              <p style="font-family:Inter,sans-serif;font-size:0.85rem;color:#444748;margin:0">We confirm within minutes by text &amp; email.</p>
+              <div style="margin-top:0.75rem;display:inline-block;background:rgba(119,90,25,0.1);color:#775a19;font-family:'Work Sans',sans-serif;font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;padding:4px 12px">✦ First ride 10% off — mention when booking</div>
             </div>
-            <div style="display:flex;justify-content:flex-end;gap:0.75rem;flex-wrap:wrap">
-              <button type="button" class="btn-out" onclick="clearAccountBookingForm()">Clear</button>
-              <button type="button" id="bk-submit-btn" class="btn-k" onclick="submitAccountBooking()">Request Ride →</button>
-            </div>
-          </div>
 
+            <!-- STEP 01 -->
+            <div style="margin-bottom:2.5rem">
+              <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:1.25rem">
+                <span style="font-family:'Work Sans',sans-serif;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:#775a19">Step 01</span>
+                <h3 style="font-family:'Times New Roman',serif;font-size:1.5rem;font-weight:700;color:#000;margin:0">Personal Info</h3>
+              </div>
+              <div class="book-grid">
+                <div class="f-group book-full"><label class="f-label">Full Name *</label><input id="bk-name" class="f-input" type="text" required placeholder="Your full name"/></div>
+                <div class="f-group"><label class="f-label">Phone *</label><input id="bk-phone" class="f-input" type="tel" required placeholder="Your phone number" oninput="fmtPhone(this)"/></div>
+                <div class="f-group"><label class="f-label">Email <span style="font-weight:400;color:#888;font-size:0.85em">(for receipts)</span></label><input id="bk-email" class="f-input" type="email" placeholder="your@email.com"/></div>
+                <div class="f-group book-full"><label class="f-label">Company Name <span style="font-weight:400;color:#888;font-size:0.85em">(leave blank if personal)</span></label><input id="bk-company" class="f-input" type="text" placeholder="e.g. Acme Corp — leave blank if personal"/></div>
+              </div>
+            </div>
+
+            <!-- STEP 02 -->
+            <div style="margin-bottom:2.5rem">
+              <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:1.25rem">
+                <span style="font-family:'Work Sans',sans-serif;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:#775a19">Step 02</span>
+                <h3 style="font-family:'Times New Roman',serif;font-size:1.5rem;font-weight:700;color:#000;margin:0">Vehicle Class</h3>
+              </div>
+              <div class="book-grid">
+                <div class="v-card">
+                  <input type="radio" name="bk-vehicle-class" id="bk-v1" value="Black SUV Luxury (7 passengers)" checked/>
+                  <label for="bk-v1">
+                    <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuCVUPBh5oQxrX7I9qlzu6QDGpuuiaZdhBH0UBkLAVKxzR4in41bPEhhffL8dvdYhbmeIRRjn5BVfDNw971kuJzVCN5SglGulLfrFmLfzx6mgQx59omvwObM4z9798Z4qkSkzBxZ401j19rXBjIpqO10fBqx8D1lfWXrPcRDGkI7uYsItkG4YE4f2uVrtSoiZlQbpT3ksAza03T_Lwps90Og60b2UQa1oQepmTFJf_SXIWnooRTQcNyXYgPQupPAxCvraJgH-Sxg-35C" style="width:100%;height:112px;object-fit:cover;margin-bottom:8px" alt="Black SUV Luxury"/>
+                    <p style="font-family:'Times New Roman',serif;font-weight:700;font-size:0.9rem;color:#000;margin:0 0 4px">Black SUV Luxury</p>
+                    <p style="font-family:Inter,sans-serif;font-size:0.75rem;color:#444748;margin:0">👤 7 &nbsp;|&nbsp; 🧳 5</p>
+                  </label>
+                </div>
+                <div class="v-card">
+                  <input type="radio" name="bk-vehicle-class" id="bk-v2" value="Regular SUV (6 passengers)"/>
+                  <label for="bk-v2">
+                    <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuBU2xk2TUq20eeEwO5dmeetrkexgALL6bqqA1QFc3aZipQUqCbPJRO1MnOLkEKbsRTg_d4dwwbr1F5MEg3kwHfqyaAHqOi5HWC7tTxMZ4g2Qg0dgqPA7qg_EYkLuFNFhYWSAABexk262XX2xjAcv74w7OOFl21ayeMP6zbznNiaeIIxltrNr7B7quxmSl2HHvoAXrUXcpTVpFigrTtW0EE6yp6s798MWGyG6lYhJaKsDbOQffha2q1h9LawQfsi93MNrKvGfMM0J400" style="width:100%;height:112px;object-fit:cover;margin-bottom:8px" alt="Regular SUV"/>
+                    <p style="font-family:'Times New Roman',serif;font-weight:700;font-size:0.9rem;color:#000;margin:0 0 4px">Regular SUV</p>
+                    <p style="font-family:Inter,sans-serif;font-size:0.75rem;color:#444748;margin:0">👤 6 &nbsp;|&nbsp; 🧳 4</p>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <!-- STEP 03 -->
+            <div style="margin-bottom:2.5rem">
+              <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:1.25rem">
+                <span style="font-family:'Work Sans',sans-serif;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:#775a19">Step 03</span>
+                <h3 style="font-family:'Times New Roman',serif;font-size:1.5rem;font-weight:700;color:#000;margin:0">Trip Details</h3>
+              </div>
+              <div class="book-grid">
+                <div class="f-group">
+                  <label class="f-label">Service Type *</label>
+                  <select id="bk-service" class="f-input" required>
+                    <option value="">Select...</option>
+                    <option value="Airport — Boston Logan (BOS)">Airport — Boston Logan (BOS)</option>
+                    <option value="Airport — Manchester MHT">Airport — Manchester MHT</option>
+                    <option value="New York Transfer (NY)">New York Transfer (NY)</option>
+                    <option value="Night Out">Night Out</option>
+                    <option value="Concert / Live Event">Concert / Live Event</option>
+                    <option value="Casino Run">Casino Run</option>
+                    <option value="Special Event">Special Event</option>
+                    <option value="Medical Appointment">Medical Appointment</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+                <div class="f-group">
+                  <label class="f-label">Flight Number <span style="font-weight:400;color:#888;font-size:0.85em">(we'll track delays)</span></label>
+                  <input id="bk-flight" class="f-input" type="text" placeholder="AA 1234" style="text-transform:uppercase"/>
+                </div>
+                <div class="f-group">
+                  <label class="f-label">Date *</label>
+                  <input id="bk-date" class="f-input" type="date" required/>
+                </div>
+                <div class="f-group">
+                  <label class="f-label">Pickup Time *</label>
+                  <input id="bk-time" class="f-input" type="time" required/>
+                  <label style="display:flex;align-items:center;gap:6px;margin-top:6px;cursor:pointer;font-family:Inter,sans-serif;font-size:0.75rem;color:#444748">
+                    <input type="checkbox" id="bk-time-tbd" onchange="bkToggleTimeTBD(this)" style="accent-color:#775a19;width:15px;height:15px"/>
+                    TBD — Admin will confirm pickup time
+                  </label>
+                </div>
+                <div class="f-group book-full">
+                  <label class="f-label">Pickup Address *</label>
+                  <div style="position:relative">
+                    <input id="bk-pickup" class="f-input" type="text" required placeholder="Start typing your address..." autocomplete="off" style="padding-right:2rem"/>
+                    <span class="material-symbols-outlined" style="position:absolute;right:0;bottom:10px;color:#444748;font-size:18px">my_location</span>
+                  </div>
+                </div>
+                <div class="f-group book-full">
+                  <label class="f-label">Destination *</label>
+                  <div style="position:relative">
+                    <input id="bk-dest" class="f-input" type="text" required placeholder="Airport, venue, or address..." autocomplete="off" style="padding-right:2rem"/>
+                    <span class="material-symbols-outlined" style="position:absolute;right:0;bottom:10px;color:#444748;font-size:18px">location_on</span>
+                  </div>
+                </div>
+                <div class="f-group book-full">
+                  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+                    <label class="f-label" style="margin:0">Additional Stops <span style="font-weight:400;color:#888;font-size:0.85em">(Optional — up to 3)</span></label>
+                    <button type="button" id="bk-add-stop-btn" onclick="addAccountStop()" style="font-family:'Work Sans',sans-serif;font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#775a19;background:none;border:1px solid #775a19;padding:4px 10px;cursor:pointer">+ Add Stop</button>
+                  </div>
+                  <div id="bk-stops-list" class="stop-list"></div>
+                </div>
+                <!-- Route preview -->
+                <div id="bk-route-card" class="book-full" style="display:none;padding:1rem;background:#fff;border:1px solid #e8c97a;border-left:3px solid #775a19">
+                  <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+                    <span class="material-symbols-outlined" style="color:#775a19;font-size:16px">route</span>
+                    <span style="font-family:'Work Sans',sans-serif;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#775a19">Live Route Estimate</span>
+                  </div>
+                  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;text-align:center">
+                    <div><p style="font-family:'Times New Roman',serif;font-size:1.35rem;font-weight:700;color:#000;margin:0" id="bk-route-distance">—</p><p style="font-family:'Work Sans',sans-serif;font-size:0.6rem;text-transform:uppercase;letter-spacing:0.08em;color:#444748;margin:4px 0 0">Distance</p></div>
+                    <div><p style="font-family:'Times New Roman',serif;font-size:1.35rem;font-weight:700;color:#000;margin:0" id="bk-route-duration">—</p><p style="font-family:'Work Sans',sans-serif;font-size:0.6rem;text-transform:uppercase;letter-spacing:0.08em;color:#444748;margin:4px 0 0">Drive Time</p></div>
+                    <div><p style="font-family:'Times New Roman',serif;font-size:1.35rem;font-weight:700;color:#775a19;margin:0" id="bk-route-price">—</p><p style="font-family:'Work Sans',sans-serif;font-size:0.6rem;text-transform:uppercase;letter-spacing:0.08em;color:#444748;margin:4px 0 0">Est. Rate</p></div>
+                  </div>
+                </div>
+                <!-- Passengers -->
+                <div class="f-group">
+                  <label class="f-label">Passengers *</label>
+                  <div style="display:flex;gap:8px;flex-wrap:wrap" id="bk-pass-btns">
+                    <button type="button" onclick="bkSelPass(this,'1')" class="p-btn sel">1</button>
+                    <button type="button" onclick="bkSelPass(this,'2')" class="p-btn">2</button>
+                    <button type="button" onclick="bkSelPass(this,'3')" class="p-btn">3</button>
+                    <button type="button" onclick="bkSelPass(this,'4')" class="p-btn">4</button>
+                    <button type="button" onclick="bkSelPass(this,'5')" class="p-btn">5</button>
+                    <button type="button" onclick="bkSelPass(this,'6+')" class="p-btn">6+</button>
+                  </div>
+                  <input type="hidden" id="bk-hid-pass" value="1"/>
+                </div>
+                <!-- Luggage -->
+                <div class="f-group">
+                  <label class="f-label">Luggage Bags</label>
+                  <div style="display:flex;gap:8px;flex-wrap:wrap" id="bk-lug-btns">
+                    <button type="button" onclick="bkSelLug(this,'0')" class="p-btn sel">0</button>
+                    <button type="button" onclick="bkSelLug(this,'1')" class="p-btn">1</button>
+                    <button type="button" onclick="bkSelLug(this,'2')" class="p-btn">2</button>
+                    <button type="button" onclick="bkSelLug(this,'3')" class="p-btn">3</button>
+                    <button type="button" onclick="bkSelLug(this,'4+')" class="p-btn">4+</button>
+                  </div>
+                  <input type="hidden" id="bk-hid-lug" value="0"/>
+                </div>
+                <div class="f-group book-full">
+                  <label class="f-label">Special Requests</label>
+                  <textarea id="bk-notes" class="f-input" rows="3" style="resize:vertical" placeholder="Child seat, extra stop, accessibility needs, early morning pickup..."></textarea>
+                </div>
+              </div>
+            </div>
+
+            <!-- STEP 04 -->
+            <div style="margin-bottom:2.5rem">
+              <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:6px">
+                <span style="font-family:'Work Sans',sans-serif;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:#775a19">Step 04</span>
+                <h3 style="font-family:'Times New Roman',serif;font-size:1.5rem;font-weight:700;color:#000;margin:0">How You'll Pay</h3>
+              </div>
+              <p style="font-family:Inter,sans-serif;font-size:0.75rem;color:#444748;margin:0 0 1.25rem">No charge until your ride is confirmed.</p>
+              <div class="book-grid">
+                <div class="pay-card">
+                  <input type="radio" name="bk-payment" id="bk-p-card" value="Credit/Debit Card" checked/>
+                  <label for="bk-p-card">
+                    <span class="material-symbols-outlined" style="color:#775a19;font-size:1.75rem">credit_card</span>
+                    <span style="font-family:'Work Sans',sans-serif;font-size:0.72rem;font-weight:700;text-transform:uppercase;color:#000">Card</span>
+                    <span style="font-family:Inter,sans-serif;font-size:0.7rem;color:#444748">Visa · MC · Amex</span>
+                  </label>
+                </div>
+                <div class="pay-card">
+                  <input type="radio" name="bk-payment" id="bk-p-venmo" value="Venmo"/>
+                  <label for="bk-p-venmo">
+                    <div style="width:28px;height:28px;border-radius:6px;background:#008CFF;display:flex;align-items:center;justify-content:center"><span style="color:white;font-weight:900;font-size:13px;font-family:sans-serif">V</span></div>
+                    <span style="font-family:'Work Sans',sans-serif;font-size:0.72rem;font-weight:700;text-transform:uppercase;color:#000">Venmo</span>
+                    <span style="font-family:Inter,sans-serif;font-size:0.7rem;color:#444748">@SeacoastRVIP</span>
+                  </label>
+                </div>
+                <div class="pay-card">
+                  <input type="radio" name="bk-payment" id="bk-p-cash" value="Cash on Arrival"/>
+                  <label for="bk-p-cash">
+                    <span class="material-symbols-outlined" style="color:#775a19;font-size:1.75rem">payments</span>
+                    <span style="font-family:'Work Sans',sans-serif;font-size:0.72rem;font-weight:700;text-transform:uppercase;color:#000">Cash</span>
+                    <span style="font-family:Inter,sans-serif;font-size:0.7rem;color:#444748">Pay on arrival</span>
+                  </label>
+                </div>
+              </div>
+              <div id="bk-pay-note" style="margin-top:1rem;padding:1rem;background:#f3f3f3;border-left:2px solid #775a19;font-family:Inter,sans-serif;font-size:0.78rem;color:#444748;line-height:1.6">
+                <strong style="color:#000">Card:</strong> We'll send a secure payment link after confirming your booking.
+              </div>
+            </div>
+
+            <!-- TOS ACCORDION -->
+            <div style="margin-bottom:1.5rem;border:1px solid #e2e2e2">
+              <button type="button" id="bk-tos-toggle" onclick="bkToggleTos()" style="width:100%;background:#f3f3f3;border:0;padding:1rem 1.25rem;font-family:'Work Sans',sans-serif;font-size:0.73rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;text-align:left;cursor:pointer;display:flex;justify-content:space-between;align-items:center;color:#1a1c1c">
+                <span style="display:flex;align-items:center;gap:8px"><span>📋</span> Terms of Service &amp; Cancellation Policy</span>
+                <span id="bk-tos-arrow" style="font-size:0.72rem;color:#775a19;white-space:nowrap">▼ Read &amp; Accept</span>
+              </button>
+              <div id="bk-tos-content" style="display:none;background:#fff;border-top:2px solid #775a19;padding:1.25rem 1.5rem;max-height:280px;overflow-y:auto;font-family:Inter,sans-serif;font-size:0.78rem;line-height:1.75;color:#444748">
+                <p style="font-family:'Times New Roman',serif;font-size:1rem;font-weight:700;color:#1a1c1c;margin-bottom:0.25rem">Seacoast RVIP LLC — Terms of Service</p>
+                <p style="font-size:0.7rem;color:#888;margin-bottom:1.25rem">Last updated: April 2, 2025</p>
+                <p style="font-weight:700;color:#1a1c1c;margin-bottom:0.35rem">1. Acceptance of Terms</p>
+                <p style="margin-bottom:1rem">By submitting a booking request, you agree to these Terms of Service.</p>
+                <p style="font-weight:700;color:#1a1c1c;margin-bottom:0.35rem">5. Cancellation &amp; Refund Policy</p>
+                <div style="background:#f9f9f9;border-left:3px solid #775a19;padding:0.75rem 1rem;margin-bottom:1rem">
+                  <p style="margin-bottom:0.35rem">✅ <strong>24+ hours before pickup</strong> — Full refund of any deposit paid.</p>
+                  <p style="margin-bottom:0.35rem">⚠️ <strong>12–24 hours before pickup</strong> — 50% cancellation fee.</p>
+                  <p style="margin-bottom:0.35rem">❌ <strong>Less than 12 hours</strong> — 100% of the confirmed fare is due.</p>
+                  <p style="margin-bottom:0">❌ <strong>No-show</strong> — 100% of the fare is due.</p>
+                </div>
+                <p><a href="terms.html" target="_blank" style="color:#775a19;text-decoration:underline">View full Terms page →</a></p>
+              </div>
+            </div>
+
+            <!-- TOS CHECKBOX -->
+            <div style="margin-bottom:1.75rem;padding:1rem 1.25rem;background:#fdfaf4;border:1.5px solid #775a19">
+              <label style="display:flex;align-items:flex-start;gap:0.875rem;cursor:pointer">
+                <input type="checkbox" id="bk-tos-check" onchange="bkTosSyncBtn()" style="margin-top:3px;width:18px;height:18px;accent-color:#775a19;flex-shrink:0;cursor:pointer">
+                <span style="font-family:Inter,sans-serif;font-size:0.875rem;color:#1a1c1c;line-height:1.55">
+                  I have read and agree to <a href="terms.html" target="_blank" style="color:#775a19;font-weight:600;text-decoration:underline">Seacoast RVIP LLC's Terms of Service</a> and <strong>Cancellation Policy</strong>.
+                </span>
+              </label>
+            </div>
+
+            <!-- SUBMIT -->
+            <button type="button" id="bk-submit-btn" onclick="submitAccountBooking()" disabled
+              style="width:100%;background:#000;color:#fff;padding:1.25rem;font-family:'Times New Roman',serif;font-size:1.25rem;font-weight:700;text-transform:uppercase;letter-spacing:0.03em;border:none;cursor:not-allowed;border-bottom:4px solid #775a19;transition:opacity 0.2s;opacity:0.4">
+              Request My Ride →
+            </button>
+            <p style="text-align:center;font-family:Inter,sans-serif;font-size:0.75rem;color:#444748;margin-top:1rem">
+              Prefer to call? <a href="tel:9782553140" style="color:#775a19;font-weight:600;text-decoration:underline">(978) 255-3140</a> &nbsp;|&nbsp;
+              <a href="sms:9782553140" style="color:#775a19;font-weight:600;text-decoration:underline">Text Us</a>
+            </p>
+          </div><!-- end left col -->
+
+          <!-- RIGHT: MAP -->
           <div class="book-map-wrap">
             <div id="acct-book-map" class="book-map"></div>
           </div>
@@ -1641,10 +1844,45 @@ function initAccountBookingForm(){
   if(dEl){ dEl.min = today; if(!dEl.value) dEl.value = today; }
   document.getElementById('bk-name').value = currentUser.name || '';
   document.getElementById('bk-phone').value = currentUser.phone || '';
-  document.getElementById('bk-email').value = currentUser.email || '';
-  if(!document.querySelector('#bk-stops-list .stop-row')) addAccountStop();
+  var emailEl = document.getElementById('bk-email'); if(emailEl) emailEl.value = currentUser.email || '';
   bindStopAutocompletes();
 }
+
+function bkSelPass(btn, val){
+  document.querySelectorAll('#bk-pass-btns .p-btn').forEach(function(b){ b.classList.remove('sel'); });
+  btn.classList.add('sel');
+  var h=document.getElementById('bk-hid-pass'); if(h) h.value=val;
+}
+function bkSelLug(btn, val){
+  document.querySelectorAll('#bk-lug-btns .p-btn').forEach(function(b){ b.classList.remove('sel'); });
+  btn.classList.add('sel');
+  var h=document.getElementById('bk-hid-lug'); if(h) h.value=val;
+}
+function bkToggleTimeTBD(cb){
+  var inp=document.getElementById('bk-time');
+  if(!inp) return;
+  if(cb.checked){ inp.removeAttribute('required'); inp.value=''; inp.disabled=true; inp.style.opacity='0.35'; }
+  else { inp.setAttribute('required','required'); inp.disabled=false; inp.style.opacity='1'; }
+}
+function bkToggleTos(){
+  var c=document.getElementById('bk-tos-content'), a=document.getElementById('bk-tos-arrow');
+  var open=c.style.display==='block';
+  c.style.display=open?'none':'block';
+  a.textContent=open?'▼ Read & Accept':'▲ Close';
+}
+function bkTosSyncBtn(){
+  var cb=document.getElementById('bk-tos-check'), btn=document.getElementById('bk-submit-btn');
+  if(!btn) return;
+  var ok=cb&&cb.checked;
+  btn.disabled=!ok; btn.style.opacity=ok?'1':'0.4'; btn.style.cursor=ok?'pointer':'not-allowed';
+}
+// Wire payment note changes for the booking form
+document.addEventListener('DOMContentLoaded', function(){
+  var payNotes={'Credit/Debit Card':'<strong style="color:#000">Card:</strong> We\'ll send a secure payment link after confirming your booking.','Venmo':'<strong style="color:#000">Venmo:</strong> After confirmation, send to @SeacoastRVIP. Include your name + ride date.','Cash on Arrival':'<strong style="color:#000">Cash:</strong> Pay your driver on arrival. Please have the exact amount ready.'};
+  document.querySelectorAll('[name="bk-payment"]').forEach(function(r){
+    r.addEventListener('change',function(){ var n=document.getElementById('bk-pay-note'); if(n) n.innerHTML=payNotes[this.value]||''; });
+  });
+});
 
 function collectStops(listId){
   var list=document.getElementById(listId);
@@ -1674,20 +1912,23 @@ function addAccountStop(v){
 }
 
 function clearAccountBookingForm(){
-  ['bk-date','bk-time','bk-pickup','bk-dest','bk-notes'].forEach(function(id){ var e=document.getElementById(id); if(e) e.value=''; });
-  document.getElementById('bk-service').value='Airport Transfer';
-  document.getElementById('bk-vehicle').value='Luxury Black SUV';
-  document.getElementById('bk-passengers').value='1';
-  document.getElementById('bk-luggage').value='0';
-  var stopList=document.getElementById('bk-stops-list');
-  if(stopList) stopList.innerHTML='';
-  addAccountStop();
-  var today = new Date().toISOString().split('T')[0];
-  var dEl = document.getElementById('bk-date');
-  if(dEl){ dEl.min=today; dEl.value=today; }
+  ['bk-date','bk-time','bk-pickup','bk-dest','bk-notes','bk-company','bk-flight'].forEach(function(id){ var e=document.getElementById(id); if(e) e.value=''; });
+  var svcEl=document.getElementById('bk-service'); if(svcEl) svcEl.value='';
+  var v1=document.getElementById('bk-v1'); if(v1) v1.checked=true;
+  var phid=document.getElementById('bk-hid-pass'); if(phid) phid.value='1';
+  document.querySelectorAll('#bk-pass-btns .p-btn').forEach(function(b,i){ b.classList.toggle('sel',i===0); });
+  var lhid=document.getElementById('bk-hid-lug'); if(lhid) lhid.value='0';
+  document.querySelectorAll('#bk-lug-btns .p-btn').forEach(function(b,i){ b.classList.toggle('sel',i===0); });
+  var pc=document.getElementById('bk-p-card'); if(pc) pc.checked=true;
+  var pn=document.getElementById('bk-pay-note'); if(pn) pn.innerHTML='<strong style="color:#000">Card:</strong> We\'ll send a secure payment link after confirming your booking.';
+  var tbdCb=document.getElementById('bk-time-tbd'); if(tbdCb){ tbdCb.checked=false; bkToggleTimeTBD(tbdCb); }
+  var tosChk=document.getElementById('bk-tos-check'); if(tosChk){ tosChk.checked=false; bkTosSyncBtn(); }
+  var stopList=document.getElementById('bk-stops-list'); if(stopList) stopList.innerHTML='';
+  var rc=document.getElementById('bk-route-card'); if(rc) rc.style.display='none';
+  var today=new Date().toISOString().split('T')[0];
+  var dEl=document.getElementById('bk-date'); if(dEl){ dEl.min=today; dEl.value=today; }
   var ok=document.getElementById('acct-book-ok'), err=document.getElementById('acct-book-err');
-  if(ok) ok.style.display='none';
-  if(err) err.style.display='none';
+  if(ok) ok.style.display='none'; if(err) err.style.display='none';
 }
 
 async function submitAccountBooking(){
@@ -1696,34 +1937,41 @@ async function submitAccountBooking(){
   var err=document.getElementById('acct-book-err');
   ok.style.display='none'; err.style.display='none';
 
+  var name=(document.getElementById('bk-name')||{value:''}).value.trim();
+  var phone=(document.getElementById('bk-phone')||{value:''}).value.trim();
+  var date=(document.getElementById('bk-date')||{value:''}).value;
+  var tbdCb=document.getElementById('bk-time-tbd');
+  var timeTBD=tbdCb&&tbdCb.checked;
+  var time=timeTBD?'TBD':(document.getElementById('bk-time')||{value:''}).value;
+  var pickup=(document.getElementById('bk-pickup')||{value:''}).value.trim();
+  var dest=(document.getElementById('bk-dest')||{value:''}).value.trim();
+
+  if(!name||!phone||!date||(!timeTBD&&!time)||!pickup||!dest){
+    err.textContent='Please fill all required fields.'; err.style.display='block'; return;
+  }
+
+  var vehicleEl=document.querySelector('[name="bk-vehicle-class"]:checked');
   var booking={
     id:'rvip_'+Date.now(),
     code:'RVIP'+Math.floor(10000+Math.random()*90000),
-    name:document.getElementById('bk-name').value.trim(),
-    phone:document.getElementById('bk-phone').value.trim(),
-    email:document.getElementById('bk-email').value.trim(),
-    date:document.getElementById('bk-date').value,
-    time:document.getElementById('bk-time').value,
-    pickup:document.getElementById('bk-pickup').value.trim(),
-    destination:document.getElementById('bk-dest').value.trim(),
-    service:document.getElementById('bk-service').value.trim() || 'Airport Transfer',
-    vehicle:document.getElementById('bk-vehicle').value.trim() || 'Luxury Black SUV',
-    passengers:document.getElementById('bk-passengers').value.trim() || '1',
-    luggage:document.getElementById('bk-luggage').value.trim() || '0',
-    notes:document.getElementById('bk-notes').value.trim(),
+    name:name, phone:phone,
+    email:(document.getElementById('bk-email')||{value:''}).value.trim(),
+    company:(document.getElementById('bk-company')||{value:''}).value.trim(),
+    date:date, time:time, pickupTimeTBD:timeTBD,
+    pickup:pickup, destination:dest,
+    service:(document.getElementById('bk-service')||{value:''}).value.trim()||'',
+    vehicle:vehicleEl?vehicleEl.value:'Black SUV Luxury (7 passengers)',
+    passengers:(document.getElementById('bk-hid-pass')||{value:'1'}).value||'1',
+    luggage:(document.getElementById('bk-hid-lug')||{value:'0'}).value||'0',
+    flightNumber:(document.getElementById('bk-flight')||{value:''}).value.trim(),
+    paymentMethod:(document.querySelector('[name="bk-payment"]:checked')||{value:'Credit/Debit Card'}).value,
+    notes:(document.getElementById('bk-notes')||{value:''}).value.trim(),
     stopList:collectStops('bk-stops-list'),
-    status:'Pending',
-    source:'account-portal',
-    clientId:currentUser ? currentUser.id : '',
+    status:'Pending', source:'account-portal',
+    clientId:currentUser?currentUser.id:'',
     createdAt:new Date().toISOString()
   };
-  booking.stops = booking.stopList.join(' | ');
-
-  if(!booking.name || !booking.phone || !booking.date || !booking.time || !booking.pickup || !booking.destination){
-    err.textContent='Please fill all required fields.';
-    err.style.display='block';
-    return;
-  }
+  booking.stops=booking.stopList.join(' | ');
 
   btn.disabled=true; btn.textContent='Booking…';
   try{
@@ -1731,16 +1979,14 @@ async function submitAccountBooking(){
     allTrips.unshift(booking);
     updateDashboardUI();
     buildCal();
-    ok.textContent='Ride request submitted. You can edit it from Trip History.';
+    ok.innerHTML='<span style="font-size:1rem;font-weight:700;display:block;margin-bottom:4px">✓ Booking Request Sent!</span>Confirmation code: <strong>'+booking.code+'</strong>. We\'ll confirm your ride within minutes by text and email.';
     ok.style.display='block';
     clearAccountBookingForm();
-    setTimeout(function(){ if(ok.style.display!=='none') ok.style.display='block'; }, 0);
-    showTab('tab-trips', null);
+    showTab('tab-trips',null);
   }catch(e){
-    err.textContent=e.message || 'Could not submit booking. Try again.';
-    err.style.display='block';
+    err.textContent=e.message||'Could not submit booking. Try again.'; err.style.display='block';
   }
-  btn.disabled=false; btn.textContent='Request Ride →';
+  btn.disabled=false; btn.style.opacity='0.4'; btn.style.cursor='not-allowed'; btn.textContent='Request My Ride →';
 }
 
 function openEditTrip(tripId){
@@ -1857,20 +2103,28 @@ function rebook(tripId){
 
   document.getElementById('bk-name').value = t.name || currentUser.name || '';
   document.getElementById('bk-phone').value = t.phone || currentUser.phone || '';
-  document.getElementById('bk-email').value = t.email || currentUser.email || '';
+  var bkEmailEl=document.getElementById('bk-email'); if(bkEmailEl) bkEmailEl.value = t.email || currentUser.email || '';
   document.getElementById('bk-date').value = t.date || '';
-  document.getElementById('bk-time').value = t.time || '';
+  document.getElementById('bk-time').value = (t.time==='TBD'?'':t.time) || '';
   document.getElementById('bk-pickup').value = t.pickup || '';
   document.getElementById('bk-dest').value = t.destination || '';
-  document.getElementById('bk-service').value = t.service || '';
-  document.getElementById('bk-vehicle').value = t.vehicle || '';
-  document.getElementById('bk-passengers').value = t.passengers || '1';
-  document.getElementById('bk-luggage').value = t.luggage || '0';
-  document.getElementById('bk-notes').value = t.notes || '';
+  var svcEl=document.getElementById('bk-service'); if(svcEl) svcEl.value = t.service || '';
+  // Vehicle: match radio
+  var vMatch=document.querySelector('[name="bk-vehicle-class"][value="'+escH(t.vehicle||'')+'"]');
+  if(!vMatch){ var v1=document.getElementById('bk-v1'); if(v1) v1.checked=true; }
+  else vMatch.checked=true;
+  // Passengers
+  var passVal=String(t.passengers||'1');
+  var passHid=document.getElementById('bk-hid-pass'); if(passHid) passHid.value=passVal;
+  document.querySelectorAll('#bk-pass-btns .p-btn').forEach(function(b){ b.classList.toggle('sel',b.textContent.trim()===passVal); });
+  // Luggage
+  var lugVal=String(t.luggage||'0');
+  var lugHid=document.getElementById('bk-hid-lug'); if(lugHid) lugHid.value=lugVal;
+  document.querySelectorAll('#bk-lug-btns .p-btn').forEach(function(b){ b.classList.toggle('sel',b.textContent.trim()===lugVal); });
+  var notesEl=document.getElementById('bk-notes'); if(notesEl) notesEl.value = t.notes || '';
   var stops = Array.isArray(t.stopList) ? t.stopList.filter(Boolean) : (typeof t.stops==='string' ? t.stops.split('|').map(function(s){return s.trim();}).filter(Boolean) : []);
   var list = document.getElementById('bk-stops-list'); list.innerHTML='';
   stops.forEach(function(s){ addAccountStop(s); });
-  if(!list.querySelector('.stop-row')) addAccountStop();
   bindStopAutocompletes();
   tryAcctRoute();
 }
@@ -1924,6 +2178,16 @@ function tryAcctRoute(){
   _acctDirSvc.route({ origin:pickup, destination:dest, waypoints:stops, travelMode:google.maps.TravelMode.DRIVING, optimizeWaypoints:false }, function(result,status){
     if(status!=='OK') return;
     _acctDirRenderer.setDirections(result);
+    var leg = result.routes[0].legs[0];
+    var distMiles = (leg.distance.value / 1609.34).toFixed(1);
+    var estPrice = Math.max(15 + (distMiles * 2.50), 45).toFixed(0);
+    var rc = document.getElementById('bk-route-card');
+    if(rc){
+      document.getElementById('bk-route-distance').textContent = distMiles + ' mi';
+      document.getElementById('bk-route-duration').textContent = leg.duration.text;
+      document.getElementById('bk-route-price').textContent = '$' + estPrice + '+';
+      rc.style.display = 'block';
+    }
   });
 }
 
