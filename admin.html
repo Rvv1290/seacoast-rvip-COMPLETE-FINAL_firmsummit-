@@ -2263,8 +2263,17 @@
         bSnap.forEach(function(bdoc) { if(!seen[bdoc.id]){ seen[bdoc.id]=true; var t=bdoc.data(); t._id=bdoc.id; trips.push(t); } });
         trips.sort(function(a,b){ return new Date(b.date||0)-new Date(a.date||0); });
 
-        // Store trips on the element so the delete handler can reload
-        document.getElementById('cli-trips-list').dataset.clientId = id;
+        // Cache trips so Edit button can look them up without fragile JSON-in-onclick
+        window._cliTripsCache = {};
+        trips.forEach(function(t){ window._cliTripsCache[t._id] = t; });
+
+        // Also cache client info for pre-filling name/phone/email on the booking form
+        window._cliProfileCache = {
+          id:    id,
+          name:  document.getElementById('cpr-name').value.trim(),
+          phone: document.getElementById('cpr-fn').value.trim(),
+          email: document.getElementById('cpr-em').value.trim()
+        };
 
         if(trips.length === 0) {
           document.getElementById('cli-trips-list').innerHTML = '<div style="padding:1.5rem;text-align:center;color:#999;font-size:0.8rem">No trip history found.</div>';
@@ -2272,7 +2281,6 @@
           var html = '<div style="background:#fff;border:1px solid #eee">';
           trips.forEach(function(t) {
             var statusColor = (t.status === 'Completed' || t.status === 'Paid') ? '#10b981' : (t.status === 'Confirmed' ? '#3b82f6' : (t.status === 'Cancelled' ? '#dc2626' : '#f59e0b'));
-            var tripJson = encodeURIComponent(JSON.stringify({id:t._id,name:t.name,phone:t.phone,email:t.email,service:t.service,date:t.date,time:t.time,pickup:t.pickup,destination:t.destination,price:t.price,status:t.status,vehicle:t.vehicle,notes:t.notes,code:t.code,tip:t.tip,driverId:t.driverId,corporateAccountId:t.corporateAccountId}));
             html += '<div style="padding:0.75rem 1rem;border-bottom:1px solid #f3f3f3;display:flex;justify-content:space-between;align-items:center;gap:0.5rem">' +
               '<div style="flex:1;min-width:0">' +
               '<div style="font-weight:600;font-size:0.85rem">' + e(t.date || '—') + ' · ' + e(t.service || 'Private Hire') + '</div>' +
@@ -2282,7 +2290,7 @@
               '<div style="font-weight:700;color:'+statusColor+'">$' + (parseFloat(t.price)||0).toFixed(2) + '</div>' +
               '<div style="font-size:0.6rem;text-transform:uppercase;font-weight:700;color:#aaa;margin-bottom:4px">' + e(t.status || 'Pending') + '</div>' +
               '<div style="display:flex;gap:4px;justify-content:flex-end">' +
-              '<button onclick="openEditTripForClient(\''+t._id+'\',\''+id+'\',decodeURIComponent(\''+tripJson+'\'))" style="font-size:0.65rem;padding:2px 8px;background:#fff;border:1px solid #775a19;color:#775a19;cursor:pointer;font-family:Inter,sans-serif;border-radius:2px">Edit</button>' +
+              '<button onclick="openEditTripForClient(\''+t._id+'\',\''+id+'\')" style="font-size:0.65rem;padding:2px 8px;background:#fff;border:1px solid #775a19;color:#775a19;cursor:pointer;font-family:Inter,sans-serif;border-radius:2px">Edit</button>' +
               '<button onclick="adminDeleteTrip(\''+t._id+'\',\''+id+'\')" style="font-size:0.65rem;padding:2px 8px;background:#fff;border:1px solid #dc2626;color:#dc2626;cursor:pointer;font-family:Inter,sans-serif;border-radius:2px">Delete</button>' +
               '</div>' +
               '</div>' +
@@ -2365,17 +2373,17 @@
       openM('m-add');
     }
 
-    function openEditTripForClient(tripId, clientId, tripJson) {
+    function openEditTripForClient(tripId, clientId) {
       _addForClientId  = clientId;
       _editForClientId = tripId;
       closeM('m-cli-detail');
-      var t = {};
-      try { t = JSON.parse(tripJson); } catch(ex) {}
+      var t   = (window._cliTripsCache   && window._cliTripsCache[tripId])                        || {};
+      var cli = (window._cliProfileCache && window._cliProfileCache.id === clientId) ? window._cliProfileCache : {};
       document.getElementById('add-title').textContent = 'Edit Trip';
       document.getElementById('eid').value = tripId;
-      document.getElementById('fn').value  = t.name  || '';
-      document.getElementById('fp').value  = t.phone || '';
-      document.getElementById('fe').value  = t.email || '';
+      document.getElementById('fn').value  = t.name  || cli.name  || '';
+      document.getElementById('fp').value  = t.phone || cli.phone || '';
+      document.getElementById('fe').value  = t.email || cli.email || '';
       document.getElementById('fsv').value = t.service || '';
       document.getElementById('fd').value  = t.date  || '';
       document.getElementById('ft').value  = t.time  || '';
@@ -2389,7 +2397,7 @@
       document.getElementById('fve').value = t.vehicle || 'Black SUV Luxury';
       document.getElementById('fcorp').value = t.corporateAccountId || '';
       // Show client assignment
-      var cname = document.getElementById('cpr-name').value.trim();
+      var cname = cli.name || document.getElementById('cpr-name').value.trim();
       document.getElementById('fclient-id').value = clientId;
       document.getElementById('fclient-search').value = cname;
       document.getElementById('fclient-selected').textContent = '✓ ' + cname;
