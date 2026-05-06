@@ -438,10 +438,12 @@ async function submitCorpForgotPwd() {
     succ.style.display = 'block';
   } catch (error) {
     const code = error.code || '';
-    if (code === 'not-found' || code.includes('not-found')) {
+    if (code.includes('not-found')) {
       err.textContent = 'No active corporate account found with that email.';
+    } else if (code.includes('invalid-argument')) {
+      err.textContent = 'Please enter a valid email address.';
     } else {
-      err.textContent = error.message || 'Could not send reset email. Please call (978) 255-3140.';
+      err.textContent = 'Could not send reset email. Please try again or call (978) 255-3140.';
     }
     err.style.display = 'block';
   } finally {

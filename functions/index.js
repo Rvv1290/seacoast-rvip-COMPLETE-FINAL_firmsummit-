@@ -198,15 +198,30 @@ exports.ensureCorpAuthAccount = onCall(async (request) => {
   });
   if (!found) throw new HttpsError("not-found", "No active corporate account found with that email");
 
+  // Ensure a Firebase Auth user exists so sendPasswordResetEmail has a target.
+  // We silently absorb auth errors so the function never returns "internal" —
+  // if the user already exists under a different lookup path, that's fine.
+  let authExists = false;
   try {
     await admin.auth().getUserByEmail(email);
+    authExists = true;
   } catch (e) {
-    if (e.code === "auth/user-not-found") {
-      // Create a Firebase Auth stub so sendPasswordResetEmail has a target
+    if (e.code !== "auth/user-not-found") {
+      // Unexpected lookup error — log it but don't crash; fall through to create
+      console.error("ensureCorpAuthAccount getUserByEmail:", e.code, e.message);
+    }
+  }
+
+  if (!authExists) {
+    try {
       const tempPwd = Math.random().toString(36).slice(-8) + "Aa1!";
       await admin.auth().createUser({ email, password: tempPwd });
-    } else {
-      throw e;
+    } catch (createErr) {
+      // auth/email-already-exists means a race condition — user was created between
+      // our check and create call, which is fine
+      if (createErr.code !== "auth/email-already-exists") {
+        throw new HttpsError("internal", "Could not prepare account: " + createErr.message);
+      }
     }
   }
 
