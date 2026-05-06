@@ -301,20 +301,26 @@ function sendCode(){
   btn.textContent='Signing In...';btn.disabled=true;
   if(!_db){err.textContent='Service error. Please call (978) 255-3140.';err.style.display='block';btn.textContent='Sign In →';btn.disabled=false;return;}
 
-    _db.collection('corporate_accounts').where('status','in',['Approved','Active']).get().then(async function(snap){
+  // Sign out any existing Firebase Auth session before querying Firestore.
+  // The corporate portal uses its own localStorage session; a lingering Firebase Auth
+  // state from the password-reset flow can interfere with Firestore security rules.
+  (_auth ? _auth.signOut().catch(function(){}) : Promise.resolve()).then(function(){
+    return _db.collection('corporate_accounts').where('status','in',['Approved','Active']).get();
+  }).then(async function(snap){
+    try {
       var found=null;
       var idenLower = iden.toLowerCase();
       snap.forEach(function(d){
         var a=d.data(); a.id=a.id||d.id;
         var p=(a.contactPhone||'').replace(/\D/g,'');
         var e=(a.contactEmail||'').toLowerCase().trim();
-        
+
         if(isEmail){
           if(e === idenLower) { found=a; return; }
         } else {
           if(p===raw||p.slice(-10)===raw){found=a;return;}
         }
-        
+
         var members=a.members||[];
         for(var i=0;i<members.length;i++){
           var mp=(members[i].phone||'').replace(/\D/g,'');
@@ -329,36 +335,41 @@ function sendCode(){
 
       if(!found){
         err.textContent='Incorrect email/phone or password.';
-      err.style.display='block';btn.textContent='Sign In →';btn.disabled=false;return;
-    }
-
-    if(!found.password || found.password !== pwd){
-      // Fallback: try Firebase Auth (handles accounts that reset via emailed link)
-      if (isEmail) {
-        try {
-          await firebase.auth().signInWithEmailAndPassword(iden.toLowerCase(), pwd);
-          _acc = found;
-          grantAccess(_acc);
-          return;
-        } catch(authErr) { /* Firebase Auth also failed — fall through */ }
+        err.style.display='block';btn.textContent='Sign In →';btn.disabled=false;return;
       }
-      if (!found.password) {
-        err.innerHTML='Account found, but <strong>no password is set</strong>. If you used our old system, use the setup link below.';
-        err.style.display='block';
-        mig.style.display='block';
-      } else {
-        err.textContent='Incorrect email/phone or password.';
-        err.style.display='block';
-      }
-      btn.textContent='Sign In →';btn.disabled=false;return;
-    }
 
-    _acc=found;
-    grantAccess(_acc);
+      if(!found.password || found.password !== pwd){
+        // Fallback: try Firebase Auth (handles accounts that reset via emailed link)
+        if (isEmail) {
+          try {
+            await firebase.auth().signInWithEmailAndPassword(iden.toLowerCase(), pwd);
+            _acc = found;
+            grantAccess(_acc);
+            return;
+          } catch(authErr) { /* Firebase Auth also failed — fall through */ }
+        }
+        if (!found.password) {
+          err.innerHTML='Account found, but <strong>no password is set</strong>. If you used our old system, use the setup link below.';
+          err.style.display='block';
+          mig.style.display='block';
+        } else {
+          err.textContent='Incorrect email/phone or password.';
+          err.style.display='block';
+        }
+        btn.textContent='Sign In →';btn.disabled=false;return;
+      }
+
+      _acc=found;
+      grantAccess(_acc);
+    } catch(innerErr) {
+      console.error('sendCode inner error:', innerErr);
+      err.textContent='Sign-in error. Please try again or call (978) 255-3140.';
+      err.style.display='block';btn.textContent='Sign In →';btn.disabled=false;
+    }
   }).catch(function(e){
-    console.error(e);
-    err.textContent='Connection error. Please try again.';err.style.display='block';
-    btn.textContent='Sign In →';btn.disabled=false;
+    console.error('sendCode query error:', e);
+    err.textContent='Connection error. Please check your connection and try again.';
+    err.style.display='block';btn.textContent='Sign In →';btn.disabled=false;
   });
 }
 
