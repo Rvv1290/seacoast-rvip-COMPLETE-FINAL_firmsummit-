@@ -231,24 +231,6 @@ body{font-family:'Inter',sans-serif;min-height:100vh;background:#fff;overflow-x:
   </div>
 </div>
 
-<!-- MODAL: Set New Password (shown when user clicks reset link) -->
-<div id="m-corp-set-pwd" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:999;align-items:center;justify-content:center">
-  <div style="background:#fff;width:90%;max-width:400px;padding:2rem;position:relative;border-top:4px solid #775a19">
-    <h3 style="font-family:'Times New Roman',serif;font-size:1.35rem;margin-bottom:0.5rem">Set New Password</h3>
-    <p style="font-size:0.85rem;color:#666;line-height:1.5;margin-bottom:1.25rem">Account: <strong id="c-reset-email-lbl"></strong></p>
-    <div id="c-setpwd-err" class="alert-err" style="margin-bottom:1rem"></div>
-    <div class="f-group">
-      <label class="f-label">New Password</label>
-      <input id="c-new-pwd" type="password" class="f-input" placeholder="Minimum 6 characters" style="background:#fafaf8"/>
-    </div>
-    <div class="f-group">
-      <label class="f-label">Confirm Password</label>
-      <input id="c-new-pwd2" type="password" class="f-input" placeholder="Repeat new password" style="background:#fafaf8"/>
-    </div>
-    <button id="c-setpwd-btn" class="btn-blk" onclick="confirmCorpPasswordReset()" style="margin-bottom:0">Set Password →</button>
-  </div>
-</div>
-
 <!-- ═══════════ RIGHT PANEL ═══════════ -->
 <div class="right">
   <img class="right-img" src="https://images.unsplash.com/photo-1563720223185-11003d516935?auto=format&fit=crop&w=1200&q=80" alt="Luxury black car"/>
@@ -319,7 +301,7 @@ function sendCode(){
   btn.textContent='Signing In...';btn.disabled=true;
   if(!_db){err.textContent='Service error. Please call (978) 255-3140.';err.style.display='block';btn.textContent='Sign In →';btn.disabled=false;return;}
 
-    _db.collection('corporate_accounts').where('status','in',['Approved','Active']).get().then(function(snap){
+    _db.collection('corporate_accounts').where('status','in',['Approved','Active']).get().then(async function(snap){
       var found=null;
       var idenLower = iden.toLowerCase();
       snap.forEach(function(d){
@@ -350,17 +332,25 @@ function sendCode(){
       err.style.display='block';btn.textContent='Sign In →';btn.disabled=false;return;
     }
 
-    if(!found.password){
-      err.innerHTML='Account found, but <strong>no password is set</strong>. If you used our old system, use the setup link below.';
-      err.style.display='block';
-      mig.style.display='block';
-      btn.textContent='Sign In →';btn.disabled=false;
-      return;
-    }
-
-    if(found.password !== pwd){
-      err.textContent='Incorrect email/phone or password.';
-      err.style.display='block';btn.textContent='Sign In →';btn.disabled=false;return;
+    if(!found.password || found.password !== pwd){
+      // Fallback: try Firebase Auth (handles accounts that reset via emailed link)
+      if (isEmail) {
+        try {
+          await firebase.auth().signInWithEmailAndPassword(iden.toLowerCase(), pwd);
+          _acc = found;
+          grantAccess(_acc);
+          return;
+        } catch(authErr) { /* Firebase Auth also failed — fall through */ }
+      }
+      if (!found.password) {
+        err.innerHTML='Account found, but <strong>no password is set</strong>. If you used our old system, use the setup link below.';
+        err.style.display='block';
+        mig.style.display='block';
+      } else {
+        err.textContent='Incorrect email/phone or password.';
+        err.style.display='block';
+      }
+      btn.textContent='Sign In →';btn.disabled=false;return;
     }
 
     _acc=found;
@@ -422,91 +412,56 @@ function closeCorpForgotModal() {
 
 async function submitCorpForgotPwd() {
   const email = document.getElementById('c-forgot-email').value.trim().toLowerCase();
-  const err = document.getElementById('c-forgot-err');
+  const err  = document.getElementById('c-forgot-err');
   const succ = document.getElementById('c-forgot-succ');
-  const btn = document.getElementById('c-forgot-btn');
+  const btn  = document.getElementById('c-forgot-btn');
 
   err.style.display = 'none'; succ.style.display = 'none';
-  if(!email || !email.includes('@')) { err.textContent='Please enter a valid email address.'; err.style.display='block'; return; }
+  if (!email || !email.includes('@')) {
+    err.textContent = 'Please enter a valid email address.';
+    err.style.display = 'block'; return;
+  }
 
   btn.textContent = 'Sending...'; btn.disabled = true;
-
   try {
-    // Verify email belongs to an active corporate account
-    const snap = await _db.collection('corporate_accounts').where('status','in',['Approved','Active']).get();
-    let found = false;
-    snap.forEach(d => { if ((d.data().contactEmail||'').toLowerCase().trim() === email) found = true; });
-    if (!found) { err.textContent='No active corporate account found with that email.'; err.style.display='block'; return; }
+    // Cloud Function verifies email in Firestore with admin SDK (bypasses security rules)
+    // and creates a Firebase Auth user stub if one doesn't exist yet
+    const ensureFn = firebase.functions().httpsCallable('ensureCorpAuthAccount');
+    await ensureFn({ email });
 
-    // Encode email + 1-hour expiry directly in the token (no Firestore write needed)
-    const exp = Date.now() + 3600000;
-    const token = btoa(encodeURIComponent(email + '|' + exp));
-    const resetUrl = 'https://www.seacoastrvip.com/corporate.html?t=' + encodeURIComponent(token);
+    // Firebase delivers its own branded reset email — routes through firebaseapp.com,
+    // so no custom-domain authorization issues
+    const continueUrl = 'https://www.seacoastrvip.com/corporate.html?pwdReset=1';
+    await _auth.sendPasswordResetEmail(email, { url: continueUrl });
 
-    // Firebase sends the email; the link takes the user straight to our reset URL
-    await _auth.sendSignInLinkToEmail(email, { url: resetUrl, handleCodeInApp: true });
-
-    succ.textContent = 'Check your email! A reset link has been sent to ' + email + '. It expires in 1 hour.';
+    succ.textContent = 'Check your email! A password reset link has been sent to ' + email + '.';
     succ.style.display = 'block';
-  } catch(error) {
-    err.textContent = error.message || 'Could not send reset email. Please call (978) 255-3140.';
+  } catch (error) {
+    const code = error.code || '';
+    if (code === 'not-found' || code.includes('not-found')) {
+      err.textContent = 'No active corporate account found with that email.';
+    } else {
+      err.textContent = error.message || 'Could not send reset email. Please call (978) 255-3140.';
+    }
     err.style.display = 'block';
   } finally {
     btn.textContent = 'Send Reset Link'; btn.disabled = false;
   }
 }
 
-// ─── HANDLE RESET TOKEN ON PAGE LOAD ───
+// ─── HANDLE ?pwdReset=1 AFTER FIREBASE PASSWORD RESET REDIRECT ───
 (function(){
   const params = new URLSearchParams(window.location.search);
-  const rawToken = params.get('t');
-  if (!rawToken) return;
-
+  if (params.get('pwdReset') !== '1') return;
   window.history.replaceState({}, document.title, window.location.pathname);
-
-  try {
-    const decoded = decodeURIComponent(atob(decodeURIComponent(rawToken)));
-    const parts = decoded.split('|');
-    if (parts.length < 2) throw new Error('bad token');
-    const email = parts[0];
-    const exp   = parseInt(parts[1], 10);
-    if (!email || !exp) throw new Error('bad token');
-    if (Date.now() > exp) { alert('This reset link has expired (1 hour limit). Please request a new one.'); return; }
-
-    document.getElementById('c-reset-email-lbl').textContent = email;
-    document.getElementById('m-corp-set-pwd').style.display = 'flex';
-    window._corpResetEmail = email;
-  } catch(e) {
-    alert('Password reset link is invalid. Please request a new one.');
-  }
+  // Show a success notice in the sign-in error area once the page has loaded
+  window.addEventListener('DOMContentLoaded', function(){
+    var el = document.getElementById('err1');
+    if (!el) return;
+    el.style.cssText = 'display:block;background:#e8f5e9;border:1px solid #a5d6a7;color:#2e7d32;padding:0.75rem 1rem;border-radius:4px;margin-bottom:0.75rem';
+    el.textContent = 'Password updated! Please sign in with your new password.';
+  });
 })();
-
-async function confirmCorpPasswordReset() {
-  const pwd  = (document.getElementById('c-new-pwd').value  || '').trim();
-  const pwd2 = (document.getElementById('c-new-pwd2').value || '').trim();
-  const err  = document.getElementById('c-setpwd-err');
-  const btn  = document.getElementById('c-setpwd-btn');
-  err.style.display = 'none';
-
-  if (!pwd || pwd.length < 6) { err.textContent='Password must be at least 6 characters.'; err.style.display='block'; return; }
-  if (pwd !== pwd2)            { err.textContent='Passwords do not match.'; err.style.display='block'; return; }
-
-  btn.textContent = 'Saving...'; btn.disabled = true;
-  try {
-    // Call Cloud Function — it runs with admin privileges, bypassing client-side rules
-    const fn = firebase.functions().httpsCallable('resetCorpPassword');
-    const result = await fn({ email: window._corpResetEmail, newPassword: pwd });
-    if (!result.data.success) throw new Error('Update failed');
-
-    document.getElementById('m-corp-set-pwd').style.display = 'none';
-    alert('Password updated! You can now sign in with your new password.');
-  } catch(e) {
-    err.textContent = e.message || 'Error saving password. Please try again.';
-    err.style.display = 'block';
-  } finally {
-    btn.textContent = 'Set Password →'; btn.disabled = false;
-  }
-}
 function dnext(el,n){if(el.value.length===1&&n<=5)document.getElementById('d'+n).focus();}
 function dprev(e,el,p){if(e.key==='Backspace'&&el.value===''&&p!==null)document.getElementById('d'+p).focus();}
 function dcheck(){var c='';for(var i=0;i<6;i++)c+=(document.getElementById('d'+i).value||'');if(c.length===6)setTimeout(verifyCode,200);}

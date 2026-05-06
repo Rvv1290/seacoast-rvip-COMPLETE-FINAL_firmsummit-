@@ -177,3 +177,38 @@ exports.resetCorpPassword = onCall(async (request) => {
   await found.ref.update({ password: newPassword, passwordResetRequired: false });
   return { success: true };
 });
+
+/**
+ * Verifies a corporate account email exists in Firestore (admin SDK bypasses
+ * client-side security rules) and ensures a matching Firebase Auth user exists
+ * so sendPasswordResetEmail can deliver a reset link.
+ */
+exports.ensureCorpAuthAccount = onCall(async (request) => {
+  const { email } = request.data;
+  if (!email) throw new HttpsError("invalid-argument", "Missing email");
+
+  const db = admin.firestore();
+  const snap = await db.collection("corporate_accounts")
+    .where("status", "in", ["Approved", "Active"])
+    .get();
+
+  let found = null;
+  snap.forEach(d => {
+    if ((d.data().contactEmail || "").toLowerCase().trim() === email.toLowerCase()) found = d;
+  });
+  if (!found) throw new HttpsError("not-found", "No active corporate account found with that email");
+
+  try {
+    await admin.auth().getUserByEmail(email);
+  } catch (e) {
+    if (e.code === "auth/user-not-found") {
+      // Create a Firebase Auth stub so sendPasswordResetEmail has a target
+      const tempPwd = Math.random().toString(36).slice(-8) + "Aa1!";
+      await admin.auth().createUser({ email, password: tempPwd });
+    } else {
+      throw e;
+    }
+  }
+
+  return { success: true };
+});
