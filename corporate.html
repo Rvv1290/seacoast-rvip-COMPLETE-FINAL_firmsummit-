@@ -9,6 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script>
 (function(){
@@ -431,34 +432,21 @@ async function submitCorpForgotPwd() {
   btn.textContent = 'Sending...'; btn.disabled = true;
 
   try {
-    // Verify email belongs to a corporate account first
+    // Verify email belongs to an active corporate account
     const snap = await _db.collection('corporate_accounts').where('status','in',['Approved','Active']).get();
-    let found = null;
-    snap.forEach(d => {
-      const a = d.data();
-      if ((a.contactEmail||'').toLowerCase().trim() === email) found = d;
-    });
-    if (!found) {
-      err.textContent = 'No active corporate account found with that email address.';
-      err.style.display = 'block';
-      return;
-    }
+    let found = false;
+    snap.forEach(d => { if ((d.data().contactEmail||'').toLowerCase().trim() === email) found = true; });
+    if (!found) { err.textContent='No active corporate account found with that email.'; err.style.display='block'; return; }
 
-    // Generate a secure Firestore-based reset token (no Firebase Auth domain issues)
-    const token = Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2) + Date.now().toString(36);
-    await _db.collection('corpPasswordResets').doc(token).set({
-      email: email,
-      exp: Date.now() + 3600000, // 1 hour
-      used: false,
-      createdAt: new Date().toISOString()
-    });
+    // Encode email + 1-hour expiry directly in the token (no Firestore write needed)
+    const exp = Date.now() + 3600000;
+    const token = btoa(encodeURIComponent(email + '|' + exp));
+    const resetUrl = 'https://www.seacoastrvip.com/corporate.html?t=' + encodeURIComponent(token);
 
-    // Use Firebase to deliver the email — the reset link is encoded in the continueUrl
-    const resetUrl = 'https://www.seacoastrvip.com/corporate.html?t=' + token;
-    const actionCodeSettings = { url: resetUrl, handleCodeInApp: true };
-    await _auth.sendSignInLinkToEmail(email, actionCodeSettings);
+    // Firebase sends the email; the link takes the user straight to our reset URL
+    await _auth.sendSignInLinkToEmail(email, { url: resetUrl, handleCodeInApp: true });
 
-    succ.textContent = 'Check your email! A password reset link has been sent to ' + email + '. The link expires in 1 hour.';
+    succ.textContent = 'Check your email! A reset link has been sent to ' + email + '. It expires in 1 hour.';
     succ.style.display = 'block';
   } catch(error) {
     err.textContent = error.message || 'Could not send reset email. Please call (978) 255-3140.';
@@ -469,28 +457,27 @@ async function submitCorpForgotPwd() {
 }
 
 // ─── HANDLE RESET TOKEN ON PAGE LOAD ───
-(async function(){
+(function(){
   const params = new URLSearchParams(window.location.search);
-  const resetToken = params.get('t');
-  if (!resetToken || !_db) return;
+  const rawToken = params.get('t');
+  if (!rawToken) return;
 
-  // Clean the URL immediately so refreshing doesn't re-trigger
   window.history.replaceState({}, document.title, window.location.pathname);
 
   try {
-    const doc = await _db.collection('corpPasswordResets').doc(resetToken).get();
-    if (!doc.exists) { alert('Password reset link is invalid. Please request a new one.'); return; }
-    const data = doc.data();
-    if (data.used)    { alert('This reset link has already been used. Please request a new one.'); return; }
-    if (data.exp < Date.now()) { alert('This reset link has expired (1 hour limit). Please request a new one.'); return; }
+    const decoded = decodeURIComponent(atob(decodeURIComponent(rawToken)));
+    const parts = decoded.split('|');
+    if (parts.length < 2) throw new Error('bad token');
+    const email = parts[0];
+    const exp   = parseInt(parts[1], 10);
+    if (!email || !exp) throw new Error('bad token');
+    if (Date.now() > exp) { alert('This reset link has expired (1 hour limit). Please request a new one.'); return; }
 
-    // Show set-new-password modal
-    document.getElementById('c-reset-email-lbl').textContent = data.email;
+    document.getElementById('c-reset-email-lbl').textContent = email;
     document.getElementById('m-corp-set-pwd').style.display = 'flex';
-    window._corpResetToken = resetToken;
-    window._corpResetEmail = data.email;
+    window._corpResetEmail = email;
   } catch(e) {
-    alert('Error verifying reset link. Please try again or call (978) 255-3140.');
+    alert('Password reset link is invalid. Please request a new one.');
   }
 })();
 
@@ -501,24 +488,18 @@ async function confirmCorpPasswordReset() {
   const btn  = document.getElementById('c-setpwd-btn');
   err.style.display = 'none';
 
-  if (!pwd || pwd.length < 6)  { err.textContent = 'Password must be at least 6 characters.'; err.style.display='block'; return; }
-  if (pwd !== pwd2)             { err.textContent = 'Passwords do not match.'; err.style.display='block'; return; }
+  if (!pwd || pwd.length < 6) { err.textContent='Password must be at least 6 characters.'; err.style.display='block'; return; }
+  if (pwd !== pwd2)            { err.textContent='Passwords do not match.'; err.style.display='block'; return; }
 
   btn.textContent = 'Saving...'; btn.disabled = true;
   try {
-    // Find account and update password in Firestore
-    const snap = await _db.collection('corporate_accounts').where('status','in',['Approved','Active']).get();
-    let found = null;
-    snap.forEach(d => {
-      if ((d.data().contactEmail||'').toLowerCase().trim() === window._corpResetEmail) found = d;
-    });
-    if (!found) { err.textContent = 'Account not found. Please contact support.'; err.style.display='block'; return; }
-
-    await found.ref.update({ password: pwd, passwordResetRequired: false });
-    await _db.collection('corpPasswordResets').doc(window._corpResetToken).update({ used: true });
+    // Call Cloud Function — it runs with admin privileges, bypassing client-side rules
+    const fn = firebase.functions().httpsCallable('resetCorpPassword');
+    const result = await fn({ email: window._corpResetEmail, newPassword: pwd });
+    if (!result.data.success) throw new Error('Update failed');
 
     document.getElementById('m-corp-set-pwd').style.display = 'none';
-    alert('Password updated successfully! You can now sign in with your new password.');
+    alert('Password updated! You can now sign in with your new password.');
   } catch(e) {
     err.textContent = e.message || 'Error saving password. Please try again.';
     err.style.display = 'block';

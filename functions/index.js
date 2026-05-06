@@ -152,3 +152,28 @@ exports.savePaymentMethod = onCall({ secrets: [stripeSecret] }, async (request) 
 
   return { success: true };
 });
+
+/**
+ * Resets a corporate account password.
+ * Runs with admin privileges so Firestore rules don't block the update.
+ */
+exports.resetCorpPassword = onCall(async (request) => {
+  const { email, newPassword } = request.data;
+  if (!email || !newPassword) throw new HttpsError("invalid-argument", "Missing email or password");
+  if (newPassword.length < 6)  throw new HttpsError("invalid-argument", "Password must be at least 6 characters");
+
+  const db = admin.firestore();
+  const snap = await db.collection("corporate_accounts")
+    .where("status", "in", ["Approved", "Active"])
+    .get();
+
+  let found = null;
+  snap.forEach(d => {
+    if ((d.data().contactEmail || "").toLowerCase().trim() === email.toLowerCase()) found = d;
+  });
+
+  if (!found) throw new HttpsError("not-found", "No active corporate account found with that email");
+
+  await found.ref.update({ password: newPassword, passwordResetRequired: false });
+  return { success: true };
+});
