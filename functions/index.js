@@ -152,3 +152,63 @@ exports.savePaymentMethod = onCall({ secrets: [stripeSecret] }, async (request) 
 
   return { success: true };
 });
+
+/**
+ * Resets a corporate account password.
+ * Runs with admin privileges so Firestore rules don't block the update.
+ */
+exports.resetCorpPassword = onCall(async (request) => {
+  const { email, newPassword } = request.data;
+  if (!email || !newPassword) throw new HttpsError("invalid-argument", "Missing email or password");
+  if (newPassword.length < 6)  throw new HttpsError("invalid-argument", "Password must be at least 6 characters");
+
+  const db = admin.firestore();
+  const snap = await db.collection("corporate_accounts")
+    .where("status", "in", ["Approved", "Active"])
+    .get();
+
+  let found = null;
+  snap.forEach(d => {
+    if ((d.data().contactEmail || "").toLowerCase().trim() === email.toLowerCase()) found = d;
+  });
+
+  if (!found) throw new HttpsError("not-found", "No active corporate account found with that email");
+
+  await found.ref.update({ password: newPassword, passwordResetRequired: false });
+  return { success: true };
+});
+
+/**
+ * Verifies a corporate account email exists in Firestore (admin SDK bypasses
+ * client-side security rules) and ensures a matching Firebase Auth user exists
+ * so sendPasswordResetEmail can deliver a reset link.
+ */
+exports.ensureCorpAuthAccount = onCall(async (request) => {
+  const { email } = request.data;
+  if (!email) throw new HttpsError("invalid-argument", "Missing email");
+
+  const db = admin.firestore();
+  const snap = await db.collection("corporate_accounts")
+    .where("status", "in", ["Approved", "Active"])
+    .get();
+
+  let found = null;
+  snap.forEach(d => {
+    if ((d.data().contactEmail || "").toLowerCase().trim() === email.toLowerCase()) found = d;
+  });
+  if (!found) throw new HttpsError("not-found", "No active corporate account found with that email");
+
+  try {
+    await admin.auth().getUserByEmail(email);
+  } catch (e) {
+    if (e.code === "auth/user-not-found") {
+      // Create a Firebase Auth stub so sendPasswordResetEmail has a target
+      const tempPwd = Math.random().toString(36).slice(-8) + "Aa1!";
+      await admin.auth().createUser({ email, password: tempPwd });
+    } else {
+      throw e;
+    }
+  }
+
+  return { success: true };
+});
