@@ -217,16 +217,34 @@ body{font-family:'Inter',sans-serif;min-height:100vh;background:#fff;overflow-x:
   <div style="background:#fff;width:90%;max-width:400px;padding:2rem;position:relative;border-top:4px solid #775a19">
     <button onclick="closeCorpForgotModal()" style="position:absolute;top:1rem;right:1rem;background:transparent;border:none;font-size:1.5rem;cursor:pointer;color:#aaa">&times;</button>
     <h3 style="font-family:'Times New Roman',serif;font-size:1.35rem;margin-bottom:0.5rem">Reset Password</h3>
-    <p style="font-size:0.85rem;color:#666;line-height:1.5;margin-bottom:1.25rem">Enter your business email. Our team will send you a temporary password so you can log back in and set a new one.</p>
-    
+    <p style="font-size:0.85rem;color:#666;line-height:1.5;margin-bottom:1.25rem">Enter your business email. We'll send you a secure link to set a new password.</p>
+
     <div id="c-forgot-err" class="alert-err" style="margin-bottom:1rem"></div>
     <div id="c-forgot-succ" class="alert-ok" style="margin-bottom:1rem"></div>
-    
+
     <div class="f-group">
       <label class="f-label">Account Email</label>
       <input id="c-forgot-email" type="email" class="f-input" placeholder="name@company.com" style="background:#fafaf8"/>
     </div>
-    <button id="c-forgot-btn" class="btn-blk" onclick="submitCorpForgotPwd()" style="margin-bottom:0">Request Password Reset</button>
+    <button id="c-forgot-btn" class="btn-blk" onclick="submitCorpForgotPwd()" style="margin-bottom:0">Send Reset Link</button>
+  </div>
+</div>
+
+<!-- MODAL: Set New Password (shown when user clicks reset link) -->
+<div id="m-corp-set-pwd" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:999;align-items:center;justify-content:center">
+  <div style="background:#fff;width:90%;max-width:400px;padding:2rem;position:relative;border-top:4px solid #775a19">
+    <h3 style="font-family:'Times New Roman',serif;font-size:1.35rem;margin-bottom:0.5rem">Set New Password</h3>
+    <p style="font-size:0.85rem;color:#666;line-height:1.5;margin-bottom:1.25rem">Account: <strong id="c-reset-email-lbl"></strong></p>
+    <div id="c-setpwd-err" class="alert-err" style="margin-bottom:1rem"></div>
+    <div class="f-group">
+      <label class="f-label">New Password</label>
+      <input id="c-new-pwd" type="password" class="f-input" placeholder="Minimum 6 characters" style="background:#fafaf8"/>
+    </div>
+    <div class="f-group">
+      <label class="f-label">Confirm Password</label>
+      <input id="c-new-pwd2" type="password" class="f-input" placeholder="Repeat new password" style="background:#fafaf8"/>
+    </div>
+    <button id="c-setpwd-btn" class="btn-blk" onclick="confirmCorpPasswordReset()" style="margin-bottom:0">Set Password →</button>
   </div>
 </div>
 
@@ -402,78 +420,112 @@ function closeCorpForgotModal() {
 }
 
 async function submitCorpForgotPwd() {
-  const email = document.getElementById('c-forgot-email').value.trim();
+  const email = document.getElementById('c-forgot-email').value.trim().toLowerCase();
   const err = document.getElementById('c-forgot-err');
   const succ = document.getElementById('c-forgot-succ');
   const btn = document.getElementById('c-forgot-btn');
-  
+
   err.style.display = 'none'; succ.style.display = 'none';
-  if(!email || !email.includes('@')) { err.textContent="Please enter a valid email address."; err.style.display='block'; return;}
-  
+  if(!email || !email.includes('@')) { err.textContent='Please enter a valid email address.'; err.style.display='block'; return; }
+
   btn.textContent = 'Sending...'; btn.disabled = true;
-  
+
   try {
-    const actionCodeSettings = { 
-      url: 'https://www.seacoastrvip.com/corporate.html',
-      handleCodeInApp: true 
-    };
-    await _auth.sendSignInLinkToEmail(email, actionCodeSettings);
-    localStorage.setItem('corp-email-signin', email);
-    
-    _db.collection('corporate_accounts').get().then(snap => {
-      snap.forEach(d => {
-        var a = d.data();
-        if ((a.contactEmail||'').toLowerCase().trim() === email.toLowerCase()) d.ref.update({ passwordResetRequired: true });
-      });
+    // Verify email belongs to a corporate account first
+    const snap = await _db.collection('corporate_accounts').where('status','in',['Approved','Active']).get();
+    let found = null;
+    snap.forEach(d => {
+      const a = d.data();
+      if ((a.contactEmail||'').toLowerCase().trim() === email) found = d;
     });
-    
-    succ.textContent = "Check your email! A secure sign-in link has been sent to " + email;
-    succ.style.display = 'block';
-  } catch(error) { 
-    let msg = error.message;
-    if (msg.includes('auth/requests-from-referer') || msg.includes('auth/unauthorized-domain')) {
-       msg = "Unable to send reset link. Your Firebase API key has HTTP referrer restrictions in Google Cloud Console that are blocking this request. Please follow the fix instructions provided.";
+    if (!found) {
+      err.textContent = 'No active corporate account found with that email address.';
+      err.style.display = 'block';
+      return;
     }
-    err.textContent = msg; err.style.display = 'block'; 
+
+    // Generate a secure Firestore-based reset token (no Firebase Auth domain issues)
+    const token = Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2) + Date.now().toString(36);
+    await _db.collection('corpPasswordResets').doc(token).set({
+      email: email,
+      exp: Date.now() + 3600000, // 1 hour
+      used: false,
+      createdAt: new Date().toISOString()
+    });
+
+    // Use Firebase to deliver the email — the reset link is encoded in the continueUrl
+    const resetUrl = 'https://www.seacoastrvip.com/corporate.html?t=' + token;
+    const actionCodeSettings = { url: resetUrl, handleCodeInApp: true };
+    await _auth.sendSignInLinkToEmail(email, actionCodeSettings);
+
+    succ.textContent = 'Check your email! A password reset link has been sent to ' + email + '. The link expires in 1 hour.';
+    succ.style.display = 'block';
+  } catch(error) {
+    err.textContent = error.message || 'Could not send reset email. Please call (978) 255-3140.';
+    err.style.display = 'block';
   } finally {
-    btn.textContent = 'Request Password Reset'; btn.disabled = false;
+    btn.textContent = 'Send Reset Link'; btn.disabled = false;
   }
 }
 
-// ─── HANDLE EMAIL LINK ON PAGE LOAD ───
+// ─── HANDLE RESET TOKEN ON PAGE LOAD ───
 (async function(){
-  if(window._auth && window._auth.isSignInWithEmailLink(window.location.href)) {
-    var email = localStorage.getItem('corp-email-signin');
-    if(!email) email = window.prompt('Please confirm your email address to complete sign-in:');
-    if(!email) return;
-    try {
-      await _auth.signInWithEmailLink(email, window.location.href);
-      localStorage.removeItem('corp-email-signin');
-      window.history.replaceState({}, document.title, window.location.pathname);
-      
-      var snap = await _db.collection('corporate_accounts').where('status','in',['Approved','Active']).get();
-      var found = null;
-      snap.forEach(d => {
-        var a = d.data(); a.id = d.id;
-        if ((a.contactEmail||'').toLowerCase().trim() === email.toLowerCase()) found = a;
-        else {
-          var members=a.members||[];
-          for(var i=0;i<members.length;i++) {
-            if((members[i].email||'').toLowerCase().trim() === email.toLowerCase()) found = a;
-          }
-        }
-      });
-      if(found) {
-        // If password reset required, flag it before redirecting
-        // If password reset required, it will be handled by the portal's real-time listener
-        grantAccess(found);
-      }
-      else alert("No active corporate account found with this email.");
-    } catch(e) {
-      alert("Login link expired or invalid.");
-    }
+  const params = new URLSearchParams(window.location.search);
+  const resetToken = params.get('t');
+  if (!resetToken || !_db) return;
+
+  // Clean the URL immediately so refreshing doesn't re-trigger
+  window.history.replaceState({}, document.title, window.location.pathname);
+
+  try {
+    const doc = await _db.collection('corpPasswordResets').doc(resetToken).get();
+    if (!doc.exists) { alert('Password reset link is invalid. Please request a new one.'); return; }
+    const data = doc.data();
+    if (data.used)    { alert('This reset link has already been used. Please request a new one.'); return; }
+    if (data.exp < Date.now()) { alert('This reset link has expired (1 hour limit). Please request a new one.'); return; }
+
+    // Show set-new-password modal
+    document.getElementById('c-reset-email-lbl').textContent = data.email;
+    document.getElementById('m-corp-set-pwd').style.display = 'flex';
+    window._corpResetToken = resetToken;
+    window._corpResetEmail = data.email;
+  } catch(e) {
+    alert('Error verifying reset link. Please try again or call (978) 255-3140.');
   }
 })();
+
+async function confirmCorpPasswordReset() {
+  const pwd  = (document.getElementById('c-new-pwd').value  || '').trim();
+  const pwd2 = (document.getElementById('c-new-pwd2').value || '').trim();
+  const err  = document.getElementById('c-setpwd-err');
+  const btn  = document.getElementById('c-setpwd-btn');
+  err.style.display = 'none';
+
+  if (!pwd || pwd.length < 6)  { err.textContent = 'Password must be at least 6 characters.'; err.style.display='block'; return; }
+  if (pwd !== pwd2)             { err.textContent = 'Passwords do not match.'; err.style.display='block'; return; }
+
+  btn.textContent = 'Saving...'; btn.disabled = true;
+  try {
+    // Find account and update password in Firestore
+    const snap = await _db.collection('corporate_accounts').where('status','in',['Approved','Active']).get();
+    let found = null;
+    snap.forEach(d => {
+      if ((d.data().contactEmail||'').toLowerCase().trim() === window._corpResetEmail) found = d;
+    });
+    if (!found) { err.textContent = 'Account not found. Please contact support.'; err.style.display='block'; return; }
+
+    await found.ref.update({ password: pwd, passwordResetRequired: false });
+    await _db.collection('corpPasswordResets').doc(window._corpResetToken).update({ used: true });
+
+    document.getElementById('m-corp-set-pwd').style.display = 'none';
+    alert('Password updated successfully! You can now sign in with your new password.');
+  } catch(e) {
+    err.textContent = e.message || 'Error saving password. Please try again.';
+    err.style.display = 'block';
+  } finally {
+    btn.textContent = 'Set Password →'; btn.disabled = false;
+  }
+}
 function dnext(el,n){if(el.value.length===1&&n<=5)document.getElementById('d'+n).focus();}
 function dprev(e,el,p){if(e.key==='Backspace'&&el.value===''&&p!==null)document.getElementById('d'+p).focus();}
 function dcheck(){var c='';for(var i=0;i<6;i++)c+=(document.getElementById('d'+i).value||'');if(c.length===6)setTimeout(verifyCode,200);}
