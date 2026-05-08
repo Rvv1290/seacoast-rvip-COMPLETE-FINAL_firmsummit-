@@ -20,5 +20,5 @@ jobs:
         run: npm ci
         working-directory: functions
 
-      - name: Deploy Hosting + Functions
-        run: npx firebase-tools@latest deploy --only hosting,functions --project seacoast-rip --token "${{ secrets.FIREBASE_TOKEN }}" --force
+      - name: Deploy Hosting + Functions + Firestore Rules
+        run: npx firebase-tools@latest deploy --only hosting,functions,firestore --project seacoast-rip --token "${{ secrets.FIREBASE_TOKEN }}" --force
