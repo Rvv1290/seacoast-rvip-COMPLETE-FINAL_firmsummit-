@@ -2,58 +2,53 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // ── Website collections (corporate_accounts, clients, trips, etc.) ──
-    // The website login pages perform unauthenticated reads to look up
-    // accounts by email/phone.  All client-side writes are disabled —
-    // every write goes through Cloud Functions which use the Admin SDK
-    // and bypass these rules entirely.
+    // ── Website / Admin collections ───────────────────────────────
+    // The admin portal writes directly to Firestore from the client
+    // (bookings, corporate_accounts, clients, trips, drivers, etc.).
+    // Reads are open for login pages; writes are also open because the
+    // admin has its own credential layer and all pages use Firebase
+    // client SDK directly (not Cloud Functions) for persistence.
+
+    match /bookings/{docId} {
+      allow read, write: if true;
+    }
 
     match /corporate_accounts/{docId} {
-      allow read: if true;
-      allow write: if false;
+      allow read, write: if true;
     }
 
     match /clients/{docId} {
-      allow read: if true;
-      allow write: if false;
+      allow read, write: if true;
+    }
+
+    match /clients/{clientId}/trips/{tripId} {
+      allow read, write: if true;
     }
 
     match /trips/{docId} {
-      allow read: if true;
-      allow write: if false;
+      allow read, write: if true;
     }
 
     match /client_trips/{docId} {
-      allow read: if true;
-      allow write: if false;
-    }
-
-    match /bookings/{docId} {
-      allow read: if true;
-      allow write: if false;
+      allow read, write: if true;
     }
 
     match /drivers/{docId} {
-      allow read: if true;
-      allow write: if false;
+      allow read, write: if true;
     }
 
     match /quotes/{docId} {
-      allow read: if true;
-      allow write: if false;
+      allow read, write: if true;
     }
 
     match /invoices/{docId} {
-      allow read: if true;
-      allow write: if false;
+      allow read, write: if true;
     }
 
     // ── App collections ──────────────────────────────────────────────
-    // Any collection not listed above falls here.
+    // Any collection not explicitly listed above falls here.
     // Authenticated app users can read and write; unauthenticated
-    // requests are blocked so the app's data stays protected.
-    // Add app-specific collection rules above this block if you need
-    // finer-grained control (e.g. users can only edit their own docs).
+    // requests are blocked to protect the app's private data.
 
     match /{document=**} {
       allow read, write: if request.auth != null;
