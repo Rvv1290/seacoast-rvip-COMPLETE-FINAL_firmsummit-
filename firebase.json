@@ -3,6 +3,9 @@
     "source": "functions",
     "runtime": "nodejs22"
   },
+  "firestore": {
+    "rules": "firestore.rules"
+  },
   "hosting": {
     "public": ".",
     "ignore": [

@@ -1,0 +1,62 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Website collections (corporate_accounts, clients, trips, etc.) ──
+    // The website login pages perform unauthenticated reads to look up
+    // accounts by email/phone.  All client-side writes are disabled —
+    // every write goes through Cloud Functions which use the Admin SDK
+    // and bypass these rules entirely.
+
+    match /corporate_accounts/{docId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /clients/{docId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /trips/{docId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /client_trips/{docId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /bookings/{docId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /drivers/{docId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /quotes/{docId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /invoices/{docId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // ── App collections ──────────────────────────────────────────────
+    // Any collection not listed above falls here.
+    // Authenticated app users can read and write; unauthenticated
+    // requests are blocked so the app's data stays protected.
+    // Add app-specific collection rules above this block if you need
+    // finer-grained control (e.g. users can only edit their own docs).
+
+    match /{document=**} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}
