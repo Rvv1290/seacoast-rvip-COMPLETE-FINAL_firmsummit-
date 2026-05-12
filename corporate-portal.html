@@ -995,18 +995,42 @@ function currentPeriodStart() {
 }
 
 // Sum of unpaid trips that fall in a CLOSED billing period.
+// 'Completed' means the driver finished the ride but the client hasn't paid yet — still owed.
+// 'Paid' means the client has settled the invoice — excluded.
 // Current-period trips are excluded — they aren't due yet.
 function calcPeriodBalance() {
   var cutoff = currentPeriodStart();
   var total = 0;
   _trips.forEach(function(t) {
-    if (t.status === 'Completed' || t.status === 'Paid' || t.status === 'Cancelled') return;
+    if (t.status === 'Paid' || t.status === 'Cancelled') return;
     var d = new Date((t.date || '') + 'T12:00:00');
-    if (isNaN(d.getTime()) || d >= cutoff) return; // skip current/future period
+    if (isNaN(d.getTime()) || d >= cutoff) return;
     var p = parseFloat((t.price + '').replace(/[^0-9.]/g, ''));
     if (!isNaN(p)) total += p;
   });
   return total;
+}
+
+// After a successful payment, mark all closed-period trips as Paid so the balance reads $0.
+async function markPastPeriodTripsAsPaid() {
+  if (!db || !sess || !sess.accountId) return;
+  var cutoff = currentPeriodStart();
+  try {
+    var snap = await db.collection('bookings')
+      .where('corporateAccountId', '==', sess.accountId)
+      .get();
+    var batch = db.batch();
+    var count = 0;
+    snap.forEach(function(d) {
+      var t = d.data();
+      if (t.status === 'Cancelled' || t.status === 'Paid') return;
+      var tripDate = new Date((t.date || '') + 'T12:00:00');
+      if (isNaN(tripDate.getTime()) || tripDate >= cutoff) return;
+      batch.update(d.ref, { status: 'Paid', balanceAdded: false });
+      count++;
+    });
+    if (count > 0) await batch.commit();
+  } catch(e) { console.warn('markPastPeriodTripsAsPaid:', e.message); }
 }
 
 function toggleSidebar() {
@@ -1299,6 +1323,8 @@ async function payWithCorpSavedCard() {
   try {
     var res = await funcs.httpsCallable('chargeSavedCard')({ accountId: sess.accountId, amount: _corpPayAmt });
     if (res.data && res.data.success) {
+      // Mark all past-period trips as Paid so calcPeriodBalance() returns $0
+      await markPastPeriodTripsAsPaid();
       // Immediately zero balance in memory so stat card + banner update without waiting for onSnapshot
       _accountBalance = 0;
       renderDashBalance();
@@ -1377,6 +1403,9 @@ async function corpSubmitPayment() {
       }).catch(function(){});
     }
 
+    // Mark all past-period trips as Paid so calcPeriodBalance() returns $0
+    await markPastPeriodTripsAsPaid();
+
     // Immediately zero balance in memory so stat card + banner update without waiting for onSnapshot
     _accountBalance = 0;
     renderDashBalance();
@@ -1396,7 +1425,8 @@ async function corpSubmitPayment() {
 
 /* --- PAYMENT WRAPPERS --- */
 function settleBalanceWithCard() {
-  openCardModal(_accountBalance > 0 ? _accountBalance : 0);
+  var due = calcPeriodBalance();
+  openCardModal(due > 0 ? due : 0);
 }
 
 function payVenmo() {

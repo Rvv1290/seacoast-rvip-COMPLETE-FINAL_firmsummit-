@@ -3403,55 +3403,88 @@
     }
 
     function loadCdTrips(acc, bonusPoints){
-      if(!db){ renderCdTrips([], bonusPoints); return; }
-      var queries = [];
-      
-      // 1. Direct IDs
-      if(acc.id)      queries.push(db.collection('bookings').where('corporateAccountId','==',acc.id).get());
-      if(acc.company) queries.push(db.collection('bookings').where('corporateCompany','==',acc.company).get());
-      
-      // 2. Primary Contact Identity
-      if(acc.contactEmail) queries.push(db.collection('bookings').where('email','==',acc.contactEmail).get());
+      if(!db){ renderCdTrips([], bonusPoints, acc.billingCycle); return; }
+
+      // Build query list — each wrapped so one failure doesn't kill the rest
+      var rawQueries = [];
+      if(acc.id)           rawQueries.push(db.collection('bookings').where('corporateAccountId','==',acc.id).get());
+      if(acc.company)      rawQueries.push(db.collection('bookings').where('corporateCompany','==',acc.company).get());
+      if(acc.contactEmail) rawQueries.push(db.collection('bookings').where('email','==',acc.contactEmail).get());
       if(acc.contactPhone) {
         var rawPh = acc.contactPhone.replace(/\D/g,'');
-        if(rawPh.length >= 10) queries.push(db.collection('bookings').where('phone','==',acc.contactPhone).get());
+        if(rawPh.length >= 10) {
+          rawQueries.push(db.collection('bookings').where('phone','==',acc.contactPhone).get());
+          // Also try normalized formats so mismatched phone formats still match
+          var norm10 = rawPh.slice(-10);
+          var normFull = '+1' + norm10;
+          if(normFull !== acc.contactPhone) rawQueries.push(db.collection('bookings').where('phone','==',normFull).get());
+          if(norm10 !== acc.contactPhone)   rawQueries.push(db.collection('bookings').where('phone','==',norm10).get());
+        }
       }
-      
-      // 3. Member Identities
       var members = acc.members || [];
       members.forEach(function(m) {
-        if(m.email) queries.push(db.collection('bookings').where('email','==',m.email).get());
-        if(m.phone) queries.push(db.collection('bookings').where('phone','==',m.phone).get());
+        if(m.email) rawQueries.push(db.collection('bookings').where('email','==',m.email).get());
+        if(m.phone) {
+          var mr = m.phone.replace(/\D/g,'');
+          if(mr.length >= 10) rawQueries.push(db.collection('bookings').where('phone','==',m.phone).get());
+        }
       });
 
-      Promise.all(queries).then(function(results){
+      // Run all queries independently — a failed individual query is skipped, not fatal
+      var safeQueries = rawQueries.map(function(q){ return q.catch(function(){ return null; }); });
+      Promise.all(safeQueries).then(function(results){
         var seen = {}, trips = [];
         results.forEach(function(snap){
+          if(!snap) return;
           snap.forEach(function(d){
             if(!seen[d.id]){ seen[d.id]=true; var t=d.data(); t._docId=d.id; trips.push(t); }
           });
         });
         trips.sort(function(a,b){ return new Date(b.date)-new Date(a.date); });
-        renderCdTrips(trips, bonusPoints);
-      }).catch(function(err){ 
-        console.error('loadCdTrips multi-query fail:', err);
-        renderCdTrips([], bonusPoints); 
+        renderCdTrips(trips, bonusPoints, acc.billingCycle);
+      }).catch(function(err){
+        console.error('loadCdTrips fail:', err);
+        renderCdTrips([], bonusPoints, acc.billingCycle);
       });
     }
 
-    function renderCdTrips(trips, bonusPoints){
+    function renderCdTrips(trips, bonusPoints, billingCycle){
       document.getElementById('cd-trips-loading').textContent = trips.length+' trip'+(trips.length!==1?'s':'')+' found';
-      var completed=0, revenue=0, pending=0, pendingBal=0;
+
+      // Billing-period cutoff — same logic as corporate portal
+      var now = new Date();
+      var cyc = (billingCycle || 'Monthly').toLowerCase();
+      var periodStart;
+      if (cyc.includes('bi') || cyc.includes('2')) {
+        var anchor = new Date('2024-01-01T00:00:00');
+        var days = Math.floor((now - anchor) / 864e5);
+        periodStart = new Date(anchor);
+        periodStart.setDate(periodStart.getDate() + Math.floor(days / 14) * 14);
+      } else if (cyc.includes('week')) {
+        var dow = now.getDay(), diff = dow === 0 ? 6 : dow - 1;
+        periodStart = new Date(now);
+        periodStart.setDate(now.getDate() - diff);
+        periodStart.setHours(0, 0, 0, 0);
+      } else {
+        periodStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      }
+
+      var completed=0, revenue=0, pending=0, outstandingBal=0;
       trips.forEach(function(t){
         var p=parseFloat((t.price+'').replace(/[^0-9.]/g,''))||0;
-        if(t.status==='Completed'){ completed++; revenue+=p; }
-        else { pending++; pendingBal+=p; }
+        if(t.status==='Completed'||t.status==='Paid'){ completed++; revenue+=p; }
+        else if(t.status!=='Cancelled'){ pending++; }
+        // Outstanding = non-Paid, non-Cancelled trips in CLOSED billing periods
+        if(t.status!=='Paid'&&t.status!=='Cancelled'){
+          var td=new Date((t.date||'')+'T12:00:00');
+          if(!isNaN(td.getTime())&&td<periodStart) outstandingBal+=p;
+        }
       });
       document.getElementById('cd-stat-total').textContent = trips.length;
       document.getElementById('cd-stat-done').textContent  = completed;
       document.getElementById('cd-stat-pend').textContent  = pending;
       document.getElementById('cd-stat-rev').textContent   = '$'+revenue.toFixed(2);
-      document.getElementById('cd-stat-bal').textContent   = '$'+pendingBal.toFixed(2);
+      document.getElementById('cd-stat-bal').textContent   = '$'+outstandingBal.toFixed(2);
 
       // Rewards
       var pts = completed + bonusPoints;
@@ -3466,7 +3499,7 @@
       var empty = document.getElementById('cd-trips-empty');
       if(!trips.length){ tbody.innerHTML=''; empty.style.display='block'; return; }
       empty.style.display='none';
-      var statusColors={'Completed':'#10b981','Confirmed':'#3b82f6','Pending':'#f59e0b'};
+      var statusColors={'Completed':'#10b981','Paid':'#10b981','Confirmed':'#3b82f6','Pending':'#f59e0b','Cancelled':'#dc2626'};
       tbody.innerHTML = trips.map(function(t){
         var sc2 = statusColors[t.status]||'#aaa';
         var d = new Date(t.date+'T12:00:00');
