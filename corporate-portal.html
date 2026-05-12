@@ -90,6 +90,7 @@ body{font-family:'Inter',sans-serif;background:#f7f7f7;color:#1a1c1c;min-height:
 .bdg-pen{background:#fef3c7;color:#92400e}
 .bdg-con{background:#dcfce7;color:#166534}
 .bdg-com{background:#f3f4f6;color:#6b7280}
+.bdg-pay{background:#d1fae5;color:#065f46}
 .empty-state{text-align:center;padding:3rem 1rem;color:#bbb;font-family:Inter,sans-serif;font-size:0.85rem}
 .empty-state .material-symbols-outlined{font-size:2.5rem;display:block;margin-bottom:0.75rem;opacity:0.4}
 /* ─── BOOKING FORM ─── */
@@ -652,7 +653,9 @@ var _sess = null;
         <div style="display:flex;gap:0.5rem;flex-wrap:wrap" id="trip-filters">
           <button class="veh-btn on" onclick="filterTrips('all',this)">All</button>
           <button class="veh-btn" onclick="filterTrips('upcoming',this)">Upcoming</button>
+          <button class="veh-btn" onclick="filterTrips('Confirmed',this)">Confirmed</button>
           <button class="veh-btn" onclick="filterTrips('Completed',this)">Completed</button>
+          <button class="veh-btn" onclick="filterTrips('Paid',this)">Paid</button>
           <button class="veh-btn" onclick="filterTrips('Pending',this)">Pending</button>
         </div>
       </div>
@@ -1609,19 +1612,29 @@ function loadTrips(){
   addListener('corporateAccountId', sess.accountId, 'accId');
   addListener('corporateCompany', sess.company, 'company');
 
-  // 2. Identity Matches (Primary)
+  // 2. Identity Matches (Primary) — try all phone formats so booking storage differences don't miss trips
   addListener('email', sess.contactEmail);
   if(sess.contactPhone) {
     var raw = sess.contactPhone.replace(/\D/g,'');
-    if(raw.length >= 10) addListener('phone', sess.contactPhone);
+    if(raw.length >= 10) {
+      addListener('phone', sess.contactPhone);
+      var r10 = raw.slice(-10), rFull = '+1' + r10;
+      if(rFull !== sess.contactPhone) addListener('phone', rFull);
+      if(r10  !== sess.contactPhone) addListener('phone', r10);
+    }
   }
 
-  // 3. Member Identity Matches
+  // 3. Member Identity Matches — same normalized phone approach
   (sess.members || []).forEach(function(m) {
     if(m.email) addListener('email', m.email);
     if(m.phone) {
-       var mr = m.phone.replace(/\D/g,'');
-       if(mr.length >= 10) addListener('phone', m.phone);
+      var mr = m.phone.replace(/\D/g,'');
+      if(mr.length >= 10) {
+        addListener('phone', m.phone);
+        var m10 = mr.slice(-10), mFull = '+1' + m10;
+        if(mFull !== m.phone) addListener('phone', mFull);
+        if(m10  !== m.phone) addListener('phone', m10);
+      }
     }
   });
 
@@ -1741,8 +1754,8 @@ function renderDashUpcoming(){
 function tripCard(t){
   var d=new Date(t.date);
   var dateStr=d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'});
-  var bdg=t.status==='Confirmed'?'<span class="bdg bdg-con">Confirmed</span>':t.status==='Completed'?'<span class="bdg bdg-com">Completed</span>':'<span class="bdg bdg-pen">Pending</span>';
-  var cls=t.status==='Confirmed'?'confirmed':t.status==='Completed'?'completed':'pending';
+  var bdg=t.status==='Confirmed'?'<span class="bdg bdg-con">Confirmed</span>':t.status==='Completed'?'<span class="bdg bdg-com">Completed</span>':t.status==='Paid'?'<span class="bdg bdg-pay">Paid</span>':t.status==='Cancelled'?'<span class="bdg" style="background:#fee2e2;color:#991b1b">Cancelled</span>':'<span class="bdg bdg-pen">Pending</span>';
+  var cls=t.status==='Confirmed'?'confirmed':t.status==='Completed'?'completed':t.status==='Paid'?'completed':'pending';
   var tripId = encodeURIComponent(t.id||t._docId||'');
   var canEdit = t.status!=='Completed' && !!tripId;
   var time12='';
