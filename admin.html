@@ -3607,15 +3607,84 @@
     function clearCorpBalance(){
       if(!_cdCorpId||!db) return;
       var now = new Date().toISOString();
-      db.collection('corporate_accounts').doc(_cdCorpId).update({
-        balance: 0,
-        balanceNote: '',
-        balanceUpdatedAt: now,
-        lastPaymentDate: now
-      }).then(function(){
-        document.getElementById('cd-balance-input').value = '';
-        alert('Balance cleared — account marked current.');
-      }).catch(function(e){ alert('Error: ' + e.message); });
+      var nowDate = new Date();
+
+      // Calculate current billing-period start for this account
+      var cycle = (_cdAcc && _cdAcc.billingCycle || 'Monthly').toLowerCase();
+      var periodStart;
+      if (cycle.includes('bi') || cycle.includes('2')) {
+        var anchor = new Date('2024-01-01T00:00:00');
+        var days = Math.floor((nowDate - anchor) / 864e5);
+        periodStart = new Date(anchor);
+        periodStart.setDate(periodStart.getDate() + Math.floor(days / 14) * 14);
+      } else if (cycle.includes('week')) {
+        var dow = nowDate.getDay(), diff = dow === 0 ? 6 : dow - 1;
+        periodStart = new Date(nowDate);
+        periodStart.setDate(nowDate.getDate() - diff);
+        periodStart.setHours(0, 0, 0, 0);
+      } else {
+        periodStart = new Date(nowDate.getFullYear(), nowDate.getMonth(), 1);
+      }
+
+      // 1. Batch-mark all past-period trips as Paid (multi-query same as loadCdTrips)
+      var acc = _cdAcc || {};
+      var markQueries = [];
+      if(acc.id)           markQueries.push(db.collection('bookings').where('corporateAccountId','==',acc.id).get());
+      if(acc.company)      markQueries.push(db.collection('bookings').where('corporateCompany','==',acc.company).get());
+      if(acc.contactEmail) markQueries.push(db.collection('bookings').where('email','==',acc.contactEmail).get());
+      if(acc.contactPhone) {
+        var rph = acc.contactPhone.replace(/\D/g,'');
+        if(rph.length >= 10) {
+          markQueries.push(db.collection('bookings').where('phone','==',acc.contactPhone).get());
+          var n10 = rph.slice(-10), nf = '+1'+n10;
+          if(nf !== acc.contactPhone) markQueries.push(db.collection('bookings').where('phone','==',nf).get());
+          if(n10 !== acc.contactPhone) markQueries.push(db.collection('bookings').where('phone','==',n10).get());
+        }
+      }
+      (acc.members||[]).forEach(function(m){
+        if(m.email) markQueries.push(db.collection('bookings').where('email','==',m.email).get());
+        if(m.phone){ var mr=m.phone.replace(/\D/g,''); if(mr.length>=10){ markQueries.push(db.collection('bookings').where('phone','==',m.phone).get()); var mn='+1'+mr.slice(-10); if(mn!==m.phone) markQueries.push(db.collection('bookings').where('phone','==',mn).get()); } }
+      });
+      if(!markQueries.length) markQueries.push(db.collection('bookings').where('corporateAccountId','==',_cdCorpId).get());
+
+      Promise.all(markQueries.map(function(q){ return q.catch(function(){ return null; }); }))
+        .then(function(results) {
+          var seen = {}, batch = db.batch(), count = 0;
+          results.forEach(function(snap){
+            if(!snap) return;
+            snap.forEach(function(d){
+              if(seen[d.id]) return; seen[d.id]=true;
+              var t = d.data();
+              if (t.status === 'Cancelled' || t.status === 'Paid') return;
+              var td = new Date((t.date || '') + 'T12:00:00');
+              if (isNaN(td.getTime()) || td >= periodStart) return;
+              batch.update(d.ref, { status: 'Paid', balanceAdded: false });
+              count++;
+            });
+          });
+          return count > 0 ? batch.commit().then(function(){ return count; }) : Promise.resolve(0);
+        })
+        // 2. Zero account balance
+        .then(function(markedCount) {
+          return db.collection('corporate_accounts').doc(_cdCorpId).update({
+            balance: 0,
+            balanceNote: '',
+            balanceUpdatedAt: now,
+            lastPaymentDate: now
+          }).then(function(){ return markedCount; });
+        })
+        // 3. Refresh modal trip list
+        .then(function(markedCount) {
+          document.getElementById('cd-balance-input').value = '';
+          toast('✅ Balance cleared — ' + markedCount + ' trip' + (markedCount !== 1 ? 's' : '') + ' marked Paid.');
+          if (_cdAcc) {
+            db.collection('corporate_accounts').doc(_cdCorpId).get().then(function(doc) {
+              var bonus = doc.exists ? (doc.data().bonusPoints || 0) : 0;
+              loadCdTrips(_cdAcc, bonus);
+            }).catch(function(){ loadCdTrips(_cdAcc, 0); });
+          }
+        })
+        .catch(function(e){ alert('Error: ' + e.message); });
     }
 
     function renderDrivers() {
