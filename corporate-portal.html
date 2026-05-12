@@ -966,15 +966,14 @@ var _tripFilter = 'all';
 var _calDate = new Date();
 var _veh = 'Black SUV Luxury';
 var _accountBalance = 0;
+var _balanceUpdatedAt = null; // ISO string — set by admin via SET BALANCE DUE / CLEAR
 var _cardData = null;
 
-// Returns the start of the current (still-open) billing period so we can
-// exclude in-progress trips from the outstanding balance.
+// Start of the current (still-open) billing period.
 function currentPeriodStart() {
   var now = new Date();
   var cycle = (sess.billingCycle || 'Monthly').toLowerCase();
   if (cycle.includes('bi') || cycle.includes('2')) {
-    // Bi-Weekly: anchor to a known Monday (2024-01-01) and step in 14-day blocks
     var anchor = new Date('2024-01-01T00:00:00');
     var days = Math.floor((now - anchor) / 864e5);
     var start = new Date(anchor);
@@ -982,33 +981,64 @@ function currentPeriodStart() {
     return start;
   }
   if (cycle.includes('week')) {
-    // Weekly: Monday-based week
-    var dow = now.getDay(); // 0=Sun
+    var dow = now.getDay();
     var diff = dow === 0 ? 6 : dow - 1;
     var start = new Date(now);
     start.setDate(now.getDate() - diff);
     start.setHours(0, 0, 0, 0);
     return start;
   }
-  // Monthly (default)
   return new Date(now.getFullYear(), now.getMonth(), 1);
 }
 
-// Sum of unpaid trips that fall in a CLOSED billing period.
-// 'Completed' means the driver finished the ride but the client hasn't paid yet — still owed.
-// 'Paid' means the client has settled the invoice — excluded.
-// Current-period trips are excluded — they aren't due yet.
+// Start of the PREVIOUS (most-recently-closed) billing period.
+function previousPeriodStart() {
+  var now = new Date();
+  var cycle = (sess.billingCycle || 'Monthly').toLowerCase();
+  if (cycle.includes('bi') || cycle.includes('2')) {
+    var anchor = new Date('2024-01-01T00:00:00');
+    var days = Math.floor((now - anchor) / 864e5);
+    var periodIdx = Math.floor(days / 14);
+    var start = new Date(anchor);
+    start.setDate(start.getDate() + (periodIdx - 1) * 14);
+    return start;
+  }
+  if (cycle.includes('week')) {
+    var dow = now.getDay();
+    var diff = dow === 0 ? 6 : dow - 1;
+    var start = new Date(now);
+    start.setDate(now.getDate() - diff - 7);
+    start.setHours(0, 0, 0, 0);
+    return start;
+  }
+  // Monthly: first of previous month
+  return new Date(now.getFullYear(), now.getMonth() - 1, 1);
+}
+
+// Outstanding balance = Completed trips from the LAST closed billing period only.
+// Completed = driver did the ride; Paid = client has already settled it.
+// If admin manually set/cleared the balance more recently than the last period start,
+// that stored value is used instead (see renderDashBalance / calcStats).
 function calcPeriodBalance() {
-  var cutoff = currentPeriodStart();
+  var prevStart = previousPeriodStart();
+  var cutoff    = currentPeriodStart(); // exclusive upper bound
   var total = 0;
   _trips.forEach(function(t) {
-    if (t.status === 'Paid' || t.status === 'Cancelled') return;
+    if (t.status !== 'Completed') return; // only rides that actually happened
     var d = new Date((t.date || '') + 'T12:00:00');
-    if (isNaN(d.getTime()) || d >= cutoff) return;
+    if (isNaN(d.getTime()) || d < prevStart || d >= cutoff) return;
     var p = parseFloat((t.price + '').replace(/[^0-9.]/g, ''));
     if (!isNaN(p)) total += p;
   });
   return total;
+}
+
+// Which balance to display: if admin updated it after last period start, respect that;
+// otherwise calculate from completed trips.
+function getDisplayBalance() {
+  var prevStart = previousPeriodStart();
+  var manuallySet = _balanceUpdatedAt && new Date(_balanceUpdatedAt) >= prevStart;
+  return manuallySet ? _accountBalance : calcPeriodBalance();
 }
 
 // After a successful payment, mark all closed-period trips as Paid so the balance reads $0.
@@ -1044,8 +1074,9 @@ function loadAccountLive(){
   db.collection('corporate_accounts').doc(sess.accountId).onSnapshot(function(snap){
     if(!snap.exists) return;
     var d = snap.data();
-    _accountBalance = d.balance || 0;
-    
+    _accountBalance    = d.balance || 0;
+    _balanceUpdatedAt  = d.balanceUpdatedAt || d.lastPaymentDate || null;
+
     // Stripe card data
     if(d.cardBrand && d.cardLast4){
       _cardData = { brand: d.cardBrand, last4: d.cardLast4 };
@@ -1108,9 +1139,9 @@ function renderDashBalance(){
     if(setupBtn)  setupBtn.style.display  = 'flex';
     if(manageBox) manageBox.style.display = 'none';
   }
-  // ─── PAYMENTS INITIALIZATION ───
-  // Show only the balance for CLOSED billing periods — current-period trips are not due yet
-  var periodBal = calcPeriodBalance();
+  // Use admin-set balance if it was updated this billing period, otherwise calculate
+  // from completed trips in the last closed period.
+  var periodBal = getDisplayBalance();
   block.style.display = 'block';
   if(periodBal > 0){
     due.style.display   = 'block';
@@ -1425,7 +1456,7 @@ async function corpSubmitPayment() {
 
 /* --- PAYMENT WRAPPERS --- */
 function settleBalanceWithCard() {
-  var due = calcPeriodBalance();
+  var due = getDisplayBalance();
   openCardModal(due > 0 ? due : 0);
 }
 
@@ -1685,8 +1716,7 @@ function calcStats(){
   });
   document.getElementById('stat-month').textContent=monthCount;
   document.getElementById('stat-total').textContent=_trips.length;
-  // Only show balance for CLOSED billing periods — current-period trips aren't due yet
-  var periodBal = calcPeriodBalance();
+  var periodBal = getDisplayBalance();
   document.getElementById('stat-bal').textContent='$'+periodBal.toFixed(2);
   document.getElementById('pay-balance').textContent='$'+periodBal.toFixed(2);
   if(upcoming.length){

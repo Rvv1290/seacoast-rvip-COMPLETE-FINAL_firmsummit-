@@ -3426,7 +3426,12 @@
         if(m.email) rawQueries.push(db.collection('bookings').where('email','==',m.email).get());
         if(m.phone) {
           var mr = m.phone.replace(/\D/g,'');
-          if(mr.length >= 10) rawQueries.push(db.collection('bookings').where('phone','==',m.phone).get());
+          if(mr.length >= 10) {
+            rawQueries.push(db.collection('bookings').where('phone','==',m.phone).get());
+            var mn10 = mr.slice(-10), mnFull = '+1' + mn10;
+            if(mnFull !== m.phone) rawQueries.push(db.collection('bookings').where('phone','==',mnFull).get());
+            if(mn10  !== m.phone)  rawQueries.push(db.collection('bookings').where('phone','==',mn10).get());
+          }
         }
       });
 
@@ -3601,10 +3606,12 @@
 
     function clearCorpBalance(){
       if(!_cdCorpId||!db) return;
+      var now = new Date().toISOString();
       db.collection('corporate_accounts').doc(_cdCorpId).update({
         balance: 0,
         balanceNote: '',
-        balanceUpdatedAt: new Date().toISOString()
+        balanceUpdatedAt: now,
+        lastPaymentDate: now
       }).then(function(){
         document.getElementById('cd-balance-input').value = '';
         alert('Balance cleared — account marked current.');
