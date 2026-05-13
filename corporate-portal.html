@@ -1249,14 +1249,19 @@ function corpApplyCustomTip(val) {
 }
 
 function _corpUpdateTipDisplay() {
-  var total = _corpBasePay + _corpTipAmt;
+  var subtotal = _corpBasePay + _corpTipAmt;
+  var fee      = parseFloat((subtotal * 0.029).toFixed(2));
+  var total    = parseFloat((subtotal + fee).toFixed(2));
   document.getElementById('corp-tip-display').textContent       = '$' + _corpTipAmt.toFixed(2);
+  document.getElementById('corp-fee-display').textContent       = '$' + fee.toFixed(2);
   document.getElementById('corp-tip-total-display').textContent = '$' + total.toFixed(2);
 }
 
 function corpConfirmTip() {
-  // Lock in base + tip as final charge amount
-  _corpPayAmt = parseFloat((_corpBasePay + _corpTipAmt).toFixed(2));
+  // Lock in base + tip + 2.9% processing fee as final charge amount
+  var subtotal = _corpBasePay + _corpTipAmt;
+  var fee      = parseFloat((subtotal * 0.029).toFixed(2));
+  _corpPayAmt  = parseFloat((subtotal + fee).toFixed(2));
   document.getElementById('corp-modal-amt').textContent = '$' + _corpPayAmt.toFixed(2);
 
   // Hide tip step, reveal card entry
@@ -2845,6 +2850,10 @@ addBookingStop();
         <div style="display:flex;justify-content:space-between;margin-bottom:0.5rem">
           <span style="font-family:Inter,sans-serif;font-size:0.8rem;color:#888">Gratuity</span>
           <span style="font-family:Inter,sans-serif;font-size:0.8rem;color:#775a19;font-weight:600" id="corp-tip-display">$0.00</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:0.5rem">
+          <span style="font-family:Inter,sans-serif;font-size:0.8rem;color:#888">Processing Fee (2.9%)</span>
+          <span style="font-family:Inter,sans-serif;font-size:0.8rem;color:#888" id="corp-fee-display">$0.00</span>
         </div>
         <div style="border-top:1px solid #f0e8cc;padding-top:0.5rem;display:flex;justify-content:space-between">
           <span style="font-family:'Work Sans',sans-serif;font-size:0.82rem;font-weight:700;color:#000;text-transform:uppercase;letter-spacing:0.04em">Total Charge</span>
