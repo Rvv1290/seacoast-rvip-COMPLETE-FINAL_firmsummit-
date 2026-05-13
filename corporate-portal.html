@@ -1250,7 +1250,7 @@ function corpApplyCustomTip(val) {
 
 function _corpUpdateTipDisplay() {
   var subtotal = _corpBasePay + _corpTipAmt;
-  var fee      = parseFloat((subtotal * 0.029).toFixed(2));
+  var fee      = parseFloat((_corpBasePay * 0.029).toFixed(2));
   var total    = parseFloat((subtotal + fee).toFixed(2));
   document.getElementById('corp-tip-display').textContent       = '$' + _corpTipAmt.toFixed(2);
   document.getElementById('corp-fee-display').textContent       = '$' + fee.toFixed(2);
@@ -1258,9 +1258,9 @@ function _corpUpdateTipDisplay() {
 }
 
 function corpConfirmTip() {
-  // Lock in base + tip + 2.9% processing fee as final charge amount
+  // Lock in base + tip + 2.9% fee on fare only as final charge amount
   var subtotal = _corpBasePay + _corpTipAmt;
-  var fee      = parseFloat((subtotal * 0.029).toFixed(2));
+  var fee      = parseFloat((_corpBasePay * 0.029).toFixed(2));
   _corpPayAmt  = parseFloat((subtotal + fee).toFixed(2));
   document.getElementById('corp-modal-amt').textContent = '$' + _corpPayAmt.toFixed(2);
 
