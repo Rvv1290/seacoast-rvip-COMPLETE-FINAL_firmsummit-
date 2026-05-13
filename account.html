@@ -2239,7 +2239,7 @@ function acctApplyCustomTip(val) {
 
 function _acctUpdateTipDisplay() {
   var subtotal = _acctBasePay + _acctTipAmt;
-  var fee      = parseFloat((subtotal * 0.029).toFixed(2));
+  var fee      = parseFloat((_acctBasePay * 0.029).toFixed(2));
   var total    = parseFloat((subtotal + fee).toFixed(2));
   document.getElementById('acct-tip-display').textContent       = '$' + _acctTipAmt.toFixed(2);
   document.getElementById('acct-fee-display').textContent       = '$' + fee.toFixed(2);
@@ -2247,9 +2247,9 @@ function _acctUpdateTipDisplay() {
 }
 
 function acctConfirmTip() {
-  // Lock in base + tip + 2.9% processing fee as final charge amount
+  // Lock in base + tip + 2.9% fee on fare only as final charge amount
   var subtotal = _acctBasePay + _acctTipAmt;
-  var fee      = parseFloat((subtotal * 0.029).toFixed(2));
+  var fee      = parseFloat((_acctBasePay * 0.029).toFixed(2));
   _acctPayAmt  = parseFloat((subtotal + fee).toFixed(2));
   document.getElementById('acct-modal-amt').textContent = '$' + _acctPayAmt.toFixed(2);
 
