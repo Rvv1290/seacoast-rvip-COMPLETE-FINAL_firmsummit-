@@ -62,8 +62,10 @@ body{font-family:'Inter',sans-serif;background:#f7f7f7;color:#1a1c1c;min-height:
 .sec-title{font-family:'Times New Roman',serif;font-size:1.1rem;font-weight:700;color:#000}
 .sec-sub{font-family:Inter,sans-serif;font-size:0.75rem;color:#888;margin-top:2px}
 /* ─── TRIP CARDS ─── */
-.trip-card{background:#fff;border-left:3px solid #e2e2e2;padding:1.1rem 1.25rem;margin-bottom:0.75rem;display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap}
-.trip-head{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap;width:100%}
+.trip-card{background:#fff;border-left:3px solid #e2e2e2;margin-bottom:0.875rem;display:flex;align-items:stretch;overflow:hidden;border-radius:2px;box-shadow:0 1px 4px rgba(0,0,0,0.07)}
+.trip-left{flex:1;padding:1.1rem 1.25rem;min-width:0}
+.trip-head{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.trip-map-side{width:220px;flex-shrink:0;background:#1a1a1a;overflow:hidden;position:relative;min-height:185px}
 .trip-main{min-width:240px;flex:1}
 .trip-actions{display:flex;flex-direction:column;align-items:flex-end;gap:0.5rem;flex-shrink:0}
 .trip-card.pending{border-left-color:#f59e0b}
@@ -72,8 +74,8 @@ body{font-family:'Inter',sans-serif;background:#f7f7f7;color:#1a1c1c;min-height:
 .trip-date{font-family:'Work Sans',sans-serif;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#775a19;margin-bottom:3px}
 .trip-route{font-family:Inter,sans-serif;font-size:0.88rem;font-weight:600;color:#000;margin-bottom:2px}
 .trip-meta{font-family:Inter,sans-serif;font-size:0.75rem;color:#888}
-.trip-map-wrap{width:100%;margin-top:0.85rem;border:1px solid #1a1a1a;border-radius:4px;overflow:hidden;background:#1a1a1a}
-.trip-map-frame{display:block;width:100%;height:165px;border:0}
+.trip-map-wrap{display:none}
+.trip-map-frame{display:block;width:100%;height:100%;min-height:185px;border:0}
 .trip-link-btn{font-family:'Work Sans',sans-serif;font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#775a19;cursor:pointer;text-decoration:none;background:none;border:none;padding:0}
 .stop-list{display:flex;flex-direction:column;gap:0.65rem}
 .stop-row{display:flex;align-items:center;gap:0.5rem}
@@ -193,7 +195,9 @@ body{font-family:'Inter',sans-serif;background:#f7f7f7;color:#1a1c1c;min-height:
   .stat-row{grid-template-columns:1fr}
   .topbar-right{display:none}
   .trip-actions{align-items:flex-start}
-  .trip-map-frame{height:150px}
+  .trip-card{flex-direction:column}
+  .trip-map-side{width:100%;min-height:160px;height:160px}
+  .trip-map-frame{min-height:160px}
   .stop-row{flex-direction:column;align-items:stretch}
 }
 @media(min-width:1001px){.mob-nav{display:none}.mob-menu-btn{display:none!important}}
@@ -1791,14 +1795,15 @@ function tripCard(t){
   var stopList = Array.isArray(t.stopList) ? t.stopList.filter(Boolean) : [];
   if(!stopList.length && t.stops && typeof t.stops==='string') stopList = t.stops.split('|').map(function(s){return s.trim();}).filter(Boolean);
   var stopMeta = stopCount ? (' · '+stopCount+' stop'+(stopCount>1?'s':'')) : '';
-  var routeMap='';
+  var mapSide='';
   var navUrl='';
   if(t.pickup&&t.destination){
     navUrl='https://www.google.com/maps/dir/?api=1&origin='+encodeURIComponent(t.pickup)+'&destination='+encodeURIComponent(t.destination)+(stopList.length?'&waypoints='+encodeURIComponent(stopList.join('|')):'');
     var wptAttr=stopList.length?' data-waypoints="'+escH(stopList.join('|'))+'"':'';
-    routeMap='<div class="trip-map-wrap"><div class="trip-map-frame trip-map-js" data-pickup="'+escH(t.pickup)+'" data-dest="'+escH(t.destination)+'"'+wptAttr+'></div></div>';
+    mapSide='<div class="trip-map-side"><div class="trip-map-frame trip-map-js" data-pickup="'+escH(t.pickup)+'" data-dest="'+escH(t.destination)+'"'+wptAttr+'></div></div>';
   }
   return '<div class="trip-card '+cls+'">'+
+    '<div class="trip-left">'+
     '<div class="trip-head"><div class="trip-main"><div class="trip-date">'+dateStr+(time12?' · '+time12:'')+'</div>'+
     '<div class="trip-route">'+escH(t.pickup||'—')+' → '+escH(t.destination||'—')+'</div>'+
     '<div class="trip-meta">'+escH(t.name||'')+(t.service?' · '+escH(t.service):'')+(t.vehicle?' · '+escH(t.vehicle):'')+stopMeta+(t.price?' · <strong>'+escH(t.price+'')+'</strong>':'')+'</div></div>'+
@@ -1806,7 +1811,7 @@ function tripCard(t){
     (canEdit?'<button type="button" class="trip-link-btn" onclick="openEditTrip(\''+tripId+'\')">Edit</button>':'')+
     (t.status==='Completed'?'<span class="trip-link-btn" onclick="rebookTrip(\''+escH(t.pickup||'')+'\',\''+escH(t.destination||'')+'\',\''+escH(t.service||'')+'\',\''+escH(t.name||'')+'\',\''+escH(t.phone||'')+'\')">↻ Rebook</span>':'')+
     (navUrl?'<a href="'+navUrl+'" target="_blank" class="trip-link-btn">Navigate</a>':'')+'</div></div>'+
-    routeMap+'</div>';
+    '</div>'+mapSide+'</div>';
 }
 
 // ─── STYLED CARD MAPS (dark/gold — matches booking map) ───
@@ -1814,14 +1819,16 @@ var _cardDirSvc=null, _cardMapObs=null;
 var _cardMapStyles=[
   {featureType:'all',elementType:'geometry',stylers:[{color:'#1a1a1a'}]},
   {featureType:'water',elementType:'geometry',stylers:[{color:'#0d0d0d'}]},
-  {featureType:'road',elementType:'geometry',stylers:[{color:'#252525'}]},
-  {featureType:'road.highway',elementType:'geometry',stylers:[{color:'#333'}]},
-  {featureType:'road.arterial',elementType:'geometry',stylers:[{color:'#2a2a2a'}]},
+  {featureType:'road',elementType:'geometry',stylers:[{color:'#2a2a2a'}]},
+  {featureType:'road.highway',elementType:'geometry',stylers:[{color:'#353535'}]},
+  {featureType:'road.arterial',elementType:'geometry',stylers:[{color:'#252525'}]},
   {featureType:'poi',elementType:'all',stylers:[{visibility:'off'}]},
   {featureType:'transit',stylers:[{visibility:'off'}]},
-  {featureType:'all',elementType:'labels.text.fill',stylers:[{color:'#999'}]},
+  {featureType:'all',elementType:'labels.text.fill',stylers:[{color:'#555'}]},
   {featureType:'all',elementType:'labels.text.stroke',stylers:[{color:'#000'},{weight:2}]},
   {featureType:'administrative.locality',elementType:'labels.text.fill',stylers:[{color:'#C9A84C'}]},
+  {featureType:'administrative.province',elementType:'labels',stylers:[{visibility:'off'}]},
+  {featureType:'administrative.country',elementType:'labels',stylers:[{visibility:'off'}]},
   {featureType:'administrative.neighborhood',elementType:'labels',stylers:[{visibility:'off'}]},
   {featureType:'administrative.land_parcel',elementType:'labels',stylers:[{visibility:'off'}]}
 ];
@@ -1837,7 +1844,7 @@ function _renderCardMap(el){
     disableDefaultUI:true,gestureHandling:'none',clickableIcons:false
   });
   var renderer=new google.maps.DirectionsRenderer({
-    suppressMarkers:false,suppressInfoWindows:true,
+    suppressMarkers:true,suppressInfoWindows:true,
     polylineOptions:{strokeColor:'#C9A84C',strokeWeight:3,strokeOpacity:1}
   });
   renderer.setMap(map);
@@ -1849,13 +1856,18 @@ function _renderCardMap(el){
   },function(result,status){
     if(status!=='OK'){el.style.display='none';return;}
     renderer.setDirections(result);
-    var totalDist=result.routes[0].legs.reduce(function(s,l){return s+l.distance.value;},0);
-    var totalTime=result.routes[0].legs.reduce(function(s,l){return s+l.duration.value;},0);
+    var legs=result.routes[0].legs;
+    // Gold circle at pickup
+    new google.maps.Marker({position:legs[0].start_location,map:map,icon:{path:google.maps.SymbolPath.CIRCLE,fillColor:'#C9A84C',fillOpacity:1,strokeColor:'#fff',strokeWeight:2,scale:7}});
+    // White circle at destination
+    new google.maps.Marker({position:legs[legs.length-1].end_location,map:map,icon:{path:google.maps.SymbolPath.CIRCLE,fillColor:'#ffffff',fillOpacity:1,strokeColor:'#C9A84C',strokeWeight:2,scale:7}});
+    var totalDist=legs.reduce(function(s,l){return s+l.distance.value;},0);
+    var totalTime=legs.reduce(function(s,l){return s+l.duration.value;},0);
     var distMi=(totalDist/1609.34).toFixed(1)+' mi';
     var mins=Math.round(totalTime/60);
     var timeStr=mins>=60?(Math.floor(mins/60)+'h '+(mins%60)+'m'):(mins+' min');
     var info=document.createElement('div');
-    info.style.cssText='position:absolute;bottom:8px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.82);color:#fff;font-family:\'Work Sans\',sans-serif;font-size:0.65rem;font-weight:600;padding:3px 12px;border-radius:20px;pointer-events:none;white-space:nowrap;border:1px solid rgba(201,168,76,0.5)';
+    info.style.cssText='position:absolute;bottom:8px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.85);color:#fff;font-family:\'Work Sans\',sans-serif;font-size:0.62rem;font-weight:700;padding:4px 12px;border-radius:20px;pointer-events:none;white-space:nowrap;letter-spacing:0.04em;border:1px solid rgba(201,168,76,0.6)';
     info.textContent=distMi+' · '+timeStr;
     el.style.position='relative';
     el.appendChild(info);
