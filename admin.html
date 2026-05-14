@@ -573,6 +573,7 @@
       transition: all 0.2s;
     }
     .ap-action-btn:active { transform: scale(0.98); }
+    .adm-map-side{width:200px;flex-shrink:0;background:#1a1a1a;overflow:hidden;position:relative;min-height:140px}
   </style>
 </head>
 
@@ -1418,19 +1419,74 @@
     function setDrivers(a) {} // Deprecated, managed by Firebase
     function getDrRate() { return parseFloat(localStorage.getItem(DR_RATE_KEY)) || 75; }
 
-    function getMapEmbedHtml(pickup, dest, height) {
-      if(!pickup) return '';
-      var h = height || '120px';
-      var src;
-      if(dest && dest.trim()) {
-        // Free Google Maps directions embed — no API key required
-        src = 'https://maps.google.com/maps?saddr=' + encodeURIComponent(pickup) +
-              '&daddr=' + encodeURIComponent(dest) +
-              '&output=embed';
-      } else {
-        src = 'https://maps.google.com/maps?q=' + encodeURIComponent(pickup) + '&output=embed';
+    // ─── STYLED CARD MAPS (admin) ───
+    var _admCardDirSvc=null, _admCardMapObs=null;
+    var _admCardMapStyles=[
+      {featureType:'all',elementType:'geometry',stylers:[{color:'#1a1a1a'}]},
+      {featureType:'water',elementType:'geometry',stylers:[{color:'#0d0d0d'}]},
+      {featureType:'road',elementType:'geometry',stylers:[{color:'#2a2a2a'}]},
+      {featureType:'road.highway',elementType:'geometry',stylers:[{color:'#353535'}]},
+      {featureType:'poi',elementType:'all',stylers:[{visibility:'off'}]},
+      {featureType:'transit',stylers:[{visibility:'off'}]},
+      {featureType:'all',elementType:'labels.text.fill',stylers:[{color:'#555'}]},
+      {featureType:'all',elementType:'labels.text.stroke',stylers:[{color:'#000'},{weight:2}]},
+      {featureType:'administrative.locality',elementType:'labels.text.fill',stylers:[{color:'#C9A84C'}]},
+      {featureType:'administrative.province',elementType:'labels',stylers:[{visibility:'off'}]},
+      {featureType:'administrative.country',elementType:'labels',stylers:[{visibility:'off'}]},
+      {featureType:'administrative.neighborhood',elementType:'labels',stylers:[{visibility:'off'}]},
+      {featureType:'administrative.land_parcel',elementType:'labels',stylers:[{visibility:'off'}]}
+    ];
+    function _admRenderCardMap(el){
+      if(!el||el.dataset.rendered||typeof google==='undefined'||!google.maps) return;
+      el.dataset.rendered='1';
+      var pickup=el.dataset.pickup, dest=el.dataset.dest;
+      if(!pickup) return;
+      if(!_admCardDirSvc) _admCardDirSvc=new google.maps.DirectionsService();
+      var map=new google.maps.Map(el,{
+        zoom:9,center:{lat:43.07,lng:-70.77},
+        styles:_admCardMapStyles,
+        disableDefaultUI:true,gestureHandling:'none',clickableIcons:false
+      });
+      if(!dest){
+        map.setCenter({lat:43.07,lng:-70.77});
+        new google.maps.Geocoder().geocode({address:pickup},function(res,s){if(s==='OK'&&res[0])map.setCenter(res[0].geometry.location);});
+        return;
       }
-      return '<div style="margin-top:1rem;height:' + h + ';border-radius:6px;overflow:hidden;border:1px solid #ddd"><iframe src="' + src + '" width="100%" height="100%" style="border:0;display:block" allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe></div>';
+      var renderer=new google.maps.DirectionsRenderer({
+        suppressMarkers:true,suppressInfoWindows:true,
+        polylineOptions:{strokeColor:'#C9A84C',strokeWeight:3,strokeOpacity:1}
+      });
+      renderer.setMap(map);
+      _admCardDirSvc.route({origin:pickup,destination:dest,travelMode:google.maps.TravelMode.DRIVING},function(result,status){
+        if(status!=='OK'){el.style.display='none';return;}
+        renderer.setDirections(result);
+        var legs=result.routes[0].legs;
+        new google.maps.Marker({position:legs[0].start_location,map:map,icon:{path:google.maps.SymbolPath.CIRCLE,fillColor:'#C9A84C',fillOpacity:1,strokeColor:'#fff',strokeWeight:2,scale:6}});
+        new google.maps.Marker({position:legs[legs.length-1].end_location,map:map,icon:{path:google.maps.SymbolPath.CIRCLE,fillColor:'#fff',fillOpacity:1,strokeColor:'#C9A84C',strokeWeight:2,scale:6}});
+        var totalDist=legs.reduce(function(s,l){return s+l.distance.value;},0);
+        var totalTime=legs.reduce(function(s,l){return s+l.duration.value;},0);
+        var distMi=(totalDist/1609.34).toFixed(1)+' mi';
+        var mins=Math.round(totalTime/60);
+        var timeStr=mins>=60?(Math.floor(mins/60)+'h '+(mins%60)+'m'):(mins+' min');
+        var info=document.createElement('div');
+        info.style.cssText='position:absolute;bottom:6px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.85);color:#fff;font-family:\'Work Sans\',sans-serif;font-size:0.6rem;font-weight:700;padding:3px 10px;border-radius:20px;pointer-events:none;white-space:nowrap;letter-spacing:0.04em;border:1px solid rgba(201,168,76,0.6)';
+        info.textContent=distMi+' · '+timeStr;
+        el.style.position='relative';
+        el.appendChild(info);
+      });
+    }
+    function admInitCardMaps(){
+      if(typeof google==='undefined'||!google.maps) return;
+      if(!_admCardMapObs){
+        _admCardMapObs=new IntersectionObserver(function(entries){
+          entries.forEach(function(e){if(e.isIntersecting){_admCardMapObs.unobserve(e.target);_admRenderCardMap(e.target);}});
+        },{threshold:0.05,rootMargin:'300px'});
+      }
+      document.querySelectorAll('.adm-map-js:not([data-rendered])').forEach(function(el){_admCardMapObs.observe(el);});
+    }
+    function getMapEmbedHtml(pickup, dest) {
+      if(!pickup) return '';
+      return '<div class="adm-map-side"><div class="trip-map-frame adm-map-js" data-pickup="'+e(pickup)+'" data-dest="'+(dest?e(dest):'')+'" style="width:100%;height:100%;min-height:140px;border:0;display:block"></div></div>';
     }
 
     // ─────────────────────────────────────────────
@@ -1657,9 +1713,10 @@
           }
         }
         // Store booking in a data attribute index — no JSON in onclick
-        return '<div class="card" data-bk-idx="' + i + '" id="bkcard' + b.id + '">' +
+        return '<div class="card" data-bk-idx="' + i + '" id="bkcard' + b.id + '" style="padding:0;overflow:hidden;display:flex;align-items:stretch">' +
+          '<div style="flex:1;padding:1rem;min-width:0">' +
           '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:.75rem">' +
-          '<div style="flex:1;min-width:180px">' +
+          '<div style="flex:1;min-width:160px">' +
           '<div style="display:flex;align-items:center;gap:.625rem;flex-wrap:wrap;margin-bottom:.5rem">' +
           '<span class="cname">' + e(b.name) + '</span>' +
           '<span class="bdg ' + (SC[b.status] || 'byw') + '">' + e(b.status) + '</span>' +
@@ -1685,9 +1742,11 @@
           '</div>' +
           '</div>' +
           '</div>' +
-          (b.pickup ? getMapEmbedHtml(b.pickup, b.destination, '140px') : '') +
+          '</div>' +
+          (b.pickup ? getMapEmbedHtml(b.pickup, b.destination) : '') +
           '</div>';
       }).join('');
+      setTimeout(admInitCardMaps, 80);
     }
 
     function initiateDriverPay(bkId) {
@@ -2909,7 +2968,7 @@
           '</div>' +
           '</div>' +
           '</div>' +
-          (b.pickup ? getMapEmbedHtml(b.pickup, b.destination, '140px') : '') +
+          (b.pickup ? getMapEmbedHtml(b.pickup, b.destination) : '') +
           '</div>';
       }).join('');
     }

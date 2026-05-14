@@ -72,7 +72,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .l-fill{height:100%;background:var(--gold);width:0%;transition:1.2s ease-out}
 
 /* ─── TRIP CARDS ─── */
-.trip-card{border:1px solid var(--border);padding:1.5rem;margin-bottom:1rem;display:flex;justify-content:space-between;align-items:center;gap:1.5rem;transition:all 0.2s}
+.trip-card{border:1px solid var(--border);margin-bottom:1rem;display:flex;justify-content:space-between;align-items:stretch;overflow:hidden;border-radius:2px;transition:all 0.2s}
 .trip-card:hover{background:#fafafa;border-color:#ccc}
 .t-main{flex:1}
 .t-header{display:flex;align-items:center;gap:12px;margin-bottom:10px}
@@ -87,8 +87,9 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 
 .t-info{display:flex;flex-wrap:wrap;gap:1.25rem;font-size:0.82rem;color:var(--text-sec)}
 .t-actions{display:flex;flex-direction:column;align-items:flex-end;gap:0.75rem}
-.trip-map-wrap{width:100%;margin-top:0.85rem;border:1px solid #1a1a1a;border-radius:4px;overflow:hidden;background:#1a1a1a}
-.trip-map-frame{display:block;width:100%;height:160px;border:0}
+.trip-map-wrap{display:none}
+.trip-map-side{width:220px;flex-shrink:0;background:#1a1a1a;overflow:hidden;position:relative;min-height:185px}
+.trip-map-frame{display:block;width:100%;height:100%;min-height:185px;border:0}
 
 /* ─── BOOK TAB ─── */
 .book-layout{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:1.5rem;align-items:start}
@@ -170,7 +171,8 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
   .main-content{padding:1.5rem 1rem 5rem}
   .mobile-bottom-nav{display:flex}
   .mobile-menu-btn{display:flex;align-items:center}
-  .trip-card{flex-direction:column;align-items:flex-start}
+  .trip-card{flex-direction:column;align-items:stretch}
+  .trip-map-side{width:100%;min-height:160px;height:160px}
   .t-actions{flex-direction:row;width:100%;justify-content:space-between;align-items:center}
   .trip-filter-row{flex-wrap:wrap;gap:8px}
   .trips-header{flex-direction:column;align-items:flex-start;gap:1rem}
@@ -1701,14 +1703,16 @@ var _cardDirSvc=null, _cardMapObs=null;
 var _cardMapStyles=[
   {featureType:'all',elementType:'geometry',stylers:[{color:'#1a1a1a'}]},
   {featureType:'water',elementType:'geometry',stylers:[{color:'#0d0d0d'}]},
-  {featureType:'road',elementType:'geometry',stylers:[{color:'#252525'}]},
-  {featureType:'road.highway',elementType:'geometry',stylers:[{color:'#333'}]},
-  {featureType:'road.arterial',elementType:'geometry',stylers:[{color:'#2a2a2a'}]},
+  {featureType:'road',elementType:'geometry',stylers:[{color:'#2a2a2a'}]},
+  {featureType:'road.highway',elementType:'geometry',stylers:[{color:'#353535'}]},
+  {featureType:'road.arterial',elementType:'geometry',stylers:[{color:'#252525'}]},
   {featureType:'poi',elementType:'all',stylers:[{visibility:'off'}]},
   {featureType:'transit',stylers:[{visibility:'off'}]},
-  {featureType:'all',elementType:'labels.text.fill',stylers:[{color:'#999'}]},
+  {featureType:'all',elementType:'labels.text.fill',stylers:[{color:'#555'}]},
   {featureType:'all',elementType:'labels.text.stroke',stylers:[{color:'#000'},{weight:2}]},
   {featureType:'administrative.locality',elementType:'labels.text.fill',stylers:[{color:'#C9A84C'}]},
+  {featureType:'administrative.province',elementType:'labels',stylers:[{visibility:'off'}]},
+  {featureType:'administrative.country',elementType:'labels',stylers:[{visibility:'off'}]},
   {featureType:'administrative.neighborhood',elementType:'labels',stylers:[{visibility:'off'}]},
   {featureType:'administrative.land_parcel',elementType:'labels',stylers:[{visibility:'off'}]}
 ];
@@ -1724,7 +1728,7 @@ function _renderCardMap(el){
     disableDefaultUI:true,gestureHandling:'none',clickableIcons:false
   });
   const renderer=new google.maps.DirectionsRenderer({
-    suppressMarkers:false,suppressInfoWindows:true,
+    suppressMarkers:true,suppressInfoWindows:true,
     polylineOptions:{strokeColor:'#C9A84C',strokeWeight:3,strokeOpacity:1}
   });
   renderer.setMap(map);
@@ -1733,13 +1737,18 @@ function _renderCardMap(el){
     (result,status)=>{
       if(status!=='OK'){el.style.display='none';return;}
       renderer.setDirections(result);
-      const totalDist=result.routes[0].legs.reduce((s,l)=>s+l.distance.value,0);
-      const totalTime=result.routes[0].legs.reduce((s,l)=>s+l.duration.value,0);
+      const legs=result.routes[0].legs;
+      // Gold circle at pickup
+      new google.maps.Marker({position:legs[0].start_location,map:map,icon:{path:google.maps.SymbolPath.CIRCLE,fillColor:'#C9A84C',fillOpacity:1,strokeColor:'#fff',strokeWeight:2,scale:7}});
+      // White circle at destination
+      new google.maps.Marker({position:legs[legs.length-1].end_location,map:map,icon:{path:google.maps.SymbolPath.CIRCLE,fillColor:'#ffffff',fillOpacity:1,strokeColor:'#C9A84C',strokeWeight:2,scale:7}});
+      const totalDist=legs.reduce((s,l)=>s+l.distance.value,0);
+      const totalTime=legs.reduce((s,l)=>s+l.duration.value,0);
       const distMi=(totalDist/1609.34).toFixed(1)+' mi';
       const mins=Math.round(totalTime/60);
       const timeStr=mins>=60?`${Math.floor(mins/60)}h ${mins%60}m`:`${mins} min`;
       const info=document.createElement('div');
-      info.style.cssText='position:absolute;bottom:8px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.82);color:#fff;font-family:\'Work Sans\',sans-serif;font-size:0.65rem;font-weight:600;padding:3px 12px;border-radius:20px;pointer-events:none;white-space:nowrap;border:1px solid rgba(201,168,76,0.5)';
+      info.style.cssText='position:absolute;bottom:8px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.85);color:#fff;font-family:\'Work Sans\',sans-serif;font-size:0.62rem;font-weight:700;padding:4px 12px;border-radius:20px;pointer-events:none;white-space:nowrap;letter-spacing:0.04em;border:1px solid rgba(201,168,76,0.6)';
       info.textContent=`${distMi} · ${timeStr}`;
       el.style.position='relative';
       el.appendChild(info);
@@ -1794,29 +1803,31 @@ function tripCard(t, showBtns=false){
   const canEdit   = !['completed','cancelled','paid'].includes(statusLow);
   const canCancel = ['confirmed','upcoming','scheduled','pending'].includes(statusLow);
   return `
-    <div class="trip-card" style="flex-wrap:wrap;align-items:flex-start">
-      <div class="t-main" style="min-width:240px">
-        <div class="t-header">
-          <span class="t-service">${escH(t.service||'Private Hire')}</span>
-          <span class="t-status ts-${statusLow}">${escH(t.status||'Scheduled')}</span>
+    <div class="trip-card" style="align-items:stretch;overflow:hidden;border-radius:2px">
+      <div style="flex:1;min-width:0;padding:1rem 1.25rem">
+        <div class="t-main" style="min-width:0">
+          <div class="t-header">
+            <span class="t-service">${escH(t.service||'Private Hire')}</span>
+            <span class="t-status ts-${statusLow}">${escH(t.status||'Scheduled')}</span>
+          </div>
+          <div class="t-info">
+            <span><span class="material-symbols-outlined" style="font-size:14px">calendar_today</span>${escH(t.date||'')} at ${escH(t.time||'')}</span>
+            <span><span class="material-symbols-outlined" style="font-size:14px">pin_drop</span>${escH(t.pickup||'—')} → ${escH(t.destination||'—')}${stopMeta}</span>
+          </div>
         </div>
-        <div class="t-info">
-          <span><span class="material-symbols-outlined" style="font-size:14px">calendar_today</span>${escH(t.date||'')} at ${escH(t.time||'')}</span>
-          <span><span class="material-symbols-outlined" style="font-size:14px">pin_drop</span>${escH(t.pickup||'—')} → ${escH(t.destination||'—')}${stopMeta}</span>
+        <div class="t-actions">
+          ${t.price?`<div style="font-weight:700">$${parseFloat(t.price).toFixed(2)}</div>`:''}
+          ${showBtns?`
+            <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
+               ${canEdit?`<button onclick="openEditTrip('${t.id}')" class="trip-link-btn">Modify</button>`:''}
+               ${canCancel?`<button onclick="cancelTrip('${t.id}')" class="trip-link-btn" style="color:#c62828;border-color:#c62828">Cancel</button>`:''}
+               <button onclick="rebook('${t.id}')" class="trip-link-btn">Rebook</button>
+               ${navUrl?`<a href="${navUrl}" target="_blank" class="trip-link-btn">Navigate</a>`:''}
+               <button onclick="receiptPDF('${t.id}')" class="trip-link-btn">Receipt</button>
+            </div>`:''}
         </div>
       </div>
-      <div class="t-actions">
-        ${t.price?`<div style="font-weight:700">$${parseFloat(t.price).toFixed(2)}</div>`:''}
-        ${showBtns?`
-          <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
-             ${canEdit?`<button onclick="openEditTrip('${t.id}')" class="trip-link-btn">Modify</button>`:''}
-             ${canCancel?`<button onclick="cancelTrip('${t.id}')" class="trip-link-btn" style="color:#c62828;border-color:#c62828">Cancel</button>`:''}
-             <button onclick="rebook('${t.id}')" class="trip-link-btn">Rebook</button>
-             ${navUrl?`<a href="${navUrl}" target="_blank" class="trip-link-btn">Navigate</a>`:''}
-             <button onclick="receiptPDF('${t.id}')" class="trip-link-btn">Receipt</button>
-          </div>`:''}
-      </div>
-      ${(t.pickup&&t.destination)?`<div class="trip-map-wrap"><div class="trip-map-frame trip-map-js" data-pickup="${escH(t.pickup)}" data-dest="${escH(t.destination)}"${stops.length?` data-waypoints="${escH(stops.join('|'))}"`:''} ></div></div>`:''}
+      ${(t.pickup&&t.destination)?`<div class="trip-map-side"><div class="trip-map-frame trip-map-js" data-pickup="${escH(t.pickup)}" data-dest="${escH(t.destination)}"${stops.length?` data-waypoints="${escH(stops.join('|'))}"`:''} ></div></div>`:''}
     </div>
   `;
 }
