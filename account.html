@@ -87,7 +87,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 
 .t-info{display:flex;flex-wrap:wrap;gap:1.25rem;font-size:0.82rem;color:var(--text-sec)}
 .t-actions{display:flex;flex-direction:column;align-items:flex-end;gap:0.75rem}
-.trip-map-wrap{width:100%;margin-top:0.85rem;border:1px solid #ececec;border-radius:4px;overflow:hidden;background:#f3f3f3}
+.trip-map-wrap{width:100%;margin-top:0.85rem;border:1px solid #1a1a1a;border-radius:4px;overflow:hidden;background:#1a1a1a}
 .trip-map-frame{display:block;width:100%;height:160px;border:0}
 
 /* ─── BOOK TAB ─── */
@@ -1693,6 +1693,66 @@ function renderRecentActivity(){
   const slice = allTrips.slice(0,3);
   if(!slice.length) return el.innerHTML='<p style="color:#aaa;font-size:0.8rem">No recent activity.</p>';
   el.innerHTML = slice.map(t => tripCard(t)).join('');
+  setTimeout(initCardMaps,80);
+}
+
+// ─── STYLED CARD MAPS (dark/gold — matches booking map) ───
+var _cardDirSvc=null, _cardMapObs=null;
+var _cardMapStyles=[
+  {featureType:'all',elementType:'geometry',stylers:[{color:'#1a1a1a'}]},
+  {featureType:'water',elementType:'geometry',stylers:[{color:'#0d0d0d'}]},
+  {featureType:'road',elementType:'geometry',stylers:[{color:'#252525'}]},
+  {featureType:'road.highway',elementType:'geometry',stylers:[{color:'#333'}]},
+  {featureType:'road.arterial',elementType:'geometry',stylers:[{color:'#2a2a2a'}]},
+  {featureType:'poi',elementType:'all',stylers:[{visibility:'off'}]},
+  {featureType:'transit',stylers:[{visibility:'off'}]},
+  {featureType:'all',elementType:'labels.text.fill',stylers:[{color:'#999'}]},
+  {featureType:'all',elementType:'labels.text.stroke',stylers:[{color:'#000'},{weight:2}]},
+  {featureType:'administrative.locality',elementType:'labels.text.fill',stylers:[{color:'#C9A84C'}]},
+  {featureType:'administrative.neighborhood',elementType:'labels',stylers:[{visibility:'off'}]},
+  {featureType:'administrative.land_parcel',elementType:'labels',stylers:[{visibility:'off'}]}
+];
+function _renderCardMap(el){
+  if(!el||el.dataset.rendered||typeof google==='undefined'||!google.maps) return;
+  el.dataset.rendered='1';
+  const pickup=el.dataset.pickup, dest=el.dataset.dest;
+  if(!pickup||!dest) return;
+  if(!_cardDirSvc) _cardDirSvc=new google.maps.DirectionsService();
+  const map=new google.maps.Map(el,{
+    zoom:9,center:{lat:43.07,lng:-70.77},
+    styles:_cardMapStyles,
+    disableDefaultUI:true,gestureHandling:'none',clickableIcons:false
+  });
+  const renderer=new google.maps.DirectionsRenderer({
+    suppressMarkers:false,suppressInfoWindows:true,
+    polylineOptions:{strokeColor:'#C9A84C',strokeWeight:3,strokeOpacity:1}
+  });
+  renderer.setMap(map);
+  const waypoints=el.dataset.waypoints?el.dataset.waypoints.split('|').filter(Boolean).map(w=>({location:w,stopover:true})):[];
+  _cardDirSvc.route({origin:pickup,destination:dest,waypoints,travelMode:google.maps.TravelMode.DRIVING},
+    (result,status)=>{
+      if(status!=='OK'){el.style.display='none';return;}
+      renderer.setDirections(result);
+      const totalDist=result.routes[0].legs.reduce((s,l)=>s+l.distance.value,0);
+      const totalTime=result.routes[0].legs.reduce((s,l)=>s+l.duration.value,0);
+      const distMi=(totalDist/1609.34).toFixed(1)+' mi';
+      const mins=Math.round(totalTime/60);
+      const timeStr=mins>=60?`${Math.floor(mins/60)}h ${mins%60}m`:`${mins} min`;
+      const info=document.createElement('div');
+      info.style.cssText='position:absolute;bottom:8px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.82);color:#fff;font-family:\'Work Sans\',sans-serif;font-size:0.65rem;font-weight:600;padding:3px 12px;border-radius:20px;pointer-events:none;white-space:nowrap;border:1px solid rgba(201,168,76,0.5)';
+      info.textContent=`${distMi} · ${timeStr}`;
+      el.style.position='relative';
+      el.appendChild(info);
+    });
+}
+function initCardMaps(){
+  if(typeof google==='undefined'||!google.maps) return;
+  if(!_cardMapObs){
+    _cardMapObs=new IntersectionObserver((entries)=>{
+      entries.forEach(e=>{if(e.isIntersecting){_cardMapObs.unobserve(e.target);_renderCardMap(e.target);}});
+    },{threshold:0.05,rootMargin:'300px'});
+  }
+  document.querySelectorAll('.trip-map-js:not([data-rendered])').forEach(el=>_cardMapObs.observe(el));
 }
 
 function renderTripsList(filter){
@@ -1702,6 +1762,7 @@ function renderTripsList(filter){
   if(filter==='completed') list = allTrips.filter(t => (t.status||'').toLowerCase()==='completed');
   if(!list.length) return el.innerHTML='<div style="padding:2rem;text-align:center;color:#ccc">No records found.</div>';
   el.innerHTML = list.map(t => tripCard(t, true)).join('');
+  setTimeout(initCardMaps,80);
 }
 
 function renderInvoicesList(list){
@@ -1726,7 +1787,6 @@ function tripCard(t, showBtns=false){
   const stopMeta = stops.length ? ` · ${stops.length} stop${stops.length>1?'s':''}` : '';
   const routeParts = stops.concat([t.destination]).filter(Boolean);
   const routeDest = routeParts.join('+to:');
-  const mapSrc = (t.pickup && t.destination) ? `https://maps.google.com/maps?saddr=${encodeURIComponent(t.pickup)}&daddr=${encodeURIComponent(routeDest)}&output=embed` : '';
   const navUrl = (t.pickup && t.destination)
     ? `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(t.pickup)}&destination=${encodeURIComponent(t.destination)}${stops.length?`&waypoints=${encodeURIComponent(stops.join('|'))}`:''}`
     : '';
@@ -1756,7 +1816,7 @@ function tripCard(t, showBtns=false){
              <button onclick="receiptPDF('${t.id}')" class="trip-link-btn">Receipt</button>
           </div>`:''}
       </div>
-      ${mapSrc?`<div class="trip-map-wrap"><iframe class="trip-map-frame" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="${mapSrc}" title="Trip route map"></iframe></div>`:''}
+      ${(t.pickup&&t.destination)?`<div class="trip-map-wrap"><div class="trip-map-frame trip-map-js" data-pickup="${escH(t.pickup)}" data-dest="${escH(t.destination)}"${stops.length?` data-waypoints="${escH(stops.join('|'))}"`:''} ></div></div>`:''}
     </div>
   `;
 }
