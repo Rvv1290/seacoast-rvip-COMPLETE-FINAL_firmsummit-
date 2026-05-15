@@ -573,8 +573,7 @@
       transition: all 0.2s;
     }
     .ap-action-btn:active { transform: scale(0.98); }
-    .adm-map-side{width:200px;flex-shrink:0;background:#1a1a1a;overflow:hidden;position:relative;min-height:140px}
-    @media(max-width:640px){.adm-map-side{width:130px;height:130px;min-height:130px;align-self:flex-start}}
+    .adm-map-side{width:100%;height:160px;background:#1a1a1a;overflow:hidden;position:relative;flex-shrink:0}
   </style>
 </head>
 
@@ -1487,7 +1486,7 @@
     }
     function getMapEmbedHtml(pickup, dest) {
       if(!pickup) return '';
-      return '<div class="adm-map-side"><div class="trip-map-frame adm-map-js" data-pickup="'+e(pickup)+'" data-dest="'+(dest?e(dest):'')+'" style="width:100%;height:100%;min-height:140px;border:0;display:block"></div></div>';
+      return '<div class="adm-map-side"><div class="trip-map-frame adm-map-js" data-pickup="'+e(pickup)+'" data-dest="'+(dest?e(dest):'')+'" style="width:100%;height:100%;min-height:160px;border:0;display:block"></div></div>';
     }
 
     // ─────────────────────────────────────────────
@@ -1714,7 +1713,7 @@
           }
         }
         // Store booking in a data attribute index — no JSON in onclick
-        return '<div class="card" data-bk-idx="' + i + '" id="bkcard' + b.id + '" style="padding:0;overflow:hidden;display:flex;align-items:stretch">' +
+        return '<div class="card" data-bk-idx="' + i + '" id="bkcard' + b.id + '" style="padding:0;overflow:hidden;display:flex;flex-direction:column">' +
           '<div style="flex:1;padding:1rem;min-width:0">' +
           '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:.75rem">' +
           '<div style="flex:1;min-width:160px">' +
