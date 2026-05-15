@@ -1727,7 +1727,7 @@ function _renderCardMap(el){
     disableDefaultUI:true,gestureHandling:'none',clickableIcons:false
   });
   const renderer=new google.maps.DirectionsRenderer({
-    suppressMarkers:true,suppressInfoWindows:true,
+    suppressMarkers:true,suppressInfoWindows:true,preserveViewport:true,
     polylineOptions:{strokeColor:'#C9A84C',strokeWeight:3,strokeOpacity:1}
   });
   renderer.setMap(map);
@@ -1736,6 +1736,7 @@ function _renderCardMap(el){
     (result,status)=>{
       if(status!=='OK'){el.style.display='none';return;}
       renderer.setDirections(result);
+      map.fitBounds(result.routes[0].bounds,{top:28,right:28,bottom:44,left:28});
       const legs=result.routes[0].legs;
       // Gold circle at pickup
       new google.maps.Marker({position:legs[0].start_location,map:map,icon:{path:google.maps.SymbolPath.CIRCLE,fillColor:'#C9A84C',fillOpacity:1,strokeColor:'#fff',strokeWeight:2,scale:7}});
