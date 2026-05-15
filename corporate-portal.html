@@ -1866,7 +1866,7 @@ function _renderCardMap(el){
     var mins=Math.round(totalTime/60);
     var timeStr=mins>=60?(Math.floor(mins/60)+'h '+(mins%60)+'m'):(mins+' min');
     var info=document.createElement('div');
-    info.style.cssText='position:absolute;bottom:8px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.85);color:#fff;font-family:\'Work Sans\',sans-serif;font-size:0.62rem;font-weight:700;padding:4px 12px;border-radius:20px;pointer-events:none;white-space:nowrap;letter-spacing:0.04em;border:1px solid rgba(201,168,76,0.6)';
+    info.style.cssText='position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.92);color:#fff;font-family:\'Work Sans\',sans-serif;font-size:0.75rem;font-weight:700;padding:6px 12px;pointer-events:none;text-align:center;letter-spacing:0.06em;border-top:1px solid rgba(201,168,76,0.35)';
     info.textContent=distMi+' · '+timeStr;
     el.style.position='relative';
     el.appendChild(info);
