@@ -451,14 +451,27 @@
         grid-column: 1
       }
 
-      /* ── Admin calendar: compact cells on mobile ── */
+      /* ── Admin calendar: compact dot-only cells on mobile ── */
       .cal-cell {
-        padding: 0.35rem !important;
-        min-height: 56px !important;
+        padding: 0.4rem 0.25rem !important;
+        min-height: 52px !important;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
       }
       .cal-day-num {
-        font-size: 0.75rem !important;
-        margin-bottom: 2px !important;
+        font-size: 0.78rem !important;
+        font-weight: 700 !important;
+        margin-bottom: 3px !important;
+      }
+      .cal-trip-chip { display: none !important; }
+      .cal-trip-dot {
+        display: block !important;
+        width: 6px; height: 6px;
+        background: #775a19;
+        border-radius: 50%;
+        margin: 0 auto;
       }
 
       /* ── Corporate detail modal: full-screen on mobile ── */
@@ -1854,9 +1867,10 @@
 
         html += '<div class="cal-cell" onclick="selectAdminDate(\''+dateStr+'\')" style="padding:1rem;min-height:100px;border-bottom:1px solid #eee;border-right:1px solid #eee;cursor:pointer;'+sel+'">' +
           '<div class="cal-day-num" style="font-weight:700;font-size:0.85rem;margin-bottom:0.5rem">'+d+'</div>' +
+          (trips.length ? '<div class="cal-trip-dot" style="display:none"></div>' : '') +
           trips.map(function(t){
             var color = t.status === 'Pending' ? '#f59e0b' : '#1d4ed8';
-            return '<div style="font-size:0.62rem;padding:2px 4px;margin-bottom:2px;background:'+color+'20;color:'+color+';border-radius:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">🚗 '+e(t.name)+'</div>';
+            return '<div class="cal-trip-chip" style="font-size:0.62rem;padding:2px 4px;margin-bottom:2px;background:'+color+'20;color:'+color+';border-radius:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">🚗 '+e(t.name)+'</div>';
           }).join('') +
           '</div>';
       }
@@ -2065,6 +2079,7 @@
           driverStatus: bk.driverStatus || '',
           status: bk.status || 'Confirmed', notes: bk.notes || '',
           balanceAdded: bk.balanceAdded || false,
+          clientId: bk.clientId || null,
           corporateAccountId: bk.corporateAccountId || null,
           corporateCompany: bk.corporateCompany || null,
           source: bk.source || 'admin', updatedAt: new Date().toISOString()
@@ -2470,12 +2485,18 @@
 
     function openEditTripForClient(tripId, clientId) {
       _addForClientId  = clientId;
-      _editForClientId = tripId;
+      _editForClientId = null;
       closeM('m-cli-detail');
-      var t   = (window._cliTripsCache   && window._cliTripsCache[tripId])  || {};
+      var cached = (window._cliTripsCache && window._cliTripsCache[tripId]) || {};
+      // If this is a subcollection trip, its real booking ID is cached.bookingId.
+      // Fall back to tripId for trips loaded directly from the bookings collection.
+      var realBookingId = cached.bookingId || tripId;
+      // Merge: prefer full booking from localStorage, supplement with subcollection data
+      var lsBk = getBks().find(function(b){ return b.id === realBookingId; }) || {};
+      var t = Object.assign({}, cached, lsBk);
       var cli = (window._cliProfileCache && window._cliProfileCache.id === clientId) ? window._cliProfileCache : {};
       document.getElementById('add-title').textContent = 'Edit Trip';
-      document.getElementById('eid').value = tripId;
+      document.getElementById('eid').value = realBookingId;
       document.getElementById('fn').value  = t.name  || cli.name  || '';
       document.getElementById('fp').value  = t.phone || cli.phone || '';
       document.getElementById('fe').value  = t.email || cli.email || '';
