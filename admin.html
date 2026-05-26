@@ -1880,10 +1880,15 @@
       if (_adminSelectedDate) {
         var el = document.getElementById('admin-cal-detail');
         el.innerHTML = '<div style="font-family:\'Work Sans\',sans-serif;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#000;margin-bottom:1.25rem">Schedule for '+new Date(_adminSelectedDate+'T12:00:00').toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})+'</div><div id="cal-trip-list"></div>';
-        renderBks(); // This will use the calendar filter
-        // Move the rendered list into the detail section
-        var list = document.getElementById('bk-list');
-        document.getElementById('cal-trip-list').appendChild(list);
+        renderBks();
+        // Copy rendered cards into calendar detail — never move #bk-list out of its
+        // original DOM location, which would null it out on the next buildAdminCal() call.
+        var bkListEl = document.getElementById('bk-list');
+        var calTripList = document.getElementById('cal-trip-list');
+        if (bkListEl && calTripList) {
+          calTripList.innerHTML = bkListEl.innerHTML || '<div style="text-align:center;padding:2rem;color:#aaa">No trips scheduled for this date.</div>';
+          bkListEl.innerHTML = '';
+        }
       }
     }
 
@@ -2008,9 +2013,8 @@
       // If we came from client profile, reload it instead of the general list
       var cliCtx = _addForClientId || _editForClientId;
       _addForClientId = null; _editForClientId = null;
-      if (cliCtx) { openCliProfile(assignClientId || cliCtx); return; }
-
       renderBks(); toast(eid ? 'Booking updated!' : 'Booking saved!');
+      if (cliCtx) { openCliProfile(assignClientId || cliCtx); return; }
     }
 
     function delBk(id) {
