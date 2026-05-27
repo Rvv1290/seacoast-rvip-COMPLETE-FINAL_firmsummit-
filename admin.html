@@ -1397,6 +1397,33 @@
               <option>Other</option>
             </select>
           </div>
+          <div><label class="flbl">Billing Type *</label>
+            <select id="est-billing" class="fsel" onchange="toggleEstBillingType()">
+              <option value="per_trip">Per Trip (Flat Fare)</option>
+              <option value="hourly">Hourly</option>
+              <option value="event_package">Flat Rate — Event Package</option>
+            </select>
+          </div>
+          <div id="est-hourly-wrap" style="display:none"><label class="flbl">Hourly Rate ($)</label><input id="est-hourly-rate" class="finp" type="number" min="0" step="5" placeholder="120" oninput="calcHourlyTotal()" /></div>
+          <div id="est-hours-wrap" style="display:none"><label class="flbl">Number of Hours</label><input id="est-hours" class="finp" type="number" min="1" step="0.5" placeholder="3" oninput="calcHourlyTotal()" /></div>
+          <div class="g2a"><label class="flbl">Event Type</label>
+            <select id="est-event-type" class="fsel">
+              <option value="">— Not an event —</option>
+              <option>Wedding</option>
+              <option>Corporate Event</option>
+              <option>Prom / Homecoming</option>
+              <option>Birthday Party</option>
+              <option>Anniversary</option>
+              <option>Concert / Festival</option>
+              <option>Gala / Formal Event</option>
+              <option>Bachelor / Bachelorette</option>
+              <option>Funeral / Memorial</option>
+              <option>Sports Event</option>
+              <option>Holiday Party</option>
+              <option>Graduation</option>
+              <option>Other Event</option>
+            </select>
+          </div>
           <div><label class="flbl">Trip Date</label><input id="est-date" class="finp" type="date" /></div>
           <div><label class="flbl">Pickup Time</label><input id="est-time" class="finp" type="time" /></div>
           <div class="g2a"><label class="flbl">Pickup Address</label><input id="est-pickup" class="finp" placeholder="Full pickup address" /></div>
@@ -4199,6 +4226,7 @@
       }
 
       var STATUS_C  = { Draft:'#f59e0b', Sent:'#3b82f6', Accepted:'#10b981', Declined:'#ef4444', Expired:'#9ca3af' };
+      var BILLING_LABELS = { per_trip:'Per Trip', hourly:'Hourly', event_package:'Event Package' };
 
       el.innerHTML = filtered.map(function(est) {
         var sc  = STATUS_C[est.status] || '#888';
@@ -4206,6 +4234,8 @@
         var created = est.createdAt ? new Date(est.createdAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—';
         var expiry  = est.expiry ? 'Valid until ' + new Date(est.expiry+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'}) : '';
         var isExpired = est.expiry && new Date(est.expiry+'T23:59:59') < new Date();
+        var billingLabel = BILLING_LABELS[est.billing] || '';
+        var hourlyDetail = (est.billing === 'hourly' && est.hourlyRate && est.hours) ? '$'+est.hourlyRate+'/hr × '+est.hours+'h' : '';
 
         return '<div class="est-card ' + cssClass + '">' +
           '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:.75rem">' +
@@ -4213,9 +4243,11 @@
               '<div style="display:flex;align-items:center;gap:.625rem;flex-wrap:wrap;margin-bottom:.5rem">' +
                 '<span class="cname">' + e(est.name||'—') + '</span>' +
                 '<span class="bdg" style="background:'+sc+'22;color:'+sc+'">' + e(est.status||'Draft') + '</span>' +
+                (billingLabel ? '<span class="bdg" style="background:#f0fdf4;color:#166534">' + billingLabel + '</span>' : '') +
+                (est.eventType ? '<span class="bdg" style="background:#fdf4ff;color:#7e22ce">' + e(est.eventType) + '</span>' : '') +
                 (isExpired && est.status!=='Accepted' && est.status!=='Declined' ? '<span class="bdg brd">Expired</span>' : '') +
               '</div>' +
-              '<div class="crow"><span class="material-symbols-outlined">directions_car</span>' + e(est.service||'—') + '</div>' +
+              '<div class="crow"><span class="material-symbols-outlined">directions_car</span>' + e(est.service||'—') + (hourlyDetail ? ' <span style="color:#888;font-size:.75rem;margin-left:.375rem">(' + hourlyDetail + ')</span>' : '') + '</div>' +
               (est.date ? '<div class="crow"><span class="material-symbols-outlined">calendar_today</span>' + e(est.date) + (est.time ? ' at ' + fT(est.time) : '') + '</div>' : '') +
               (est.pickup ? '<div class="crow"><span class="material-symbols-outlined">location_on</span>' + e(est.pickup) + (est.destination ? ' → ' + e(est.destination) : '') + '</div>' : '') +
               '<div class="crow"><span class="material-symbols-outlined">phone</span>' + e(est.phone||'—') + (est.email ? ' · ' + e(est.email) : '') + '</div>' +
@@ -4252,9 +4284,29 @@
       document.getElementById('est-price').value   = '';
       document.getElementById('est-vehicle').value = 'Black SUV Luxury';
       document.getElementById('est-status').value  = 'Draft';
+      document.getElementById('est-billing').value = 'per_trip';
+      document.getElementById('est-event-type').value = '';
+      document.getElementById('est-hourly-rate').value = '';
+      document.getElementById('est-hours').value = '';
+      document.getElementById('est-hourly-wrap').style.display = 'none';
+      document.getElementById('est-hours-wrap').style.display  = 'none';
       var exp = new Date(); exp.setDate(exp.getDate() + 7);
       document.getElementById('est-expiry').value  = exp.toISOString().split('T')[0];
       openM('m-estimate');
+    }
+
+    function toggleEstBillingType() {
+      var billing = (document.getElementById('est-billing') || {}).value;
+      var show = billing === 'hourly';
+      document.getElementById('est-hourly-wrap').style.display = show ? '' : 'none';
+      document.getElementById('est-hours-wrap').style.display  = show ? '' : 'none';
+      if (!show) { document.getElementById('est-hourly-rate').value = ''; document.getElementById('est-hours').value = ''; }
+    }
+
+    function calcHourlyTotal() {
+      var rate  = parseFloat(document.getElementById('est-hourly-rate').value) || 0;
+      var hours = parseFloat(document.getElementById('est-hours').value) || 0;
+      if (rate > 0 && hours > 0) document.getElementById('est-price').value = (rate * hours).toFixed(2);
     }
 
     function openEditEstimate(id) {
@@ -4277,6 +4329,13 @@
       document.getElementById('est-status').value  = est.status  || 'Draft';
       document.getElementById('est-notes').value   = est.notes   || '';
       document.getElementById('est-message').value = est.message || '';
+      document.getElementById('est-billing').value = est.billing || 'per_trip';
+      document.getElementById('est-event-type').value = est.eventType || '';
+      document.getElementById('est-hourly-rate').value = est.hourlyRate || '';
+      document.getElementById('est-hours').value = est.hours || '';
+      var isHourly = (est.billing === 'hourly');
+      document.getElementById('est-hourly-wrap').style.display = isHourly ? '' : 'none';
+      document.getElementById('est-hours-wrap').style.display  = isHourly ? '' : 'none';
       openM('m-estimate');
     }
 
@@ -4290,12 +4349,21 @@
       var list = getEstimates();
       var orig = eid ? list.find(function(x){return x.id===eid;}) : null;
 
+      var billing   = document.getElementById('est-billing').value || 'per_trip';
+      var eventType = document.getElementById('est-event-type').value || '';
+      var hourlyRate = billing === 'hourly' ? (parseFloat(document.getElementById('est-hourly-rate').value) || null) : null;
+      var hours      = billing === 'hourly' ? (parseFloat(document.getElementById('est-hours').value) || null) : null;
+
       var est = {
         id:          eid || ('EST-' + Date.now()),
         name:        name,
         phone:       phone,
         email:       document.getElementById('est-email').value.trim(),
         service:     document.getElementById('est-service').value,
+        billing:     billing,
+        eventType:   eventType,
+        hourlyRate:  hourlyRate,
+        hours:       hours,
         date:        document.getElementById('est-date').value,
         time:        document.getElementById('est-time').value,
         pickup:      document.getElementById('est-pickup').value.trim(),
@@ -4465,6 +4533,11 @@
       var validUntil = est.expiry ? new Date(est.expiry+'T12:00:00').toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}) : '';
       var estNum = (est.id||'').replace('est-','').slice(-6).toUpperCase() || Date.now().toString().slice(-6);
       var price = parseFloat(est.price) || 0;
+      var BILLING_PDF = { per_trip:'Per Trip (Flat Fare)', hourly:'Hourly Rate', event_package:'Flat Rate — Event Package' };
+      var billingLabel = BILLING_PDF[est.billing] || 'Per Trip (Flat Fare)';
+      var hourlyLine = (est.billing === 'hourly' && est.hourlyRate && est.hours)
+        ? '$' + parseFloat(est.hourlyRate).toFixed(2) + '/hr × ' + est.hours + ' hrs'
+        : '';
 
       var html = '<!DOCTYPE html><html><head><title>Estimate #'+estNum+' — Seacoast RVIP</title><style>'+
         'body{font-family:\'Helvetica Neue\',Arial,sans-serif;padding:2.5rem;max-width:680px;margin:0 auto;color:#111;font-size:14px}'+
@@ -4501,6 +4574,7 @@
           '</div>'+
           '<div class="info-block">'+
             '<label>Service</label><div class="val">'+e(est.service||'Private Hire')+'</div>'+
+            (est.eventType?'<div class="sub" style="margin-top:2px">'+e(est.eventType)+'</div>':'')+
             (svcDate?'<div class="sub" style="margin-top:4px"><label style="display:inline">Date: </label>'+svcDate+'</div>':'')+
             (est.time?'<div class="sub"><label style="display:inline">Time: </label>'+e(est.time)+'</div>':'')+
           '</div>'+
@@ -4512,7 +4586,10 @@
             (est.vehicle?'<div class="sub" style="margin-top:2px">'+e(est.vehicle)+'</div>':'')+
           '</div>' : '')+
         '<table><thead><tr><th>Description</th><th style="text-align:right">Amount</th></tr></thead><tbody>'+
-          '<tr><td>'+e(est.service||'Transportation Service')+(est.notes?'<div class="sub" style="margin-top:3px">'+e(est.notes.slice(0,120))+'</div>':'')+'</td>'+
+          '<tr><td>'+e(est.service||'Transportation Service')+
+            '<div class="sub" style="margin-top:3px">Billing: '+billingLabel+(hourlyLine?' — '+hourlyLine:'')+'</div>'+
+            (est.notes?'<div class="sub" style="margin-top:2px">'+e(est.notes.slice(0,120))+'</div>':'')+
+          '</td>'+
           '<td style="text-align:right;font-weight:700">$'+price.toFixed(2)+'</td></tr>'+
         '</tbody></table>'+
         '<div class="total-box">'+
