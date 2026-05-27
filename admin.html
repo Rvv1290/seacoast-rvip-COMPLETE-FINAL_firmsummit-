@@ -587,6 +587,21 @@
     }
     .ap-action-btn:active { transform: scale(0.98); }
     .adm-map-side{width:100%;height:160px;background:#1a1a1a;overflow:hidden;position:relative;flex-shrink:0}
+
+    /* --- ESTIMATES FEATURE --- */
+    .est-card {
+      background: #fff;
+      border-left: 3px solid #0891b2;
+      padding: 1rem;
+      margin-bottom: .75rem;
+    }
+    .est-card.est-accepted { border-left-color: #10b981; }
+    .est-card.est-declined { border-left-color: #ef4444; }
+    .est-card.est-expired  { border-left-color: #9ca3af; }
+    .est-card.est-sent     { border-left-color: #3b82f6; }
+    .est-card.est-draft    { border-left-color: #f59e0b; }
+
+    .bcyn  { background: #ecfeff; color: #0e7490; }
   </style>
 </head>
 
@@ -709,6 +724,7 @@
         <button class="tab" onclick="goTab('quotes',this)" style="color:#16a34a;font-weight:700">Quotes</button>
         <button class="tab" onclick="goTab('corporate',this)" style="color:#7c3aed;font-weight:700">Corporate ⭐</button>
         <button class="tab" onclick="goTab('manage-drivers',this)" style="color:#775a19;font-weight:700">Management ⚙</button>
+        <button class="tab" onclick="goTab('estimates',this)" style="color:#0891b2;font-weight:700">Estimates 💰</button>
       </div>
 
       <div id="sec-all">
@@ -1042,6 +1058,43 @@
         </div>
       </div>
 
+      <!-- ESTIMATES -->
+      <div id="sec-estimates" style="display:none">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;flex-wrap:wrap;gap:.75rem">
+          <div>
+            <div style="font-family:'Times New Roman',serif;font-size:1.1rem;font-weight:700">💰 Price Estimates</div>
+            <div style="font-size:.75rem;color:#888;margin-top:3px">Create, send, and track custom estimates for prospective clients</div>
+          </div>
+          <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+            <button onclick="openNewEstimate()" class="btn bk"><span class="material-symbols-outlined" style="font-size:15px">add</span>New Estimate</button>
+            <button onclick="loadEstimates()" class="btn bo"><span class="material-symbols-outlined" style="font-size:14px">refresh</span>Refresh</button>
+          </div>
+        </div>
+        <!-- Stats Row -->
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:1.25rem">
+          <div class="sbox" style="border-bottom:3px solid #0891b2;text-align:center;padding:1rem"><div id="est-cnt-tot" style="font-size:1.5rem;font-weight:700;color:#0891b2">0</div><div style="font-size:.7rem">Total</div></div>
+          <div class="sbox" style="border-bottom:3px solid #f59e0b;text-align:center;padding:1rem"><div id="est-cnt-draft" style="font-size:1.5rem;font-weight:700;color:#f59e0b">0</div><div style="font-size:.7rem">Draft</div></div>
+          <div class="sbox" style="border-bottom:3px solid #3b82f6;text-align:center;padding:1rem"><div id="est-cnt-sent" style="font-size:1.5rem;font-weight:700;color:#3b82f6">0</div><div style="font-size:.7rem">Sent</div></div>
+          <div class="sbox" style="border-bottom:3px solid #10b981;text-align:center;padding:1rem"><div id="est-cnt-accepted" style="font-size:1.5rem;font-weight:700;color:#10b981">0</div><div style="font-size:.7rem">Accepted</div></div>
+          <div class="sbox" style="border-bottom:3px solid #ef4444;text-align:center;padding:1rem"><div id="est-cnt-declined" style="font-size:1.5rem;font-weight:700;color:#ef4444">0</div><div style="font-size:.7rem">Declined</div></div>
+        </div>
+        <!-- Filter bar -->
+        <div style="display:flex;gap:.5rem;margin-bottom:1rem;flex-wrap:wrap">
+          <select id="est-filter-status" onchange="renderEstimates()" style="padding:0.55rem;border:1.5px solid #eee;border-radius:4px;font-family:Inter,sans-serif;font-size:0.8rem;outline:none;background:#fff;cursor:pointer">
+            <option value="">All Statuses</option>
+            <option value="Draft">Draft</option>
+            <option value="Sent">Sent</option>
+            <option value="Accepted">Accepted</option>
+            <option value="Declined">Declined</option>
+            <option value="Expired">Expired</option>
+          </select>
+          <input type="text" id="est-search" oninput="renderEstimates()" placeholder="Search client name or service…" style="padding:0.55rem 0.75rem;border:1.5px solid #eee;border-radius:4px;font-family:Inter,sans-serif;font-size:0.8rem;outline:none;flex:1;min-width:180px" />
+        </div>
+        <div id="est-list">
+          <div class="empty"><span class="material-symbols-outlined">request_quote</span><div style="font-size:.8rem">Click Refresh or New Estimate to get started</div></div>
+        </div>
+      </div>
+
       <div id="sec-driver" style="display:none">
         <div id="dr-profile-hero" style="display:none;margin-bottom:1.5rem"></div>
 
@@ -1316,6 +1369,97 @@
     </div>
   </div>
 
+  <!-- CREATE / EDIT ESTIMATE MODAL -->
+  <div class="ov" id="m-estimate">
+    <div class="modal" style="max-width:600px">
+      <div class="mhd">
+        <h3 id="est-modal-title">New Estimate</h3><button class="mx" onclick="closeM('m-estimate')">✕</button>
+      </div>
+      <div class="mbdy">
+        <input type="hidden" id="est-eid" />
+        <div class="g2" style="margin-bottom:1.25rem">
+          <div><label class="flbl">Client Name *</label><input id="est-name" class="finp" placeholder="John Smith" /></div>
+          <div><label class="flbl">Phone *</label><input id="est-phone" class="finp" type="tel" placeholder="(603) 555-0000" /></div>
+          <div><label class="flbl">Email</label><input id="est-email" class="finp" type="email" placeholder="client@email.com" /></div>
+          <div><label class="flbl">Service *</label>
+            <select id="est-service" class="fsel">
+              <option value="">Select...</option>
+              <option>Airport — Boston Logan (BOS)</option>
+              <option>Airport — Manchester MHT</option>
+              <option>New York Transfer (NY)</option>
+              <option>Night Out</option>
+              <option>Concert / Live Event</option>
+              <option>Casino Run</option>
+              <option>Special Event</option>
+              <option>Medical Appointment</option>
+              <option>Hotel Transfer</option>
+              <option>Multi-Stop</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div><label class="flbl">Trip Date</label><input id="est-date" class="finp" type="date" /></div>
+          <div><label class="flbl">Pickup Time</label><input id="est-time" class="finp" type="time" /></div>
+          <div class="g2a"><label class="flbl">Pickup Address</label><input id="est-pickup" class="finp" placeholder="Full pickup address" /></div>
+          <div class="g2a"><label class="flbl">Destination</label><input id="est-dest" class="finp" placeholder="Airport, venue, or address" /></div>
+          <div><label class="flbl">Passengers</label><input id="est-pax" class="finp" type="number" min="1" max="20" placeholder="1" /></div>
+          <div><label class="flbl">Vehicle</label>
+            <select id="est-vehicle" class="fsel">
+              <option>Black SUV Luxury</option>
+              <option>Regular Black SUV</option>
+            </select>
+          </div>
+          <div><label class="flbl">Estimated Price ($) *</label><input id="est-price" class="finp" type="number" min="0" step="5" placeholder="145" /></div>
+          <div><label class="flbl">Valid Until</label><input id="est-expiry" class="finp" type="date" /></div>
+          <div><label class="flbl">Status</label>
+            <select id="est-status" class="fsel">
+              <option value="Draft">Draft</option>
+              <option value="Sent">Sent</option>
+              <option value="Accepted">Accepted</option>
+              <option value="Declined">Declined</option>
+              <option value="Expired">Expired</option>
+            </select>
+          </div>
+          <div class="g2a"><label class="flbl">Internal Notes</label><input id="est-notes" class="finp" placeholder="Flight number, special requests, route details..." /></div>
+          <div class="g2a">
+            <label class="flbl">Custom Message (shown to client when sent)</label>
+            <textarea id="est-message" rows="4" style="width:100%;background:#f7f7f7;border:0;border-bottom:2px solid #ddd;padding:.6rem 0;font-family:Inter,sans-serif;font-size:.875rem;outline:none;resize:none;box-sizing:border-box;line-height:1.6" placeholder="Hi [Name], here is your price estimate for..."></textarea>
+          </div>
+        </div>
+        <div style="display:flex;gap:.75rem;justify-content:flex-end;flex-wrap:wrap">
+          <button onclick="closeM('m-estimate')" class="btn bo">Cancel</button>
+          <button onclick="saveEstimate('Draft')" class="btn bo" style="border-color:#0891b2;color:#0891b2">Save Draft</button>
+          <button onclick="saveEstimate('Sent')" class="btn bk" style="padding:.625rem 2rem">Save &amp; Send</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SEND ESTIMATE MODAL -->
+  <div class="ov" id="m-est-send">
+    <div class="modal" style="max-width:480px">
+      <div class="mhd">
+        <h3>Send Estimate</h3><button class="mx" onclick="closeM('m-est-send')">✕</button>
+      </div>
+      <div class="mbdy">
+        <div id="est-send-info" style="background:#f7f7f7;border-left:3px solid #0891b2;padding:1rem;margin-bottom:1rem;font-size:.83rem"></div>
+        <label class="flbl">Message (edit before sending)</label>
+        <textarea id="est-send-msg" rows="7"
+          style="width:100%;background:#f7f7f7;border:0;border-bottom:2px solid #ddd;padding:.75rem 0;font-family:Inter,sans-serif;font-size:.8rem;resize:none;outline:none;box-sizing:border-box;line-height:1.6;margin-bottom:1.25rem"></textarea>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.625rem;margin-bottom:.625rem">
+          <button onclick="estSendSMS()" class="btn bk" style="justify-content:center;padding:.875rem"><span class="material-symbols-outlined" style="font-size:15px">sms</span>Text</button>
+          <button onclick="estSendEmail()" class="btn bo" style="justify-content:center;padding:.875rem"><span class="material-symbols-outlined" style="font-size:15px">mail</span>Email</button>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.625rem;margin-bottom:.625rem">
+          <button onclick="estSendWA()" class="btn bgn" style="justify-content:center;padding:.875rem"><span class="material-symbols-outlined" style="font-size:15px">chat</span>WhatsApp</button>
+          <button onclick="estCopyMsg()" class="btn bo" style="justify-content:center;padding:.875rem"><span class="material-symbols-outlined" style="font-size:15px">content_copy</span>Copy</button>
+        </div>
+        <button onclick="convertEstimateToBooking()" class="btn bgn" style="width:100%;justify-content:center;padding:.875rem;margin-top:.5rem">
+          <span class="material-symbols-outlined" style="font-size:15px">add_task</span>Convert to Booking
+        </button>
+      </div>
+    </div>
+  </div>
+
   <script>
     // ─────────────────────────────────────────────
     //  CONFIG
@@ -1418,6 +1562,7 @@
     var curPayBk = null;   // booking open in pay modal
     var curClBk = null;   // booking open in client modal
     var curQid = null;   // quote docId being converted
+    var curCompUid = null; // driver uid open in compliance review
     var QMAP = {};     // docId -> quote object
     var MMAP = {};     // key -> {title,text}
     var curUser = null;
@@ -1824,7 +1969,7 @@
       curTab = tab;
       document.querySelectorAll('.tab').forEach(function (b) { b.classList.remove('on'); });
       if (btn) btn.classList.add('on');
-      ['sec-all', 'sec-clients', 'sec-quotes', 'sec-messages', 'sec-compliance', 'sec-manage-drivers', 'sec-driver', 'sec-corporate', 'sec-calendar'].forEach(function (id) {
+      ['sec-all', 'sec-clients', 'sec-quotes', 'sec-messages', 'sec-compliance', 'sec-manage-drivers', 'sec-driver', 'sec-corporate', 'sec-calendar', 'sec-estimates'].forEach(function (id) {
         var el = document.getElementById(id);
         if (el) el.style.display = 'none';
       });
@@ -1836,6 +1981,7 @@
       else if (tab === 'driver') { document.getElementById('sec-driver').style.display = 'block'; loadDriverRides(); }
       else if (tab === 'corporate') { document.getElementById('sec-corporate').style.display = 'block'; loadCorporate(); }
       else if (tab === 'calendar') { document.getElementById('sec-calendar').style.display = 'block'; buildAdminCal(); }
+      else if (tab === 'estimates') { document.getElementById('sec-estimates').style.display = 'block'; loadEstimates(); }
       else { document.getElementById('sec-all').style.display = 'block'; renderBks(); }
     }
 
@@ -3988,6 +4134,400 @@
       }
       
       openM('m-doc-view');
+    }
+
+    // ─────────────────────────────────────────────
+    //  ESTIMATES
+    // ─────────────────────────────────────────────
+    var _estimates = [];
+    var _curEstimate = null;
+
+    function getEstimates() {
+      try { return JSON.parse(localStorage.getItem('rv-estimates') || '[]'); } catch(ex) { return []; }
+    }
+    function setEstimates(arr) { localStorage.setItem('rv-estimates', JSON.stringify(arr)); }
+
+    function loadEstimates() {
+      if (!db) { _estimates = getEstimates(); renderEstimates(); return; }
+      db.collection('estimates').orderBy('createdAt', 'desc').limit(200).get().then(function(snap) {
+        var local = getEstimates();
+        var map = {};
+        local.forEach(function(est) { if(est.id) map[est.id] = est; });
+        snap.forEach(function(d) { var est = d.data(); est.id = d.id; map[est.id] = est; });
+        var merged = Object.keys(map).map(function(k){ return map[k]; });
+        setEstimates(merged);
+        _estimates = merged;
+        renderEstimates();
+      }).catch(function(err) {
+        console.warn('loadEstimates:', err.message);
+        _estimates = getEstimates();
+        renderEstimates();
+      });
+    }
+
+    function renderEstimates() {
+      var list = getEstimates();
+      _estimates = list;
+
+      var fStatus = (document.getElementById('est-filter-status') || {}).value || '';
+      var fSearch  = ((document.getElementById('est-search') || {}).value || '').toLowerCase();
+
+      var filtered = list.filter(function(est) {
+        if (fStatus && est.status !== fStatus) return false;
+        if (fSearch) {
+          var match = (est.name||'').toLowerCase().includes(fSearch)
+            || (est.service||'').toLowerCase().includes(fSearch)
+            || (est.phone||'').includes(fSearch);
+          if (!match) return false;
+        }
+        return true;
+      });
+
+      filtered.sort(function(a,b) { return new Date(b.createdAt||0) - new Date(a.createdAt||0); });
+
+      document.getElementById('est-cnt-tot').textContent      = list.length;
+      document.getElementById('est-cnt-draft').textContent    = list.filter(function(x){return x.status==='Draft';}).length;
+      document.getElementById('est-cnt-sent').textContent     = list.filter(function(x){return x.status==='Sent';}).length;
+      document.getElementById('est-cnt-accepted').textContent = list.filter(function(x){return x.status==='Accepted';}).length;
+      document.getElementById('est-cnt-declined').textContent = list.filter(function(x){return x.status==='Declined';}).length;
+
+      var el = document.getElementById('est-list');
+      if (!filtered.length) {
+        el.innerHTML = '<div class="empty"><span class="material-symbols-outlined">request_quote</span>' +
+          '<div style="font-size:.8rem">' + (fStatus || fSearch ? 'No matching estimates found.' : 'No estimates yet. Click <strong>New Estimate</strong> to create one.') + '</div></div>';
+        return;
+      }
+
+      var STATUS_C  = { Draft:'#f59e0b', Sent:'#3b82f6', Accepted:'#10b981', Declined:'#ef4444', Expired:'#9ca3af' };
+
+      el.innerHTML = filtered.map(function(est) {
+        var sc  = STATUS_C[est.status] || '#888';
+        var cssClass = 'est-' + (est.status||'draft').toLowerCase();
+        var created = est.createdAt ? new Date(est.createdAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—';
+        var expiry  = est.expiry ? 'Valid until ' + new Date(est.expiry+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'}) : '';
+        var isExpired = est.expiry && new Date(est.expiry+'T23:59:59') < new Date();
+
+        return '<div class="est-card ' + cssClass + '">' +
+          '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:.75rem">' +
+            '<div style="flex:1;min-width:180px">' +
+              '<div style="display:flex;align-items:center;gap:.625rem;flex-wrap:wrap;margin-bottom:.5rem">' +
+                '<span class="cname">' + e(est.name||'—') + '</span>' +
+                '<span class="bdg" style="background:'+sc+'22;color:'+sc+'">' + e(est.status||'Draft') + '</span>' +
+                (isExpired && est.status!=='Accepted' && est.status!=='Declined' ? '<span class="bdg brd">Expired</span>' : '') +
+              '</div>' +
+              '<div class="crow"><span class="material-symbols-outlined">directions_car</span>' + e(est.service||'—') + '</div>' +
+              (est.date ? '<div class="crow"><span class="material-symbols-outlined">calendar_today</span>' + e(est.date) + (est.time ? ' at ' + fT(est.time) : '') + '</div>' : '') +
+              (est.pickup ? '<div class="crow"><span class="material-symbols-outlined">location_on</span>' + e(est.pickup) + (est.destination ? ' → ' + e(est.destination) : '') + '</div>' : '') +
+              '<div class="crow"><span class="material-symbols-outlined">phone</span>' + e(est.phone||'—') + (est.email ? ' · ' + e(est.email) : '') + '</div>' +
+              (expiry ? '<div class="crow" style="color:' + (isExpired?'#ef4444':'#888') + '"><span class="material-symbols-outlined">timer</span>' + expiry + '</div>' : '') +
+              '<div style="font-size:.65rem;color:#bbb;margin-top:.375rem">Created ' + created + '</div>' +
+            '</div>' +
+            '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:.5rem">' +
+              '<div style="font-family:\'Times New Roman\',serif;font-size:1.6rem;font-weight:700;color:#0891b2">$' + (est.price||'—') + '</div>' +
+              '<div style="display:flex;gap:.375rem;flex-wrap:wrap;justify-content:flex-end">' +
+                '<button onclick="openSendEstimate(\'' + est.id + '\')" class="btn bk" style="font-size:.65rem"><span class="material-symbols-outlined" style="font-size:13px">send</span>Send</button>' +
+                '<button onclick="exportEstimatePDF(\'' + est.id + '\')" class="btn bo" style="font-size:.65rem"><span class="material-symbols-outlined" style="font-size:13px">picture_as_pdf</span>PDF</button>' +
+                '<button onclick="openEditEstimate(\'' + est.id + '\')" class="btn bo" style="font-size:.65rem"><span class="material-symbols-outlined" style="font-size:13px">edit</span>Edit</button>' +
+                (est.status === 'Accepted' ? '<button onclick="convertEstimateToBookingById(\'' + est.id + '\')" class="btn bgn" style="font-size:.65rem"><span class="material-symbols-outlined" style="font-size:13px">add_task</span>Book It</button>' : '') +
+                '<button onclick="updateEstimateStatus(\'' + est.id + '\',\'Accepted\')" class="btn bgn" style="font-size:.65rem" title="Mark Accepted"><span class="material-symbols-outlined" style="font-size:13px">thumb_up</span></button>' +
+                '<button onclick="updateEstimateStatus(\'' + est.id + '\',\'Declined\')" class="btn br" style="font-size:.65rem" title="Mark Declined"><span class="material-symbols-outlined" style="font-size:13px">thumb_down</span></button>' +
+                '<button onclick="delEstimate(\'' + est.id + '\')" class="btn br" style="font-size:.65rem;padding:.45rem"><span class="material-symbols-outlined" style="font-size:13px">delete</span></button>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+    }
+
+    function openNewEstimate() {
+      document.getElementById('est-modal-title').textContent = 'New Estimate';
+      document.getElementById('est-eid').value = '';
+      ['est-name','est-phone','est-email','est-pickup','est-dest','est-notes','est-message'].forEach(function(id){
+        var el = document.getElementById(id); if(el) el.value = '';
+      });
+      document.getElementById('est-service').value = '';
+      document.getElementById('est-date').value    = '';
+      document.getElementById('est-time').value    = '';
+      document.getElementById('est-pax').value     = '';
+      document.getElementById('est-price').value   = '';
+      document.getElementById('est-vehicle').value = 'Black SUV Luxury';
+      document.getElementById('est-status').value  = 'Draft';
+      var exp = new Date(); exp.setDate(exp.getDate() + 7);
+      document.getElementById('est-expiry').value  = exp.toISOString().split('T')[0];
+      openM('m-estimate');
+    }
+
+    function openEditEstimate(id) {
+      var est = getEstimates().find(function(x){return x.id===id;});
+      if (!est) return;
+      document.getElementById('est-modal-title').textContent = 'Edit Estimate';
+      document.getElementById('est-eid').value     = id;
+      document.getElementById('est-name').value    = est.name    || '';
+      document.getElementById('est-phone').value   = est.phone   || '';
+      document.getElementById('est-email').value   = est.email   || '';
+      document.getElementById('est-service').value = est.service || '';
+      document.getElementById('est-date').value    = est.date    || '';
+      document.getElementById('est-time').value    = est.time    || '';
+      document.getElementById('est-pickup').value  = est.pickup  || '';
+      document.getElementById('est-dest').value    = est.destination || '';
+      document.getElementById('est-pax').value     = est.passengers || '';
+      document.getElementById('est-vehicle').value = est.vehicle || 'Black SUV Luxury';
+      document.getElementById('est-price').value   = est.price   || '';
+      document.getElementById('est-expiry').value  = est.expiry  || '';
+      document.getElementById('est-status').value  = est.status  || 'Draft';
+      document.getElementById('est-notes').value   = est.notes   || '';
+      document.getElementById('est-message').value = est.message || '';
+      openM('m-estimate');
+    }
+
+    function saveEstimate(statusOverride) {
+      var name  = document.getElementById('est-name').value.trim();
+      var phone = document.getElementById('est-phone').value.trim();
+      var price = document.getElementById('est-price').value.trim();
+      if (!name || !phone || !price) { toast('Fill in Name, Phone, and Price'); return; }
+
+      var eid  = document.getElementById('est-eid').value;
+      var list = getEstimates();
+      var orig = eid ? list.find(function(x){return x.id===eid;}) : null;
+
+      var est = {
+        id:          eid || ('EST-' + Date.now()),
+        name:        name,
+        phone:       phone,
+        email:       document.getElementById('est-email').value.trim(),
+        service:     document.getElementById('est-service').value,
+        date:        document.getElementById('est-date').value,
+        time:        document.getElementById('est-time').value,
+        pickup:      document.getElementById('est-pickup').value.trim(),
+        destination: document.getElementById('est-dest').value.trim(),
+        passengers:  parseInt(document.getElementById('est-pax').value) || 1,
+        vehicle:     document.getElementById('est-vehicle').value,
+        price:       parseFloat(price),
+        expiry:      document.getElementById('est-expiry').value,
+        status:      statusOverride || document.getElementById('est-status').value || 'Draft',
+        notes:       document.getElementById('est-notes').value.trim(),
+        message:     document.getElementById('est-message').value.trim(),
+        createdAt:   orig ? orig.createdAt : new Date().toISOString(),
+        updatedAt:   new Date().toISOString()
+      };
+
+      if (eid) {
+        var idx = list.findIndex(function(x){return x.id===eid;});
+        if (idx > -1) list[idx] = est; else list.push(est);
+      } else {
+        list.push(est);
+      }
+      setEstimates(list);
+
+      if (db) {
+        db.collection('estimates').doc(est.id).set(est, {merge:true}).catch(function(err){ console.warn('estimate sync:', err.message); });
+      }
+
+      closeM('m-estimate');
+      renderEstimates();
+
+      if (est.status === 'Sent') {
+        _curEstimate = est;
+        _openEstSendModal(est);
+      } else {
+        toast(eid ? 'Estimate updated!' : 'Estimate saved!');
+      }
+    }
+
+    function _openEstSendModal(est) {
+      var firstName = (est.name || '').split(' ')[0] || 'there';
+      var defaultMsg = est.message ||
+        'Hi ' + firstName + '! Thank you for your interest in Seacoast RVIP.\n\n' +
+        'Here is your custom price estimate:\n\n' +
+        '• Service: ' + (est.service || '—') + '\n' +
+        (est.date ? '• Date: ' + est.date + (est.time ? ' at ' + fT(est.time) : '') + '\n' : '') +
+        (est.pickup ? '• Pickup: ' + est.pickup + '\n' : '') +
+        (est.destination ? '• Destination: ' + est.destination + '\n' : '') +
+        '• Vehicle: ' + (est.vehicle || 'Black SUV Luxury') + '\n' +
+        '• Estimated Fare: $' + est.price + '\n' +
+        (est.expiry ? '• Valid Until: ' + est.expiry + '\n' : '') +
+        '\nTo confirm this booking, reply to this message or call/text (978) 255-3140.\n\n— Ramon, Seacoast RVIP';
+
+      document.getElementById('est-send-info').innerHTML =
+        '<strong>' + e(est.name) + '</strong><br>' +
+        '<span style="color:#666;font-size:.78rem">' + e(est.phone) + ' · ' + e(est.service||'—') + ' · $' + est.price + '</span>';
+      document.getElementById('est-send-msg').value = defaultMsg;
+      openM('m-est-send');
+    }
+
+    function openSendEstimate(id) {
+      var est = getEstimates().find(function(x){return x.id===id;});
+      if (!est) return;
+      _curEstimate = est;
+      _openEstSendModal(est);
+    }
+
+    function estSendSMS() {
+      if (!_curEstimate) return;
+      var msg = document.getElementById('est-send-msg').value;
+      window.open('sms:' + _curEstimate.phone + '&body=' + encodeURIComponent(msg));
+      updateEstimateStatus(_curEstimate.id, 'Sent');
+      closeM('m-est-send');
+    }
+    function estSendEmail() {
+      if (!_curEstimate) return;
+      var msg = document.getElementById('est-send-msg').value;
+      var sub = 'Seacoast RVIP — Your Price Estimate';
+      var dest = _curEstimate.email || _curEstimate.phone;
+      window.open('mailto:' + dest + '?subject=' + encodeURIComponent(sub) + '&body=' + encodeURIComponent(msg));
+      updateEstimateStatus(_curEstimate.id, 'Sent');
+      closeM('m-est-send');
+    }
+    function estSendWA() {
+      if (!_curEstimate) return;
+      var msg = document.getElementById('est-send-msg').value;
+      var num = (_curEstimate.phone||'').replace(/\D/g,'');
+      window.open('https://wa.me/' + num + '?text=' + encodeURIComponent(msg));
+      updateEstimateStatus(_curEstimate.id, 'Sent');
+      closeM('m-est-send');
+    }
+    function estCopyMsg() {
+      var msg = document.getElementById('est-send-msg').value;
+      navigator.clipboard.writeText(msg).then(function(){ toast('Message copied!'); }).catch(function(){ toast('Could not copy'); });
+    }
+
+    function updateEstimateStatus(id, newStatus) {
+      var list = getEstimates();
+      var est  = list.find(function(x){return x.id===id;});
+      if (!est) return;
+      est.status    = newStatus;
+      est.updatedAt = new Date().toISOString();
+      setEstimates(list);
+      if (db) db.collection('estimates').doc(id).set({status:newStatus, updatedAt:est.updatedAt},{merge:true}).catch(function(){});
+      _curEstimate = est;
+      renderEstimates();
+      toast('Estimate marked ' + newStatus);
+    }
+
+    function delEstimate(id) {
+      if (!confirm('Delete this estimate?')) return;
+      var list = getEstimates().filter(function(x){return x.id!==id;});
+      setEstimates(list);
+      if (db) db.collection('estimates').doc(id).delete().catch(function(){});
+      renderEstimates();
+      toast('Estimate deleted');
+    }
+
+    function convertEstimateToBooking() {
+      if (!_curEstimate) return;
+      convertEstimateToBookingById(_curEstimate.id);
+      closeM('m-est-send');
+    }
+
+    function convertEstimateToBookingById(id) {
+      var est = getEstimates().find(function(x){return x.id===id;});
+      if (!est) return;
+
+      document.getElementById('add-title').textContent = 'New Booking (from Estimate)';
+      document.getElementById('eid').value   = '';
+      document.getElementById('fn').value    = est.name    || '';
+      document.getElementById('fp').value    = est.phone   || '';
+      document.getElementById('fe').value    = est.email   || '';
+      document.getElementById('fsv').value   = est.service || '';
+      document.getElementById('fd').value    = est.date    || '';
+      document.getElementById('ft').value    = est.time    || '';
+      document.getElementById('fpu').value   = est.pickup  || '';
+      document.getElementById('fde').value   = est.destination || '';
+      document.getElementById('fpr').value   = est.price   || '';
+      document.getElementById('fst').value   = 'Confirmed';
+      document.getElementById('fve').value   = est.vehicle || 'Black SUV Luxury';
+      document.getElementById('fno').value   = est.notes   || '';
+      document.getElementById('fti').value   = '';
+      document.getElementById('fco').value   = '';
+      document.getElementById('fcorp').value = '';
+      document.getElementById('fclient-id').value = '';
+      document.getElementById('fclient-search').value = '';
+      document.getElementById('fclient-results').style.display = 'none';
+      document.getElementById('fclient-selected').style.display = 'none';
+      updateDriverSelects();
+      updateCorpSelect();
+      genCode();
+      curQid = null;
+
+      updateEstimateStatus(id, 'Accepted');
+
+      var allTab = document.querySelector('.tab.on') || document.querySelector('.tab');
+      goTab('all', allTab);
+      openM('m-add');
+      toast('Estimate converted — complete the booking form');
+    }
+
+    function exportEstimatePDF(id) {
+      var est = getEstimates().find(function(x){ return x.id === id; });
+      if (!est) return toast('Estimate not found');
+      var today = new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+      var svcDate = est.date ? new Date(est.date+'T12:00:00').toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'}) : '';
+      var validUntil = est.expiry ? new Date(est.expiry+'T12:00:00').toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}) : '';
+      var estNum = (est.id||'').replace('est-','').slice(-6).toUpperCase() || Date.now().toString().slice(-6);
+      var price = parseFloat(est.price) || 0;
+
+      var html = '<!DOCTYPE html><html><head><title>Estimate #'+estNum+' — Seacoast RVIP</title><style>'+
+        'body{font-family:\'Helvetica Neue\',Arial,sans-serif;padding:2.5rem;max-width:680px;margin:0 auto;color:#111;font-size:14px}'+
+        'h1{font-family:Georgia,serif;font-size:2rem;margin:0;letter-spacing:-0.5px}'+
+        '.gold{color:#775a19}.sub{font-size:.8rem;color:#888}'+
+        'hr.thick{border:none;border-top:2px solid #111;margin:1.5rem 0}'+
+        'hr.thin{border:none;border-top:1px solid #eee;margin:1rem 0}'+
+        'table{width:100%;border-collapse:collapse;margin:1rem 0}'+
+        'th{text-align:left;font-size:.6rem;text-transform:uppercase;letter-spacing:.1em;color:#aaa;padding:.5rem .5rem;border-bottom:2px solid #eee}'+
+        'td{padding:.625rem .5rem;font-size:.82rem;border-bottom:1px solid #f3f3f3}'+
+        '.total-box{background:#f9f6ef;border:1px solid #e5d9b6;padding:1rem 1.25rem;margin-top:.75rem;display:flex;justify-content:space-between;align-items:center}'+
+        '.total-label{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#775a19}'+
+        '.total-amt{font-family:Georgia,serif;font-size:1.6rem;font-weight:700;color:#000}'+
+        '.badge{display:inline-block;padding:2px 10px;border-radius:2px;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;background:#e0f2fe;color:#0369a1}'+
+        '.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin:1.25rem 0}'+
+        '.info-block label{font-size:.6rem;text-transform:uppercase;letter-spacing:.08em;color:#aaa;display:block;margin-bottom:3px}'+
+        '.info-block .val{font-size:.88rem;font-weight:600;color:#111}'+
+        'footer{margin-top:2.5rem;font-size:.7rem;color:#aaa;border-top:1px solid #eee;padding-top:1rem;text-align:center}'+
+        '@media print{body{padding:1rem}}'+
+        '</style></head><body>'+
+        '<div style="display:flex;justify-content:space-between;align-items:flex-start">'+
+          '<div><h1>Seacoast <span class="gold">RVIP</span> LLC</h1><div class="sub" style="margin-top:4px">Premium Luxury Transportation</div></div>'+
+          '<div style="text-align:right">'+
+            '<div style="font-size:1.1rem;font-weight:700">ESTIMATE</div>'+
+            '<div style="font-size:.85rem;color:#555"># '+estNum+'</div>'+
+            '<div class="sub" style="margin-top:2px">Issued: '+today+'</div>'+
+          '</div>'+
+        '</div>'+
+        '<hr class="thick">'+
+        '<div class="info-grid">'+
+          '<div class="info-block"><label>Prepared For</label><div class="val">'+e(est.name||'—')+'</div>'+
+            (est.phone?'<div class="sub" style="margin-top:2px">'+e(est.phone)+'</div>':'')+
+            (est.email?'<div class="sub">'+e(est.email)+'</div>':'')+
+          '</div>'+
+          '<div class="info-block">'+
+            '<label>Service</label><div class="val">'+e(est.service||'Private Hire')+'</div>'+
+            (svcDate?'<div class="sub" style="margin-top:4px"><label style="display:inline">Date: </label>'+svcDate+'</div>':'')+
+            (est.time?'<div class="sub"><label style="display:inline">Time: </label>'+e(est.time)+'</div>':'')+
+          '</div>'+
+        '</div>'+
+        ((est.pickup||est.destination)?
+          '<div style="margin-bottom:1.25rem">'+
+            '<div style="font-size:.6rem;text-transform:uppercase;letter-spacing:.08em;color:#aaa;margin-bottom:3px">Route</div>'+
+            '<div style="font-size:.88rem;font-weight:600">'+e(est.pickup||'—')+(est.destination?' &nbsp;→&nbsp; '+e(est.destination):'')+'</div>'+
+            (est.vehicle?'<div class="sub" style="margin-top:2px">'+e(est.vehicle)+'</div>':'')+
+          '</div>' : '')+
+        '<table><thead><tr><th>Description</th><th style="text-align:right">Amount</th></tr></thead><tbody>'+
+          '<tr><td>'+e(est.service||'Transportation Service')+(est.notes?'<div class="sub" style="margin-top:3px">'+e(est.notes.slice(0,120))+'</div>':'')+'</td>'+
+          '<td style="text-align:right;font-weight:700">$'+price.toFixed(2)+'</td></tr>'+
+        '</tbody></table>'+
+        '<div class="total-box">'+
+          '<span class="total-label">Total Estimate</span>'+
+          '<span class="total-amt">$'+price.toFixed(2)+'</span>'+
+        '</div>'+
+        (validUntil?'<div class="sub" style="margin-top:.75rem">This estimate is valid until <strong>'+validUntil+'</strong>. Prices subject to change after expiration.</div>':'')+
+        (est.message?'<hr class="thin"><div style="font-size:.6rem;text-transform:uppercase;letter-spacing:.08em;color:#aaa;margin-bottom:.5rem">Message</div><div style="font-size:.82rem;color:#444;line-height:1.6;white-space:pre-wrap">'+e(est.message)+'</div>':'')+
+        '<footer>Seacoast RVIP LLC &nbsp;·&nbsp; (978) 255-3140 &nbsp;·&nbsp; info@seacoastrvip.com &nbsp;·&nbsp; seacoastrvip.com</footer>'+
+        '</body></html>';
+
+      var w = window.open('','_blank');
+      w.document.write(html);
+      w.document.close();
+      setTimeout(function(){ w.print(); }, 600);
     }
 
     // ─────────────────────────────────────────────
