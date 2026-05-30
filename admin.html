@@ -673,7 +673,7 @@
             <option value="Other">Other</option>
           </select>
           <select id="admin-filter-sort" onchange="renderBks()" style="padding:0.6rem;border:1.5px solid #eee;border-radius:4px;font-family:Inter,sans-serif;font-size:0.8rem;outline:none;background:#fff;cursor:pointer;min-width:120px">
-            <option value="recent">Most Recent</option>
+            <option value="upcoming">Upcoming First</option>
             <option value="oldest">Oldest First</option>
             <option value="name">Client Name A–Z</option>
           </select>
@@ -1869,12 +1869,17 @@
       });
 
       // Sort
-      var sortVal = document.getElementById('admin-filter-sort')?.value || 'recent';
+      var sortVal = document.getElementById('admin-filter-sort')?.value || 'upcoming';
+      var _now = new Date();
       list = list.sort(function (a, b) {
         if (sortVal === 'name') return (a.name||'').localeCompare(b.name||'');
-        if (sortVal === 'oldest') return new Date(a.date + ' ' + (a.time||'00:00')) - new Date(b.date + ' ' + (b.time||'00:00'));
-        // default: recent first
-        return new Date(b.date + ' ' + (b.time||'23:59')) - new Date(a.date + ' ' + (a.time||'23:59'));
+        if (sortVal === 'oldest') return new Date(a.date + 'T' + (a.time||'00:00')) - new Date(b.date + 'T' + (b.time||'00:00'));
+        // default: upcoming first — future/today trips closest to now first, then past trips most-recent first
+        var da = new Date(a.date + 'T' + (a.time||'00:00')), db = new Date(b.date + 'T' + (b.time||'00:00'));
+        var aFuture = da >= _now, bFuture = db >= _now;
+        if (aFuture && bFuture) return da - db;   // both upcoming: nearest first
+        if (!aFuture && !bFuture) return db - da;  // both past: most recent first
+        return aFuture ? -1 : 1;                   // upcoming always before past
       });
 
       var lEl = document.getElementById('bk-list'), eEl = document.getElementById('bk-empty');
