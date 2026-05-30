@@ -2617,17 +2617,38 @@ function receiptPDF(id){
    if(!t) return;
    const base = parseFloat(t.price||0);
    const tip  = parseFloat(t.tip||0);
-   const fee  = parseFloat((base * 0.029).toFixed(2));
-   const total = parseFloat((base + tip + fee).toFixed(2));
-   const feeRow = (t.status==='Paid'||t.status==='Completed') ? `<tr><th>Processing Fee (2.9%)</th><td>$${fee.toFixed(2)}</td></tr>` : '';
-   const tipRow = tip > 0 ? `<tr><th>Gratuity</th><td>$${tip.toFixed(2)}</td></tr>` : '';
-   const totalAmt = (t.status==='Paid'||t.status==='Completed') ? total : base + tip;
+   const isPaid = t.status==='Paid'||t.status==='Completed';
+   const fee  = isPaid ? parseFloat((base * 0.029).toFixed(2)) : 0;
+   const totalAmt = parseFloat((base + tip + fee).toFixed(2));
+   const tipRow = tip > 0 ? `<tr><td style="padding:7px 14px;color:#555;font-size:.85rem;border:none">Gratuity</td><td style="padding:7px 14px;text-align:right;font-size:.85rem;border:none">$${tip.toFixed(2)}</td></tr>` : '';
+   const feeRow = isPaid ? `<tr><td style="padding:7px 14px;color:#555;font-size:.85rem;border:none">Processing Fee (2.9%)</td><td style="padding:7px 14px;text-align:right;font-size:.85rem;border:none">$${fee.toFixed(2)}</td></tr>` : '';
+   const css = `body{font-family:'Helvetica Neue',Arial,sans-serif;padding:3rem;max-width:680px;margin:0 auto;color:#111;font-size:14px}
+h1{margin:0;font-family:Georgia,serif;font-size:1.8rem;letter-spacing:-.5px}
+.gold{color:#775a19}.sub{font-size:.78rem;color:#888}
+hr.thick{border:none;border-top:2px solid #111;margin:1.25rem 0}
+hr.thin{border:none;border-top:1px solid #eee;margin:.75rem 0}
+.detail-table{width:100%;border-collapse:collapse;margin:1.25rem 0}
+.detail-table td,.detail-table th{padding:8px 10px;font-size:.82rem;border-bottom:1px solid #f0f0f0;text-align:left}
+.detail-table th{color:#aaa;font-size:.6rem;text-transform:uppercase;letter-spacing:.08em;font-weight:600}
+.totals-wrap{display:flex;justify-content:flex-end;margin-top:1.5rem}
+.totals-box{min-width:260px;border:1px solid #e5e5e5}
+.totals-box tr td{padding:8px 16px;font-size:.85rem;border:none}
+.totals-box .lbl{color:#555}
+.totals-box .amt{text-align:right}
+.totals-box .divider td{border-top:2px solid #111!important;padding-top:10px}
+.totals-box .grand .lbl{font-weight:700;font-size:.95rem;text-transform:uppercase;letter-spacing:.04em}
+.totals-box .grand .amt{font-weight:700;font-size:1.1rem;color:#000}
+footer{margin-top:2.5rem;font-size:.7rem;color:#aaa;border-top:1px solid #eee;padding-top:1rem;text-align:center}
+@media print{body{padding:1rem}}`;
    const w=window.open('','_blank');
-   w.document.write(`<html><head><title>Receipt ${t.code||''}</title><style>body{font-family:Arial;padding:3rem;line-height:1.6}h1{margin:0}table{width:100%;border-collapse:collapse;margin-top:2rem}td,th{border:1px solid #ddd;padding:12px;text-align:left}</style></head><body>`);
-   w.document.write(`<div><h1 style="color:#775a19">SEACOAST RVIP</h1><p>Premium Car Service</p></div><hr>`);
-   w.document.write(`<h2>Individual Ride Receipt</h2><p><strong>Passenger:</strong> ${t.name}<br><strong>Confirmation:</strong> ${t.code||'N/A'}<br><strong>Date:</strong> ${t.date} ${t.time}</p>`);
-   w.document.write(`<table><tr><th>Pickup</th><td>${t.pickup}</td></tr><tr><th>Destination</th><td>${t.destination}</td></tr><tr><th>Vehicle</th><td>${t.vehicle||'Luxury Black Sedan/SUV'}</td></tr><tr><th>Service</th><td>${t.service}</td></tr><tr><th>Base Fare</th><td>$${base.toFixed(2)}</td></tr>${tipRow}${feeRow}<tr><th style="font-size:1.2rem">TOTAL CHARGED</th><td style="font-size:1.2rem"><strong>$${totalAmt.toFixed(2)}</strong></td></tr></table>`);
-   w.document.write(`<p style="margin-top:3rem;font-size:0.8rem;color:#888">Thank you for traveling with Seacoast RVIP. Questions? Call (978) 255-3140</p></body></html>`);
+   w.document.write(`<html><head><title>Receipt ${t.code||''}</title><style>${css}</style></head><body>`);
+   w.document.write(`<div style="display:flex;justify-content:space-between;align-items:flex-start"><div><h1>Seacoast <span class="gold">RVIP</span> LLC</h1><div class="sub" style="margin-top:3px">Premium Luxury Transportation</div></div><div style="text-align:right"><div style="font-size:1rem;font-weight:700;letter-spacing:.08em">RECEIPT</div><div style="font-size:.82rem;color:#555">${t.code||'—'}</div><div class="sub">${new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}</div></div></div>`);
+   w.document.write(`<hr class="thick">`);
+   w.document.write(`<div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin:1rem 0"><div><div class="sub" style="text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px">Passenger</div><div style="font-weight:600;font-size:.9rem">${t.name}</div>${t.phone?`<div class="sub">${t.phone}</div>`:''}</div><div><div class="sub" style="text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px">Trip Date</div><div style="font-weight:600;font-size:.9rem">${t.date}${t.time?' at '+t.time:''}</div><div class="sub">${t.service||''}</div></div></div>`);
+   w.document.write(`<hr class="thin">`);
+   w.document.write(`<table class="detail-table"><thead><tr><th>Trip Details</th><th></th></tr></thead><tbody><tr><td style="color:#888;width:38%">Pickup</td><td>${t.pickup||'—'}</td></tr><tr><td style="color:#888">Destination</td><td>${t.destination||'—'}</td></tr><tr><td style="color:#888">Vehicle</td><td>${t.vehicle||'Luxury Black Sedan/SUV'}</td></tr><tr><td style="color:#888">Status</td><td>${t.status||'—'}</td></tr></tbody></table>`);
+   w.document.write(`<div class="totals-wrap"><table class="totals-box"><tbody><tr><td class="lbl">Base Fare</td><td class="amt">$${base.toFixed(2)}</td></tr>${tipRow}${feeRow}<tr class="divider grand"><td class="lbl">Total Charged</td><td class="amt">$${totalAmt.toFixed(2)}</td></tr></tbody></table></div>`);
+   w.document.write(`<footer>Seacoast RVIP LLC &nbsp;·&nbsp; (978) 255-3140 &nbsp;·&nbsp; info@seacoastrvip.com &nbsp;·&nbsp; seacoastrvip.com</footer></body></html>`);
    w.document.close(); w.print();
 }
 function generateStatement(){
@@ -2642,17 +2663,33 @@ function generateStatement(){
    const paidBase = paidTrips.reduce((s,t) => s + (parseFloat(t.price||0)), 0);
    const feeTotal = parseFloat((paidBase * 0.029).toFixed(2));
    const rows = filtered.map(t => {
-     const base = parseFloat(t.price||0); const tip = parseFloat(t.tip||0);
-     const fee = (t.status==='Paid'||t.status==='Completed') ? parseFloat((base*0.029).toFixed(2)) : 0;
-     return `<tr><td>${t.date}</td><td>${t.code||''}</td><td>${t.service}</td><td>$${base.toFixed(2)}</td><td>${tip>0?'$'+tip.toFixed(2):'—'}</td><td>${fee>0?'$'+fee.toFixed(2):'—'}</td><td>$${(base+tip+fee).toFixed(2)}</td><td>${t.status}</td></tr>`;
+     const base = parseFloat(t.price||0);
+     return `<tr><td>${t.date}</td><td>${t.code||''}</td><td>${t.service}</td><td style="text-align:right">$${base.toFixed(2)}</td><td>${t.status}</td></tr>`;
    }).join('');
    const grandTotal = total + tips + feeTotal;
+   const tipRow2 = tips > 0 ? `<tr><td style="padding:7px 16px;color:#555;border:none">Gratuity</td><td style="padding:7px 16px;text-align:right;border:none">$${tips.toFixed(2)}</td></tr>` : '';
+   const css2 = `body{font-family:'Helvetica Neue',Arial,sans-serif;padding:3rem;max-width:800px;margin:0 auto;color:#111;font-size:14px}
+h1{font-family:Georgia,serif;font-size:1.8rem;margin:0;letter-spacing:-.5px}.gold{color:#775a19}.sub{font-size:.78rem;color:#888}
+hr.thick{border:none;border-top:2px solid #111;margin:1.25rem 0}hr.thin{border:none;border-top:1px solid #eee;margin:.75rem 0}
+table.trips{width:100%;border-collapse:collapse;margin:1.25rem 0}
+table.trips th{padding:8px 10px;font-size:.6rem;text-transform:uppercase;letter-spacing:.08em;color:#aaa;border-bottom:2px solid #eee;text-align:left}
+table.trips td{padding:8px 10px;font-size:.82rem;border-bottom:1px solid #f3f3f3}
+.totals-wrap{display:flex;justify-content:flex-end;margin-top:1.75rem}
+.totals-box{min-width:280px;border:1px solid #e5e5e5}
+.totals-box td{padding:8px 16px;font-size:.85rem;border:none}
+.totals-box .amt{text-align:right}.totals-box .lbl{color:#555}
+.totals-box .divider td{border-top:2px solid #111!important;padding-top:10px}
+.totals-box .grand .lbl{font-weight:700;font-size:.95rem;text-transform:uppercase}
+.totals-box .grand .amt{font-weight:700;font-size:1.1rem}
+footer{margin-top:2.5rem;font-size:.7rem;color:#aaa;border-top:1px solid #eee;padding-top:1rem;text-align:center}
+@media print{body{padding:1rem}}`;
    const w=window.open('','_blank');
-   w.document.write(`<html><head><title>Statement ${mNames[m]} ${y}</title><style>body{font-family:serif;padding:3rem;max-width:900px;margin:auto}table{width:100%;border-collapse:collapse;margin-top:1.5rem}th,td{border:1px solid #ddd;padding:8px;font-size:0.85rem}.total{text-align:right;font-size:1.2rem;font-weight:700;margin-top:1.5rem}</style></head><body>`);
-   w.document.write(`<h1>SEACOAST RVIP</h1><h3>Client Monthly Statement</h3><p><strong>Client:</strong> ${currentUser.name}<br><strong>Period:</strong> ${mNames[m]} ${y}</p>`);
-   w.document.write(`<table><thead><tr><th>Date</th><th>Conf#</th><th>Service</th><th>Base Fare</th><th>Tip</th><th>Proc. Fee</th><th>Total</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table>`);
-   w.document.write(`<div class="total">Subtotal: $${total.toFixed(2)} &nbsp;|&nbsp; Tips: $${tips.toFixed(2)} &nbsp;|&nbsp; Processing Fees: $${feeTotal.toFixed(2)} &nbsp;|&nbsp; <strong>Grand Total: $${grandTotal.toFixed(2)}</strong></div>`);
-   w.document.write(`<p style="margin-top:3rem;color:#888;font-size:0.75rem">Generated automatically for ${currentUser.name} on ${new Date().toLocaleDateString()}</p></body></html>`);
+   w.document.write(`<html><head><title>Statement ${mNames[m]} ${y}</title><style>${css2}</style></head><body>`);
+   w.document.write(`<div style="display:flex;justify-content:space-between;align-items:flex-start"><div><h1>Seacoast <span class="gold">RVIP</span> LLC</h1><div class="sub" style="margin-top:3px">Premium Luxury Transportation</div></div><div style="text-align:right"><div style="font-size:1rem;font-weight:700;letter-spacing:.08em">CLIENT STATEMENT</div><div class="sub" style="margin-top:2px">${mNames[m]} ${y}</div></div></div>`);
+   w.document.write(`<hr class="thick"><div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin:.75rem 0"><div><div class="sub" style="text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px">Client</div><div style="font-weight:600">${currentUser.name}</div></div><div><div class="sub" style="text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px">Generated</div><div style="font-weight:600">${new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}</div></div></div><hr class="thin">`);
+   w.document.write(`<table class="trips"><thead><tr><th>Date</th><th>Conf #</th><th>Service</th><th style="text-align:right">Amount</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table>`);
+   w.document.write(`<div class="totals-wrap"><table class="totals-box"><tbody><tr><td class="lbl">Subtotal</td><td class="amt">$${total.toFixed(2)}</td></tr>${tipRow2}<tr><td class="lbl">Processing Fee (2.9%)</td><td class="amt">$${feeTotal.toFixed(2)}</td></tr><tr class="divider grand"><td class="lbl">Grand Total</td><td class="amt">$${grandTotal.toFixed(2)}</td></tr></tbody></table></div>`);
+   w.document.write(`<footer>Seacoast RVIP LLC &nbsp;·&nbsp; (978) 255-3140 &nbsp;·&nbsp; info@seacoastrvip.com &nbsp;·&nbsp; seacoastrvip.com</footer></body></html>`);
    w.document.close(); w.print();
 }
 
