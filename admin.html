@@ -1792,12 +1792,13 @@
           } else {
             // Document missing from Firestore snapshot
             var ts = bk.createdAt ? new Date(bk.createdAt).getTime() : Date.now();
-            if (ts < oldestTs) {
-              // It's older than our snapshot window, keep it locally
+            var ageMs = Date.now() - ts;
+            if (ts < oldestTs || ageMs < 5 * 60 * 1000) {
+              // Keep: either older than our query window OR created in the last 5 minutes
+              // (recent bookings may still be mid-flight to Firestore — don't discard them)
               updatedLocal.push(bk);
             } else {
-              // It SHOULD be in the latest 200 list but isn't. It's likely deleted. 
-              // Discard it so the phone stops trying to resurrect it.
+              // Older booking that should appear in the top-200 but doesn't — likely deleted
               console.log('Sync: Discarding deleted item', bk.id);
             }
           }
