@@ -2768,10 +2768,17 @@
       var pax     = 1;
       var status  = 'Confirmed';
       if (!date || !pickup || !dest) return toast('Date, pickup, and destination are required');
+      // Generate a stable doc ref so we can embed the id in the document data.
+      // Without id + updatedAt in the data, the onSnapshot listener and
+      // pullFromFirebase() both skip the document, making the trip invisible in All Rides.
+      var ref = db.collection('bookings').doc();
+      var now = new Date().toISOString();
       var trip = {
+        id: ref.id,
         date, time, service, price, pickup, destination: dest,
         passengers: pax, status, clientId,
-        createdAt: new Date().toISOString(),
+        createdAt: now,
+        updatedAt: now,
         source: 'admin-added'
       };
       // Get client email/phone to tag the booking so the client portal can find it
@@ -2785,9 +2792,14 @@
         }
       } catch(e) {}
       try {
-        var ref = await db.collection('bookings').add(trip);
+        await ref.set(trip);
         // Also write to subcollection for legacy compatibility
         await db.collection('clients').doc(clientId).collection('trips').doc(ref.id).set(trip);
+        // Add to localStorage immediately so All Rides reflects the new trip without a reload
+        var bks = getBks();
+        bks.push(trip);
+        setBks(bks);
+        renderBks();
         toast('Trip added successfully');
         document.getElementById('cli-add-trip-form').style.display = 'none';
         // Reload trip list
