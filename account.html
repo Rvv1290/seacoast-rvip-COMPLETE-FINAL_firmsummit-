@@ -1378,10 +1378,9 @@ async function doPhoneLogin(){
   const btn = document.getElementById('phone-btn');
   const err = document.getElementById('phone-err');
   const mig = document.getElementById('migration-prompt');
-  
+
   err.style.display='none';
   mig.style.display='none';
-  // Reset migration prompt state so a previous lookup doesn't leak through
   _pendingClient = null;
   var _migBtnReset = document.getElementById('migration-btn');
   var _migSuccReset = document.getElementById('migration-success');
@@ -1391,59 +1390,119 @@ async function doPhoneLogin(){
   if (_migEmailWrapReset) _migEmailWrapReset.style.display = 'none';
 
   if(!raw) { err.textContent='Please enter your phone or email.'; err.style.display='block'; return; }
-  if(!isEmail && digits.length < 10) { err.textContent='Please enter a valid 10-digit phone or a valid email.'; err.style.display='block'; return; }
+  if(!isEmail && digits.length < 10) { err.textContent='Please enter a valid 10-digit phone number.'; err.style.display='block'; return; }
   if(isEmail && !/^\S+@\S+\.\S+$/.test(raw)) { err.textContent='Please enter a valid email address.'; err.style.display='block'; return; }
   if(!pwd) { err.textContent='Please enter your password.'; err.style.display='block'; return; }
-  
-  btn.disabled=true; btn.textContent='Signing In...';
-  
-  try {
-    let foundDoc = null;
 
+  btn.disabled=true; btn.textContent='Signing In...';
+
+  try {
+    // ── EMAIL PATH ────────────────────────────────────────────────────────────
+    // Accounts created via Sign Up use Firebase Auth for passwords.
+    // Legacy/admin-created accounts may have a plain-text password in Firestore.
+    // Try Firebase Auth first; fall back to Firestore for legacy accounts.
     if(isEmail){
-      const identity = raw.toLowerCase();
-      var emailVariants = [raw, identity];
-      for(const e of emailVariants){
+      const emailLower = raw.toLowerCase();
+
+      // 1. Try Firebase Auth (covers all accounts created via the sign-up form)
+      try {
+        await auth.signInWithEmailAndPassword(emailLower, pwd);
+        // Succeeded — find or create the Firestore client doc
+        let snap = await db.collection('clients').where('email','==',emailLower).limit(1).get();
+        if(snap.empty) snap = await db.collection('clients').where('email','==',raw).limit(1).get();
+        if(!snap.empty){
+          let client; snap.forEach(d => client = {id:d.id, ...d.data()});
+          loginUser(client);
+          return;
+        }
+        // Firebase Auth user exists but no Firestore doc — create one now
+        const fbUser = auth.currentUser;
+        const ref = db.collection('clients').doc();
+        const data = {
+          name: fbUser.displayName || emailLower.split('@')[0],
+          email: emailLower, phone: '',
+          status: 'Approved', createdAt: new Date().toISOString(), authProvider: 'email'
+        };
+        await ref.set(data);
+        loginUser({id: ref.id, ...data});
+        return;
+      } catch(authErr) {
+        // wrong-password or invalid-credential means the Firebase Auth account
+        // exists but the password is wrong — show error immediately, no fallback
+        if(authErr.code === 'auth/wrong-password' || authErr.code === 'auth/invalid-credential'){
+          err.textContent = 'Incorrect password. Use Forgot Password to reset it.';
+          err.style.display='block';
+          btn.disabled=false; btn.textContent='Sign In →';
+          return;
+        }
+        // user-not-found / invalid-email → could be a legacy Firestore-only account; fall through
+        if(authErr.code !== 'auth/user-not-found' && authErr.code !== 'auth/invalid-email'){
+          err.textContent = friendlyAuthError(authErr);
+          err.style.display='block';
+          btn.disabled=false; btn.textContent='Sign In →';
+          return;
+        }
+      }
+
+      // 2. Fallback: legacy account — look up Firestore doc and check plain-text password
+      let foundDoc = null;
+      for(const e of [raw, emailLower]){
         const snap = await db.collection('clients').where('email','==',e).limit(1).get();
         if(!snap.empty){ snap.forEach(d => foundDoc = {id:d.id, ...d.data()}); break; }
       }
+      if(!foundDoc){
+        err.textContent='No account found with that email.';
+        err.style.display='block';
+      } else if(!foundDoc.password){
+        err.innerHTML='Account found, but <strong>no password is set</strong>.<br>Tap below to set one up via email.';
+        err.style.display='block';
+        mig.style.display='block';
+        _pendingClient = foundDoc;
+        var migEmailWrap = document.getElementById('migration-email-wrap');
+        if(migEmailWrap) migEmailWrap.style.display = 'none';
+      } else if(foundDoc.password !== pwd){
+        err.textContent='Incorrect password.';
+        err.style.display='block';
+      } else {
+        loginUser(foundDoc);
+        return;
+      }
+
+    // ── PHONE PATH ────────────────────────────────────────────────────────────
+    // Phone accounts always use a plain-text password stored in Firestore by admin.
     } else {
-      // Try multiple phone formats (+1, plain, formatted)
       const pFmt1 = `(${digits.substring(0,3)}) ${digits.substring(3,6)}-${digits.substring(6,10)}`;
       const pFmt2 = `${digits.substring(0,3)}-${digits.substring(3,6)}-${digits.substring(6,10)}`;
       const formats = ['+1'+digits, digits, pFmt1, pFmt2];
+      let foundDoc = null;
       for(const p of formats){
         const snap = await db.collection('clients').where('phone','==',p).limit(1).get();
         if(!snap.empty){ snap.forEach(d => foundDoc = {id:d.id, ...d.data()}); break; }
       }
-    }
 
-    if(!foundDoc){
-      err.textContent='Incorrect phone/email or password.';
-      err.style.display='block';
-    } else {
-      // Check status
-      const status = foundDoc.status || 'Approved'; // Default to Approved if not set
-      if (status !== 'Approved') {
-          err.innerHTML = '<strong>Account Pending Approval</strong><br>Your profile is currently being reviewed. We will notify you by text once it is active.';
-          err.style.display = 'block';
-      } else if(!foundDoc.password){
-          // Account exists but no password yet — show unified setup flow
+      if(!foundDoc){
+        err.textContent='No account found with that phone number.';
+        err.style.display='block';
+      } else {
+        const status = foundDoc.status || 'Approved';
+        if(status !== 'Approved'){
+          err.innerHTML='<strong>Account Pending Approval</strong><br>Your profile is currently being reviewed. We will notify you by text once it is active.';
+          err.style.display='block';
+        } else if(!foundDoc.password){
           err.innerHTML='Account found, but <strong>no password is set</strong>.<br>Tap below to set one up via email.';
           err.style.display='block';
           mig.style.display='block';
-          // Cache the looked-up client so startMigration can skip the lookup
           _pendingClient = foundDoc;
-          // If client has no email on file, expose the email input
           var migEmailWrap = document.getElementById('migration-email-wrap');
-          if (!foundDoc.email && migEmailWrap) migEmailWrap.style.display = 'block';
-          else if (migEmailWrap) migEmailWrap.style.display = 'none';
-      } else if(foundDoc.password !== pwd){
-          err.textContent='Incorrect phone/email or password.';
+          if(!foundDoc.email && migEmailWrap) migEmailWrap.style.display = 'block';
+          else if(migEmailWrap) migEmailWrap.style.display = 'none';
+        } else if(foundDoc.password !== pwd){
+          err.textContent='Incorrect password.';
           err.style.display='block';
-      } else {
+        } else {
           loginUser(foundDoc);
-          return; // Success
+          return;
+        }
       }
     }
   } catch(e){
