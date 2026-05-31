@@ -2271,21 +2271,24 @@
         // AUTO-SYNC TO CLIENT TRIPS
         if (bk.status && ['Confirmed', 'Paid', 'Completed', 'Upcoming'].indexOf(bk.status.trim()) !== -1) {
           var raw = (bk.phone || '').replace(/\D/g, '');
-          var cid = null;
+          var cid = bk.clientId || null; // use explicitly assigned client first
 
-          // Find client by phone
-          if (raw.length >= 7) {
-            var ph = raw.length === 10 ? '+1' + raw : (raw.length === 11 && raw[0] === '1' ? '+' + raw : '+' + raw);
-            var fmts = [ph, raw, '+1' + raw.slice(-10)];
-            for (var i = 0; i < fmts.length && !cid; i++) {
-              var s = await db.collection('clients').where('phone', '==', fmts[i]).limit(1).get();
-              if (!s.empty) s.forEach(function (d) { cid = d.id; });
+          // Only search by phone/email when no explicit clientId is set
+          if (!cid) {
+            // Find client by phone
+            if (raw.length >= 7) {
+              var ph = raw.length === 10 ? '+1' + raw : (raw.length === 11 && raw[0] === '1' ? '+' + raw : '+' + raw);
+              var fmts = [ph, raw, '+1' + raw.slice(-10)];
+              for (var i = 0; i < fmts.length && !cid; i++) {
+                var s = await db.collection('clients').where('phone', '==', fmts[i]).limit(1).get();
+                if (!s.empty) s.forEach(function (d) { cid = d.id; });
+              }
             }
-          }
-          // Fall back to email lookup
-          if (!cid && bk.email) {
-            var es = await db.collection('clients').where('email', '==', bk.email).limit(1).get();
-            if (!es.empty) es.forEach(function(d){ cid = d.id; });
+            // Fall back to email lookup
+            if (!cid && bk.email) {
+              var es = await db.collection('clients').where('email', '==', bk.email).limit(1).get();
+              if (!es.empty) es.forEach(function(d){ cid = d.id; });
+            }
           }
 
           if (!cid && raw.length >= 7) {
