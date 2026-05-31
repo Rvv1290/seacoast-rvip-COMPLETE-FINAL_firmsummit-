@@ -2710,6 +2710,7 @@
 
     // ── CLIENT SEARCH in m-add ───────────────────────────────────────────────
     var _clientSearchTimer = null;
+    var _fclientResults = [];
     function searchClientsForAssign(q) {
       clearTimeout(_clientSearchTimer);
       var res = document.getElementById('fclient-results');
@@ -2728,8 +2729,9 @@
             snapE.forEach(function(d){ if(!results.find(function(r){return r.id===d.id;})) results.push({id:d.id,...d.data()}); });
           }
           if (!results.length) { res.innerHTML = '<div style="padding:.5rem .75rem;color:#aaa">No clients found</div>'; res.style.display='block'; return; }
-          res.innerHTML = results.map(function(c){
-            return '<div onclick="selectClientForAssign(\''+c.id+'\','+JSON.stringify(e(c.name||'')+' — '+(c.phone||c.email||''))+',\''+e(c.name||'')+'\')" style="padding:.5rem .75rem;cursor:pointer;border-bottom:1px solid #f3f3f3" onmouseover="this.style.background=\'#f9f6ef\'" onmouseout="this.style.background=\'\'">'+
+          _fclientResults = results;
+          res.innerHTML = results.map(function(c, i){
+            return '<div onclick="selectClientForAssign('+i+')" style="padding:.5rem .75rem;cursor:pointer;border-bottom:1px solid #f3f3f3" onmouseover="this.style.background=\'#f9f6ef\'" onmouseout="this.style.background=\'\'">'+
               '<strong>'+e(c.name||'—')+'</strong> <span style="color:#888;font-size:0.75rem">'+e(c.phone||'')+(c.email?' · '+e(c.email):'')+'</span></div>';
           }).join('');
           res.style.display = 'block';
@@ -2737,9 +2739,12 @@
       }, 300);
     }
 
-    function selectClientForAssign(cid, label, name) {
-      document.getElementById('fclient-id').value = cid;
-      document.getElementById('fclient-search').value = name;
+    function selectClientForAssign(idx) {
+      var c = _fclientResults[idx];
+      if (!c) return;
+      var label = (c.name||'') + (c.phone||c.email ? ' — '+(c.phone||c.email) : '');
+      document.getElementById('fclient-id').value = c.id;
+      document.getElementById('fclient-search').value = c.name||'';
       document.getElementById('fclient-results').style.display = 'none';
       document.getElementById('fclient-selected').textContent = '✓ ' + label;
       document.getElementById('fclient-selected').style.display = 'block';
