@@ -1156,31 +1156,14 @@ async function doSocialAuth(providerName) {
   const socialErr = document.getElementById('social-auth-err');
   if (socialErr) socialErr.style.display = 'none';
 
-  // iPhone Safari blocks popups and ITP breaks OAuth round-trips in popup windows.
-  // Use redirect directly for iPhone; iPad works fine with popup (desktop UA).
-  const isIPhone = /iPhone/i.test(navigator.userAgent) && !/iPad/i.test(navigator.userAgent);
-  if (isIPhone) {
-    try {
-      localStorage.setItem('rvip-social-pending', providerName);
-      await auth.signInWithRedirect(provider);
-    } catch (e) {
-      showSocialError(friendlyAuthError(e));
-    }
-    return;
-  }
-
-  // Popup for desktop/iPad with redirect fallback if popup is blocked
   try {
     const result = await auth.signInWithPopup(provider);
     await handleSocialResult(result, providerName);
   } catch (e) {
-    if (e.code === 'auth/popup-blocked' || e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') {
-      try {
-        localStorage.setItem('rvip-social-pending', providerName);
-        await auth.signInWithRedirect(provider);
-      } catch (e2) {
-        showSocialError(friendlyAuthError(e2));
-      }
+    if (e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') {
+      // User dismissed — no error needed
+    } else if (e.code === 'auth/popup-blocked') {
+      showSocialError('Pop-up was blocked by your browser. Please allow pop-ups for this site and try again.');
     } else {
       showSocialError(friendlyAuthError(e));
     }
@@ -1276,20 +1259,11 @@ auth.getRedirectResult().then(function(result) {
     handleSocialResult(result, providerName).catch(function(e) {
       showSocialError(friendlyAuthError(e));
     });
-  } else if (localStorage.getItem('rvip-social-pending')) {
-    // We were expecting a redirect result but got none — Safari ITP likely blocked it.
-    // Surface a clear message rather than failing silently.
-    const pending = localStorage.getItem('rvip-social-pending');
+  } else {
     localStorage.removeItem('rvip-social-pending');
-    showSocialError(
-      'Sign-in could not complete on this device (Safari blocks third-party cookies). ' +
-      'Please try Google sign-in or use your phone number + password instead.'
-    );
   }
 }).catch(function(e) {
-  if (e.code && e.code !== 'auth/no-current-user') {
-    showSocialError(friendlyAuthError(e));
-  }
+  localStorage.removeItem('rvip-social-pending');
 });
 
 async function doSignup() {
