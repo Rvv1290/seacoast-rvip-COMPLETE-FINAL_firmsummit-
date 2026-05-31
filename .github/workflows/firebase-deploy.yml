@@ -4,10 +4,14 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - uses: actions/checkout@v4
 
@@ -15,10 +19,20 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: functions/package-lock.json
 
       - name: Install function dependencies
         run: npm ci
         working-directory: functions
 
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
       - name: Deploy Hosting + Functions + Firestore Rules
-        run: npx firebase-tools@latest deploy --only hosting,functions,firestore --project seacoast-rip --token "${{ secrets.FIREBASE_TOKEN }}" --force
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.auth.outputs.credentials_file_path }}
+        run: npx firebase-tools@13 deploy --only hosting,functions,firestore --project seacoast-rip --force --non-interactive
