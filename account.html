@@ -296,8 +296,14 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
         
         <div id="migration-prompt" style="display:none;margin-top:1.5rem;padding:1rem;background:#fff8e1;border:1px solid #ffe082;border-radius:4px;font-size:0.8rem">
           <div><strong>First-time sign in?</strong></div>
-          <div style="margin:0.5rem 0 1rem;color:#5d4037">If you used our old system, you need to set a password once.</div>
-          <button onclick="startMigration()" class="btn-k" style="width:100%;background:#5d4037;font-size:0.7rem">Verify via SMS & Setup Password</button>
+          <div style="margin:0.5rem 0 1rem;color:#5d4037">If you used our old system, you need to set a password once. We'll send a secure setup link to your email.</div>
+          <div id="migration-email-wrap" style="display:none;margin-bottom:0.75rem">
+            <label class="f-label" style="display:block;margin-bottom:0.25rem">Your Email</label>
+            <input id="migration-email-inp" type="email" class="f-input" placeholder="you@email.com" style="margin-bottom:0.5rem"/>
+            <div style="font-size:0.7rem;color:#5d4037">We don't have an email on file. Enter the one you'd like to use.</div>
+          </div>
+          <button id="migration-btn" onclick="startMigration()" class="btn-k" style="width:100%;background:#5d4037;font-size:0.7rem">Set Up My Password</button>
+          <div id="migration-success" style="display:none;margin-top:0.75rem;background:#e8f5e9;border:1px solid #66bb6a;color:#1b5e20;padding:0.75rem;border-radius:4px;font-size:0.78rem"></div>
         </div>
       </div>
 
@@ -1322,6 +1328,14 @@ async function doPhoneLogin(){
   
   err.style.display='none';
   mig.style.display='none';
+  // Reset migration prompt state so a previous lookup doesn't leak through
+  _pendingClient = null;
+  var _migBtnReset = document.getElementById('migration-btn');
+  var _migSuccReset = document.getElementById('migration-success');
+  var _migEmailWrapReset = document.getElementById('migration-email-wrap');
+  if (_migBtnReset) { _migBtnReset.style.display = ''; _migBtnReset.disabled = false; _migBtnReset.textContent = 'Set Up My Password'; }
+  if (_migSuccReset) { _migSuccReset.style.display = 'none'; _migSuccReset.innerHTML = ''; }
+  if (_migEmailWrapReset) _migEmailWrapReset.style.display = 'none';
 
   if(!raw) { err.textContent='Please enter your phone or email.'; err.style.display='block'; return; }
   if(!isEmail && digits.length < 10) { err.textContent='Please enter a valid 10-digit phone or a valid email.'; err.style.display='block'; return; }
@@ -1360,14 +1374,17 @@ async function doPhoneLogin(){
       if (status !== 'Approved') {
           err.innerHTML = '<strong>Account Pending Approval</strong><br>Your profile is currently being reviewed. We will notify you by text once it is active.';
           err.style.display = 'block';
-      } else if(!foundDoc.password && !isEmail){
-          // User found but no password
-          err.innerHTML='Account found, but <strong>no password is set</strong>.<br>Please use the migration link below.';
+      } else if(!foundDoc.password){
+          // Account exists but no password yet — show unified setup flow
+          err.innerHTML='Account found, but <strong>no password is set</strong>.<br>Tap below to set one up via email.';
           err.style.display='block';
           mig.style.display='block';
-      } else if(!foundDoc.password && isEmail){
-          err.innerHTML='Account found, but <strong>no password is set</strong>.<br>Use Google/Apple sign-in or reset with your email.';
-          err.style.display='block';
+          // Cache the looked-up client so startMigration can skip the lookup
+          _pendingClient = foundDoc;
+          // If client has no email on file, expose the email input
+          var migEmailWrap = document.getElementById('migration-email-wrap');
+          if (!foundDoc.email && migEmailWrap) migEmailWrap.style.display = 'block';
+          else if (migEmailWrap) migEmailWrap.style.display = 'none';
       } else if(foundDoc.password !== pwd){
           err.textContent='Incorrect phone/email or password.';
           err.style.display='block';
@@ -1386,60 +1403,108 @@ async function doPhoneLogin(){
 // ─── MIGRATION FLOW (OTP fallback for first password setup) ───
 
 async function startMigration(){
-  const digits = document.getElementById('phone-inp').value.replace(/\D/g,'');
-  if(digits.length < 10) return alert('Enter your 10-digit phone number first.');
-  
-  const phone = '+1' + digits;
-  _pendingPhone = phone;
-  
-  const btn = document.querySelector('#migration-prompt button');
-  btn.disabled = true; btn.textContent = 'Verifying...';
-  
+  const btn       = document.getElementById('migration-btn');
+  const succBox   = document.getElementById('migration-success');
+  const err       = document.getElementById('phone-err');
+  const emailWrap = document.getElementById('migration-email-wrap');
+  const emailInp  = document.getElementById('migration-email-inp');
+  const inputVal  = document.getElementById('phone-inp').value.trim();
+  const isEmail   = inputVal.includes('@');
+  const digits    = inputVal.replace(/\D/g,'');
+
+  err.style.display = 'none';
+  succBox.style.display = 'none';
+  btn.disabled = true; btn.textContent = 'Looking up account…';
+
   try {
-    // Check if user exists
-    const pFmt1 = `(${digits.substring(0,3)}) ${digits.substring(3,6)}-${digits.substring(6,10)}`;
-    const pFmt2 = `${digits.substring(0,3)}-${digits.substring(3,6)}-${digits.substring(6,10)}`;
-    const formats = [phone, digits, pFmt1, pFmt2];
-    
-    let client = null;
-    for(const p of formats){
-        const snap = await db.collection('clients').where('phone','==',p).limit(1).get();
-        if(!snap.empty){
-            snap.forEach(d => client = {id:d.id, ...d.data()});
-            break;
+    // Locate the client (use cached lookup from doPhoneLogin if available)
+    let client = _pendingClient || null;
+    if (!client) {
+      if (isEmail) {
+        const variants = [inputVal, inputVal.toLowerCase()];
+        for (const v of variants) {
+          const snap = await db.collection('clients').where('email','==',v).limit(1).get();
+          if (!snap.empty) { snap.forEach(d => client = {id:d.id, ...d.data()}); break; }
         }
+      } else if (digits.length >= 10) {
+        const d10 = digits.slice(-10);
+        const phoneFull = '+1' + d10;
+        const pFmt1 = `(${d10.substring(0,3)}) ${d10.substring(3,6)}-${d10.substring(6,10)}`;
+        const pFmt2 = `${d10.substring(0,3)}-${d10.substring(3,6)}-${d10.substring(6,10)}`;
+        const formats = [phoneFull, digits, d10, pFmt1, pFmt2];
+        for (const p of formats) {
+          const snap = await db.collection('clients').where('phone','==',p).limit(1).get();
+          if (!snap.empty) { snap.forEach(d => client = {id:d.id, ...d.data()}); break; }
+        }
+      }
     }
-    
-    if(!client){
-        alert('We couldn\'t find an account with that number. Please start a new booking.');
-        btn.disabled = false; btn.textContent = 'Verify via SMS & Setup Password';
-        return;
+
+    if (!client) {
+      err.innerHTML = "We couldn't find an account matching that " + (isEmail ? 'email' : 'phone number') + ". Please <strong>create a new account</strong> by booking a ride, or call <a href=\"tel:9782553140\" style=\"color:#775a19\">(978) 255-3140</a>.";
+      err.style.display = 'block';
+      btn.disabled = false; btn.textContent = 'Set Up My Password';
+      return;
     }
-    
+
     _pendingClient = client;
-    
-    // Trigger Phone Auth
-    try {
-      if(window._recaptchaVerifier) { window._recaptchaVerifier.clear(); window._recaptchaVerifier = null; }
-    } catch(e) { window._recaptchaVerifier = null; }
-    // Recreate the container so reCAPTCHA doesn't complain about a used element
-    var rcEl = document.getElementById('recaptcha-container');
-    if(rcEl) { rcEl.innerHTML = ''; }
-    window._recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
-      size: 'invisible',
-      callback: function() {},
-      'expired-callback': function() { window._recaptchaVerifier = null; }
-    });
-    
-    const prov = new firebase.auth.PhoneAuthProvider();
-    _confirmationResult = await firebase.auth().signInWithPhoneNumber(phone, window._recaptchaVerifier);
-    
-    document.getElementById('otp-phone-display').textContent = phone;
-    document.getElementById('step-phone').style.display='none';
-    document.getElementById('step-otp').style.display='block';
-  } catch(e){
-    alert('Error: ' + e.message);
-    btn.disabled = false; btn.textContent = 'Verify via SMS & Setup Password';
+    if (digits.length >= 10) _pendingPhone = '+1' + digits.slice(-10);
+
+    // Determine the email to send the setup link to
+    let targetEmail = client.email || '';
+    if (!targetEmail && isEmail) targetEmail = inputVal.toLowerCase();
+    if (!targetEmail && emailInp && emailInp.value.trim()) targetEmail = emailInp.value.trim().toLowerCase();
+
+    // If still no email, expose the input field and ask the user to enter one
+    if (!targetEmail) {
+      if (emailWrap) emailWrap.style.display = 'block';
+      err.textContent = 'Please enter the email address you want to use for sign-in.';
+      err.style.display = 'block';
+      btn.disabled = false; btn.textContent = 'Send Setup Link';
+      if (emailInp) emailInp.focus();
+      return;
+    }
+    if (targetEmail && !/^\S+@\S+\.\S+$/.test(targetEmail)) {
+      err.textContent = 'Please enter a valid email address.';
+      err.style.display = 'block';
+      btn.disabled = false; btn.textContent = 'Send Setup Link';
+      return;
+    }
+
+    btn.textContent = 'Sending link…';
+
+    // If the user typed a new email (not on file), save it before sending
+    if (!client.email && targetEmail) {
+      try { await db.collection('clients').doc(client.id).update({ email: targetEmail }); } catch(e) {}
+      client.email = targetEmail;
+    }
+
+    // Send Firebase sign-in email link (works without Phone Auth)
+    const returnUrl = window.location.origin + '/account.html';
+    const actionCodeSettings = { url: returnUrl, handleCodeInApp: true };
+    await auth.sendSignInLinkToEmail(targetEmail, actionCodeSettings);
+    localStorage.setItem('rvip-email-signin', targetEmail);
+    // Tag the client so the next sign-in forces the password setup modal
+    try { await db.collection('clients').doc(client.id).update({ passwordResetRequired: true }); } catch(e) {}
+
+    // Success — replace the prompt with a clear success message
+    succBox.innerHTML =
+      '<div style="font-weight:700;margin-bottom:0.35rem">✓ Setup link sent!</div>' +
+      'Check your inbox at <strong>' + escH(targetEmail) + '</strong> and tap the link to finish signing in and set your password.' +
+      '<div style="font-size:0.7rem;color:#555;margin-top:0.4rem">Don\'t see it? Check your <strong>Spam</strong> or <strong>Junk</strong> folder. The email comes from <em>noreply@seacoastrvip.com</em>.</div>';
+    succBox.style.display = 'block';
+    btn.style.display = 'none';
+    if (emailWrap) emailWrap.style.display = 'none';
+  } catch(e) {
+    console.error('[Migration]', e.code, e.message);
+    if (e.code === 'auth/invalid-email') {
+      err.textContent = 'That email address is invalid. Please double-check and try again.';
+    } else if (e.code === 'auth/too-many-requests') {
+      err.textContent = 'Too many attempts. Please wait a few minutes and try again.';
+    } else {
+      err.textContent = 'Could not send setup link: ' + (e.message || 'unknown error') + '. Please try again or call (978) 255-3140.';
+    }
+    err.style.display = 'block';
+    btn.disabled = false; btn.textContent = 'Set Up My Password';
   }
 }
 
@@ -1523,7 +1588,7 @@ function loginUser(client){
   // New logic: Check if a password reset is forced (Temporary Password usage)
   if (currentUser.passwordResetRequired) {
     setTimeout(() => {
-      showToast('Welcome! Please set your private password.');
+      try { toast('Welcome! Please set your private password.'); } catch(e) {}
       openM('m-cpwd');
     }, 1000);
   }
