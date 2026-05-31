@@ -2554,10 +2554,44 @@
         // Load trips — merge subcollection + global bookings tagged with clientId
         var seen = {}, trips = [];
         var tSnap = await db.collection('clients').doc(id).collection('trips').orderBy('date','desc').limit(50).get();
-        tSnap.forEach(function(tdoc) { if(!seen[tdoc.id]){ seen[tdoc.id]=true; var t=tdoc.data(); t._id=tdoc.id; trips.push(t); } });
+        var subTrips = []; // remember subcollection trips for backfill
+        tSnap.forEach(function(tdoc) {
+          if(!seen[tdoc.id]){
+            seen[tdoc.id]=true; var t=tdoc.data(); t._id=tdoc.id;
+            trips.push(t); subTrips.push(t);
+          }
+        });
         var bSnap = await db.collection('bookings').where('clientId','==',id).limit(100).get();
-        bSnap.forEach(function(bdoc) { if(!seen[bdoc.id]){ seen[bdoc.id]=true; var t=bdoc.data(); t._id=bdoc.id; trips.push(t); } });
+        var bookingIdsForClient = {}; // bookingId -> true
+        bSnap.forEach(function(bdoc) {
+          bookingIdsForClient[bdoc.id] = true;
+          if(!seen[bdoc.id]){ seen[bdoc.id]=true; var t=bdoc.data(); t._id=bdoc.id; trips.push(t); }
+        });
         trips.sort(function(a,b){ return new Date(b.date||0)-new Date(a.date||0); });
+
+        // Backfill: subcollection trips that have no matching booking won't appear in All Rides.
+        // Write them to the bookings collection with clientId set so they show up everywhere.
+        // Uses bookingId from sub-trip when present, else the sub-doc id.
+        var cName = c.name || '', cPhone = c.phone || '', cEmail = c.email || '';
+        subTrips.forEach(function(st) {
+          var targetBkId = st.bookingId || st._id;
+          if (bookingIdsForClient[targetBkId]) return; // already in bookings
+          var bkDoc = {
+            id: targetBkId, clientId: id,
+            name: st.name || cName, phone: st.phone || cPhone, email: st.email || cEmail,
+            service: st.service || '', date: st.date || '', time: st.time || '',
+            pickup: st.pickup || '', destination: st.destination || '',
+            vehicle: st.vehicle || '', price: parseFloat(st.price) || 0,
+            tip: parseFloat(st.tip) || 0,
+            status: st.status || 'Confirmed',
+            code: (st.code || '').toUpperCase(),
+            notes: st.notes || '',
+            source: st.source || 'subcollection-backfill',
+            createdAt: st.createdAt || st.addedAt || new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          };
+          db.collection('bookings').doc(targetBkId).set(bkDoc, { merge: true }).catch(function(){});
+        });
 
         // Cache trips so Edit button can look them up without fragile JSON-in-onclick
         window._cliTripsCache = {};
