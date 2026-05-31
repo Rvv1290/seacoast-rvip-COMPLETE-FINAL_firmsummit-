@@ -1585,11 +1585,13 @@ async function initDashboard(){
     // happen to share the same email or phone number.
     db.collection('bookings').where('corporateAccountId', '==', currentUser.corporateAccountId).onSnapshot(mergeTrips);
   } else {
-    // 2. Global bookings (matching email)
+    // 2. Global bookings explicitly assigned to this client by the admin
+    db.collection('bookings').where('clientId', '==', currentUser.id).onSnapshot(mergeTrips);
+    // 3. Global bookings (matching email)
     if (currentUser.email) {
       db.collection('bookings').where('email', '==', currentUser.email).onSnapshot(mergeTrips);
     }
-    // 3. Global bookings (matching phone)
+    // 4. Global bookings (matching phone)
     if (currentUser.phone) {
       const rawPh = currentUser.phone.replace(/\D/g,'');
       if (rawPh) {
