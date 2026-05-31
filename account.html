@@ -213,6 +213,9 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .auth-toggle{display:flex;margin-bottom:2rem;border:1px solid var(--border);border-radius:4px;overflow:hidden}
 .auth-toggle-btn{flex:1;padding:0.85rem;font-family:'Work Sans',sans-serif;font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;background:#fff;color:#888;border:none;cursor:pointer;transition:all 0.2s}
 .auth-toggle-btn.active{background:#000;color:#fff}
+.login-method-tabs{display:flex;margin-bottom:1.25rem;border:1px solid var(--border);border-radius:4px;overflow:hidden}
+.login-method-tab{flex:1;padding:0.7rem;font-family:'Work Sans',sans-serif;font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;background:#fff;color:#888;border:none;cursor:pointer;transition:all 0.2s}
+.login-method-tab.active{background:#111;color:#fff}
 
 .social-auth{display:flex;flex-direction:column;gap:0.75rem;margin-bottom:2rem;padding-bottom:1.5rem;border-bottom:1px solid var(--border)}
 .btn-social{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;padding:0.75rem;border:1px solid #ddd;background:#fff;color:#000;font-family:'Work Sans',sans-serif;font-size:0.75rem;font-weight:600;cursor:pointer;transition:0.2s}
@@ -275,16 +278,21 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
       <p class="auth-help">Quick sign-in options are simplified to reduce confusion: Google, Apple, or Phone/Email login.</p>
     </div>
 
-    <div class="divider">Or sign in with phone or email</div>
+    <div class="divider">Or sign in directly</div>
 
     <div id="view-login">
+    <!-- Login method tabs -->
+    <div class="login-method-tabs">
+      <button id="ltab-phone" class="login-method-tab active" onclick="switchLoginTab('phone')">Phone</button>
+      <button id="ltab-email" class="login-method-tab" onclick="switchLoginTab('email')">Email</button>
+    </div>
 
     <!-- ── UNIFIED LOGIN ── -->
     <div id="login-phone-method">
       <div id="step-phone">
         <div class="f-group">
-          <label class="f-label">Phone or Email</label>
-          <input id="phone-inp" type="text" class="f-input" placeholder="(603) 000-0000 or you@email.com" oninput="formatIdentityInput(this)" onkeydown="if(event.key==='Enter')document.getElementById('phone-pwd-inp').focus()"/>
+          <label id="login-identity-label" class="f-label">Phone Number</label>
+          <input id="phone-inp" type="tel" class="f-input" placeholder="(603) 000-0000" oninput="formatIdentityInput(this)" onkeydown="if(event.key==='Enter')document.getElementById('phone-pwd-inp').focus()"/>
         </div>
         <div class="f-group">
           <label class="f-label">Password</label>
@@ -292,7 +300,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
         </div>
         <div id="phone-err" style="display:none;color:#d32f2f;font-size:0.8rem;margin-bottom:1rem"></div>
         <button id="phone-btn" onclick="doPhoneLogin()" class="btn-k" style="width:100%">Sign In →</button>
-        <button onclick="sendForgotPwdLink('identity')" style="width:100%;margin-top:0.75rem;background:transparent;border:none;color:#888;font-size:0.85rem;cursor:pointer;text-decoration:underline;padding:0.75rem 0;min-height:44px">Forgot Password?</button>
+        <button id="forgot-pwd-btn" onclick="sendForgotPwdLink('email')" style="display:none;width:100%;margin-top:0.75rem;background:transparent;border:none;color:#888;font-size:0.85rem;cursor:pointer;text-decoration:underline;padding:0.75rem 0;min-height:44px">Forgot Password?</button>
         
         <div id="migration-prompt" style="display:none;margin-top:1.5rem;padding:1rem;background:#fff8e1;border:1px solid #ffe082;border-radius:4px;font-size:0.8rem">
           <div><strong>First-time sign in?</strong></div>
@@ -1107,6 +1115,33 @@ function showAuthMode(mode) {
   }
 }
 
+function switchLoginTab(tab) {
+  const inp = document.getElementById('phone-inp');
+  const label = document.getElementById('login-identity-label');
+  const forgotBtn = document.getElementById('forgot-pwd-btn');
+  const phoneTab = document.getElementById('ltab-phone');
+  const emailTab = document.getElementById('ltab-email');
+  document.getElementById('phone-err').style.display = 'none';
+  document.getElementById('migration-prompt').style.display = 'none';
+  inp.value = '';
+  document.getElementById('phone-pwd-inp').value = '';
+  if (tab === 'phone') {
+    inp.type = 'tel';
+    inp.placeholder = '(603) 000-0000';
+    label.textContent = 'Phone Number';
+    if (forgotBtn) forgotBtn.style.display = 'none';
+    phoneTab.classList.add('active');
+    emailTab.classList.remove('active');
+  } else {
+    inp.type = 'email';
+    inp.placeholder = 'you@email.com';
+    label.textContent = 'Email Address';
+    if (forgotBtn) forgotBtn.style.display = '';
+    phoneTab.classList.remove('active');
+    emailTab.classList.add('active');
+  }
+}
+
 async function doSocialAuth(providerName) {
   let provider;
   if (providerName === 'google') {
@@ -1121,11 +1156,20 @@ async function doSocialAuth(providerName) {
   const socialErr = document.getElementById('social-auth-err');
   if (socialErr) socialErr.style.display = 'none';
 
-  // Use popup for all devices. iPad already worked because iOS 13+ Safari sends
-  // a desktop UA (no "iPad" string), bypassing the old isMobile redirect path.
-  // iPhone redirect was broken by Safari ITP blocking third-party cookies during
-  // the OAuth round-trip. Popup works on modern iOS; the catch block below
-  // falls back to redirect only if the popup is actually blocked.
+  // iPhone Safari blocks popups and ITP breaks OAuth round-trips in popup windows.
+  // Use redirect directly for iPhone; iPad works fine with popup (desktop UA).
+  const isIPhone = /iPhone/i.test(navigator.userAgent) && !/iPad/i.test(navigator.userAgent);
+  if (isIPhone) {
+    try {
+      localStorage.setItem('rvip-social-pending', providerName);
+      await auth.signInWithRedirect(provider);
+    } catch (e) {
+      showSocialError(friendlyAuthError(e));
+    }
+    return;
+  }
+
+  // Popup for desktop/iPad with redirect fallback if popup is blocked
   try {
     const result = await auth.signInWithPopup(provider);
     await handleSocialResult(result, providerName);
@@ -2909,11 +2953,7 @@ async function submitForgotPwd() {
     await auth.sendPasswordResetEmail(email, { url: returnUrl });
     succ.innerHTML = `
       <strong>Password reset email sent!</strong><br>
-      Check your inbox at <strong>${email}</strong> for a link from Seacoast RVIP.<br>
-      <span style="font-size:0.75rem;color:#555;margin-top:4px;display:block">
-        Don't see it? Check your <strong>Spam</strong> or <strong>Junk</strong> folder.
-        The email comes from <em>noreply@seacoastrvip.com</em>.
-      </span>`;
+      A reset link has been sent to <strong>${email}</strong>. Please allow a minute for delivery and click the link to set a new password.`;
     succ.style.display = 'block';
   } catch(error) {
     if(error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
@@ -3025,6 +3065,7 @@ function fmtPhone(el){
   el.value = out;
 }
 function formatIdentityInput(el){
+  if(el.type === 'email') return; // email tab — leave raw
   const v = (el.value || '').trim();
   if(v.includes('@')) return; // keep email raw
   fmtPhone(el);
