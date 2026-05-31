@@ -1276,6 +1276,15 @@ auth.getRedirectResult().then(function(result) {
     handleSocialResult(result, providerName).catch(function(e) {
       showSocialError(friendlyAuthError(e));
     });
+  } else if (localStorage.getItem('rvip-social-pending')) {
+    // We were expecting a redirect result but got none — Safari ITP likely blocked it.
+    // Surface a clear message rather than failing silently.
+    const pending = localStorage.getItem('rvip-social-pending');
+    localStorage.removeItem('rvip-social-pending');
+    showSocialError(
+      'Sign-in could not complete on this device (Safari blocks third-party cookies). ' +
+      'Please try Google sign-in or use your phone number + password instead.'
+    );
   }
 }).catch(function(e) {
   if (e.code && e.code !== 'auth/no-current-user') {
@@ -2811,8 +2820,6 @@ function filterTrips(filter, el){
   if(el) el.classList.add('selected');
   renderTripsList(filter);
 }
-
-function switchLoginTab(){}
 
 // ─── EMAIL LOGIN ───
 async function doEmailLogin(){
