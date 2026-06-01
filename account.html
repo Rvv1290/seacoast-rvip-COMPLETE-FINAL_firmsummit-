@@ -1742,11 +1742,16 @@ async function initDashboard(){
     if (currentUser.email) {
       db.collection('bookings').where('email', '==', currentUser.email).onSnapshot(mergeTrips);
     }
-    // 4. Global bookings (matching phone)
+    // 4. Global bookings (matching phone) — query both stored format and digits-only
+    //    to catch bookings saved with a different phone format than the client doc
     if (currentUser.phone) {
       const rawPh = currentUser.phone.replace(/\D/g,'');
       if (rawPh) {
         db.collection('bookings').where('phone', '==', currentUser.phone).onSnapshot(mergeTrips);
+        // If the stored phone has formatting, also try digits-only in case bookings were saved without formatting
+        if (rawPh !== currentUser.phone) {
+          db.collection('bookings').where('phone', '==', rawPh).onSnapshot(mergeTrips);
+        }
       }
     }
   }
