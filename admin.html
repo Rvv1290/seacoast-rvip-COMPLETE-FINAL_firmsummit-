@@ -746,6 +746,7 @@
           <div style="display:flex;gap:.5rem;flex-wrap:wrap">
             <button onclick="loadClients()" class="btn bo"><span class="material-symbols-outlined" style="font-size:14px">refresh</span>Refresh</button>
             <button onclick="recoverDeletedClients()" class="btn bo" style="border-color:#7c3aed;color:#7c3aed"><span class="material-symbols-outlined" style="font-size:14px">restore_from_trash</span>Recover Deleted</button>
+            <button onclick="relinkAllTrips()" class="btn bo" style="border-color:#0369a1;color:#0369a1"><span class="material-symbols-outlined" style="font-size:14px">link</span>Re-link All Trips</button>
           </div>
         </div>
         <div id="cl-list">
@@ -2479,8 +2480,10 @@
       if (!db) { el.innerHTML = fbErrHTML(); return; }
       el.innerHTML = '<div style="text-align:center;padding:2rem;color:#aaa;font-size:.8rem">Loading...</div>';
       try {
-        var snap = await db.collection('clients').orderBy('createdAt', 'desc').limit(200).get();
+        var snap = await db.collection('clients').limit(500).get();
         var all = []; snap.forEach(function (d) { all.push(Object.assign({ id: d.id }, d.data())); });
+        // Sort newest first client-side so docs missing createdAt are still shown
+        all.sort(function(a,b){ return new Date(b.createdAt||0) - new Date(a.createdAt||0); });
         var list    = all.filter(function(c){ return !c.deleted; });
         var deleted = all.filter(function(c){ return  c.deleted; });
         document.getElementById('s5').textContent = list.length;
@@ -2598,6 +2601,74 @@
       } catch(ex){ toast('Recovery error: ' + ex.message); }
     }
 
+
+    async function relinkAllTrips() {
+      if(!db) return;
+      toast('Scanning all trips and clients…');
+      try {
+        // 1. Build lookup maps from all clients
+        var clientsSnap = await db.collection('clients').limit(500).get();
+        var phoneMap = {}, emailMap = {};
+        var norm = function(p){ return (p||'').replace(/\D/g,''); };
+        clientsSnap.forEach(function(d){
+          var c = d.data();
+          if(c.deleted) return;
+          var ph = norm(c.phone);
+          if(ph && ph.length >= 7) phoneMap[ph] = d.id;
+          if(c.email) emailMap[c.email.toLowerCase().trim()] = d.id;
+        });
+
+        // 2. Fetch all bookings
+        var bSnap = await db.collection('bookings').limit(500).get();
+        var batch = db.batch();
+        var count = 0;
+
+        bSnap.forEach(function(d){
+          var b = d.data();
+          var docId = b.id || d.id;
+          var updates = {};
+
+          // Self-heal missing id field
+          if(!b.id) updates.id = docId;
+
+          // Try to resolve clientId
+          var existingCid = b.clientId;
+          var resolvedCid = existingCid || null;
+
+          if(!resolvedCid) {
+            // Match by normalized phone
+            var bph = norm(b.phone);
+            if(bph && bph.length >= 7 && phoneMap[bph]) resolvedCid = phoneMap[bph];
+          }
+          if(!resolvedCid && b.email) {
+            // Match by email
+            var em = (b.email||'').toLowerCase().trim();
+            if(emailMap[em]) resolvedCid = emailMap[em];
+          }
+
+          if(resolvedCid && resolvedCid !== existingCid) {
+            updates.clientId = resolvedCid;
+          }
+
+          // Also stamp updatedAt if missing so onSnapshot can pick it up
+          if(!b.updatedAt) updates.updatedAt = new Date().toISOString();
+
+          if(Object.keys(updates).length > 0) {
+            batch.update(d.ref, updates);
+            count++;
+          }
+        });
+
+        if(count > 0) {
+          await batch.commit();
+          // Refresh local cache
+          await pullFromFirebase();
+          toast('Re-linked ' + count + ' trip' + (count!==1?'s':'') + ' to client accounts. All Rides updated.');
+        } else {
+          toast('All trips are already linked — nothing to update.');
+        }
+      } catch(ex){ toast('Re-link error: ' + ex.message); }
+    }
 
     async function openCliProfile(id) {
       if(!id || !db) return;
@@ -2854,11 +2925,11 @@
         if (!db) return;
         try {
           var results = [];
-          var snapN = await db.collection('clients').orderBy('name').startAt(q).endAt(q+'').limit(8).get();
-          snapN.forEach(function(d){ results.push({id:d.id,...d.data()}); });
+          var snapN = await db.collection('clients').orderBy('name').startAt(q).endAt(q+'').limit(12).get();
+          snapN.forEach(function(d){ var c={id:d.id,...d.data()}; if(!c.deleted) results.push(c); });
           if (results.length < 4) {
-            var snapE = await db.collection('clients').where('email','>=',q).where('email','<=',q+'').limit(5).get();
-            snapE.forEach(function(d){ if(!results.find(function(r){return r.id===d.id;})) results.push({id:d.id,...d.data()}); });
+            var snapE = await db.collection('clients').where('email','>=',q).where('email','<=',q+'').limit(8).get();
+            snapE.forEach(function(d){ var c={id:d.id,...d.data()}; if(!c.deleted&&!results.find(function(r){return r.id===d.id;})) results.push(c); });
           }
           if (!results.length) { res.innerHTML = '<div style="padding:.5rem .75rem;color:#aaa">No clients found</div>'; res.style.display='block'; return; }
           _fclientResults = results;
