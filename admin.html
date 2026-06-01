@@ -1532,11 +1532,17 @@
 
       // ── Real-time Bookings Sync ──
       // Primary listener: bookings with updatedAt (real-time change detection)
-      function mergeBkIntoLocal(b, local, localMap) {
-        if(!b.id) return 0;
-        if(!localMap[b.id]){ local.push(b); localMap[b.id]=b; return 1; }
-        var idx = local.findIndex(function(x){ return x.id === b.id; });
-        if(idx >= 0){ local[idx] = b; localMap[b.id]=b; return 1; }
+      function mergeBkIntoLocal(b, local, localMap, docId) {
+        var id = b.id || docId;
+        if(!id) return 0;
+        // Self-heal: if the Firestore doc was missing the id field, write it back
+        if(!b.id && docId && db) {
+          db.collection('bookings').doc(docId).update({ id: docId }).catch(function(){});
+          b = Object.assign({}, b, { id: docId });
+        }
+        if(!localMap[id]){ local.push(b); localMap[id]=b; return 1; }
+        var idx = local.findIndex(function(x){ return x.id === id; });
+        if(idx >= 0){ local[idx] = b; localMap[id]=b; return 1; }
         return 0;
       }
       function refreshAdminAfterBkChange() {
@@ -1557,7 +1563,7 @@
           var changed = 0;
           snap.docChanges().forEach(function(change){
             if(change.type === 'added' || change.type === 'modified'){
-              changed += mergeBkIntoLocal(change.doc.data(), local, localMap);
+              changed += mergeBkIntoLocal(change.doc.data(), local, localMap, change.doc.id);
             }
           });
           if(changed > 0){ setBks(local); refreshAdminAfterBkChange(); }
@@ -1572,7 +1578,7 @@
           local.forEach(function(b){ if(b.id) localMap[b.id] = b; });
           var changed = 0;
           snap.forEach(function(d){
-            changed += mergeBkIntoLocal(d.data(), local, localMap);
+            changed += mergeBkIntoLocal(d.data(), local, localMap, d.id);
           });
           if(changed > 0){ setBks(local); refreshAdminAfterBkChange(); }
         }).catch(function(e){ console.warn('Bookings date-fallback:', e.message); });
@@ -1772,10 +1778,16 @@
         
         var firebaseMap = {};
         var oldestTs = Date.now();
-        snap.forEach(function (d) { 
+        snap.forEach(function (d) {
           var b = d.data();
-          if (b.id) {
-            firebaseMap[b.id] = b;
+          var id = b.id || d.id;
+          if (!b.id && id) {
+            // Self-heal: write the id field back so future queries can index it
+            db.collection('bookings').doc(id).update({ id: id }).catch(function(){});
+            b = Object.assign({}, b, { id: id });
+          }
+          if (id) {
+            firebaseMap[id] = b;
             var ts = b.createdAt ? new Date(b.createdAt).getTime() : Date.now();
             if (ts < oldestTs) oldestTs = ts;
           }
@@ -1783,12 +1795,13 @@
 
         var updatedLocal = [];
         var localIdsSeen = {};
-        
+
         // 1. Process local storage items
         local.forEach(function (bk) {
-          if (firebaseMap[bk.id]) {
+          var bkId = bk.id;
+          if (bkId && firebaseMap[bkId]) {
             // Document exists in both: take Firestore version (authoritative)
-            updatedLocal.push(firebaseMap[bk.id]);
+            updatedLocal.push(firebaseMap[bkId]);
           } else {
             // Document missing from Firestore snapshot
             var ts = bk.createdAt ? new Date(bk.createdAt).getTime() : Date.now();
@@ -2464,19 +2477,25 @@
       if (!db) { el.innerHTML = fbErrHTML(); return; }
       el.innerHTML = '<div style="text-align:center;padding:2rem;color:#aaa;font-size:.8rem">Loading...</div>';
       try {
-        var snap = await db.collection('clients').orderBy('createdAt', 'desc').limit(100).get();
-        var list = []; snap.forEach(function (d) { list.push(Object.assign({ id: d.id }, d.data())); });
+        var snap = await db.collection('clients').orderBy('createdAt', 'desc').limit(200).get();
+        var all = []; snap.forEach(function (d) { all.push(Object.assign({ id: d.id }, d.data())); });
+        var list    = all.filter(function(c){ return !c.deleted; });
+        var deleted = all.filter(function(c){ return  c.deleted; });
         document.getElementById('s5').textContent = list.length;
-        if (!list.length) { el.innerHTML = '<div class="empty"><span class="material-symbols-outlined">people</span><div style="font-size:.8rem">No clients yet</div></div>'; return; }
-        el.innerHTML = list.map(function (c) {
+
+        function clientCardHTML(c, isDeleted) {
           var since = c.createdAt ? new Date(c.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
           var tag = c.createdByAdmin ? '<span class="bdg byw" style="margin-left:6px">Admin added</span>' : '<span class="bdg bgr" style="margin-left:6px">Self signup</span>';
-          var stat = c.status || 'Approved'; // Default to Approved for existing ones
+          var stat = c.status || 'Approved';
           var statColor = stat === 'Pending' ? '#f59e0b' : '#10b981';
-          return '<div class="card msgcard" style="margin-bottom:.625rem;cursor:pointer" onclick="openCliProfile(\'' + c.id + '\')"> ' +
+          var actionBtns = isDeleted
+            ? '<button onclick="event.stopPropagation();restoreClient(\'' + c.id + '\',\'' + e(c.name||c.phone||'client') + '\')" class="btn bo" style="font-size:.62rem"><span class="material-symbols-outlined" style="font-size:12px">restore</span>Restore</button>'
+            : '<a href="sms:' + (c.phone || '') + '" onclick="event.stopPropagation()" class="btn bk" style="text-decoration:none;font-size:.62rem"><span class="material-symbols-outlined" style="font-size:12px">sms</span>Text</a>' +
+              '<button onclick="event.stopPropagation();deleteClient(\'' + c.id + '\',\'' + e(c.name||c.phone||'client') + '\')" class="btn br" style="font-size:.62rem"><span class="material-symbols-outlined" style="font-size:12px">archive</span>Archive</button>';
+          return '<div class="card msgcard" style="margin-bottom:.625rem;cursor:pointer' + (isDeleted ? ';opacity:.6' : '') + '" onclick="openCliProfile(\'' + c.id + '\')">' +
             '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:.75rem">' +
             '<div>' +
-            '<div style="font-weight:700;margin-bottom:4px">' + e(c.name || c.phone || 'Unknown') + tag + 
+            '<div style="font-weight:700;margin-bottom:4px">' + e(c.name || c.phone || 'Unknown') + tag +
             ' <span class="bdg" style="background:'+statColor+'20;color:'+statColor+';margin-left:4px">'+stat+'</span></div>' +
             '<div class="crow"><span class="material-symbols-outlined">phone</span>' + e(c.phone || '—') + '</div>' +
             (c.email ? '<div class="crow"><span class="material-symbols-outlined">mail</span>' + e(c.email) + '</div>' : '') +
@@ -2484,22 +2503,40 @@
             '</div>' +
             '<div style="display:flex;flex-direction:column;gap:0.4rem;align-items:flex-end">' +
             '<div style="font-size:.68rem;color:#aaa;margin-bottom:.1rem">Since ' + since + '</div>' +
-            '<a href="sms:' + (c.phone || '') + '" onclick="event.stopPropagation()" class="btn bk" style="text-decoration:none;font-size:.62rem"><span class="material-symbols-outlined" style="font-size:12px">sms</span>Text</a>' +
-            '<button onclick="event.stopPropagation();deleteClient(\'' + c.id + '\',\'' + e(c.name||c.phone||'client') + '\')" class="btn br" style="font-size:.62rem"><span class="material-symbols-outlined" style="font-size:12px">delete_forever</span>Delete</button>' +
-            '</div>' +
-            '</div>' +
+            actionBtns +
+            '</div></div></div>';
+        }
+
+        var html = '';
+        if (!list.length) {
+          html = '<div class="empty"><span class="material-symbols-outlined">people</span><div style="font-size:.8rem">No clients yet</div></div>';
+        } else {
+          html = list.map(function(c){ return clientCardHTML(c, false); }).join('');
+        }
+        if (deleted.length) {
+          html += '<div style="margin-top:1.5rem;padding-top:1rem;border-top:1px dashed #ddd">' +
+            '<div style="font-family:\'Work Sans\',sans-serif;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#aaa;margin-bottom:0.75rem">Archived (' + deleted.length + ') — click Restore to recover</div>' +
+            deleted.map(function(c){ return clientCardHTML(c, true); }).join('') +
             '</div>';
-        }).join('');
+        }
+        el.innerHTML = html;
       } catch (ex) { el.innerHTML = fbErrHTML(ex.message); }
     }
 
     function deleteClient(id, name){
       if(!id||!db) return;
-      if(!confirm('\u26a0\ufe0f DELETE CLIENT ACCOUNT\n\nPermanently delete "' + name + '" from the server?\n\nThis cannot be undone.')) return;
-      if(!confirm('\ud83d\uded1 FINAL CONFIRMATION\n\nDelete "' + name + '"?\n\nClick OK to confirm.')) return;
-      db.collection('clients').doc(id).delete().then(function(){
-        toast('Client deleted.');
+      if(!confirm('\u26a0\ufe0f ARCHIVE CLIENT ACCOUNT\n\nArchive "' + name + '"?\n\nThe client will be hidden from the list but their trips and data are preserved. You can restore them at any time.')) return;
+      db.collection('clients').doc(id).update({ deleted: true, deletedAt: new Date().toISOString() }).then(function(){
+        toast('Client archived.');
         closeM('m-cli-detail');
+        loadClients();
+      }).catch(function(err){ toast('Error: '+err.message); });
+    }
+
+    function restoreClient(id, name){
+      if(!id||!db) return;
+      db.collection('clients').doc(id).update({ deleted: false, deletedAt: null }).then(function(){
+        toast('Client restored.');
         loadClients();
       }).catch(function(err){ toast('Error: '+err.message); });
     }
