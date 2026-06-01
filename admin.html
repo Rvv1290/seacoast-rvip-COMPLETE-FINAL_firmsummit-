@@ -2479,8 +2479,10 @@
       if (!db) { el.innerHTML = fbErrHTML(); return; }
       el.innerHTML = '<div style="text-align:center;padding:2rem;color:#aaa;font-size:.8rem">Loading...</div>';
       try {
-        var snap = await db.collection('clients').orderBy('createdAt', 'desc').limit(200).get();
+        var snap = await db.collection('clients').limit(500).get();
         var all = []; snap.forEach(function (d) { all.push(Object.assign({ id: d.id }, d.data())); });
+        // Sort newest first client-side so docs missing createdAt are still shown
+        all.sort(function(a,b){ return new Date(b.createdAt||0) - new Date(a.createdAt||0); });
         var list    = all.filter(function(c){ return !c.deleted; });
         var deleted = all.filter(function(c){ return  c.deleted; });
         document.getElementById('s5').textContent = list.length;
@@ -2854,11 +2856,11 @@
         if (!db) return;
         try {
           var results = [];
-          var snapN = await db.collection('clients').orderBy('name').startAt(q).endAt(q+'').limit(8).get();
-          snapN.forEach(function(d){ results.push({id:d.id,...d.data()}); });
+          var snapN = await db.collection('clients').orderBy('name').startAt(q).endAt(q+'').limit(12).get();
+          snapN.forEach(function(d){ var c={id:d.id,...d.data()}; if(!c.deleted) results.push(c); });
           if (results.length < 4) {
-            var snapE = await db.collection('clients').where('email','>=',q).where('email','<=',q+'').limit(5).get();
-            snapE.forEach(function(d){ if(!results.find(function(r){return r.id===d.id;})) results.push({id:d.id,...d.data()}); });
+            var snapE = await db.collection('clients').where('email','>=',q).where('email','<=',q+'').limit(8).get();
+            snapE.forEach(function(d){ var c={id:d.id,...d.data()}; if(!c.deleted&&!results.find(function(r){return r.id===d.id;})) results.push(c); });
           }
           if (!results.length) { res.innerHTML = '<div style="padding:.5rem .75rem;color:#aaa">No clients found</div>'; res.style.display='block'; return; }
           _fclientResults = results;
