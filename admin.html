@@ -743,8 +743,10 @@
             <div style="font-family:'Times New Roman',serif;font-size:1.1rem;font-weight:700">Registered Clients</div>
             <div style="font-size:.75rem;color:#888;margin-top:3px">Clients who signed up at account.html</div>
           </div>
-          <button onclick="loadClients()" class="btn bo"><span class="material-symbols-outlined"
-              style="font-size:14px">refresh</span>Refresh</button>
+          <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+            <button onclick="loadClients()" class="btn bo"><span class="material-symbols-outlined" style="font-size:14px">refresh</span>Refresh</button>
+            <button onclick="recoverDeletedClients()" class="btn bo" style="border-color:#7c3aed;color:#7c3aed"><span class="material-symbols-outlined" style="font-size:14px">restore_from_trash</span>Recover Deleted</button>
+          </div>
         </div>
         <div id="cl-list">
           <div class="empty"><span class="material-symbols-outlined">people</span>
@@ -2540,6 +2542,62 @@
         loadClients();
       }).catch(function(err){ toast('Error: '+err.message); });
     }
+
+    async function recoverDeletedClients() {
+      if(!db) return;
+      toast('Scanning for orphaned client data…');
+      try {
+        // 1. Collect all existing client doc IDs (including soft-deleted)
+        var clientsSnap = await db.collection('clients').limit(500).get();
+        var existingIds = {};
+        clientsSnap.forEach(function(d){ existingIds[d.id] = true; });
+
+        // 2. Scan all bookings for clientId values that have no matching client doc
+        var bookingsSnap = await db.collection('bookings').limit(500).get();
+        var orphanGroups = {}; // clientId -> [booking data]
+        bookingsSnap.forEach(function(d){
+          var b = d.data();
+          var cid = b.clientId;
+          if(cid && !existingIds[cid]){
+            if(!orphanGroups[cid]) orphanGroups[cid] = [];
+            orphanGroups[cid].push(b);
+          }
+        });
+
+        var orphanIds = Object.keys(orphanGroups);
+        if(!orphanIds.length){
+          return toast('No orphaned client data found — all trips are linked to existing accounts.');
+        }
+
+        // 3. Reconstruct and restore each orphaned client using their most recent trip data
+        var recovered = 0;
+        for(var i = 0; i < orphanIds.length; i++){
+          var cid = orphanIds[i];
+          var trips = orphanGroups[cid];
+          trips.sort(function(a,b){ return new Date(b.createdAt||0) - new Date(a.createdAt||0); });
+          var src = trips[0];
+          var clientData = {
+            name:           src.name  || 'Unknown',
+            phone:          src.phone || '',
+            email:          src.email || '',
+            status:         'Approved',
+            createdAt:      src.createdAt || new Date().toISOString(),
+            restoredAt:     new Date().toISOString(),
+            restoredFrom:   'orphaned-bookings-recovery',
+            createdByAdmin: true,
+            deleted:        false
+          };
+          try {
+            await db.collection('clients').doc(cid).set(clientData, { merge: true });
+            recovered++;
+          } catch(e){ console.warn('Recovery failed for', cid, e.message); }
+        }
+
+        toast('Recovered ' + recovered + ' client account' + (recovered !== 1 ? 's' : '') + ' from ' + orphanIds.length + ' orphaned IDs. Refreshing…');
+        setTimeout(loadClients, 1200);
+      } catch(ex){ toast('Recovery error: ' + ex.message); }
+    }
+
 
     async function openCliProfile(id) {
       if(!id || !db) return;
