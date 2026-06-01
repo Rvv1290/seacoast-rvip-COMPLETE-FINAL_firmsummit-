@@ -2574,7 +2574,6 @@
         for(var i = 0; i < orphanIds.length; i++){
           var cid = orphanIds[i];
           var trips = orphanGroups[cid];
-          // Use most recent trip as the source of truth for name/phone/email
           trips.sort(function(a,b){ return new Date(b.createdAt||0) - new Date(a.createdAt||0); });
           var src = trips[0];
           var clientData = {
@@ -2589,7 +2588,6 @@
             deleted:        false
           };
           try {
-            // Restore with the ORIGINAL client doc ID so all trips link up automatically
             await db.collection('clients').doc(cid).set(clientData, { merge: true });
             recovered++;
           } catch(e){ console.warn('Recovery failed for', cid, e.message); }
@@ -2599,6 +2597,7 @@
         setTimeout(loadClients, 1200);
       } catch(ex){ toast('Recovery error: ' + ex.message); }
     }
+
 
     async function openCliProfile(id) {
       if(!id || !db) return;
