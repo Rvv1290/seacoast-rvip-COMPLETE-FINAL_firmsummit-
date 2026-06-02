@@ -1318,9 +1318,13 @@
             </div>
           </div>
         </div>
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;border-bottom:1px solid #eee;padding-bottom:.5rem">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;border-bottom:1px solid #eee;padding-bottom:.5rem;flex-wrap:wrap;gap:.5rem">
           <div style="font-family:'Times New Roman',serif;font-weight:700;font-size:1.1rem">Trip History</div>
-          <button onclick="openAddForClient()" class="btn bgn" style="padding:.35rem .75rem;font-size:0.75rem"><span class="material-symbols-outlined" style="font-size:14px;vertical-align:middle">add</span> Add Trip</button>
+          <div style="display:flex;gap:.4rem;flex-wrap:wrap">
+            <button onclick="generateClientInvoice()" class="btn bo" style="padding:.35rem .75rem;font-size:0.72rem;border-color:#0369a1;color:#0369a1"><span class="material-symbols-outlined" style="font-size:14px;vertical-align:middle">receipt</span> Invoice</button>
+            <button onclick="generateClientStatement()" class="btn bo" style="padding:.35rem .75rem;font-size:0.72rem;border-color:#7c3aed;color:#7c3aed"><span class="material-symbols-outlined" style="font-size:14px;vertical-align:middle">description</span> Statement</button>
+            <button onclick="openAddForClient()" class="btn bgn" style="padding:.35rem .75rem;font-size:0.75rem"><span class="material-symbols-outlined" style="font-size:14px;vertical-align:middle">add</span> Add Trip</button>
+          </div>
         </div>
         <div id="cli-trips-list">
           <div class="empty"><span class="material-symbols-outlined">directions_car</span><div style="font-size:.8rem">Loading trips...</div></div>
@@ -2195,10 +2199,27 @@
           price: bk.price, code: bk.code, status: bk.status, clientId: assignClientId,
           updatedAt: new Date().toISOString() };
         if (eid) {
-          db.collection('clients').doc(assignClientId).collection('trips').where('bookingId','==',eid).limit(1).get()
-            .then(function(sn){ sn.empty ? db.collection('clients').doc(assignClientId).collection('trips').add(Object.assign({addedAt:new Date().toISOString()},subData)) : sn.docs[0].ref.set(subData,{merge:true}); }).catch(function(){});
+          // Try both lookups (bookingId field match OR doc-id match) and update the
+          // first one found. If neither exists, add fresh. Prevents duplicates from
+          // sub-trips that lack a bookingId field (backfilled / legacy docs).
+          var subRef = db.collection('clients').doc(assignClientId).collection('trips');
+          Promise.all([
+            subRef.where('bookingId','==',eid).limit(1).get(),
+            subRef.doc(eid).get()
+          ]).then(function(arr){
+            var byBookingId = arr[0], byDocId = arr[1];
+            if (!byBookingId.empty) {
+              byBookingId.docs[0].ref.set(subData, { merge: true });
+            } else if (byDocId.exists) {
+              byDocId.ref.set(subData, { merge: true });
+            } else {
+              subRef.doc(eid).set(Object.assign({ addedAt: new Date().toISOString() }, subData));
+            }
+          }).catch(function(){});
         } else {
-          db.collection('clients').doc(assignClientId).collection('trips').add(Object.assign({addedAt:new Date().toISOString()},subData)).catch(function(){});
+          // New trip — write subcollection doc using the booking id so future edits update in place
+          db.collection('clients').doc(assignClientId).collection('trips').doc(bk.id)
+            .set(Object.assign({ addedAt: new Date().toISOString() }, subData)).catch(function(){});
         }
       }
 
@@ -3019,6 +3040,92 @@
         // Reload the trip list
         openCliProfile(clientId);
       } catch(e) { toast('Error deleting trip: ' + e.message); }
+    }
+
+    // ── Client Invoice / Statement Generation ──────────────────────────────
+    function _collectClientTrips() {
+      var cache = window._cliTripsCache || {};
+      var trips = Object.keys(cache).map(function(k){ return cache[k]; });
+      trips.sort(function(a,b){ return new Date(a.date||0) - new Date(b.date||0); });
+      return trips;
+    }
+
+    function _escH(s) { return (s+'').replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+
+    function generateClientInvoice() {
+      var cid   = document.getElementById('cli-detail-id').value;
+      var cname = document.getElementById('cpr-name').value.trim();
+      var cph   = document.getElementById('cpr-fn').value.trim();
+      var cem   = document.getElementById('cpr-em').value.trim();
+      if (!cid) return toast('Open a client profile first');
+      var trips = _collectClientTrips().filter(function(t){
+        var s = (t.status||'').toLowerCase();
+        return s === 'confirmed' || s === 'completed';
+      });
+      if (!trips.length) return toast('No outstanding trips to invoice');
+      var rows = trips.map(function(t){
+        var d = new Date((t.date||'')+'T12:00:00');
+        var ds = isNaN(d.getTime()) ? '—' : d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+        return '<tr><td>'+ds+'</td><td>'+_escH(t.code||'—')+'</td><td>'+_escH(t.service||'—')+'</td><td>'+_escH(t.pickup||'')+' → '+_escH(t.destination||'')+'</td><td style="text-align:right">$'+(parseFloat(t.price)||0).toFixed(2)+'</td><td>'+_escH(t.status||'')+'</td></tr>';
+      }).join('');
+      var total = trips.reduce(function(s,t){ return s + (parseFloat(t.price)||0); }, 0);
+      var invNo = 'INV-' + new Date().getFullYear() + '-' + Date.now().toString().slice(-6);
+      var due   = new Date(Date.now()+30*864e5).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+      var w = window.open('', '_blank');
+      if (!w) return toast('Pop-up blocked — please allow pop-ups');
+      w.document.write('<html><head><title>Invoice '+invNo+' — '+_escH(cname)+'</title>');
+      w.document.write('<style>body{font-family:Arial,sans-serif;padding:2.5rem;max-width:800px;margin:0 auto;color:#111}table{width:100%;border-collapse:collapse;margin-top:1rem}th,td{border:1px solid #ddd;padding:8px;text-align:left;font-size:0.85rem}th{background:#111;color:#fff}h1{font-size:1.6rem;margin:0}.head{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #111;padding-bottom:1rem;margin-bottom:1.5rem}.muted{color:#666;font-size:0.85rem}.total{font-size:1.3rem;font-weight:700;margin-top:1rem;text-align:right}.gold{color:#775a19}@media print{body{padding:1rem}}</style>');
+      w.document.write('</head><body>');
+      w.document.write('<div class="head"><div><h1>SEACOAST <span class="gold">RVIP</span> LLC</h1><div class="muted">Premium Ground Transportation</div></div><div style="text-align:right"><div style="font-weight:700;letter-spacing:.1em">INVOICE</div><div class="muted">'+invNo+'</div><div class="muted">Due: '+due+'</div></div></div>');
+      w.document.write('<div style="display:flex;justify-content:space-between;margin-bottom:1rem"><div><strong>Bill To:</strong><br>'+_escH(cname||'—')+(cem?'<br>'+_escH(cem):'')+(cph?'<br>'+_escH(cph):'')+'</div><div><strong>Date:</strong> '+new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})+'</div></div>');
+      w.document.write('<table><thead><tr><th>Date</th><th>Conf#</th><th>Service</th><th>Route</th><th style="text-align:right">Amount</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table>');
+      w.document.write('<div class="total">Total Due: $'+total.toFixed(2)+'</div>');
+      w.document.write('<p class="muted" style="margin-top:2rem">Remit payment within 30 days. Questions: billing@seacoastrvip.com · (978) 255-3140 · seacoastrvip.com</p>');
+      w.document.write('</body></html>');
+      w.document.close();
+      setTimeout(function(){ try { w.print(); } catch(e){} }, 300);
+    }
+
+    function generateClientStatement() {
+      var cid   = document.getElementById('cli-detail-id').value;
+      var cname = document.getElementById('cpr-name').value.trim();
+      var cph   = document.getElementById('cpr-fn').value.trim();
+      var cem   = document.getElementById('cpr-em').value.trim();
+      if (!cid) return toast('Open a client profile first');
+      var fromStr = prompt('Statement start date (YYYY-MM-DD):', new Date(new Date().getFullYear(), new Date().getMonth()-1, 1).toISOString().slice(0,10));
+      if (!fromStr) return;
+      var toStr = prompt('Statement end date (YYYY-MM-DD):', new Date().toISOString().slice(0,10));
+      if (!toStr) return;
+      var from = new Date(fromStr+'T00:00:00');
+      var to   = new Date(toStr+'T23:59:59');
+      var trips = _collectClientTrips().filter(function(t){
+        var d = new Date((t.date||'')+'T12:00:00');
+        return !isNaN(d.getTime()) && d >= from && d <= to;
+      });
+      if (!trips.length) return toast('No trips in this period');
+      var rows = trips.map(function(t){
+        var d = new Date((t.date||'')+'T12:00:00');
+        var ds = d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+        return '<tr><td>'+ds+'</td><td>'+_escH(t.code||'—')+'</td><td>'+_escH(t.service||'—')+'</td><td>'+_escH(t.pickup||'')+' → '+_escH(t.destination||'')+'</td><td style="text-align:right">$'+(parseFloat(t.price)||0).toFixed(2)+'</td><td>'+_escH(t.status||'')+'</td></tr>';
+      }).join('');
+      var total = trips.reduce(function(s,t){ return s + (parseFloat(t.price)||0); }, 0);
+      var paid  = trips.filter(function(t){ return (t.status||'').toLowerCase()==='paid'; }).reduce(function(s,t){ return s + (parseFloat(t.price)||0); }, 0);
+      var outstanding = trips.filter(function(t){ var s=(t.status||'').toLowerCase(); return s==='confirmed'||s==='completed'; }).reduce(function(s,t){ return s + (parseFloat(t.price)||0); }, 0);
+      var period = from.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) + ' — ' + to.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+      var w = window.open('', '_blank');
+      if (!w) return toast('Pop-up blocked — please allow pop-ups');
+      w.document.write('<html><head><title>Statement — '+_escH(cname)+'</title>');
+      w.document.write('<style>body{font-family:Arial,sans-serif;padding:2.5rem;max-width:850px;margin:0 auto;color:#111}table{width:100%;border-collapse:collapse;margin-top:1rem}th,td{border:1px solid #ddd;padding:8px;text-align:left;font-size:0.85rem}th{background:#111;color:#fff}h1{font-size:1.6rem;margin:0}.head{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #111;padding-bottom:1rem;margin-bottom:1.5rem}.muted{color:#666;font-size:0.85rem}.summary{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin:1.5rem 0;padding:1rem;background:#f9f6ef;border-left:4px solid #775a19}.summary div{text-align:center}.summary .lbl{font-size:0.7rem;text-transform:uppercase;letter-spacing:0.08em;color:#666}.summary .val{font-size:1.1rem;font-weight:700;margin-top:4px}.gold{color:#775a19}@media print{body{padding:1rem}}</style>');
+      w.document.write('</head><body>');
+      w.document.write('<div class="head"><div><h1>SEACOAST <span class="gold">RVIP</span> LLC</h1><div class="muted">Premium Ground Transportation</div></div><div style="text-align:right"><div style="font-weight:700;letter-spacing:.1em">TRIP STATEMENT</div><div class="muted">'+_escH(period)+'</div><div class="muted">'+new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})+'</div></div></div>');
+      w.document.write('<div><strong>Account:</strong> '+_escH(cname||'—')+(cem?' · '+_escH(cem):'')+(cph?' · '+_escH(cph):'')+'</div>');
+      w.document.write('<div class="summary"><div><div class="lbl">Total Trips</div><div class="val">'+trips.length+'</div></div><div><div class="lbl">Period Total</div><div class="val">$'+total.toFixed(2)+'</div></div><div><div class="lbl">Outstanding</div><div class="val" style="color:#b91c1c">$'+outstanding.toFixed(2)+'</div></div></div>');
+      w.document.write('<table><thead><tr><th>Date</th><th>Conf#</th><th>Service</th><th>Route</th><th style="text-align:right">Amount</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table>');
+      w.document.write('<p class="muted" style="margin-top:2rem">Paid this period: $'+paid.toFixed(2)+' · Outstanding: $'+outstanding.toFixed(2)+'</p>');
+      w.document.write('<p class="muted">Questions: billing@seacoastrvip.com · (978) 255-3140 · seacoastrvip.com</p>');
+      w.document.write('</body></html>');
+      w.document.close();
+      setTimeout(function(){ try { w.print(); } catch(e){} }, 300);
     }
 
     async function approveClient(id) {
