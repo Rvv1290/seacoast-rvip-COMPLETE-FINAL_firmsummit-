@@ -2196,7 +2196,7 @@
       if (assignClientId && db) {
         var subData = { bookingId: bk.id, service: bk.service, date: bk.date, time: bk.time,
           pickup: bk.pickup, destination: bk.destination, vehicle: bk.vehicle,
-          price: bk.price, code: bk.code, status: bk.status, clientId: assignClientId,
+          price: bk.price, tip: bk.tip || 0, code: bk.code, status: bk.status, clientId: assignClientId,
           updatedAt: new Date().toISOString() };
         if (eid) {
           // Try both lookups (bookingId field match OR doc-id match) and update the
@@ -2742,23 +2742,26 @@
         
         openM('m-cli-detail');
         
-        // Load trips — merge subcollection + global bookings tagged with clientId
-        var seen = {}, trips = [];
+        // Load trips — bookings collection first (has complete data incl. tip),
+        // then subcollection for any legacy trips not yet backfilled to bookings.
+        var seen = {}, trips = [], bookingIdsForClient = {};
+        var bSnap = await db.collection('bookings').where('clientId','==',id).limit(100).get();
+        bSnap.forEach(function(bdoc) {
+          var t = bdoc.data(); t._id = bdoc.id;
+          bookingIdsForClient[bdoc.id] = true;
+          seen[bdoc.id] = true;
+          trips.push(t);
+        });
         var tSnap = await db.collection('clients').doc(id).collection('trips').orderBy('date','desc').limit(50).get();
         var subTrips = []; // remember subcollection trips for backfill
         tSnap.forEach(function(tdoc) {
           var t = tdoc.data(); t._id = tdoc.id;
-          // Skip if we've already seen this trip (by doc id or by its linked booking id)
+          subTrips.push(t);
+          // Skip if already loaded from bookings (by booking doc id or by bookingId field)
           if (seen[tdoc.id] || (t.bookingId && seen[t.bookingId])) return;
           seen[tdoc.id] = true;
-          if (t.bookingId) seen[t.bookingId] = true; // prevent booking with same id from being added again
-          trips.push(t); subTrips.push(t);
-        });
-        var bSnap = await db.collection('bookings').where('clientId','==',id).limit(100).get();
-        var bookingIdsForClient = {}; // bookingId -> true
-        bSnap.forEach(function(bdoc) {
-          bookingIdsForClient[bdoc.id] = true;
-          if(!seen[bdoc.id]){ seen[bdoc.id]=true; var t=bdoc.data(); t._id=bdoc.id; trips.push(t); }
+          if (t.bookingId) seen[t.bookingId] = true;
+          trips.push(t);
         });
         trips.sort(function(a,b){ return new Date(b.date||0)-new Date(a.date||0); });
 
