@@ -1021,18 +1021,18 @@ function previousPeriodStart() {
   return new Date(now.getFullYear(), now.getMonth() - 1, 1);
 }
 
-// Outstanding balance = Completed trips from the LAST closed billing period only.
-// Completed = driver did the ride; Paid = client has already settled it.
+// Outstanding balance = ALL unpaid trips from ANY past closed billing period.
+// "Paid" and "Cancelled" are excluded; everything else from before the current period counts.
 // If admin manually set/cleared the balance more recently than the last period start,
 // that stored value is used instead (see renderDashBalance / calcStats).
 function calcPeriodBalance() {
-  var prevStart = previousPeriodStart();
-  var cutoff    = currentPeriodStart(); // exclusive upper bound
+  var cutoff = currentPeriodStart(); // anything before this is a past (closed) period
   var total = 0;
   _trips.forEach(function(t) {
-    if (t.status !== 'Completed') return; // only rides that actually happened
+    var s = (t.status || '').toLowerCase();
+    if (s === 'paid' || s === 'cancelled') return; // already settled or voided
     var d = new Date((t.date || '') + 'T12:00:00');
-    if (isNaN(d.getTime()) || d < prevStart || d >= cutoff) return;
+    if (isNaN(d.getTime()) || d >= cutoff) return; // current-period or undated trips not due yet
     var p = parseFloat((t.price + '').replace(/[^0-9.]/g, ''));
     var tip = parseFloat(t.tip) || 0;
     if (!isNaN(p)) total += p + tip;
@@ -1041,7 +1041,7 @@ function calcPeriodBalance() {
 }
 
 // Which balance to display: if admin updated it after last period start, respect that;
-// otherwise calculate from completed trips.
+// otherwise calculate from all unpaid past-period trips.
 function getDisplayBalance() {
   var prevStart = previousPeriodStart();
   var manuallySet = _balanceUpdatedAt && new Date(_balanceUpdatedAt) >= prevStart;
