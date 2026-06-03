@@ -1021,16 +1021,19 @@ function previousPeriodStart() {
   return new Date(now.getFullYear(), now.getMonth() - 1, 1);
 }
 
-// Outstanding balance = ALL unpaid trips from ANY past closed billing period.
-// "Paid" and "Cancelled" are excluded; everything else from before the current period counts.
+// Outstanding balance = Completed (done, not yet paid) trips from ANY past closed billing period,
+// scoped strictly to trips linked to this account via corporateAccountId (not by email/company
+// which could accidentally include other accounts' bookings).
 // If admin manually set/cleared the balance more recently than the last period start,
 // that stored value is used instead (see renderDashBalance / calcStats).
 function calcPeriodBalance() {
   var cutoff = currentPeriodStart(); // anything before this is a past (closed) period
   var total = 0;
-  _trips.forEach(function(t) {
-    var s = (t.status || '').toLowerCase();
-    if (s === 'paid' || s === 'cancelled') return; // already settled or voided
+  // Use only _tripsByAccId (corporateAccountId match) to avoid cross-account contamination
+  // from email/phone/company-name listeners that can pull in other clients' bookings.
+  var scopedTrips = _tripsByAccId.length ? _tripsByAccId : _trips;
+  scopedTrips.forEach(function(t) {
+    if (t.status !== 'Completed') return; // only rides that happened and haven't been paid
     var d = new Date((t.date || '') + 'T12:00:00');
     if (isNaN(d.getTime()) || d >= cutoff) return; // current-period or undated trips not due yet
     var p = parseFloat((t.price + '').replace(/[^0-9.]/g, ''));
