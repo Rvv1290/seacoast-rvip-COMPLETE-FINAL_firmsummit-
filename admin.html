@@ -1943,7 +1943,7 @@
           '<div class="crow"><span class="material-symbols-outlined">phone</span>' + e(b.phone || '—') + (b.email ? ' · ' + e(b.email) : '') + '</div>' +
           '</div>' +
           '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:.5rem">' +
-          '<div style="font-family:\'Times New Roman\',serif;font-size:1.6rem;font-weight:700;color:#775a19">$' + (b.price || '—') + '</div>' +
+          '<div style="font-family:\'Times New Roman\',serif;font-size:1.6rem;font-weight:700;color:#775a19">$' + ((parseFloat(b.price)||0)+(parseFloat(b.tip)||0)).toFixed(2) + (parseFloat(b.tip)>0?'<div style="font-size:0.7rem;font-weight:400;color:#888;text-align:right">$'+(parseFloat(b.price)||0).toFixed(2)+' + $'+(parseFloat(b.tip)||0).toFixed(2)+' tip</div>':'') + '</div>' +
           '<div style="display:flex;gap:.375rem;flex-wrap:wrap;justify-content:flex-end">' +
           payDriverBtnHtml +
           (b.status === 'Pending' ? '<button onclick="quickConfirm(\'' + b.id + '\')" class="btn bg" style="font-size:.62rem;background:#16a34a;color:#fff;border-color:#15803d"><span class="material-symbols-outlined" style="font-size:13px">check_circle</span>Confirm</button>' : '') +
@@ -2390,17 +2390,21 @@
       if (!b) return;
       curPayBk = b;
 
+      var _bFare = parseFloat(b.price) || 0;
+      var _bTip  = parseFloat(b.tip)  || 0;
+      var _bTotal = (_bFare + _bTip).toFixed(2);
       var link = SITE + '/payment.html?code=' + encodeURIComponent(b.code || '');
       var msg = 'Hi ' + ((b.name || '').split(' ')[0] || 'there') + '! Your Seacoast RVIP ride is confirmed for ' +
         (b.date || '—') + ' at ' + fT(b.time) +
-        '.\n\nFare: $' + b.price + '\nPay here: ' + link +
+        '.\n\nFare: $' + _bFare.toFixed(2) + (_bTip > 0 ? ' + Tip: $' + _bTip.toFixed(2) : '') + '\nTotal: $' + _bTotal +
+        '\nPay here: ' + link +
         '\n\nCode: ' + (b.code || '—') + '\n— Ramon (978) 255-3140';
 
       document.getElementById('pay-info').innerHTML =
         '<strong>' + e(b.name) + '</strong><br>' +
-        '<span style="color:#666;font-size:.78rem">' + e(b.phone) + ' · ' + e(b.date || '—') + ' · $' + b.price + '</span>';
+        '<span style="color:#666;font-size:.78rem">' + e(b.phone) + ' · ' + e(b.date || '—') + ' · $' + _bTotal + (_bTip > 0 ? ' (incl. $' + _bTip.toFixed(2) + ' tip)' : '') + '</span>';
       document.getElementById('pay-link-txt').textContent = link;
-      document.getElementById('pay-amount').textContent = '$' + b.price;
+      document.getElementById('pay-amount').textContent = '$' + _bTotal;
       document.getElementById('pay-msg').value = msg;
       openM('m-pay');
     }
