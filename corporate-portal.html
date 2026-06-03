@@ -1034,7 +1034,8 @@ function calcPeriodBalance() {
     var d = new Date((t.date || '') + 'T12:00:00');
     if (isNaN(d.getTime()) || d < prevStart || d >= cutoff) return;
     var p = parseFloat((t.price + '').replace(/[^0-9.]/g, ''));
-    if (!isNaN(p)) total += p;
+    var tip = parseFloat(t.tip) || 0;
+    if (!isNaN(p)) total += p + tip;
   });
   return total;
 }
@@ -1753,7 +1754,7 @@ function calcStats(){
     if(d.getMonth()===thisMonth&&d.getFullYear()===thisYear)monthCount++;
     var p=parseFloat((t.price+'').replace(/[^0-9.]/g,''));
     if(t.status==='Completed'){completedCount++;if(!isNaN(p))totalSpend+=p;}
-    else if(t.price&&!isNaN(p))totalBal+=p;
+    else if(t.price&&!isNaN(p))totalBal+=p+(parseFloat(t.tip)||0);
   });
   document.getElementById('stat-month').textContent=monthCount;
   document.getElementById('stat-total').textContent=_trips.length;
@@ -2244,7 +2245,7 @@ function printNet30(){
   var now=new Date();
   var thirtyAgo=new Date(now.getTime()-30*24*60*60*1000);
   var recent=_trips.filter(function(t){return new Date(t.date)>=thirtyAgo;});
-  var total=recent.reduce(function(s,t){var p=parseFloat((t.price+'').replace(/[^0-9.]/g,''));return s+(isNaN(p)?0:p);},0);
+  var total=recent.reduce(function(s,t){var p=parseFloat((t.price+'').replace(/[^0-9.]/g,''));var tip=parseFloat(t.tip)||0;return s+(isNaN(p)?0:p+tip);},0);
   var rows=recent.map(function(t){
     return '<tr><td>'+t.date+'</td><td>'+escH(t.code||'')+'</td><td>'+escH(t.service||'')+'</td><td>'+escH(t.pickup||'')+'</td><td>'+escH(t.destination||'')+'</td><td style="text-align:right">$'+(parseFloat(t.price)||0).toFixed(2)+'</td><td>'+t.status+'</td></tr>';
   }).join('');
@@ -2513,7 +2514,7 @@ function filterStmt(){
     var d = new Date(t.date+'T12:00:00');
     return d>=from && d<=to;
   });
-  var total = _stmtFiltered.reduce(function(s,t){var p=parseFloat((t.price+'').replace(/[^0-9.]/g,''));return s+(isNaN(p)?0:p);},0);
+  var total = _stmtFiltered.reduce(function(s,t){var p=parseFloat((t.price+'').replace(/[^0-9.]/g,''));var tip=parseFloat(t.tip)||0;return s+(isNaN(p)?0:p+tip);},0);
   document.getElementById('stmt-period-lbl').textContent = periodLabel;
   document.getElementById('stmt-trip-count').textContent = _stmtFiltered.length;
   document.getElementById('stmt-total-amt').textContent  = '$'+total.toFixed(2);
@@ -2536,8 +2537,8 @@ function filterStmt(){
 function printStmtPDF(){
   if(!_stmtFiltered.length){alert('Generate a statement first.');return;}
   var periodLbl = document.getElementById('stmt-period-lbl').textContent;
-  var total = _stmtFiltered.reduce(function(s,t){var p=parseFloat((t.price+'').replace(/[^0-9.]/g,''));return s+(isNaN(p)?0:p);},0);
-  var paidBase = _stmtFiltered.filter(function(t){return t.status==='Paid'||t.status==='Completed';}).reduce(function(s,t){return s+(parseFloat(t.price)||0);},0);
+  var total = _stmtFiltered.reduce(function(s,t){var p=parseFloat((t.price+'').replace(/[^0-9.]/g,''));var tip=parseFloat(t.tip)||0;return s+(isNaN(p)?0:p+tip);},0);
+  var paidBase = _stmtFiltered.filter(function(t){return t.status==='Paid'||t.status==='Completed';}).reduce(function(s,t){return s+(parseFloat(t.price)||0)+(parseFloat(t.tip)||0);},0);
   var feeTotal = parseFloat((paidBase*0.029).toFixed(2));
   var grandTotal = total + feeTotal;
   var rows = _stmtFiltered.map(function(t){
@@ -2575,7 +2576,7 @@ function printStmtPDF(){
 function printNet30Filtered(){
   if(!_stmtFiltered.length){alert('Generate a statement first.');return;}
   var periodLbl = document.getElementById('stmt-period-lbl').textContent;
-  var total = _stmtFiltered.reduce(function(s,t){var p=parseFloat((t.price+'').replace(/[^0-9.]/g,''));return s+(isNaN(p)?0:p);},0);
+  var total = _stmtFiltered.reduce(function(s,t){var p=parseFloat((t.price+'').replace(/[^0-9.]/g,''));var tip=parseFloat(t.tip)||0;return s+(isNaN(p)?0:p+tip);},0);
   var rows = _stmtFiltered.map(function(t){
     return '<tr><td>'+t.date+'</td><td>'+escH(t.code||'')+'</td><td>'+escH(t.service||'')+'</td><td>'+escH(t.pickup||'')+'</td><td>'+escH(t.destination||'')+'</td><td style="text-align:right">$'+(parseFloat(t.price)||0).toFixed(2)+'</td><td>'+t.status+'</td></tr>';
   }).join('');
