@@ -1787,9 +1787,9 @@ function updateDashboardUI(){
     const since = new Date(currentUser.lastPaymentDate);
     balance = confirmed
       .filter(t => new Date(t.date) >= since)
-      .reduce((s, t) => s + parseFloat(t.price || 0), 0);
+      .reduce((s, t) => s + parseFloat(t.price || 0) + parseFloat(t.tip || 0), 0);
   } else {
-    balance = confirmed.reduce((s, t) => s + parseFloat(t.price || 0), 0);
+    balance = confirmed.reduce((s, t) => s + parseFloat(t.price || 0) + parseFloat(t.tip || 0), 0);
   }
   document.getElementById('stat-balance').textContent = `$${balance.toFixed(2)}`;
   
@@ -1942,8 +1942,8 @@ function renderInvoicesList(list){
           <div style="font-size:0.75rem;color:#666">${t.pickup} → ${t.destination}</div>
        </div>
        <div style="text-align:right">
-          <div style="font-weight:700;color:#d32f2f;margin-bottom:6px">$${parseFloat(t.price).toFixed(2)}</div>
-          <button onclick="payTrip('${t.id}',${t.price})" class="btn-k" style="padding:0.4rem 0.8rem;font-size:0.6rem">Pay Now</button>
+          <div style="font-weight:700;color:#d32f2f;margin-bottom:6px">$${(parseFloat(t.price||0)+parseFloat(t.tip||0)).toFixed(2)}${parseFloat(t.tip||0)>0?`<span style="font-size:0.65rem;font-weight:400;color:#888;display:block">incl. $${parseFloat(t.tip).toFixed(2)} tip</span>`:''}</div>
+          <button onclick="payTrip('${t.id}',${(parseFloat(t.price||0)+parseFloat(t.tip||0))})" class="btn-k" style="padding:0.4rem 0.8rem;font-size:0.6rem">Pay Now</button>
        </div>
     </div>
   `).join('');
@@ -1974,7 +1974,7 @@ function tripCard(t, showBtns=false){
           </div>
         </div>
         <div class="t-actions">
-          ${t.price?`<div style="font-weight:700">$${parseFloat(t.price).toFixed(2)}</div>`:''}
+          ${t.price?`<div style="font-weight:700">$${(parseFloat(t.price||0)+parseFloat(t.tip||0)).toFixed(2)}${parseFloat(t.tip||0)>0?`<div style="font-size:0.65rem;font-weight:400;color:#888">incl. $${parseFloat(t.tip).toFixed(2)} tip</div>`:''}</div>`:''}
           ${showBtns?`
             <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
                ${canEdit?`<button onclick="openEditTrip('${t.id}')" class="trip-link-btn">Modify</button>`:''}

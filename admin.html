@@ -1847,7 +1847,7 @@
       var bks = getBks();
       var up = bks.filter(function (b) { return b.status === 'Confirmed' || b.status === 'Pending'; }).length;
       var rev = bks.filter(function (b) { return b.status === 'Paid' || b.status === 'Completed'; })
-        .reduce(function (s, b) { return s + (parseFloat(b.price) || 0); }, 0);
+        .reduce(function (s, b) { return s + (parseFloat(b.price) || 0) + (parseFloat(b.tip) || 0); }, 0);
       var pendingPayCount = bks.filter(function (b) { return b.status === 'Pending' || b.status === 'Confirmed'; }).length;
       document.getElementById('s1').textContent = bks.length;
       document.getElementById('s2').textContent = up;
@@ -2806,7 +2806,7 @@
               '<div style="font-size:0.72rem;color:#777;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + e((t.pickup||'').substring(0,30)) + ' → ' + e((t.destination||'').substring(0,30)) + '</div>' +
               '</div>' +
               '<div style="text-align:right;flex-shrink:0">' +
-              '<div style="font-weight:700;color:'+statusColor+'">$' + (parseFloat(t.price)||0).toFixed(2) + '</div>' +
+              '<div style="font-weight:700;color:'+statusColor+'">'+(function(){ var total=(parseFloat(t.price)||0)+(parseFloat(t.tip)||0); var tipAmt=parseFloat(t.tip)||0; return '$'+total.toFixed(2)+(tipAmt>0?'<span style="font-size:0.65rem;font-weight:400;color:#888;margin-left:3px">(+$'+tipAmt.toFixed(2)+' tip)</span>':''); })()+'</div>' +
               '<div style="font-size:0.6rem;text-transform:uppercase;font-weight:700;color:#aaa;margin-bottom:4px">' + e(t.status || 'Pending') + '</div>' +
               '<div style="display:flex;gap:4px;justify-content:flex-end">' +
               '<button onclick="openEditTripForClient(\''+t._id+'\',\''+id+'\')" style="font-size:0.65rem;padding:2px 8px;background:#fff;border:1px solid #775a19;color:#775a19;cursor:pointer;font-family:Inter,sans-serif;border-radius:2px">Edit</button>' +
@@ -3068,9 +3068,10 @@
       var rows = trips.map(function(t){
         var d = new Date((t.date||'')+'T12:00:00');
         var ds = isNaN(d.getTime()) ? '—' : d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
-        return '<tr><td>'+ds+'</td><td>'+_escH(t.code||'—')+'</td><td>'+_escH(t.service||'—')+'</td><td>'+_escH(t.pickup||'')+' → '+_escH(t.destination||'')+'</td><td style="text-align:right">$'+(parseFloat(t.price)||0).toFixed(2)+'</td><td>'+_escH(t.status||'')+'</td></tr>';
+        var fare=(parseFloat(t.price)||0), tip=(parseFloat(t.tip)||0), tot=fare+tip;
+        return '<tr><td>'+ds+'</td><td>'+_escH(t.code||'—')+'</td><td>'+_escH(t.service||'—')+'</td><td>'+_escH(t.pickup||'')+' → '+_escH(t.destination||'')+'</td><td style="text-align:right">$'+fare.toFixed(2)+'</td><td style="text-align:right">'+(tip>0?'$'+tip.toFixed(2):'—')+'</td><td style="text-align:right;font-weight:600">$'+tot.toFixed(2)+'</td><td>'+_escH(t.status||'')+'</td></tr>';
       }).join('');
-      var total = trips.reduce(function(s,t){ return s + (parseFloat(t.price)||0); }, 0);
+      var total = trips.reduce(function(s,t){ return s + (parseFloat(t.price)||0) + (parseFloat(t.tip)||0); }, 0);
       var invNo = 'INV-' + new Date().getFullYear() + '-' + Date.now().toString().slice(-6);
       var due   = new Date(Date.now()+30*864e5).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
       var w = window.open('', '_blank');
@@ -3080,7 +3081,7 @@
       w.document.write('</head><body>');
       w.document.write('<div class="head"><div><h1>SEACOAST <span class="gold">RVIP</span> LLC</h1><div class="muted">Premium Ground Transportation</div></div><div style="text-align:right"><div style="font-weight:700;letter-spacing:.1em">INVOICE</div><div class="muted">'+invNo+'</div><div class="muted">Due: '+due+'</div></div></div>');
       w.document.write('<div style="display:flex;justify-content:space-between;margin-bottom:1rem"><div><strong>Bill To:</strong><br>'+_escH(cname||'—')+(cem?'<br>'+_escH(cem):'')+(cph?'<br>'+_escH(cph):'')+'</div><div><strong>Date:</strong> '+new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})+'</div></div>');
-      w.document.write('<table><thead><tr><th>Date</th><th>Conf#</th><th>Service</th><th>Route</th><th style="text-align:right">Amount</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table>');
+      w.document.write('<table><thead><tr><th>Date</th><th>Conf#</th><th>Service</th><th>Route</th><th style="text-align:right">Fare</th><th style="text-align:right">Tip</th><th style="text-align:right">Total</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table>');
       w.document.write('<div class="total">Total Due: $'+total.toFixed(2)+'</div>');
       w.document.write('<p class="muted" style="margin-top:2rem">Remit payment within 30 days. Questions: billing@seacoastrvip.com · (978) 255-3140 · seacoastrvip.com</p>');
       w.document.write('</body></html>');
@@ -3108,11 +3109,12 @@
       var rows = trips.map(function(t){
         var d = new Date((t.date||'')+'T12:00:00');
         var ds = d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
-        return '<tr><td>'+ds+'</td><td>'+_escH(t.code||'—')+'</td><td>'+_escH(t.service||'—')+'</td><td>'+_escH(t.pickup||'')+' → '+_escH(t.destination||'')+'</td><td style="text-align:right">$'+(parseFloat(t.price)||0).toFixed(2)+'</td><td>'+_escH(t.status||'')+'</td></tr>';
+        var fare=(parseFloat(t.price)||0), tip=(parseFloat(t.tip)||0), tot=fare+tip;
+        return '<tr><td>'+ds+'</td><td>'+_escH(t.code||'—')+'</td><td>'+_escH(t.service||'—')+'</td><td>'+_escH(t.pickup||'')+' → '+_escH(t.destination||'')+'</td><td style="text-align:right">$'+fare.toFixed(2)+'</td><td style="text-align:right">'+(tip>0?'$'+tip.toFixed(2):'—')+'</td><td style="text-align:right;font-weight:600">$'+tot.toFixed(2)+'</td><td>'+_escH(t.status||'')+'</td></tr>';
       }).join('');
-      var total = trips.reduce(function(s,t){ return s + (parseFloat(t.price)||0); }, 0);
-      var paid  = trips.filter(function(t){ return (t.status||'').toLowerCase()==='paid'; }).reduce(function(s,t){ return s + (parseFloat(t.price)||0); }, 0);
-      var outstanding = trips.filter(function(t){ var s=(t.status||'').toLowerCase(); return s==='confirmed'||s==='completed'; }).reduce(function(s,t){ return s + (parseFloat(t.price)||0); }, 0);
+      var total = trips.reduce(function(s,t){ return s + (parseFloat(t.price)||0) + (parseFloat(t.tip)||0); }, 0);
+      var paid  = trips.filter(function(t){ return (t.status||'').toLowerCase()==='paid'; }).reduce(function(s,t){ return s + (parseFloat(t.price)||0) + (parseFloat(t.tip)||0); }, 0);
+      var outstanding = trips.filter(function(t){ var s=(t.status||'').toLowerCase(); return s==='confirmed'||s==='completed'; }).reduce(function(s,t){ return s + (parseFloat(t.price)||0) + (parseFloat(t.tip)||0); }, 0);
       var period = from.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) + ' — ' + to.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
       var w = window.open('', '_blank');
       if (!w) return toast('Pop-up blocked — please allow pop-ups');
@@ -3122,7 +3124,7 @@
       w.document.write('<div class="head"><div><h1>SEACOAST <span class="gold">RVIP</span> LLC</h1><div class="muted">Premium Ground Transportation</div></div><div style="text-align:right"><div style="font-weight:700;letter-spacing:.1em">TRIP STATEMENT</div><div class="muted">'+_escH(period)+'</div><div class="muted">'+new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})+'</div></div></div>');
       w.document.write('<div><strong>Account:</strong> '+_escH(cname||'—')+(cem?' · '+_escH(cem):'')+(cph?' · '+_escH(cph):'')+'</div>');
       w.document.write('<div class="summary"><div><div class="lbl">Total Trips</div><div class="val">'+trips.length+'</div></div><div><div class="lbl">Period Total</div><div class="val">$'+total.toFixed(2)+'</div></div><div><div class="lbl">Outstanding</div><div class="val" style="color:#b91c1c">$'+outstanding.toFixed(2)+'</div></div></div>');
-      w.document.write('<table><thead><tr><th>Date</th><th>Conf#</th><th>Service</th><th>Route</th><th style="text-align:right">Amount</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table>');
+      w.document.write('<table><thead><tr><th>Date</th><th>Conf#</th><th>Service</th><th>Route</th><th style="text-align:right">Fare</th><th style="text-align:right">Tip</th><th style="text-align:right">Total</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table>');
       w.document.write('<p class="muted" style="margin-top:2rem">Paid this period: $'+paid.toFixed(2)+' · Outstanding: $'+outstanding.toFixed(2)+'</p>');
       w.document.write('<p class="muted">Questions: billing@seacoastrvip.com · (978) 255-3140 · seacoastrvip.com</p>');
       w.document.write('</body></html>');
@@ -4077,7 +4079,7 @@
 
       var completed=0, revenue=0, pending=0, outstandingBal=0;
       trips.forEach(function(t){
-        var p=parseFloat((t.price+'').replace(/[^0-9.]/g,''))||0;
+        var p=(parseFloat((t.price+'').replace(/[^0-9.]/g,''))||0) + (parseFloat(t.tip)||0);
         if(t.status==='Completed'||t.status==='Paid'){ completed++; revenue+=p; }
         else if(t.status!=='Cancelled'){ pending++; }
         // Outstanding = non-Paid, non-Cancelled trips in CLOSED billing periods
