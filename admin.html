@@ -1845,18 +1845,19 @@
     // ─────────────────────────────────────────────
     function renderBks() {
       var bks = getBks();
-      var up = bks.filter(function (b) { return b.status === 'Confirmed' || b.status === 'Pending'; }).length;
-      var rev = bks.filter(function (b) { return b.status === 'Paid' || b.status === 'Completed'; })
+      var activeBks = bks.filter(function(b){ return !b.deleted; });
+      var up = activeBks.filter(function (b) { return b.status === 'Confirmed' || b.status === 'Pending'; }).length;
+      var rev = activeBks.filter(function (b) { return b.status === 'Paid' || b.status === 'Completed'; })
         .reduce(function (s, b) { return s + (parseFloat(b.price) || 0) + (parseFloat(b.tip) || 0); }, 0);
-      var pendingPayCount = bks.filter(function (b) { return b.status === 'Pending' || b.status === 'Confirmed'; }).length;
-      document.getElementById('s1').textContent = bks.length;
+      var pendingPayCount = activeBks.filter(function (b) { return b.status === 'Pending' || b.status === 'Confirmed'; }).length;
+      document.getElementById('s1').textContent = activeBks.length;
       document.getElementById('s2').textContent = up;
       document.getElementById('s3').textContent = '$' + rev.toFixed(0);
       document.getElementById('s4').textContent = pendingPayCount;
       var badge = document.getElementById('pending-pay-badge');
       if (badge) badge.textContent = pendingPayCount;
 
-      var list = bks.filter(function (b) {
+      var list = activeBks.filter(function (b) {
         // 1. Status Tab Filter
         if (curTab === 'confirmed') if (b.status !== 'Confirmed') return false;
         if (curTab === 'pending-payments') if (b.status !== 'Pending' && b.status !== 'Confirmed') return false;
@@ -1903,8 +1904,9 @@
       });
 
       var lEl = document.getElementById('bk-list'), eEl = document.getElementById('bk-empty');
-      if (!list.length) { lEl.innerHTML = ''; eEl.style.display = 'block'; return; }
-      eEl.style.display = 'none';
+      var trashBks = bks.filter(function(b){ return b.deleted; });
+      if (!list.length && !trashBks.length) { lEl.innerHTML = ''; eEl.style.display = 'block'; return; }
+      if (!list.length) { lEl.innerHTML = ''; } else { eEl.style.display = 'none'; }
 
       var SC = { Pending: 'byw', Confirmed: 'bbl', Paid: 'bgr', Completed: 'bgr', Cancelled: 'brd' };
       var drs = getDrivers();
@@ -1958,7 +1960,50 @@
           (b.pickup ? getMapEmbedHtml(b.pickup, b.destination) : '') +
           '</div>';
       }).join('');
+      // Trash bin section
+      var trashHtml = '';
+      if (trashBks.length) {
+        trashHtml = '<div style="margin-top:1.5rem">' +
+          '<div onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display===\'none\'?\'block\':\'none\'" style="display:flex;align-items:center;gap:.5rem;cursor:pointer;padding:.5rem .75rem;background:#fee2e2;border-radius:6px 6px 0 0;border:1px solid #fca5a5">' +
+          '<span class="material-symbols-outlined" style="color:#dc2626;font-size:16px">delete</span>' +
+          '<span style="font-weight:600;font-size:.8rem;color:#dc2626">Trash (' + trashBks.length + ' booking' + (trashBks.length>1?'s':'') + ') — click to expand</span>' +
+          '</div>' +
+          '<div style="display:none;border:1px solid #fca5a5;border-top:none;border-radius:0 0 6px 6px;overflow:hidden">' +
+          trashBks.map(function(b){
+            return '<div style="padding:.75rem 1rem;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #fee2e2;background:#fff5f5;gap:.5rem">' +
+              '<div style="flex:1;min-width:0">' +
+              '<div style="font-weight:600;font-size:.82rem;color:#555">' + e(b.name||'—') + ' · ' + e(b.date||'—') + '</div>' +
+              '<div style="font-size:.72rem;color:#aaa">' + e(b.service||'') + ' · $' + ((parseFloat(b.price)||0)+(parseFloat(b.tip)||0)).toFixed(2) + ' · ' + e(b.status||'') + '</div>' +
+              '</div>' +
+              '<div style="display:flex;gap:.375rem;flex-shrink:0">' +
+              '<button onclick="restoreBk(\'' + b.id + '\')" class="btn bo" style="font-size:.62rem;color:#16a34a;border-color:#16a34a"><span class="material-symbols-outlined" style="font-size:13px">restore_from_trash</span>Restore</button>' +
+              '<button onclick="permDeleteBk(\'' + b.id + '\')" class="btn br" style="font-size:.62rem"><span class="material-symbols-outlined" style="font-size:13px">delete_forever</span>Delete Forever</button>' +
+              '</div>' +
+              '</div>';
+          }).join('') +
+          '</div></div>';
+      }
+      lEl.insertAdjacentHTML('beforeend', trashHtml);
       setTimeout(admInitCardMaps, 80);
+    }
+
+    function restoreBk(id) {
+      var bks = getBks();
+      var idx = bks.findIndex(function(b){ return b.id === id; });
+      if (idx > -1) { delete bks[idx].deleted; delete bks[idx].deletedAt; }
+      setBks(bks);
+      if (db) db.collection('bookings').doc(id).update({
+        deleted: firebase.firestore.FieldValue.delete(),
+        deletedAt: firebase.firestore.FieldValue.delete()
+      }).catch(function(){});
+      renderBks(); toast('Booking restored');
+    }
+
+    function permDeleteBk(id) {
+      if (!confirm('Permanently delete this booking? This cannot be undone.')) return;
+      setBks(getBks().filter(function(b){ return b.id !== id; }));
+      if (db) db.collection('bookings').doc(id).delete().catch(function(){});
+      renderBks(); toast('Permanently deleted');
     }
 
     function initiateDriverPay(bkId) {
@@ -2234,10 +2279,13 @@
     }
 
     function delBk(id) {
-      if (!confirm('Delete this booking?')) return;
-      setBks(getBks().filter(function (b) { return b.id !== id; }));
-      if (db) db.collection('bookings').doc(id).delete().catch(function () { });
-      renderBks(); toast('Deleted');
+      if (!confirm('Move this booking to trash?')) return;
+      var bks = getBks();
+      var idx = bks.findIndex(function(b){ return b.id === id; });
+      if (idx > -1) { bks[idx].deleted = true; bks[idx].deletedAt = new Date().toISOString(); }
+      setBks(bks);
+      if (db) db.collection('bookings').doc(id).update({ deleted: true, deletedAt: new Date().toISOString() }).catch(function(){});
+      renderBks(); toast('Moved to trash');
     }
 
     // ─────────────────────────────────────────────
@@ -2302,7 +2350,9 @@
           clientId: bk.clientId || null,
           corporateAccountId: bk.corporateAccountId || null,
           corporateCompany: bk.corporateCompany || null,
-          source: bk.source || 'admin', updatedAt: new Date().toISOString()
+          source: bk.source || 'admin',
+          createdAt: bk.createdAt || new Date().toISOString(),
+          updatedAt: new Date().toISOString()
         }, { merge: true });
 
         // AUTO-SYNC TO CLIENT TRIPS
@@ -2750,7 +2800,7 @@
           var t = bdoc.data(); t._id = bdoc.id;
           bookingIdsForClient[bdoc.id] = true;
           seen[bdoc.id] = true;
-          trips.push(t);
+          if (!t.deleted) trips.push(t);
         });
         var tSnap = await db.collection('clients').doc(id).collection('trips').orderBy('date','desc').limit(50).get();
         var subTrips = []; // remember subcollection trips for backfill
@@ -3039,14 +3089,18 @@
 
     async function adminDeleteTrip(tripId, clientId) {
       if (!tripId || !db) return;
-      if (!confirm('Permanently delete this trip from the client\'s history?')) return;
+      if (!confirm('Move this trip to trash? You can restore it later.')) return;
       try {
-        // Delete from bookings collection
-        try { await db.collection('bookings').doc(tripId).delete(); } catch(e) {}
-        // Delete from client subcollection
-        try { await db.collection('clients').doc(clientId).collection('trips').doc(tripId).delete(); } catch(e) {}
-        toast('Trip deleted');
-        // Reload the trip list
+        var now = new Date().toISOString();
+        // Soft-delete: mark booking as deleted (stays in Firestore, filtered from views)
+        await db.collection('bookings').doc(tripId).update({ deleted: true, deletedAt: now }).catch(function(){});
+        // Also remove from client subcollection so it doesn't show in client portal
+        await db.collection('clients').doc(clientId).collection('trips').doc(tripId).delete().catch(function(){});
+        // Update local state
+        var bks = getBks();
+        var idx = bks.findIndex(function(b){ return b.id === tripId; });
+        if (idx > -1) { bks[idx].deleted = true; bks[idx].deletedAt = now; setBks(bks); }
+        toast('Trip moved to trash');
         openCliProfile(clientId);
       } catch(e) { toast('Error deleting trip: ' + e.message); }
     }
