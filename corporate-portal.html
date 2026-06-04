@@ -1029,10 +1029,9 @@ function previousPeriodStart() {
 function calcPeriodBalance() {
   var cutoff = currentPeriodStart(); // anything before this is a past (closed) period
   var total = 0;
-  // Use only _tripsByAccId (corporateAccountId match) to avoid cross-account contamination
-  // from email/phone/company-name listeners that can pull in other clients' bookings.
-  var scopedTrips = _tripsByAccId.length ? _tripsByAccId : _trips;
-  scopedTrips.forEach(function(t) {
+  // Only use corporateAccountId-matched trips — never fall back to _trips which
+  // includes email/phone/company listeners that can pull in other accounts' bookings.
+  _tripsByAccId.forEach(function(t) {
     if (t.status !== 'Completed') return; // only rides that happened and haven't been paid
     var d = new Date((t.date || '') + 'T12:00:00');
     if (isNaN(d.getTime()) || d >= cutoff) return; // current-period or undated trips not due yet
@@ -1603,8 +1602,9 @@ function loadTrips(){
     return arr;
   }
 
-  function addListener(field, value, targetCollection) {
+  function addListener(field, value, targetCollection, retries) {
     if(!value) return;
+    retries = retries || 0;
     try {
       var unsub = db.collection('bookings').where(field, '==', value)
         .onSnapshot(function(snap){
@@ -1615,6 +1615,12 @@ function loadTrips(){
           mergeTripCaches();
         }, function(err){
           console.warn('Listener failed for ' + field + ':', err.message);
+          // Retry with exponential backoff up to 3 times
+          if(retries < 3){
+            setTimeout(function(){
+              addListener(field, value, targetCollection, retries + 1);
+            }, 1000 * Math.pow(2, retries));
+          }
         });
       _unsubs.push(unsub);
     } catch(e) { console.error(e); }
