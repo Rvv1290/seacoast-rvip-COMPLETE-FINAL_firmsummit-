@@ -3782,7 +3782,7 @@
             (a.status === 'Rejected' ? '<button onclick="corpAction(\'' + e(a.id) + '\',\'Pending\')" class="btn bo" style="font-size:0.72rem"><span class="material-symbols-outlined" style="font-size:13px">undo</span>Reopen</button>' : '') +
             '<button onclick="openMemberModal(\'' + e(a.id) + '\')" class="btn bo" style="font-size:0.72rem;border-color:#7c3aed;color:#7c3aed"><span class="material-symbols-outlined" style="font-size:13px">group</span>Members (' + memberCount + ')</button>' +
             '<button onclick="openCorpDetail(\'' + e(a.id) + '\')" class="btn bg" style="font-size:0.72rem;background:#000"><span class="material-symbols-outlined" style="font-size:13px">open_in_full</span>View Full Account</button>' +
-            '<button onclick="_cdCorpId=\''+e(a.id)+'\';deleteCorpAccount()" class="btn br" style="padding:5px 8px;font-size:0.72rem"><span class="material-symbols-outlined" style="font-size:13px">delete</span></button>' +
+            '<button onclick="openCorpDetail(\''+e(a.id)+'\');deleteCorpAccount()" class="btn br" style="padding:5px 8px;font-size:0.72rem"><span class="material-symbols-outlined" style="font-size:13px">delete</span></button>' +
           '</div>' +
         '</div>';
       }).join('');
@@ -3996,6 +3996,7 @@
     // ── Corporate Detail Modal ──
     var _cdCorpId = '';
     var _cdAcc = null;
+    var _cdTripUnsubs = []; // real-time trip listeners for the open detail modal
     var ADMIN_TIERS = [
       {name:'Bronze',  min:0,  icon:'🥉'},
       {name:'Silver',  min:10, icon:'🥈'},
@@ -4011,8 +4012,9 @@
 
     function openCorpDetail(corpId){
       _cdCorpId = corpId;
-      _cdAcc = _corpAccounts.find(function(a){ return a.id === corpId; });
-      if(!_cdAcc) return;
+      // Always pull fresh data from Firestore — stale cache causes wrong totals/status
+      var cached = _corpAccounts.find(function(a){ return a.id === corpId; });
+      _cdAcc = cached || { id: corpId };
       var a = _cdAcc;
 
       // Populate header & info
@@ -4058,63 +4060,97 @@
       document.getElementById('cd-trips-empty').style.display = 'none';
 
       if(!db){ loadCdTrips(a, 0); return; }
+      // Fetch fresh account doc — updates balance, bonus, and status that may be stale in cache
       db.collection('corporate_accounts').doc(corpId).get().then(function(doc){
+        if(doc.exists){
+          var fresh = Object.assign({}, doc.data(), { id: doc.id });
+          _cdAcc = fresh;
+          // Refresh balance display if admin already set one manually
+          if(fresh.balance != null){
+            document.getElementById('cd-balance-input').value = '';
+          }
+        }
         var bonus = doc.exists ? (doc.data().bonusPoints||0) : 0;
         document.getElementById('cd-bonus-display').textContent = bonus;
         document.getElementById('cd-bonus-input').value = '';
-        loadCdTrips(a, bonus);
+        loadCdTrips(_cdAcc, bonus);
       }).catch(function(){ loadCdTrips(a, 0); });
     }
 
     function loadCdTrips(acc, bonusPoints){
+      // Tear down any previous real-time listeners for the old account
+      _cdTripUnsubs.forEach(function(u){ try{ u(); }catch(e){} });
+      _cdTripUnsubs = [];
+
       if(!db){ renderCdTrips([], bonusPoints, acc.billingCycle); return; }
 
-      // Build query list — each wrapped so one failure doesn't kill the rest
-      var rawQueries = [];
-      if(acc.id)           rawQueries.push(db.collection('bookings').where('corporateAccountId','==',acc.id).get());
-      if(acc.company)      rawQueries.push(db.collection('bookings').where('corporateCompany','==',acc.company).get());
-      if(acc.contactEmail) rawQueries.push(db.collection('bookings').where('email','==',acc.contactEmail).get());
-      if(acc.contactPhone) {
+      // Buckets per listener key so each snapshot refresh only replaces its own slice
+      var _cdBuckets = {};
+      var _cdBonusPts = bonusPoints;
+
+      function mergeCdBuckets(){
+        var seen = {}, trips = [];
+        Object.keys(_cdBuckets).forEach(function(k){
+          _cdBuckets[k].forEach(function(t){
+            var key = t.id || t._docId;
+            if(!key || !seen[key]){ if(key) seen[key]=true; trips.push(t); }
+          });
+        });
+        trips.sort(function(a,b){ return new Date(b.date)-new Date(a.date); });
+        renderCdTrips(trips, _cdBonusPts, acc.billingCycle);
+      }
+
+      function addCdListener(field, value, bucketKey, retries){
+        if(!value) return;
+        retries = retries || 0;
+        try {
+          var unsub = db.collection('bookings').where(field,'==',value)
+            .onSnapshot(function(snap){
+              var arr = [];
+              snap.forEach(function(d){ var t=d.data(); t._docId=d.id; arr.push(t); });
+              _cdBuckets[bucketKey] = arr;
+              mergeCdBuckets();
+            }, function(err){
+              console.warn('Corp detail listener ['+field+'='+value+']:', err.message);
+              if(retries < 3){
+                setTimeout(function(){ addCdListener(field, value, bucketKey, retries+1); },
+                  1000 * Math.pow(2, retries));
+              }
+            });
+          _cdTripUnsubs.push(unsub);
+        } catch(e){ console.error('addCdListener:', e); }
+      }
+
+      // Primary: account ID (most reliable)
+      if(acc.id)           addCdListener('corporateAccountId', acc.id,            'accId');
+      if(acc.company)      addCdListener('corporateCompany',   acc.company,       'company');
+      if(acc.contactEmail) addCdListener('email',              acc.contactEmail,  'email_primary');
+      if(acc.contactPhone){
         var rawPh = acc.contactPhone.replace(/\D/g,'');
-        if(rawPh.length >= 10) {
-          rawQueries.push(db.collection('bookings').where('phone','==',acc.contactPhone).get());
-          // Also try normalized formats so mismatched phone formats still match
-          var norm10 = rawPh.slice(-10);
-          var normFull = '+1' + norm10;
-          if(normFull !== acc.contactPhone) rawQueries.push(db.collection('bookings').where('phone','==',normFull).get());
-          if(norm10 !== acc.contactPhone)   rawQueries.push(db.collection('bookings').where('phone','==',norm10).get());
+        if(rawPh.length >= 10){
+          addCdListener('phone', acc.contactPhone, 'phone_raw');
+          var norm10 = rawPh.slice(-10), normFull = '+1'+norm10;
+          if(normFull !== acc.contactPhone) addCdListener('phone', normFull, 'phone_full');
+          if(norm10   !== acc.contactPhone) addCdListener('phone', norm10,   'phone_10');
         }
       }
-      var members = acc.members || [];
-      members.forEach(function(m) {
-        if(m.email) rawQueries.push(db.collection('bookings').where('email','==',m.email).get());
-        if(m.phone) {
+      (acc.members||[]).forEach(function(m, mi){
+        if(m.email) addCdListener('email', m.email, 'mem_email_'+mi);
+        if(m.phone){
           var mr = m.phone.replace(/\D/g,'');
-          if(mr.length >= 10) {
-            rawQueries.push(db.collection('bookings').where('phone','==',m.phone).get());
-            var mn10 = mr.slice(-10), mnFull = '+1' + mn10;
-            if(mnFull !== m.phone) rawQueries.push(db.collection('bookings').where('phone','==',mnFull).get());
-            if(mn10  !== m.phone)  rawQueries.push(db.collection('bookings').where('phone','==',mn10).get());
+          if(mr.length >= 10){
+            addCdListener('phone', m.phone, 'mem_phone_'+mi+'_raw');
+            var mn10=mr.slice(-10), mnFull='+1'+mn10;
+            if(mnFull!==m.phone) addCdListener('phone', mnFull, 'mem_phone_'+mi+'_full');
+            if(mn10!==m.phone)   addCdListener('phone', mn10,   'mem_phone_'+mi+'_10');
           }
         }
       });
 
-      // Run all queries independently — a failed individual query is skipped, not fatal
-      var safeQueries = rawQueries.map(function(q){ return q.catch(function(){ return null; }); });
-      Promise.all(safeQueries).then(function(results){
-        var seen = {}, trips = [];
-        results.forEach(function(snap){
-          if(!snap) return;
-          snap.forEach(function(d){
-            if(!seen[d.id]){ seen[d.id]=true; var t=d.data(); t._docId=d.id; trips.push(t); }
-          });
-        });
-        trips.sort(function(a,b){ return new Date(b.date)-new Date(a.date); });
-        renderCdTrips(trips, bonusPoints, acc.billingCycle);
-      }).catch(function(err){
-        console.error('loadCdTrips fail:', err);
-        renderCdTrips([], bonusPoints, acc.billingCycle);
-      });
+      // Show loading state until first snapshot arrives
+      if(!Object.keys(_cdBuckets).length){
+        document.getElementById('cd-trips-loading').textContent = 'Loading trips…';
+      }
     }
 
     function renderCdTrips(trips, bonusPoints, billingCycle){
@@ -4143,8 +4179,8 @@
         var p=(parseFloat((t.price+'').replace(/[^0-9.]/g,''))||0) + (parseFloat(t.tip)||0);
         if(t.status==='Completed'||t.status==='Paid'){ completed++; revenue+=p; }
         else if(t.status!=='Cancelled'){ pending++; }
-        // Outstanding = non-Paid, non-Cancelled trips in CLOSED billing periods
-        if(t.status!=='Paid'&&t.status!=='Cancelled'){
+        // Outstanding = Completed (done, not yet paid) trips in CLOSED billing periods only
+        if(t.status==='Completed'){
           var td=new Date((t.date||'')+'T12:00:00');
           if(!isNaN(td.getTime())&&td<periodStart) outstandingBal+=p;
         }
@@ -4185,6 +4221,9 @@
     }
 
     function closeCorpDetail(){
+      // Tear down real-time trip listeners so they don't keep running in the background
+      _cdTripUnsubs.forEach(function(u){ try{ u(); }catch(e){} });
+      _cdTripUnsubs = [];
       document.getElementById('corp-detail-modal').style.display='none';
       document.body.style.overflow='';
     }
