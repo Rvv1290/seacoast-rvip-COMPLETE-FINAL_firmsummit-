@@ -1943,7 +1943,10 @@ function renderInvoicesList(list){
        </div>
        <div style="text-align:right">
           <div style="font-weight:700;color:#d32f2f;margin-bottom:6px">$${(parseFloat(t.price||0)+parseFloat(t.tip||0)).toFixed(2)}${parseFloat(t.tip||0)>0?`<span style="font-size:0.65rem;font-weight:400;color:#888;display:block">incl. $${parseFloat(t.tip).toFixed(2)} tip</span>`:''}</div>
-          <button onclick="payTrip('${t.id}',${(parseFloat(t.price||0)+parseFloat(t.tip||0))})" class="btn-k" style="padding:0.4rem 0.8rem;font-size:0.6rem">Pay Now</button>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
+            <button onclick="payTrip('${t.id}',${(parseFloat(t.price||0)+parseFloat(t.tip||0))})" class="btn-k" style="padding:0.4rem 0.8rem;font-size:0.6rem">Pay with Card</button>
+            <button onclick="payVenmo('${t.id}')" style="padding:0.4rem 0.8rem;font-size:0.6rem;background:#3D95CE;color:#fff;border:none;cursor:pointer;font-family:'Work Sans',sans-serif;font-weight:700">Venmo</button>
+          </div>
        </div>
     </div>
   `).join('');
@@ -2719,27 +2722,42 @@ async function _markTripsCompleted() {
 }
 
 function settleBalanceWithCard() {
-  // Use admin-managed balance when available; otherwise derive from confirmed trips
+  // Use admin-managed balance when available; otherwise derive from confirmed trips (fare + tip)
   let total;
   if (typeof currentUser.balance === 'number') {
     total = currentUser.balance;
   } else {
     const confirmed = allTrips.filter(t => (t.status||'').toLowerCase()==='confirmed');
-    total = confirmed.reduce((s, t) => s + parseFloat(t.price||0), 0);
+    total = confirmed.reduce((s, t) => s + parseFloat(t.price||0) + parseFloat(t.tip||0), 0);
   }
   openStripePayModal(total > 0 ? total.toFixed(2) : '0');
 }
 
 function openCardModal() { settleBalanceWithCard(); }
 
-function payVenmo() {
-  window.open('https://venmo.com/u/Ramon-Vargas-83', '_blank');
+function payVenmo(tripId) {
+  var amt;
+  if (tripId) {
+    // Single-trip Venmo: fare + tip for that trip
+    var t = allTrips.find(function(x){ return x.id === tripId; });
+    amt = t ? (parseFloat(t.price||0) + parseFloat(t.tip||0)) : 0;
+  } else {
+    // Full balance Venmo: same calculation as the pay button
+    if (typeof currentUser.balance === 'number') {
+      amt = currentUser.balance;
+    } else {
+      var confirmed = allTrips.filter(function(t){ return (t.status||'').toLowerCase()==='confirmed'; });
+      amt = confirmed.reduce(function(s,t){ return s + parseFloat(t.price||0) + parseFloat(t.tip||0); }, 0);
+    }
+  }
+  var note = encodeURIComponent('Seacoast RVIP - Ride Payment');
+  window.open('https://venmo.com/u/Ramon-Vargas-83?txn=pay&amount=' + (amt > 0 ? amt.toFixed(2) : '') + '&note=' + note, '_blank');
 }
 
 function renderSavedCardInfo() {
-  // Update balance reminder display
+  // Update balance reminder display (fare + tip)
   const confirmed = allTrips.filter(t => (t.status||'').toLowerCase()==='confirmed');
-  let total = 0; confirmed.forEach(t => total += parseFloat(t.price||0));
+  let total = 0; confirmed.forEach(t => total += parseFloat(t.price||0) + parseFloat(t.tip||0));
   var rem = document.getElementById('acct-balance-reminder');
   var remAmt = document.getElementById('acct-balance-amt');
   if (total > 0 && rem) {

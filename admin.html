@@ -2794,10 +2794,17 @@
         
         // Load trips — bookings collection first (has complete data incl. tip),
         // then subcollection for any legacy trips not yet backfilled to bookings.
+        // Also merge local getBks() so tip values edited in the same session are reflected.
+        var localBkMap = {};
+        getBks().forEach(function(b){ if(b.id) localBkMap[b.id] = b; });
+
         var seen = {}, trips = [], bookingIdsForClient = {};
         var bSnap = await db.collection('bookings').where('clientId','==',id).limit(100).get();
         bSnap.forEach(function(bdoc) {
           var t = bdoc.data(); t._id = bdoc.id;
+          // Merge local cache tip — local state is always at least as fresh as Firestore
+          var local = localBkMap[bdoc.id];
+          if(local && (parseFloat(local.tip)||0) > (parseFloat(t.tip)||0)) t.tip = local.tip;
           bookingIdsForClient[bdoc.id] = true;
           seen[bdoc.id] = true;
           if (!t.deleted) trips.push(t);
@@ -2806,6 +2813,10 @@
         var subTrips = []; // remember subcollection trips for backfill
         tSnap.forEach(function(tdoc) {
           var t = tdoc.data(); t._id = tdoc.id;
+          // For subcollection trips, try to get the tip from the matching local booking
+          var bookingKey = t.bookingId || tdoc.id;
+          var local = localBkMap[bookingKey];
+          if(local && (parseFloat(local.tip)||0) > (parseFloat(t.tip)||0)) t.tip = local.tip;
           subTrips.push(t);
           // Skip if already loaded from bookings (by booking doc id or by bookingId field)
           if (seen[tdoc.id] || (t.bookingId && seen[t.bookingId])) return;
