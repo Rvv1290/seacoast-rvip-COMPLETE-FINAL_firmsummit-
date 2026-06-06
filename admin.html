@@ -1554,13 +1554,9 @@
       }
       function refreshAdminAfterBkChange() {
         if(curTab === 'all' || curTab === 'bookings') renderBks();
-        if(document.getElementById('corp-detail-modal').style.display === 'block' && _cdCorpId){
-          var acc = _corpAccounts.find(function(a){ return a.id === _cdCorpId; });
-          if(acc){
-            var bonus = parseInt(document.getElementById('cd-bonus-display').textContent)||0;
-            loadCdTrips(acc, bonus);
-          }
-        }
+        // Corp detail listeners are real-time onSnapshot — they auto-update.
+        // Do NOT call loadCdTrips here; that would tear down and recreate all
+        // listeners on every booking change, causing constant churn and data flicker.
       }
       db.collection('bookings').orderBy('updatedAt','desc').limit(300)
         .onSnapshot(function(snap){
@@ -1906,7 +1902,8 @@
       var lEl = document.getElementById('bk-list'), eEl = document.getElementById('bk-empty');
       var trashBks = bks.filter(function(b){ return b.deleted; });
       if (!list.length && !trashBks.length) { lEl.innerHTML = ''; eEl.style.display = 'block'; return; }
-      if (!list.length) { lEl.innerHTML = ''; } else { eEl.style.display = 'none'; }
+      eEl.style.display = 'none'; // hide empty state whenever we have anything to render
+      if (!list.length) { lEl.innerHTML = ''; }
 
       var SC = { Pending: 'byw', Confirmed: 'bbl', Paid: 'bgr', Completed: 'bgr', Cancelled: 'brd' };
       var drs = getDrivers();
@@ -4071,15 +4068,29 @@
       document.getElementById('cd-trips-empty').style.display = 'none';
 
       if(!db){ loadCdTrips(a, 0); return; }
-      // Fetch fresh account doc — updates balance, bonus, and status that may be stale in cache
+      // Fetch fresh account doc — updates balance, bonus, and any field stale in cache
       db.collection('corporate_accounts').doc(corpId).get().then(function(doc){
         if(doc.exists){
           var fresh = Object.assign({}, doc.data(), { id: doc.id });
           _cdAcc = fresh;
-          // Refresh balance display if admin already set one manually
-          if(fresh.balance != null){
-            document.getElementById('cd-balance-input').value = '';
-          }
+          // Re-populate header in case cached data was incomplete
+          document.getElementById('cd-company').textContent = fresh.company || '—';
+          var sc2 = STATUS_COLORS[fresh.status] || '#888';
+          var sb2 = document.getElementById('cd-status-badge');
+          sb2.textContent = fresh.status || '—';
+          sb2.style.background = sc2+'22'; sb2.style.color = sc2;
+          document.getElementById('cd-contact').textContent = (fresh.contactName||'—') + (fresh.contactTitle?' · '+fresh.contactTitle:'');
+          document.getElementById('cd-phone').textContent  = fresh.contactPhone||'—';
+          document.getElementById('cd-phone').href = 'tel:'+((fresh.contactPhone||'').replace(/\D/g,''));
+          document.getElementById('cd-email').textContent  = fresh.contactEmail||'—';
+          document.getElementById('cd-email').href = 'mailto:'+(fresh.contactEmail||'');
+          document.getElementById('cd-billing').textContent  = fresh.billingCycle||'—';
+          document.getElementById('cd-industry').textContent = fresh.industry||'—';
+          document.getElementById('cd-address').textContent  = fresh.billingAddress||'—';
+          document.getElementById('cd-btn-approve').style.display  = (fresh.status!=='Approved'&&fresh.status!=='Active') ? '' : 'none';
+          document.getElementById('cd-btn-activate').style.display = (fresh.status==='Approved') ? '' : 'none';
+          document.getElementById('cd-btn-reject').style.display   = (fresh.status!=='Rejected') ? '' : 'none';
+          document.getElementById('cd-btn-reopen').style.display   = (fresh.status==='Rejected') ? '' : 'none';
         }
         var bonus = doc.exists ? (doc.data().bonusPoints||0) : 0;
         document.getElementById('cd-bonus-display').textContent = bonus;
