@@ -6048,7 +6048,7 @@ function daOpenAssign(bookingId) {
   if (sel) {
     var active = _daDrivers.filter(function(d){ return d.status==='active'; });
     sel.innerHTML = '<option value="">— Select Driver —</option>' +
-      active.map(function(d){ return '<option value="'+d.id+'">'+daEsc(d.name)+(d.vehicle&&d.vehicle.make?' ('+daEsc(d.vehicle.make+' '+d.vehicle.model)+')')+'</option>'; }).join('');
+      active.map(function(d){ return '<option value="'+d.id+'">'+daEsc(d.name)+(d.vehicle&&d.vehicle.make?' ('+daEsc(d.vehicle.make+' '+d.vehicle.model)+')':'')+'</option>'; }).join('');
     if (b && b.driverId) sel.value = b.driverId;
   }
   document.getElementById('dap-assign-notes').value = '';
