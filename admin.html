@@ -716,14 +716,10 @@
     <div class="wrap">
       <div class="tabs">
         <button class="tab on" onclick="goTab('all',this)">All Rides</button>
-        <button class="tab" onclick="goTab('confirmed',this)" style="color:#1d4ed8">Active Schedule</button>
-        <button class="tab" onclick="goTab('pending-payments',this)" style="color:#d97706;font-weight:700">Pending Payments <span id="pending-pay-badge" style="display:inline-block;background:#d97706;color:#fff;border-radius:10px;font-size:0.55rem;padding:1px 6px;margin-left:4px;vertical-align:middle">0</span></button>
         <button class="tab" onclick="goTab('done',this)">Completed</button>
         <button class="tab" onclick="goTab('calendar',this)" style="color:#000;font-weight:800"><span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle;margin-right:4px">calendar_month</span>Calendar</button>
         <button class="tab" onclick="goTab('clients',this)" style="color:#7c3aed;font-weight:700">Clients</button>
-        <button class="tab" onclick="goTab('quotes',this)" style="color:#16a34a;font-weight:700">Quotes</button>
         <button class="tab" onclick="goTab('corporate',this)" style="color:#7c3aed;font-weight:700">Corporate ⭐</button>
-        <button class="tab" onclick="goTab('manage-drivers',this)" style="color:#775a19;font-weight:700">Management ⚙</button>
         <button class="tab" onclick="goTab('estimates',this)" style="color:#0891b2;font-weight:700">Estimates 💰</button>
         <button class="tab" onclick="openDriverAppPanel()" style="color:#0e7a3a;font-weight:700;border-left:2px solid #eee;margin-left:4px;padding-left:12px">Driver App 🚗</button>
       </div>
@@ -757,23 +753,6 @@
         </div>
       </div>
 
-      <div id="sec-quotes" style="display:none">
-        <div
-          style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;flex-wrap:wrap;gap:.75rem">
-          <div>
-            <div style="font-family:'Times New Roman',serif;font-size:1.1rem;font-weight:700">Quote Requests</div>
-            <div style="font-size:.75rem;color:#888;margin-top:3px">From the Get a Quote page · Convert to create a
-              booking</div>
-          </div>
-          <button onclick="loadQuotes()" class="btn bo"><span class="material-symbols-outlined"
-              style="font-size:14px">refresh</span>Refresh</button>
-        </div>
-        <div id="qt-list">
-          <div class="empty"><span class="material-symbols-outlined">request_quote</span>
-            <div style="font-size:.8rem">Click Refresh to load quotes</div>
-          </div>
-        </div>
-      </div>
 
       <div id="sec-messages" style="display:none">
         <div style="margin-bottom:1.5rem">
@@ -824,13 +803,6 @@
       </div>
 
       <!-- MANAGE DRIVERS -->
-      <div id="sec-manage-drivers" style="display:none">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem">
-          <div style="font-family:'Times New Roman',serif;font-size:1.1rem;font-weight:700">Active Drivers Operations</div>
-          <div style="font-size:0.8rem;color:#666">Drivers self-register via Portal Link</div>
-        </div>
-        <div id="dr-list"></div>
-      </div>
 
       <!-- ADMIN CALENDAR -->
       <div id="sec-calendar" style="display:none">
@@ -1534,7 +1506,6 @@
           d.plate = (d.profile && d.profile.vPlate) ? d.profile.vPlate : '';
           window.allDriversCache.push(d);
         });
-        if(curTab === 'manage-drivers') renderDrivers();
         if(curTab === 'compliance') renderCompliance();
       });
 
@@ -1732,7 +1703,7 @@
       if (curUser && curUser.role === 'driver') {
         document.querySelectorAll('.tab').forEach(function (t) {
           var txt = t.textContent.toLowerCase();
-          if (txt.includes('clients') || txt.includes('quotes') || txt.includes('messages') || txt.includes('drivers') || txt.includes('all') || txt.includes('upcoming') || txt.includes('awaiting') || txt.includes('completed')) {
+          if (txt.includes('clients') || txt.includes('messages') || txt.includes('drivers') || txt.includes('all') || txt.includes('upcoming') || txt.includes('awaiting') || txt.includes('completed')) {
             t.style.display = 'none';
           }
         });
@@ -1856,8 +1827,6 @@
 
       var list = activeBks.filter(function (b) {
         // 1. Status Tab Filter
-        if (curTab === 'confirmed') if (b.status !== 'Confirmed') return false;
-        if (curTab === 'pending-payments') if (b.status !== 'Pending' && b.status !== 'Confirmed') return false;
         if (curTab === 'done') if (b.status !== 'Paid' && b.status !== 'Completed') return false;
 
         // 2. Search Query (Name, Phone, Code, Email)
@@ -2065,15 +2034,13 @@
       curTab = tab;
       document.querySelectorAll('.tab').forEach(function (b) { b.classList.remove('on'); });
       if (btn) btn.classList.add('on');
-      ['sec-all', 'sec-clients', 'sec-quotes', 'sec-messages', 'sec-compliance', 'sec-manage-drivers', 'sec-driver', 'sec-corporate', 'sec-calendar', 'sec-estimates'].forEach(function (id) {
+      ['sec-all', 'sec-clients', 'sec-messages', 'sec-compliance', 'sec-driver', 'sec-corporate', 'sec-calendar', 'sec-estimates'].forEach(function (id) {
         var el = document.getElementById(id);
         if (el) el.style.display = 'none';
       });
       if (tab === 'clients') { document.getElementById('sec-clients').style.display = 'block'; loadClients(); }
-      else if (tab === 'quotes') { document.getElementById('sec-quotes').style.display = 'block'; loadQuotes(); }
       else if (tab === 'messages') { document.getElementById('sec-messages').style.display = 'block'; buildMsgs(); loadBcCount(); }
       else if (tab === 'compliance') { document.getElementById('sec-compliance').style.display = 'block'; renderCompliance(); }
-      else if (tab === 'manage-drivers') { document.getElementById('sec-manage-drivers').style.display = 'block'; renderDrivers(); }
       else if (tab === 'driver') { document.getElementById('sec-driver').style.display = 'block'; loadDriverRides(); }
       else if (tab === 'corporate') { document.getElementById('sec-corporate').style.display = 'block'; loadCorporate(); }
       else if (tab === 'calendar') { document.getElementById('sec-calendar').style.display = 'block'; buildAdminCal(); }
@@ -3488,7 +3455,6 @@
             '</div>' +
             '<div style="display:flex;gap:8px;flex-direction:column;align-items:flex-end">' +
             '<button onclick="export1099(\'' + d.id + '\')" class="btn bgn" style="font-size:.75rem"><span class="material-symbols-outlined" style="font-size:15px">receipt_long</span>Generate 1099</button>' +
-            '<button onclick="goTab(\'manage-drivers\')" class="btn bo" style="font-size:.75rem"><span class="material-symbols-outlined" style="font-size:15px">arrow_back</span>Back to CRM</button>' +
             '</div>' +
             '</div>' +
             '</div>' +
