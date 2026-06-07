@@ -495,7 +495,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
             </div>
             <div class="pay-box-btns" style="display:flex;gap:0.75rem;flex-wrap:wrap">
               <button onclick="settleBalanceWithCard()" class="btn-k" style="font-size:0.65rem;padding:0.6rem 1.2rem">Pay with Card →</button>
-              <button onclick="payVenmo()" class="btn-v" style="border:none;cursor:pointer;font-size:0.65rem;padding:0.6rem 1.2rem">
+              <button onclick="openVenmoPayModal()" class="btn-v" style="border:none;cursor:pointer;font-size:0.65rem;padding:0.6rem 1.2rem">
                 <span class="material-symbols-outlined" style="font-size:14px">savings</span>Venmo
               </button>
             </div>
@@ -776,7 +776,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
                  <span class="material-symbols-outlined" style="font-size:17px">lock</span>
                  Pay Now via Stripe
                </button>
-               <button onclick="payVenmo()" style="width:100%;margin-top:0.625rem;display:flex;align-items:center;justify-content:center;gap:8px;background:#3D95CE;color:#fff;border:none;border-bottom:2px solid #2a6a94;padding:0.75rem;font-family:'Work Sans',sans-serif;font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;cursor:pointer">
+               <button onclick="openVenmoPayModal()" style="width:100%;margin-top:0.625rem;display:flex;align-items:center;justify-content:center;gap:8px;background:#3D95CE;color:#fff;border:none;border-bottom:2px solid #2a6a94;padding:0.75rem;font-family:'Work Sans',sans-serif;font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;cursor:pointer">
                  <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M17.4 2C14.6 2 12.4 3.5 11 6.2 9.9 4.3 8.3 3.3 6.2 3.3c-3 0-4.2 2.2-4.2 4.8 0 5 7 14.4 9.2 14.4 1.3 0 2.4-1.5 4-4.3.4.1.7.1 1.1.1 3.4 0 6.1-3.1 6.1-7.8C22.4 4.5 20.3 2 17.4 2z"/></svg>
                  Pay via Venmo
                </button>
@@ -1020,6 +1020,75 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
       </div>
     </div>
     <p style="text-align:center;font-size:0.65rem;color:#aaa;padding:0 1.25rem 1rem">Secured by Stripe · 256-bit encryption · Visa · MC · Amex</p>
+  </div>
+</div>
+
+<!-- VENMO PAYMENT SHEET MODAL -->
+<div id="acct-venmo-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:9999;align-items:center;justify-content:center;padding:1rem;overflow-y:auto">
+  <div style="background:#fff;width:100%;max-width:480px;border-radius:6px;overflow-y:auto;box-shadow:0 25px 60px rgba(0,0,0,0.35);max-height:90vh;margin:auto">
+    <!-- Header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:1rem 1.25rem;border-bottom:1px solid #eee">
+      <div style="display:flex;align-items:center;gap:0.625rem">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="#3D95CE"><path d="M17.4 2C14.6 2 12.4 3.5 11 6.2 9.9 4.3 8.3 3.3 6.2 3.3c-3 0-4.2 2.2-4.2 4.8 0 5 7 14.4 9.2 14.4 1.3 0 2.4-1.5 4-4.3.4.1.7.1 1.1.1 3.4 0 6.1-3.1 6.1-7.8C22.4 4.5 20.3 2 17.4 2z"/></svg>
+        <span style="font-family:'Times New Roman',serif;font-size:1rem;font-weight:700">Seacoast RVIP — Pay via Venmo</span>
+      </div>
+      <button onclick="closeVenmoPayModal()" style="background:none;border:none;cursor:pointer;color:#888;font-size:1.4rem;line-height:1;padding:0.25rem">✕</button>
+    </div>
+    <!-- Amount -->
+    <div style="background:#e8f4fd;padding:0.75rem 1.25rem;border-bottom:1px solid #b3d9f5;text-align:center">
+      <p style="font-family:Inter,sans-serif;font-size:0.82rem;color:#1a6a9e;margin:0">
+        Total due: <strong id="venmo-modal-amt" style="font-size:1rem">$0</strong>
+      </p>
+    </div>
+
+    <!-- Tip Step -->
+    <div style="padding:1.5rem">
+      <div style="text-align:center;margin-bottom:1.25rem">
+        <div style="font-family:'Work Sans',sans-serif;font-size:0.58rem;font-weight:700;text-transform:uppercase;letter-spacing:0.14em;color:#1a6a9e;margin-bottom:4px">Outstanding Balance</div>
+        <div style="font-family:'Times New Roman',serif;font-size:2rem;font-weight:700;color:#000" id="venmo-tip-base">$0.00</div>
+      </div>
+      <div style="font-family:'Work Sans',sans-serif;font-size:0.68rem;font-weight:700;color:#444;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.75rem;text-align:center">Add a Gratuity for Your Driver 🙏</div>
+      <!-- Preset tip buttons -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0.5rem;margin-bottom:0.5rem">
+        <button onclick="venmoSelectTip(0.15)" id="venmo-tip-15" style="padding:0.75rem 0.25rem;border:1.5px solid #e2e2e2;background:#fff;font-family:'Work Sans',sans-serif;font-size:0.78rem;font-weight:700;cursor:pointer;border-radius:3px;transition:all 0.15s;min-height:44px">15%</button>
+        <button onclick="venmoSelectTip(0.18)" id="venmo-tip-18" style="padding:0.75rem 0.25rem;border:1.5px solid #e2e2e2;background:#fff;font-family:'Work Sans',sans-serif;font-size:0.78rem;font-weight:700;cursor:pointer;border-radius:3px;transition:all 0.15s;min-height:44px">18%</button>
+        <button onclick="venmoSelectTip(0.20)" id="venmo-tip-20" style="padding:0.75rem 0.25rem;border:1.5px solid #3D95CE;background:#3D95CE;color:#fff;font-family:'Work Sans',sans-serif;font-size:0.78rem;font-weight:700;cursor:pointer;border-radius:3px;transition:all 0.15s;min-height:44px">20%</button>
+        <button onclick="venmoSelectTip(0.25)" id="venmo-tip-25" style="padding:0.75rem 0.25rem;border:1.5px solid #e2e2e2;background:#fff;font-family:'Work Sans',sans-serif;font-size:0.78rem;font-weight:700;cursor:pointer;border-radius:3px;transition:all 0.15s;min-height:44px">25%</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-bottom:1.25rem">
+        <button onclick="venmoSelectTip(0)" id="venmo-tip-none" style="padding:0.75rem;border:1.5px solid #e2e2e2;background:#fff;font-family:'Work Sans',sans-serif;font-size:0.72rem;font-weight:600;cursor:pointer;border-radius:3px;color:#888;transition:all 0.15s;min-height:44px">No Tip</button>
+        <button onclick="venmoToggleCustomTip()" id="venmo-tip-custom-btn" style="padding:0.75rem;border:1.5px solid #e2e2e2;background:#fff;font-family:'Work Sans',sans-serif;font-size:0.72rem;font-weight:600;cursor:pointer;border-radius:3px;color:#000;transition:all 0.15s;min-height:44px">Custom $</button>
+      </div>
+      <!-- Custom tip input -->
+      <div id="venmo-custom-tip-wrap" style="display:none;margin-bottom:1.25rem">
+        <div style="display:flex;align-items:center;border-bottom:2px solid #3D95CE;padding-bottom:0.5rem;gap:0.5rem">
+          <span style="font-family:'Work Sans',sans-serif;font-size:1.1rem;font-weight:700;color:#3D95CE">$</span>
+          <input id="venmo-custom-tip-input" type="number" min="0" step="0.01" placeholder="0.00"
+            style="flex:1;border:none;background:transparent;font-family:'Work Sans',sans-serif;font-size:16px;font-weight:700;color:#000;outline:none"
+            oninput="venmoApplyCustomTip(this.value)"/>
+        </div>
+      </div>
+      <!-- Summary -->
+      <div style="background:#e8f4fd;border:1px solid #b3d9f5;border-radius:3px;padding:1rem;margin-bottom:1.25rem">
+        <div style="display:flex;justify-content:space-between;margin-bottom:0.4rem">
+          <span style="font-family:Inter,sans-serif;font-size:0.8rem;color:#888">Ride Total</span>
+          <span style="font-family:Inter,sans-serif;font-size:0.8rem;color:#333" id="venmo-tip-sub-display">$0.00</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:0.5rem">
+          <span style="font-family:Inter,sans-serif;font-size:0.8rem;color:#888">Gratuity</span>
+          <span style="font-family:Inter,sans-serif;font-size:0.8rem;color:#3D95CE;font-weight:600" id="venmo-tip-display">$0.00</span>
+        </div>
+        <div style="border-top:1px solid #b3d9f5;padding-top:0.5rem;display:flex;justify-content:space-between">
+          <span style="font-family:'Work Sans',sans-serif;font-size:0.82rem;font-weight:700;color:#000;text-transform:uppercase;letter-spacing:0.04em">Total</span>
+          <span style="font-family:'Work Sans',sans-serif;font-size:0.95rem;font-weight:700;color:#000" id="venmo-tip-total-display">$0.00</span>
+        </div>
+      </div>
+      <button onclick="venmoConfirmAndPay()" style="width:100%;background:#3D95CE;color:#fff;border:none;border-bottom:3px solid #2a6a94;padding:1rem;font-family:'Work Sans',sans-serif;font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;cursor:pointer;min-height:44px;display:flex;align-items:center;justify-content:center;gap:8px">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M17.4 2C14.6 2 12.4 3.5 11 6.2 9.9 4.3 8.3 3.3 6.2 3.3c-3 0-4.2 2.2-4.2 4.8 0 5 7 14.4 9.2 14.4 1.3 0 2.4-1.5 4-4.3.4.1.7.1 1.1.1 3.4 0 6.1-3.1 6.1-7.8C22.4 4.5 20.3 2 17.4 2z"/></svg>
+        Continue to Venmo →
+      </button>
+      <p style="text-align:center;font-size:0.65rem;color:#aaa;margin-top:0.75rem">No processing fee · Opens Venmo app with total pre-filled</p>
+    </div>
   </div>
 </div>
 
@@ -1945,7 +2014,7 @@ function renderInvoicesList(list){
           <div style="font-weight:700;color:#d32f2f;margin-bottom:6px">$${(parseFloat(t.price||0)+parseFloat(t.tip||0)).toFixed(2)}${parseFloat(t.tip||0)>0?`<span style="font-size:0.65rem;font-weight:400;color:#888;display:block">incl. $${parseFloat(t.tip).toFixed(2)} tip</span>`:''}</div>
           <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
             <button onclick="payTrip('${t.id}',${(parseFloat(t.price||0)+parseFloat(t.tip||0))})" class="btn-k" style="padding:0.4rem 0.8rem;font-size:0.6rem">Pay with Card</button>
-            <button onclick="payVenmo('${t.id}')" style="padding:0.4rem 0.8rem;font-size:0.6rem;background:#3D95CE;color:#fff;border:none;cursor:pointer;font-family:'Work Sans',sans-serif;font-weight:700">Venmo</button>
+            <button onclick="openVenmoPayModal('${t.id}')" style="padding:0.4rem 0.8rem;font-size:0.6rem;background:#3D95CE;color:#fff;border:none;cursor:pointer;font-family:'Work Sans',sans-serif;font-weight:700">Venmo</button>
           </div>
        </div>
     </div>
@@ -2735,24 +2804,106 @@ function settleBalanceWithCard() {
 
 function openCardModal() { settleBalanceWithCard(); }
 
-function payVenmo(tripId) {
-  var amt;
+// ─── VENMO PAYMENT SHEET MODAL ───
+var _venmoBasePay = 0;
+var _venmoTipAmt  = 0;
+var _venmoTripId  = null;
+
+function openVenmoPayModal(tripId) {
+  _venmoTripId = tripId || null;
+  var baseAmt;
   if (tripId) {
-    // Single-trip Venmo: fare + tip for that trip
     var t = allTrips.find(function(x){ return x.id === tripId; });
-    amt = t ? (parseFloat(t.price||0) + parseFloat(t.tip||0)) : 0;
+    baseAmt = t ? parseFloat(t.price||0) : 0;
   } else {
-    // Full balance Venmo: same calculation as the pay button
-    if (typeof currentUser.balance === 'number') {
-      amt = currentUser.balance;
-    } else {
+    var completed = allTrips.filter(function(t){ return (t.status||'').toLowerCase()==='completed'; });
+    baseAmt = completed.reduce(function(s,t){ return s + parseFloat(t.price||0); }, 0);
+    if (baseAmt <= 0) {
       var confirmed = allTrips.filter(function(t){ return (t.status||'').toLowerCase()==='confirmed'; });
-      amt = confirmed.reduce(function(s,t){ return s + parseFloat(t.price||0) + parseFloat(t.tip||0); }, 0);
+      baseAmt = confirmed.reduce(function(s,t){ return s + parseFloat(t.price||0); }, 0);
     }
   }
-  var note = encodeURIComponent('Seacoast RVIP - Ride Payment');
-  window.open('https://venmo.com/u/Ramon-Vargas-83?txn=pay&amount=' + (amt > 0 ? amt.toFixed(2) : '') + '&note=' + note, '_blank');
+  if (baseAmt <= 0) { toast('No outstanding balance to pay.'); return; }
+  var modal = document.getElementById('acct-venmo-modal');
+  modal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+  _venmoShowTipStep(baseAmt);
 }
+
+function _venmoShowTipStep(baseAmt) {
+  _venmoBasePay = parseFloat(baseAmt) || 0;
+  _venmoTipAmt  = parseFloat((_venmoBasePay * 0.20).toFixed(2));
+  document.getElementById('venmo-tip-base').textContent = '$' + _venmoBasePay.toFixed(2);
+  _venmoUpdateDisplay();
+  ['venmo-tip-15','venmo-tip-18','venmo-tip-20','venmo-tip-25','venmo-tip-none','venmo-tip-custom-btn'].forEach(function(id){
+    var el = document.getElementById(id); if (!el) return;
+    el.style.borderColor = '#e2e2e2'; el.style.background = '#fff'; el.style.color = '#000';
+  });
+  var def = document.getElementById('venmo-tip-20');
+  if (def) { def.style.borderColor='#3D95CE'; def.style.background='#3D95CE'; def.style.color='#fff'; }
+  document.getElementById('venmo-custom-tip-wrap').style.display = 'none';
+  var ci = document.getElementById('venmo-custom-tip-input'); if (ci) ci.value = '';
+}
+
+function venmoSelectTip(pct) {
+  _venmoTipAmt = parseFloat((_venmoBasePay * pct).toFixed(2));
+  document.getElementById('venmo-custom-tip-wrap').style.display = 'none';
+  var ci = document.getElementById('venmo-custom-tip-input'); if (ci) ci.value = '';
+  var map = { '0.15':'venmo-tip-15','0.18':'venmo-tip-18','0.20':'venmo-tip-20','0.25':'venmo-tip-25','0':'venmo-tip-none' };
+  ['venmo-tip-15','venmo-tip-18','venmo-tip-20','venmo-tip-25','venmo-tip-none','venmo-tip-custom-btn'].forEach(function(id){
+    var el = document.getElementById(id); if (!el) return;
+    el.style.borderColor = '#e2e2e2'; el.style.background = '#fff'; el.style.color = '#000';
+  });
+  var selId = map[pct.toString()];
+  if (selId) { var sel = document.getElementById(selId); if (sel) { sel.style.borderColor='#3D95CE'; sel.style.background='#3D95CE'; sel.style.color='#fff'; } }
+  _venmoUpdateDisplay();
+}
+
+function venmoToggleCustomTip() {
+  var wrap = document.getElementById('venmo-custom-tip-wrap');
+  var show = wrap.style.display === 'none';
+  wrap.style.display = show ? 'block' : 'none';
+  ['venmo-tip-15','venmo-tip-18','venmo-tip-20','venmo-tip-25','venmo-tip-none','venmo-tip-custom-btn'].forEach(function(id){
+    var el = document.getElementById(id); if (!el) return;
+    el.style.borderColor = '#e2e2e2'; el.style.background = '#fff'; el.style.color = '#000';
+  });
+  if (show) {
+    var btn = document.getElementById('venmo-tip-custom-btn');
+    if (btn) { btn.style.borderColor='#3D95CE'; btn.style.background='#3D95CE'; btn.style.color='#fff'; }
+    var ci = document.getElementById('venmo-custom-tip-input'); if (ci) ci.focus();
+  }
+}
+
+function venmoApplyCustomTip(val) {
+  _venmoTipAmt = parseFloat(val) || 0;
+  _venmoUpdateDisplay();
+}
+
+function _venmoUpdateDisplay() {
+  var total = parseFloat((_venmoBasePay + _venmoTipAmt).toFixed(2));
+  document.getElementById('venmo-tip-sub-display').textContent   = '$' + _venmoBasePay.toFixed(2);
+  document.getElementById('venmo-tip-display').textContent       = '$' + _venmoTipAmt.toFixed(2);
+  document.getElementById('venmo-tip-total-display').textContent = '$' + total.toFixed(2);
+  document.getElementById('venmo-modal-amt').textContent         = '$' + total.toFixed(2);
+}
+
+function venmoConfirmAndPay() {
+  var total = parseFloat((_venmoBasePay + _venmoTipAmt).toFixed(2));
+  var note = encodeURIComponent('Seacoast RVIP - Ride Payment');
+  closeVenmoPayModal();
+  window.open('https://venmo.com/u/Ramon-Vargas-83?txn=pay&amount=' + total.toFixed(2) + '&note=' + note, '_blank');
+}
+
+function closeVenmoPayModal() {
+  document.getElementById('acct-venmo-modal').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+document.addEventListener('click', function(e) {
+  if (e.target === document.getElementById('acct-venmo-modal')) closeVenmoPayModal();
+});
+
+function payVenmo(tripId) { openVenmoPayModal(tripId); }
 
 function renderSavedCardInfo() {
   // Update balance reminder display (fare + tip)
