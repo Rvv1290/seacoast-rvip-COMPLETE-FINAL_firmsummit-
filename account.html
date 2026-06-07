@@ -1852,18 +1852,9 @@ function updateDashboardUI(){
   document.getElementById('stat-total').textContent = allTrips.length;
   document.getElementById('stat-loyalty').textContent = completed;
 
-  // Balance: use admin-managed Firestore field when present; otherwise sum unpaid trips
-  let balance;
-  if (typeof currentUser.balance === 'number') {
-    balance = currentUser.balance;
-  } else if (currentUser.lastPaymentDate) {
-    const since = new Date(currentUser.lastPaymentDate);
-    balance = confirmed
-      .filter(t => new Date(t.date) >= since)
-      .reduce((s, t) => s + parseFloat(t.price || 0) + parseFloat(t.tip || 0), 0);
-  } else {
-    balance = confirmed.reduce((s, t) => s + parseFloat(t.price || 0) + parseFloat(t.tip || 0), 0);
-  }
+  // Always sum Completed + Confirmed trips — never use the manual balance field
+  // (manual balance was masking trips because balance:0 in Firestore matched typeof===number)
+  const balance = confirmed.reduce((s, t) => s + parseFloat(t.price || 0) + parseFloat(t.tip || 0), 0);
   document.getElementById('stat-balance').textContent = `$${balance.toFixed(2)}`;
 
   var payBtns = document.getElementById('stat-pay-btn');
