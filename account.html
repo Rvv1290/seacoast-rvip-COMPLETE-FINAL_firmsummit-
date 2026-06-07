@@ -236,16 +236,12 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 <div id="toast"></div>
 
 <!-- NAV -->
-<nav class="nav">
-  <div style="display:flex;align-items:center;gap:1.5rem">
-    <button class="mobile-menu-btn" id="hamburger-btn" onclick="toggleMobileSidebar()"><span class="material-symbols-outlined">menu</span></button>
-    <a href="index.html" class="nav-logo">Seacoast RVIP</a>
-    <div style="display:flex;gap:1.5rem;font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em">
-       <a href="index.html" style="text-decoration:none;color:#000">Home</a>
-       <a href="schedule.html" style="text-decoration:none;color:var(--gold-dark)">Book Ride</a>
-    </div>
-  </div>
-  <button id="nav-btn-logout" style="display:none" onclick="doLogout()" class="btn-out">Sign Out</button>
+<nav class="nav" style="justify-content:space-between">
+  <button class="mobile-menu-btn" id="hamburger-btn" onclick="toggleMobileSidebar()"><span class="material-symbols-outlined">menu</span></button>
+  <a href="index.html" class="nav-logo" style="position:absolute;left:50%;transform:translateX(-50%)">Seacoast RVIP</a>
+  <button id="nav-btn-logout" style="display:none;background:none;border:none;cursor:pointer;color:#999;padding:8px;line-height:1" onclick="doLogout()" title="Sign Out">
+    <span class="material-symbols-outlined" style="font-size:20px">logout</span>
+  </button>
 </nav>
 
 <!-- ═══════════ LOGIN PAGE ═══════════ -->
@@ -436,52 +432,62 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
       <div id="tab-dash" class="tab-panel on">
 
         <!-- Welcome Header -->
-        <div class="dash-welcome">
-          <h1 id="welcome-msg" style="font-family:'Times New Roman',serif;font-size:2.2rem;color:#000;margin-bottom:0.25rem">Welcome, User</h1>
-          <p style="color:var(--text-sec);font-size:0.9rem;line-height:1.6">Your travel summary and loyalty status.</p>
+        <div style="margin-bottom:1.75rem">
+          <p style="font-family:'Work Sans',sans-serif;font-size:0.58rem;font-weight:700;text-transform:uppercase;letter-spacing:0.16em;color:var(--gold-dark);margin-bottom:0.4rem">Client Dashboard</p>
+          <h1 id="welcome-msg" style="font-family:'Times New Roman',serif;font-size:2rem;color:#000;margin:0 0 0.1rem">Welcome, User</h1>
+          <div style="width:36px;height:2px;background:var(--gold);margin-top:0.6rem"></div>
         </div>
 
-        <!-- Stat Cards Row — compact, horizontal scroll on mobile -->
-        <div class="dash-stats-row">
-          <div class="stat-card-sm">
-            <div class="stat-lbl">Total Trips</div>
-            <div class="stat-val-sm" id="stat-total">0</div>
+        <!-- Stat Cards Row -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.875rem;margin-bottom:1.25rem">
+          <div style="background:#fff;border:1px solid var(--border);padding:1.1rem 1rem">
+            <div style="font-family:'Work Sans',sans-serif;font-size:0.55rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-sec);margin-bottom:6px">Total Trips</div>
+            <div style="font-family:'Times New Roman',serif;font-size:2rem;font-weight:700;color:#000;line-height:1" id="stat-total">0</div>
           </div>
-          <div class="stat-card-sm">
-            <div class="stat-lbl">Loyalty Points</div>
-            <div class="stat-val-sm" id="stat-loyalty" style="color:var(--gold-dark)">0</div>
-          </div>
-          <div class="stat-card-sm">
-            <div class="stat-lbl">Balance Due</div>
-            <div class="stat-val-sm" id="stat-balance" style="color:#d32f2f">$0.00</div>
-            <button id="stat-pay-btn" onclick="payTotalBalance()" class="btn-k" style="display:none;margin-top:0.6rem;padding:0.4rem 0.8rem;font-size:0.6rem;width:100%">Pay Now →</button>
+          <div style="background:#fff;border:1px solid var(--border);padding:1.1rem 1rem">
+            <div style="font-family:'Work Sans',sans-serif;font-size:0.55rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-sec);margin-bottom:6px">Loyalty Points</div>
+            <div style="font-family:'Times New Roman',serif;font-size:2rem;font-weight:700;color:var(--gold-dark);line-height:1" id="stat-loyalty">0</div>
           </div>
         </div>
 
-        <!-- Loyalty Tier — compact single card -->
-        <div class="loyalty-overview-card">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;flex-wrap:wrap;gap:0.5rem">
-            <span style="font-family:'Work Sans',sans-serif;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:var(--text-sec)">Loyalty Rewards</span>
-            <div style="display:flex;gap:0.5rem;align-items:center">
-              <span id="tier-badge-dash" style="font-family:'Work Sans',sans-serif;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--gold-dark);background:rgba(201,168,76,0.1);padding:3px 10px;border-radius:20px">Member</span>
+        <!-- Balance Due Card (always shown) -->
+        <div id="balance-card" style="background:#fff;border:1px solid var(--border);border-left:3px solid #d32f2f;padding:1.25rem 1.25rem 1rem;margin-bottom:1.25rem">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.5rem">
+            <div style="font-family:'Work Sans',sans-serif;font-size:0.55rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-sec)">Outstanding Balance</div>
+            <span class="material-symbols-outlined" style="font-size:16px;color:#d32f2f">account_balance_wallet</span>
+          </div>
+          <div style="font-family:'Times New Roman',serif;font-size:2.4rem;font-weight:700;color:#d32f2f;line-height:1;margin-bottom:0.875rem" id="stat-balance">$0.00</div>
+          <div id="stat-pay-btn" style="display:none;display:grid;grid-template-columns:1fr 1fr;gap:0.5rem">
+            <button onclick="settleBalanceWithCard()" class="btn-k" style="font-size:0.6rem;padding:0.6rem 0.5rem;display:flex;align-items:center;justify-content:center;gap:5px">
+              <span class="material-symbols-outlined" style="font-size:13px">lock</span>Card
+            </button>
+            <button onclick="openVenmoPayModal()" style="font-size:0.6rem;padding:0.6rem 0.5rem;background:#3D95CE;color:#fff;border:none;border-bottom:2px solid #2a6a94;font-family:'Work Sans',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="white"><path d="M17.4 2C14.6 2 12.4 3.5 11 6.2 9.9 4.3 8.3 3.3 6.2 3.3c-3 0-4.2 2.2-4.2 4.8 0 5 7 14.4 9.2 14.4 1.3 0 2.4-1.5 4-4.3.4.1.7.1 1.1.1 3.4 0 6.1-3.1 6.1-7.8C22.4 4.5 20.3 2 17.4 2z"/></svg>Venmo
+            </button>
+          </div>
+          <p id="balance-zero-msg" style="font-size:0.72rem;color:#aaa;margin:0">No outstanding balance. You're all clear.</p>
+        </div>
+
+        <!-- Loyalty Tier Card -->
+        <div style="background:#fff;border:1px solid var(--border);border-top:2px solid var(--gold);padding:1.25rem;margin-bottom:1.25rem">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+            <span style="font-family:'Work Sans',sans-serif;font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:var(--text-sec)">Loyalty Rewards</span>
+            <span id="tier-badge-dash" style="font-family:'Work Sans',sans-serif;font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--gold-dark);background:rgba(201,168,76,0.1);padding:3px 10px;border-radius:20px">Member</span>
+          </div>
+          <div style="height:3px;background:#f0f0f0;border-radius:2px;margin-bottom:0.75rem;overflow:hidden"><div class="l-fill" id="loyalty-bar-dash" style="height:100%"></div></div>
+          <p id="rewards-status-msg" style="font-size:0.75rem;color:var(--text-sec);margin:0 0 0.875rem">Loading rewards status...</p>
+          <div style="display:flex;justify-content:space-between;padding-top:0.75rem;border-top:1px solid var(--border)">
+            <div style="text-align:center">
+              <div style="font-size:0.58rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#bbb">Member</div>
+              <div style="font-size:0.6rem;color:#aaa;margin-top:2px">0–9</div>
             </div>
-          </div>
-          <div class="l-bar" style="margin-bottom:0.5rem"><div class="l-fill" id="loyalty-bar-dash"></div></div>
-          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.5rem">
-            <p id="rewards-status-msg" style="font-size:0.75rem;color:var(--text-sec);margin:0">Loading rewards status...</p>
-            <div style="display:flex;gap:1.5rem">
-              <div style="text-align:center">
-                <div style="font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#aaa">Member</div>
-                <div style="font-size:0.65rem;color:#888">0–9</div>
-              </div>
-              <div style="text-align:center">
-                <div style="font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#888">Silver</div>
-                <div style="font-size:0.65rem;color:#888">10–24</div>
-              </div>
-              <div style="text-align:center">
-                <div style="font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--gold-dark)">Gold</div>
-                <div style="font-size:0.65rem;color:var(--gold-dark)">25+</div>
-              </div>
+            <div style="text-align:center">
+              <div style="font-size:0.58rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#888">Silver</div>
+              <div style="font-size:0.6rem;color:#888;margin-top:2px">10–24</div>
+            </div>
+            <div style="text-align:center">
+              <div style="font-size:0.58rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--gold-dark)">Gold</div>
+              <div style="font-size:0.6rem;color:var(--gold-dark);margin-top:2px">25+</div>
             </div>
           </div>
         </div>
@@ -1838,17 +1844,15 @@ async function initDashboard(){
 
 function updateDashboardUI(){
   const completed = allTrips.filter(t => ['completed','paid'].includes((t.status||'').toLowerCase())).length;
-  // Only 'Confirmed' (unpaid) trips count toward outstanding balance
-  const confirmed = allTrips.filter(t => (t.status||'').toLowerCase()==='confirmed');
+  // Confirmed AND Completed trips are unpaid — both count toward outstanding balance
+  const confirmed = allTrips.filter(t => ['confirmed','completed'].includes((t.status||'').toLowerCase()));
   const upcoming  = allTrips.filter(t => ['upcoming','scheduled','pending','confirmed'].includes((t.status||'').toLowerCase())).length;
-  
+
   // Stats
   document.getElementById('stat-total').textContent = allTrips.length;
   document.getElementById('stat-loyalty').textContent = completed;
-  
-  // Balance: use admin-managed Firestore field when present; otherwise sum
-  // confirmed trips since the last payment date (so completed monthly cycles
-  // don't inflate the current balance).
+
+  // Balance: use admin-managed Firestore field when present; otherwise sum unpaid trips
   let balance;
   if (typeof currentUser.balance === 'number') {
     balance = currentUser.balance;
@@ -1861,14 +1865,18 @@ function updateDashboardUI(){
     balance = confirmed.reduce((s, t) => s + parseFloat(t.price || 0) + parseFloat(t.tip || 0), 0);
   }
   document.getElementById('stat-balance').textContent = `$${balance.toFixed(2)}`;
-  
+
+  var payBtns = document.getElementById('stat-pay-btn');
+  var zeroMsg = document.getElementById('balance-zero-msg');
   if(balance > 0){
      document.getElementById('pay-box').style.display='block';
      document.getElementById('pay-total-lbl').textContent = `$${balance.toFixed(2)}`;
-     document.getElementById('stat-pay-btn').style.display='block';
+     if(payBtns){ payBtns.style.display='grid'; }
+     if(zeroMsg){ zeroMsg.style.display='none'; }
   } else {
      document.getElementById('pay-box').style.display='none';
-     document.getElementById('stat-pay-btn').style.display='none';
+     if(payBtns){ payBtns.style.display='none'; }
+     if(zeroMsg){ zeroMsg.style.display='block'; }
   }
 
   updateLoyaltyUI(completed);
@@ -1920,7 +1928,21 @@ function renderRecentActivity(){
   const el = document.getElementById('recent-list');
   const slice = allTrips.slice(0,3);
   if(!slice.length) return el.innerHTML='<p style="color:#aaa;font-size:0.8rem">No recent activity.</p>';
-  el.innerHTML = slice.map(t => tripCard(t)).join('');
+  el.innerHTML = slice.map(t => {
+    const statusLow = (t.status||'').toLowerCase();
+    const isPayable = ['confirmed','completed'].includes(statusLow);
+    const fare = parseFloat(t.price||0) + parseFloat(t.tip||0);
+    const payRow = isPayable && fare > 0 ? `
+      <div style="margin:-1rem 0 1rem;border:1px solid var(--border);border-top:none;padding:0.6rem 1.25rem;display:flex;gap:6px;background:#fafafa">
+        <button onclick="payTrip('${t.id}',${fare.toFixed(2)})" class="btn-k" style="flex:1;padding:0.45rem 0.5rem;font-size:0.58rem;display:flex;align-items:center;justify-content:center;gap:4px">
+          <span class="material-symbols-outlined" style="font-size:12px">lock</span>Pay with Card
+        </button>
+        <button onclick="openVenmoPayModal('${t.id}')" style="flex:1;padding:0.45rem 0.5rem;font-size:0.58rem;background:#3D95CE;color:#fff;border:none;border-bottom:2px solid #2a6a94;font-family:'Work Sans',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="white"><path d="M17.4 2C14.6 2 12.4 3.5 11 6.2 9.9 4.3 8.3 3.3 6.2 3.3c-3 0-4.2 2.2-4.2 4.8 0 5 7 14.4 9.2 14.4 1.3 0 2.4-1.5 4-4.3.4.1.7.1 1.1.1 3.4 0 6.1-3.1 6.1-7.8C22.4 4.5 20.3 2 17.4 2z"/></svg>Venmo
+        </button>
+      </div>` : '';
+    return tripCard(t) + payRow;
+  }).join('');
   setTimeout(initCardMaps,80);
 }
 
@@ -2747,9 +2769,11 @@ function _acctZeroBalanceDisplay() {
   // Stats bar balance
   var statBal = document.getElementById('stat-balance');
   if (statBal) statBal.textContent = '$0.00';
-  // Pay-now button in stats bar
+  // Pay-now buttons in balance card
   var statPayBtn = document.getElementById('stat-pay-btn');
   if (statPayBtn) statPayBtn.style.display = 'none';
+  var zm = document.getElementById('balance-zero-msg');
+  if (zm) zm.style.display = 'block';
   // Pay box in dashboard
   var payBox = document.getElementById('pay-box');
   if (payBox) payBox.style.display = 'none';
