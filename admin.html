@@ -5206,7 +5206,7 @@
 </style>
 
 <!-- ─── PANEL WRAPPER ─── -->
-<div id="driver-app-panel" style="display:none;position:fixed;inset:0;background:#f5f5f5;z-index:9000;flex-direction:column;overflow:hidden">
+<div id="driver-app-panel" style="display:none;position:fixed;inset:0;background:#f5f5f5;z-index:99999;flex-direction:column;overflow:hidden">
 
   <!-- Top bar -->
   <div style="background:#000;color:#fff;height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 1.5rem;flex-shrink:0">
@@ -5481,10 +5481,12 @@ var _daUnsubNotifs  = null;
 var _daUnsubBookings = null;
 
 function openDriverAppPanel() {
-  document.getElementById('driver-app-panel').style.display = 'flex';
+  var panel = document.getElementById('driver-app-panel');
+  if (!panel) { alert('Driver panel not found — please refresh the page.'); return; }
+  panel.style.cssText = 'display:flex!important;position:fixed;inset:0;top:0;left:0;right:0;bottom:0;background:#f5f5f5;z-index:99999;flex-direction:column;overflow:hidden';
   document.body.style.overflow = 'hidden';
   daGoTab('overview');
-  daLoadAll();
+  try { daLoadAll(); } catch(e) { console.warn('daLoadAll error:', e); }
 }
 
 function closeDriverAppPanel() {
@@ -5508,33 +5510,38 @@ function daOpenM(id) { var el = document.getElementById(id); if(el){ el.style.di
 function daCloseM(id) { var el = document.getElementById(id); if(el){ el.style.display='none'; } }
 
 // ─── LOAD ALL ───
+var _daDb = null;
+function getDaDb() {
+  if (!_daDb) { try { _daDb = (typeof db !== 'undefined' && db) ? db : firebase.firestore(); } catch(e) {} }
+  return _daDb;
+}
 function daLoadAll() {
   if (_daUnsubDrivers) _daUnsubDrivers();
-  _daUnsubDrivers = db.collection('drivers').orderBy('createdAt','desc').onSnapshot(function(snap) {
+  _daUnsubDrivers = getDaDb().collection('drivers').orderBy('createdAt','desc').onSnapshot(function(snap) {
     _daDrivers = snap.docs.map(function(d){ return Object.assign({id:d.id}, d.data()); });
     daRenderAll();
   }, function(e){ console.warn('da drivers:', e); });
 
   if (_daUnsubPayouts) _daUnsubPayouts();
-  _daUnsubPayouts = db.collection('driverPayouts').orderBy('generatedAt','desc').limit(50).onSnapshot(function(snap) {
+  _daUnsubPayouts = getDaDb().collection('driverPayouts').orderBy('generatedAt','desc').limit(50).onSnapshot(function(snap) {
     _daPayouts = snap.docs.map(function(d){ return Object.assign({id:d.id}, d.data()); });
     daRenderPayouts();
     daRenderOverview();
   }, function(e){ console.warn('da payouts:', e); });
 
   if (_daUnsubNotifs) _daUnsubNotifs();
-  _daUnsubNotifs = db.collection('driverNotifications').orderBy('sentAt','desc').limit(30).onSnapshot(function(snap) {
+  _daUnsubNotifs = getDaDb().collection('driverNotifications').orderBy('sentAt','desc').limit(30).onSnapshot(function(snap) {
     _daNotifs = snap.docs.map(function(d){ return Object.assign({id:d.id}, d.data()); });
     daRenderNotifHistory();
   }, function(e){ console.warn('da notifs:', e); });
 
   // Load confirmed bookings for dispatch
   if (_daUnsubBookings) _daUnsubBookings();
-  _daUnsubBookings = db.collection('bookings').where('status','==','Confirmed').onSnapshot(function(snap) {
+  _daUnsubBookings = getDaDb().collection('bookings').where('status','==','Confirmed').onSnapshot(function(snap) {
     _daBookings = snap.docs.map(function(d){ return Object.assign({id:d.id}, d.data()); });
     daRenderDispatch();
   }, function(e){
-    db.collection('bookings').onSnapshot(function(snap2){
+    getDaDb().collection('bookings').onSnapshot(function(snap2){
       _daBookings = snap2.docs.map(function(d){ return Object.assign({id:d.id}, d.data()); }).filter(function(b){ return b.status==='Confirmed'; });
       daRenderDispatch();
     });
@@ -5765,11 +5772,11 @@ async function daGeneratePayout() {
   if (!driver) return;
 
   // Fetch completed trips for this driver in date range
-  var snap = await db.collection('bookings')
+  var snap = await getDaDb().collection('bookings')
     .where('driverId','==',driverId)
     .where('status','==','Completed')
     .get().catch(function(){
-      return db.collection('bookings').where('status','==','Completed').get();
+      return getDaDb().collection('bookings').where('status','==','Completed').get();
     });
 
   var trips = snap.docs
@@ -5799,7 +5806,7 @@ async function daGeneratePayout() {
     generatedBy:   'admin'
   };
 
-  var ref = await db.collection('driverPayouts').add(payout);
+  var ref = await getDaDb().collection('driverPayouts').add(payout);
   payout.id = ref.id;
   daShowPayoutStatement(payout);
   daOpenM('dap-m-payout');
@@ -5844,7 +5851,7 @@ function daViewPayoutStatement(payoutId) {
 }
 
 async function daMarkPaid(payoutId) {
-  await db.collection('driverPayouts').doc(payoutId).update({ status:'paid', paidAt: new Date().toISOString() });
+  await getDaDb().collection('driverPayouts').doc(payoutId).update({ status:'paid', paidAt: new Date().toISOString() });
   daCloseM('dap-m-payout');
 }
 
@@ -5870,7 +5877,7 @@ async function daSendNotification() {
     sentBy:   'admin'
   };
 
-  await db.collection('driverNotifications').add(notif);
+  await getDaDb().collection('driverNotifications').add(notif);
   document.getElementById('dap-notif-title').value = '';
   document.getElementById('dap-notif-msg').value   = '';
   if (res) { res.style.display='block'; res.style.background='#e8f5e9'; res.style.border='1px solid #c8e6c9'; res.style.color='#2e7d32'; res.textContent = '✓ Notification sent to ' + notif.sentToLabel; setTimeout(function(){ res.style.display='none'; }, 4000); }
@@ -5948,10 +5955,10 @@ async function daSaveDriver() {
     updatedAt: new Date().toISOString()
   };
   if (_daEditingId) {
-    await db.collection('drivers').doc(_daEditingId).update(data);
+    await getDaDb().collection('drivers').doc(_daEditingId).update(data);
   } else {
     data.createdAt = new Date().toISOString();
-    await db.collection('drivers').add(data);
+    await getDaDb().collection('drivers').add(data);
   }
   daCloseM('dap-m-driver');
 }
@@ -6020,7 +6027,7 @@ function daOpenPayoutForDriver(id) {
 async function daSetStatus(id, status) {
   var data = { status: status };
   if (status==='active') data.approvedAt = new Date().toISOString();
-  await db.collection('drivers').doc(id).update(data);
+  await getDaDb().collection('drivers').doc(id).update(data);
   if (document.getElementById('dap-m-profile').style.display==='flex') daCloseM('dap-m-profile');
 }
 
@@ -6054,7 +6061,7 @@ async function daConfirmAssign() {
   var driver = _daDrivers.find(function(d){ return d.id===driverId; });
   if (!driver) return;
   var notes = document.getElementById('dap-assign-notes').value.trim();
-  await db.collection('bookings').doc(_daAssignTripId).update({
+  await getDaDb().collection('bookings').doc(_daAssignTripId).update({
     driverId:    driverId,
     driverName:  driver.name,
     driverPhone: driver.phone||'',
