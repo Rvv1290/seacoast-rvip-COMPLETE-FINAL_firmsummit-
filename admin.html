@@ -5203,11 +5203,12 @@
 
     <!-- ── OVERVIEW ── -->
     <div id="dap-sec-overview" class="dap-section" style="display:block">
-      <div class="dap-grid4" style="margin-bottom:1.5rem" id="dap-stats-row">
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:1rem;margin-bottom:1.5rem" id="dap-stats-row">
         <div class="dap-stat"><div class="dap-stat-lbl">Active Drivers</div><div class="dap-stat-val" id="dap-s-active">0</div></div>
         <div class="dap-stat"><div class="dap-stat-lbl">Pending Onboarding</div><div class="dap-stat-val" style="color:#f57c00" id="dap-s-pending">0</div></div>
         <div class="dap-stat"><div class="dap-stat-lbl">Total Drivers</div><div class="dap-stat-val" id="dap-s-total">0</div></div>
         <div class="dap-stat"><div class="dap-stat-lbl">Payouts Pending</div><div class="dap-stat-val" style="color:#c62828" id="dap-s-payouts">0</div></div>
+        <div class="dap-stat"><div class="dap-stat-lbl">Docs to Review</div><div class="dap-stat-val" style="color:#0277bd" id="dap-s-docs">0</div></div>
       </div>
       <div class="dap-grid2">
         <div>
@@ -5445,6 +5446,8 @@ var _daUnsubDrivers = null;
 var _daUnsubPayouts = null;
 var _daUnsubNotifs  = null;
 var _daUnsubBookings = null;
+var _daDocs         = {};
+var _daDocUnsubs    = {};
 
 function openDriverAppPanel() {
   var panel = document.getElementById('driver-app-panel');
@@ -5463,6 +5466,8 @@ function closeDriverAppPanel() {
   if (_daUnsubPayouts) { _daUnsubPayouts(); _daUnsubPayouts = null; }
   if (_daUnsubNotifs)  { _daUnsubNotifs();  _daUnsubNotifs  = null; }
   if (_daUnsubBookings){ _daUnsubBookings(); _daUnsubBookings = null; }
+  Object.keys(_daDocUnsubs).forEach(function(k){ try { _daDocUnsubs[k](); } catch(e){} });
+  _daDocUnsubs = {}; _daDocs = {};
 }
 
 function daGoTab(tab) {
@@ -5522,6 +5527,116 @@ function daRenderAll() {
   daPopulateDriverSelects();
 }
 
+// ─── DOCUMENT MANAGEMENT ───
+var _DA_DOC_LABELS = { license:'Driver\'s License', insurance:'Insurance', registration:'Vehicle Registration', background:'Background Check', selfie:'Profile Photo', other:'Other Document' };
+
+function daLoadDocsForDriver(driverId) {
+  if (_daDocUnsubs[driverId]) return; // already watching
+  _daDocUnsubs[driverId] = getDaDb().collection('drivers').doc(driverId).collection('documents')
+    .onSnapshot(function(snap) {
+      _daDocs[driverId] = snap.docs.map(function(d){ return Object.assign({id:d.id}, d.data()); });
+      daRenderDocCards(driverId, 'dap-docs-' + driverId);
+      daRenderDocCards(driverId, 'dap-prof-docs-' + driverId);
+      daUpdateDocsStat();
+    }, function(e){ console.warn('docs:', e); });
+}
+
+function daUpdateDocsStat() {
+  var count = 0;
+  Object.keys(_daDocs).forEach(function(did){
+    (_daDocs[did]||[]).forEach(function(doc){ if (doc.status === 'pending') count++; });
+  });
+  var el = document.getElementById('dap-s-docs');
+  if (el) el.textContent = count;
+}
+
+function daRenderDocCards(driverId, containerId) {
+  var container = document.getElementById(containerId);
+  if (!container) return;
+  var docs = _daDocs[driverId] || [];
+  if (!docs.length) { container.innerHTML = '<p style="font-size:0.75rem;color:#aaa;margin:0">No documents uploaded yet.</p>'; return; }
+  container.innerHTML = docs.map(function(doc) {
+    var label = _DA_DOC_LABELS[doc.type] || doc.fileName || doc.type || 'Document';
+    var st = doc.status || 'pending';
+    var stColor = st==='approved' ? '#2e7d32' : st==='rejected' ? '#c62828' : '#f57c00';
+    return '<div style="display:flex;align-items:center;gap:0.75rem;padding:0.625rem 0;border-bottom:1px solid #f0f0f0">' +
+      '<span class="material-symbols-outlined" style="font-size:18px;color:#aaa;flex-shrink:0">description</span>' +
+      '<div style="flex:1;min-width:0">' +
+        '<div style="font-weight:600;font-size:0.8rem">' + daEsc(label) + '</div>' +
+        (doc.uploadedAt ? '<div style="font-size:0.68rem;color:#aaa">Uploaded ' + new Date(doc.uploadedAt).toLocaleDateString() + '</div>' : '') +
+        (doc.reviewNote ? '<div style="font-size:0.68rem;color:#c62828;margin-top:1px">' + daEsc(doc.reviewNote) + '</div>' : '') +
+      '</div>' +
+      '<span style="font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:' + stColor + ';flex-shrink:0">' + st + '</span>' +
+      (doc.url ? '<a href="' + daEsc(doc.url) + '" target="_blank" class="dap-btn-outline" style="font-size:0.58rem;padding:0.25rem 0.55rem;text-decoration:none;flex-shrink:0">View</a>' : '') +
+      (st !== 'approved' ? '<button onclick="daApproveDoc(\'' + driverId + '\',\'' + doc.id + '\')" class="dap-btn dap-btn-green" style="font-size:0.58rem;padding:0.25rem 0.55rem;flex-shrink:0">✓ Approve</button>' : '') +
+      (st !== 'rejected' ? '<button onclick="daRejectDoc(\'' + driverId + '\',\'' + doc.id + '\')" class="dap-btn dap-btn-red" style="font-size:0.58rem;padding:0.25rem 0.55rem;flex-shrink:0">✕ Reject</button>' : '') +
+    '</div>';
+  }).join('');
+}
+
+async function daApproveDoc(driverId, docId) {
+  await getDaDb().collection('drivers').doc(driverId).collection('documents').doc(docId)
+    .update({ status: 'approved', reviewedAt: new Date().toISOString() });
+}
+
+async function daRejectDoc(driverId, docId) {
+  var reason = prompt('Rejection reason (optional — driver will see this):') || '';
+  await getDaDb().collection('drivers').doc(driverId).collection('documents').doc(docId)
+    .update({ status: 'rejected', reviewedAt: new Date().toISOString(), reviewNote: reason });
+}
+
+async function daActivateDriver(id) {
+  var docs = _daDocs[id] || [];
+  var unapproved = docs.filter(function(d){ return d.status !== 'approved'; });
+  if (docs.length === 0) {
+    if (!confirm('No documents uploaded yet. Activate this driver anyway?')) return;
+  } else if (unapproved.length > 0) {
+    if (!confirm(unapproved.length + ' document(s) not yet approved. Activate anyway?')) return;
+  }
+  await getDaDb().collection('drivers').doc(id).update({ status: 'active', approvedAt: new Date().toISOString() });
+  var pm = document.getElementById('dap-m-profile');
+  if (pm && pm.style.display === 'flex') daCloseM('dap-m-profile');
+}
+
+// ─── DRIVER EARNINGS ───
+async function daLoadDriverEarnings(driverId, containerId) {
+  var container = document.getElementById(containerId);
+  if (!container) return;
+  try {
+    var snap = await getDaDb().collection('bookings')
+      .where('driverId', '==', driverId).where('status', '==', 'Completed').get()
+      .catch(function(){ return getDaDb().collection('bookings').where('status','==','Completed').get(); });
+    var driver = _daDrivers.find(function(d){ return d.id === driverId; });
+    var share = driver ? (driver.driverShare || 0.8) : 0.8;
+    var gross = 0, trips = 0;
+    snap.docs.forEach(function(doc){
+      var b = doc.data();
+      if (!b.deleted && (!b.driverId || b.driverId === driverId)) {
+        gross += parseFloat(b.price||0) + parseFloat(b.tip||0);
+        trips++;
+      }
+    });
+    var net = parseFloat((gross * share).toFixed(2));
+    container.innerHTML =
+      '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.75rem;margin-top:0.5rem">' +
+        '<div style="background:#f9f9f9;padding:0.875rem;text-align:center">' +
+          '<div style="font-size:0.58rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#999;margin-bottom:5px">Completed Trips</div>' +
+          '<div style="font-family:\'Times New Roman\',serif;font-size:1.5rem;font-weight:700">' + trips + '</div>' +
+        '</div>' +
+        '<div style="background:#f9f9f9;padding:0.875rem;text-align:center">' +
+          '<div style="font-size:0.58rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#999;margin-bottom:5px">Gross Revenue</div>' +
+          '<div style="font-family:\'Times New Roman\',serif;font-size:1.5rem;font-weight:700">$' + gross.toFixed(2) + '</div>' +
+        '</div>' +
+        '<div style="background:#f9f9f9;padding:0.875rem;text-align:center">' +
+          '<div style="font-size:0.58rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#999;margin-bottom:5px">Net to Driver (' + Math.round(share*100) + '%)</div>' +
+          '<div style="font-family:\'Times New Roman\',serif;font-size:1.5rem;font-weight:700;color:#C9A84C">$' + net.toFixed(2) + '</div>' +
+        '</div>' +
+      '</div>';
+  } catch(e) {
+    container.innerHTML = '<span style="font-size:0.78rem;color:#aaa">Could not load earnings data.</span>';
+  }
+}
+
 // ─── OVERVIEW ───
 function daRenderOverview() {
   var active    = _daDrivers.filter(function(d){ return d.status==='active'; }).length;
@@ -5531,6 +5646,7 @@ function daRenderOverview() {
   document.getElementById('dap-s-pending').textContent = pending;
   document.getElementById('dap-s-total').textContent   = _daDrivers.length;
   document.getElementById('dap-s-payouts').textContent = pendPay;
+  daUpdateDocsStat();
   // Onboarding badge
   var badge = document.getElementById('dap-onb-badge');
   if (badge) { badge.textContent = pending; badge.style.display = pending > 0 ? 'inline-block' : 'none'; }
@@ -5627,34 +5743,46 @@ function daRenderDrivers() {
 function daRenderOnboarding() {
   var el = document.getElementById('dap-onb-list');
   if (!el) return;
-  var pending = _daDrivers.filter(function(d){ return d.status==='pending'; });
+  var pending = _daDrivers.filter(function(d){ return d.status==='pending' || d.status==='docs_pending'; });
   if (!pending.length) { el.innerHTML = '<p style="font-size:0.82rem;color:#aaa">No pending applications.</p>'; return; }
   el.innerHTML = pending.map(function(d){
     var v = d.vehicle || {};
     var joined = d.createdAt ? (new Date(d.createdAt.seconds ? d.createdAt.seconds*1000 : d.createdAt)).toLocaleDateString() : '—';
-    return '<div class="dap-card" style="margin-bottom:1rem;border-left:3px solid #f57c00">' +
+    var agreeColor = d.agreementSigned ? '#2e7d32' : '#888';
+    var agreeIcon  = d.agreementSigned ? 'check_circle' : 'radio_button_unchecked';
+    var agreeLabel = d.agreementSigned ? 'Agreement signed' : 'Agreement not yet signed';
+    return '<div class="dap-card" style="margin-bottom:1.5rem;border-left:3px solid #f57c00">' +
       '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:0.75rem">' +
         '<div style="display:flex;align-items:center;gap:0.875rem">' +
           '<div class="dap-avatar" style="background:#f57c00">' + (d.name||'?')[0].toUpperCase() + '</div>' +
           '<div>' +
             '<div style="font-family:\'Times New Roman\',serif;font-size:1rem;font-weight:700">' + daEsc(d.name||'—') + '</div>' +
-            '<div style="font-size:0.75rem;color:#888">' + daEsc(d.phone||'') + ' · ' + daEsc(d.email||'') + '</div>' +
-            '<div style="font-size:0.75rem;color:#888;margin-top:2px">Applied: ' + joined + '</div>' +
+            '<div style="font-size:0.75rem;color:#888">' + daEsc(d.phone||'') + (d.email?' · '+daEsc(d.email):'') + '</div>' +
+            '<div style="font-size:0.72rem;color:#888;margin-top:2px">Applied: ' + joined + '</div>' +
+            '<div style="font-size:0.72rem;color:' + agreeColor + ';margin-top:3px;display:flex;align-items:center;gap:3px">' +
+              '<span class="material-symbols-outlined" style="font-size:13px">' + agreeIcon + '</span>' + agreeLabel +
+            '</div>' +
           '</div>' +
         '</div>' +
-        '<div style="display:flex;gap:0.5rem;flex-wrap:wrap">' +
-          '<button onclick="daSetStatus(\'' + d.id + '\',\'active\')" class="dap-btn dap-btn-green" style="font-size:0.62rem;display:flex;align-items:center;gap:4px"><span class="material-symbols-outlined" style="font-size:13px">check</span>Approve</button>' +
+        '<div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:flex-start">' +
+          '<button onclick="daActivateDriver(\'' + d.id + '\')" class="dap-btn dap-btn-green" style="font-size:0.62rem;display:flex;align-items:center;gap:4px"><span class="material-symbols-outlined" style="font-size:13px">verified</span>Activate</button>' +
           '<button onclick="daSetStatus(\'' + d.id + '\',\'rejected\')" class="dap-btn dap-btn-red" style="font-size:0.62rem;display:flex;align-items:center;gap:4px"><span class="material-symbols-outlined" style="font-size:13px">close</span>Reject</button>' +
-          '<button onclick="daOpenProfile(\'' + d.id + '\')" class="dap-btn-outline" style="font-size:0.62rem">View Details</button>' +
+          '<button onclick="daOpenProfile(\'' + d.id + '\')" class="dap-btn-outline" style="font-size:0.62rem">View Profile</button>' +
         '</div>' +
       '</div>' +
       (v.make ? '<div style="margin-top:0.875rem;padding-top:0.875rem;border-top:1px solid #f0f0f0;font-size:0.78rem;color:#555">' +
         '<span class="material-symbols-outlined" style="font-size:13px;vertical-align:middle;margin-right:4px">directions_car</span>' +
-        daEsc([v.year,v.make,v.model].filter(Boolean).join(' ')) + (v.plate ? ' · ' + daEsc(v.plate) : '') + (v.color ? ' · ' + daEsc(v.color) : '') +
+        daEsc([v.year,v.make,v.model].filter(Boolean).join(' ')) + (v.plate?' · '+daEsc(v.plate):'') + (v.color?' · '+daEsc(v.color):'') +
       '</div>' : '') +
+      '<div style="margin-top:1rem;padding-top:1rem;border-top:1px solid #f0f0f0">' +
+        '<div style="font-family:\'Work Sans\',sans-serif;font-size:0.58rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#999;margin-bottom:0.75rem">Submitted Documents</div>' +
+        '<div id="dap-docs-' + d.id + '"><span style="font-size:0.75rem;color:#aaa">Loading…</span></div>' +
+      '</div>' +
       (d.notes ? '<div style="margin-top:0.75rem;font-size:0.75rem;color:#888;font-style:italic">Notes: ' + daEsc(d.notes) + '</div>' : '') +
     '</div>';
   }).join('');
+  // Start watching documents for each pending driver
+  pending.forEach(function(d){ daLoadDocsForDriver(d.id); });
 }
 
 // ─── DISPATCH ───
@@ -5938,15 +6066,25 @@ function daOpenProfile(id) {
   var v = d.vehicle || {};
   var body = document.getElementById('dap-profile-body');
   var joined = d.createdAt ? new Date(d.createdAt.seconds ? d.createdAt.seconds*1000 : d.createdAt).toLocaleDateString() : '—';
+  var agreeColor = d.agreementSigned ? '#2e7d32' : '#888';
+  var agreeIcon  = d.agreementSigned ? 'check_circle' : 'radio_button_unchecked';
+  var agreeLabel = d.agreementSigned
+    ? ('Signed ' + (d.agreementSignedAt ? new Date(d.agreementSignedAt).toLocaleDateString() : ''))
+    : 'Not signed yet';
   body.innerHTML =
+    // ── Header ──
     '<div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem;padding-bottom:1.5rem;border-bottom:1px solid #eee">' +
       '<div class="dap-avatar" style="width:56px;height:56px;font-size:1.5rem">' + (d.name||'?')[0].toUpperCase() + '</div>' +
       '<div>' +
         '<div style="font-family:\'Times New Roman\',serif;font-size:1.2rem;font-weight:700">' + daEsc(d.name||'—') + '</div>' +
         '<div style="font-size:0.8rem;color:#888">' + daEsc(d.phone||'') + (d.email?' · '+daEsc(d.email):'') + '</div>' +
-        '<div style="margin-top:5px"><span class="dap-badge dap-badge-' + (d.status||'pending') + '">' + (d.status||'pending') + '</span></div>' +
+        '<div style="margin-top:5px;display:flex;align-items:center;gap:0.5rem">' +
+          '<span class="dap-badge dap-badge-' + (d.status||'pending') + '">' + (d.status||'pending') + '</span>' +
+          '<span style="font-size:0.68rem;color:' + agreeColor + ';display:flex;align-items:center;gap:3px"><span class="material-symbols-outlined" style="font-size:13px">' + agreeIcon + '</span>' + agreeLabel + '</span>' +
+        '</div>' +
       '</div>' +
     '</div>' +
+    // ── Vehicle + Compensation ──
     '<div class="dap-grid2" style="margin-bottom:1.25rem">' +
       '<div style="background:#f9f9f9;padding:1rem">' +
         '<div style="font-size:0.58rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#999;margin-bottom:0.5rem">Vehicle</div>' +
@@ -5961,15 +6099,29 @@ function daOpenProfile(id) {
         '<div style="font-size:0.72rem;color:#888;margin-top:2px">Joined: ' + joined + '</div>' +
       '</div>' +
     '</div>' +
+    // ── Earnings ──
+    '<div style="margin-bottom:1.25rem">' +
+      '<div style="font-family:\'Work Sans\',sans-serif;font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#C9A84C;margin-bottom:0.5rem">Account Totals</div>' +
+      '<div id="dap-prof-earnings-' + id + '"><span style="font-size:0.78rem;color:#aaa">Loading earnings…</span></div>' +
+    '</div>' +
+    // ── Documents ──
+    '<div style="margin-bottom:1.25rem;padding-top:1.25rem;border-top:1px solid #eee">' +
+      '<div style="font-family:\'Work Sans\',sans-serif;font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#999;margin-bottom:0.5rem">Documents</div>' +
+      '<div id="dap-prof-docs-' + id + '"><span style="font-size:0.78rem;color:#aaa">Loading documents…</span></div>' +
+    '</div>' +
     (d.notes?'<div style="background:#fffbf0;border:1px solid #ffe082;padding:0.875rem 1rem;margin-bottom:1.25rem;font-size:0.82rem;color:#775a19"><strong>Admin Notes:</strong> '+daEsc(d.notes)+'</div>':'') +
-    '<div style="display:flex;gap:0.75rem;flex-wrap:wrap">' +
+    // ── Actions ──
+    '<div style="display:flex;gap:0.75rem;flex-wrap:wrap;padding-top:1.25rem;border-top:1px solid #eee">' +
       '<button onclick="daEditFromProfile()" class="dap-btn dap-btn-gold" style="font-size:0.65rem">Edit Profile</button>' +
-      (d.status==='pending'   ?'<button onclick="daSetStatus(\''+id+'\',\'active\')" class="dap-btn dap-btn-green" style="font-size:0.65rem">Approve Driver</button>':'') +
+      (d.status==='pending'||d.status==='docs_pending' ? '<button onclick="daActivateDriver(\''+id+'\')" class="dap-btn dap-btn-green" style="font-size:0.65rem;display:flex;align-items:center;gap:4px"><span class="material-symbols-outlined" style="font-size:13px">verified</span>Activate Driver</button>' : '') +
       (d.status==='active'    ?'<button onclick="daSetStatus(\''+id+'\',\'suspended\')" class="dap-btn dap-btn-red" style="font-size:0.65rem">Suspend</button>':'') +
-      (d.status==='suspended' ?'<button onclick="daSetStatus(\''+id+'\',\'active\')" class="dap-btn dap-btn-green" style="font-size:0.65rem">Reactivate</button>':'') +
+      (d.status==='suspended' ?'<button onclick="daActivateDriver(\''+id+'\')" class="dap-btn dap-btn-green" style="font-size:0.65rem">Reactivate</button>':'') +
       '<button onclick="daOpenPayoutForDriver(\''+id+'\')" class="dap-btn" style="font-size:0.65rem;display:flex;align-items:center;gap:4px"><span class="material-symbols-outlined" style="font-size:13px">payments</span>Generate Payout</button>' +
     '</div>';
   daOpenM('dap-m-profile');
+  // Load async data
+  daLoadDocsForDriver(id);
+  daLoadDriverEarnings(id, 'dap-prof-earnings-' + id);
 }
 
 function daEditFromProfile() {
