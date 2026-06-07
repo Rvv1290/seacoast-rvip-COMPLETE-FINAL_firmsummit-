@@ -725,6 +725,7 @@
         <button class="tab" onclick="goTab('corporate',this)" style="color:#7c3aed;font-weight:700">Corporate ⭐</button>
         <button class="tab" onclick="goTab('manage-drivers',this)" style="color:#775a19;font-weight:700">Management ⚙</button>
         <button class="tab" onclick="goTab('estimates',this)" style="color:#0891b2;font-weight:700">Estimates 💰</button>
+        <button class="tab" onclick="openDriverAppPanel()" style="color:#0e7a3a;font-weight:700;border-left:2px solid #eee;margin-left:4px;padding-left:12px">Driver App 🚗</button>
       </div>
 
       <div id="sec-all">
@@ -5155,6 +5156,934 @@
       </div>
     </div>
   </div>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- DRIVER APP MANAGEMENT PANEL — self-contained, no existing code touched -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<style>
+/* ─── DRIVER APP PANEL ─── */
+#driver-app-panel{font-family:'Inter',sans-serif}
+.dap-tab-btn{background:none;border:none;border-bottom:3px solid transparent;padding:1rem 1.25rem;font-family:'Work Sans',sans-serif;font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#888;cursor:pointer;white-space:nowrap;transition:all 0.15s}
+.dap-tab-btn:hover{color:#000}
+.dap-tab-btn.dap-tab-active{color:#000;border-bottom-color:#C9A84C}
+.dap-stat{background:#fff;border:1px solid #eee;padding:1.5rem;min-width:0}
+.dap-stat-val{font-family:'Times New Roman',serif;font-size:2rem;font-weight:700;color:#000;line-height:1.1}
+.dap-stat-lbl{font-family:'Work Sans',sans-serif;font-size:0.58rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#999;margin-bottom:6px}
+.dap-card{background:#fff;border:1px solid #eee;padding:1.25rem;transition:border-color 0.15s}
+.dap-card:hover{border-color:#C9A84C}
+.dap-badge{display:inline-block;font-family:'Work Sans',sans-serif;font-size:0.55rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;padding:3px 8px;border-radius:2px}
+.dap-badge-active{background:#e8f5e9;color:#2e7d32}
+.dap-badge-pending{background:#fff8e1;color:#f57c00}
+.dap-badge-suspended{background:#fef2f2;color:#c62828}
+.dap-badge-rejected{background:#f5f5f5;color:#999}
+.dap-btn{background:#000;color:#fff;border:none;border-bottom:2px solid #444;padding:0.5rem 1rem;font-family:'Work Sans',sans-serif;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;cursor:pointer;transition:0.15s}
+.dap-btn:hover{background:#222}
+.dap-btn-gold{background:#C9A84C;color:#000;border-bottom-color:#775a19}
+.dap-btn-gold:hover{background:#dcb75a}
+.dap-btn-red{background:#c62828;color:#fff;border-bottom-color:#8b0000}
+.dap-btn-red:hover{background:#b71c1c}
+.dap-btn-green{background:#2e7d32;color:#fff;border-bottom-color:#1b5e20}
+.dap-btn-green:hover{background:#388e3c}
+.dap-btn-outline{background:transparent;color:#000;border:1px solid #ddd;border-bottom:2px solid #ccc;padding:0.45rem 0.9rem;font-family:'Work Sans',sans-serif;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;cursor:pointer}
+.dap-btn-outline:hover{background:#f9f9f9}
+.dap-input{width:100%;border:1px solid #ddd;border-bottom:2px solid #bbb;padding:0.65rem 0.75rem;font-family:Inter,sans-serif;font-size:0.85rem;outline:none;transition:border-color 0.15s}
+.dap-input:focus{border-color:#C9A84C}
+.dap-label{display:block;font-family:'Work Sans',sans-serif;font-size:0.58rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#775a19;margin-bottom:5px}
+.dap-grid2{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.dap-grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem}
+.dap-section{display:none}
+.dap-table{width:100%;border-collapse:collapse}
+.dap-table th{font-family:'Work Sans',sans-serif;font-size:0.58rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#999;text-align:left;padding:0.6rem 0.75rem;border-bottom:1px solid #eee}
+.dap-table td{padding:0.75rem;border-bottom:1px solid #f5f5f5;font-size:0.82rem;vertical-align:middle}
+.dap-table tr:hover td{background:#fafafa}
+.dap-avatar{width:38px;height:38px;border-radius:50%;background:#000;color:#C9A84C;display:flex;align-items:center;justify-content:center;font-family:'Times New Roman',serif;font-size:1rem;font-weight:700;flex-shrink:0}
+.dap-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:10000;align-items:center;justify-content:center;padding:1rem}
+.dap-modal{background:#fff;width:100%;max-width:640px;max-height:90vh;overflow-y:auto;box-shadow:0 25px 60px rgba(0,0,0,0.3)}
+.dap-modal-hd{display:flex;align-items:center;justify-content:space-between;padding:1.25rem 1.5rem;border-bottom:1px solid #eee}
+.dap-modal-hd h3{font-family:'Times New Roman',serif;font-size:1.1rem;font-weight:700;margin:0}
+.dap-modal-bd{padding:1.5rem}
+@media(max-width:768px){.dap-grid4{grid-template-columns:1fr 1fr}.dap-grid2{grid-template-columns:1fr}}
+</style>
+
+<!-- ─── PANEL WRAPPER ─── -->
+<div id="driver-app-panel" style="display:none;position:fixed;inset:0;background:#f5f5f5;z-index:9000;flex-direction:column;overflow:hidden">
+
+  <!-- Top bar -->
+  <div style="background:#000;color:#fff;height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 1.5rem;flex-shrink:0">
+    <div style="display:flex;align-items:center;gap:1.25rem">
+      <button onclick="closeDriverAppPanel()" style="background:none;border:none;color:#C9A84C;cursor:pointer;font-family:'Work Sans',sans-serif;font-size:0.75rem;font-weight:700;letter-spacing:0.06em;display:flex;align-items:center;gap:6px">
+        <span class="material-symbols-outlined" style="font-size:16px">arrow_back</span>BACK TO ADMIN
+      </button>
+      <div style="width:1px;height:24px;background:#333"></div>
+      <span style="font-family:'Times New Roman',serif;font-size:1.1rem;font-weight:700;color:#C9A84C">Driver App Management</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:0.75rem">
+      <button onclick="daOpenAddDriver()" class="dap-btn dap-btn-gold" style="display:flex;align-items:center;gap:6px"><span class="material-symbols-outlined" style="font-size:14px">person_add</span>Add Driver</button>
+    </div>
+  </div>
+
+  <!-- Sub-tab bar -->
+  <div style="background:#fff;border-bottom:1px solid #eee;padding:0 1.5rem;display:flex;gap:0;overflow-x:auto;flex-shrink:0">
+    <button class="dap-tab-btn dap-tab-active" data-tab="overview"  onclick="daGoTab('overview')">Overview</button>
+    <button class="dap-tab-btn" data-tab="drivers"   onclick="daGoTab('drivers')">Drivers</button>
+    <button class="dap-tab-btn" data-tab="onboarding" onclick="daGoTab('onboarding')">Onboarding <span id="dap-onb-badge" style="display:none;background:#f57c00;color:#fff;border-radius:10px;font-size:0.52rem;padding:1px 6px;margin-left:4px">0</span></button>
+    <button class="dap-tab-btn" data-tab="dispatch"  onclick="daGoTab('dispatch')">Dispatch</button>
+    <button class="dap-tab-btn" data-tab="payouts"   onclick="daGoTab('payouts')">Payouts</button>
+    <button class="dap-tab-btn" data-tab="notifications" onclick="daGoTab('notifications')">Notifications</button>
+  </div>
+
+  <!-- Content area -->
+  <div style="flex:1;overflow-y:auto;padding:1.75rem 1.5rem">
+
+    <!-- ── OVERVIEW ── -->
+    <div id="dap-sec-overview" class="dap-section" style="display:block">
+      <div class="dap-grid4" style="margin-bottom:1.5rem" id="dap-stats-row">
+        <div class="dap-stat"><div class="dap-stat-lbl">Active Drivers</div><div class="dap-stat-val" id="dap-s-active">0</div></div>
+        <div class="dap-stat"><div class="dap-stat-lbl">Pending Onboarding</div><div class="dap-stat-val" style="color:#f57c00" id="dap-s-pending">0</div></div>
+        <div class="dap-stat"><div class="dap-stat-lbl">Total Drivers</div><div class="dap-stat-val" id="dap-s-total">0</div></div>
+        <div class="dap-stat"><div class="dap-stat-lbl">Payouts Pending</div><div class="dap-stat-val" style="color:#c62828" id="dap-s-payouts">0</div></div>
+      </div>
+      <div class="dap-grid2">
+        <div>
+          <div style="font-family:'Work Sans',sans-serif;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#999;margin-bottom:0.875rem">Recent Driver Activity</div>
+          <div id="dap-ov-drivers"></div>
+        </div>
+        <div>
+          <div style="font-family:'Work Sans',sans-serif;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#999;margin-bottom:0.875rem">Recent Payouts</div>
+          <div id="dap-ov-payouts"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── DRIVERS ── -->
+    <div id="dap-sec-drivers" class="dap-section">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;flex-wrap:wrap;gap:0.75rem">
+        <input id="dap-drv-search" class="dap-input" placeholder="Search by name or phone…" style="max-width:300px" oninput="daRenderDrivers()"/>
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+          <button onclick="daFilterDrivers('all')"       id="dap-f-all"       class="dap-btn"         style="font-size:0.6rem">All</button>
+          <button onclick="daFilterDrivers('active')"    id="dap-f-active"    class="dap-btn-outline" style="font-size:0.6rem">Active</button>
+          <button onclick="daFilterDrivers('pending')"   id="dap-f-pending"   class="dap-btn-outline" style="font-size:0.6rem">Pending</button>
+          <button onclick="daFilterDrivers('suspended')" id="dap-f-suspended" class="dap-btn-outline" style="font-size:0.6rem">Suspended</button>
+        </div>
+      </div>
+      <div id="dap-drv-list"></div>
+    </div>
+
+    <!-- ── ONBOARDING ── -->
+    <div id="dap-sec-onboarding" class="dap-section">
+      <div style="font-family:'Work Sans',sans-serif;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#f57c00;margin-bottom:1.25rem">Pending Applications — Review &amp; Approve</div>
+      <div id="dap-onb-list"></div>
+    </div>
+
+    <!-- ── DISPATCH ── -->
+    <div id="dap-sec-dispatch" class="dap-section">
+      <div class="dap-grid2" style="gap:1.5rem">
+        <div>
+          <div style="font-family:'Work Sans',sans-serif;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#999;margin-bottom:1rem">Confirmed Trips — Awaiting Driver</div>
+          <div id="dap-dispatch-trips"></div>
+        </div>
+        <div>
+          <div style="font-family:'Work Sans',sans-serif;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#999;margin-bottom:1rem">Available Active Drivers</div>
+          <div id="dap-dispatch-drivers"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PAYOUTS ── -->
+    <div id="dap-sec-payouts" class="dap-section">
+      <!-- Generator -->
+      <div class="dap-card" style="margin-bottom:1.5rem">
+        <div style="font-family:'Work Sans',sans-serif;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#C9A84C;margin-bottom:1rem">Generate Driver Payout Statement</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:1rem;align-items:end;flex-wrap:wrap">
+          <div>
+            <label class="dap-label">Driver</label>
+            <select id="dap-po-driver" class="dap-input" style="cursor:pointer">
+              <option value="">— Select Driver —</option>
+            </select>
+          </div>
+          <div>
+            <label class="dap-label">Period Start</label>
+            <input id="dap-po-start" type="date" class="dap-input"/>
+          </div>
+          <div>
+            <label class="dap-label">Period End</label>
+            <input id="dap-po-end" type="date" class="dap-input"/>
+          </div>
+          <div>
+            <button onclick="daGeneratePayout()" class="dap-btn dap-btn-gold" style="white-space:nowrap;padding:0.65rem 1rem">Generate →</button>
+          </div>
+        </div>
+        <div style="margin-top:1rem">
+          <label class="dap-label">Driver Share %</label>
+          <input id="dap-po-share" type="number" class="dap-input" value="80" min="0" max="100" style="max-width:120px"/>
+          <span style="font-size:0.75rem;color:#888;margin-left:8px">% of each fare goes to driver</span>
+        </div>
+      </div>
+      <!-- Preview -->
+      <div id="dap-payout-preview" style="display:none;margin-bottom:1.5rem"></div>
+      <!-- History -->
+      <div style="font-family:'Work Sans',sans-serif;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#999;margin-bottom:0.875rem">Payout History</div>
+      <div id="dap-payout-history"></div>
+    </div>
+
+    <!-- ── NOTIFICATIONS ── -->
+    <div id="dap-sec-notifications" class="dap-section">
+      <div class="dap-grid2" style="gap:1.5rem;align-items:start">
+        <div class="dap-card">
+          <div style="font-family:'Work Sans',sans-serif;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#C9A84C;margin-bottom:1.25rem">Send Notification to Drivers</div>
+          <div style="margin-bottom:1rem">
+            <label class="dap-label">Send To</label>
+            <select id="dap-notif-to" class="dap-input" style="cursor:pointer" onchange="daNotifRecipientChange()">
+              <option value="all">All Active Drivers</option>
+              <option value="single">Specific Driver</option>
+            </select>
+          </div>
+          <div id="dap-notif-driver-sel" style="display:none;margin-bottom:1rem">
+            <label class="dap-label">Select Driver</label>
+            <select id="dap-notif-driver" class="dap-input" style="cursor:pointer"></select>
+          </div>
+          <div style="margin-bottom:1rem">
+            <label class="dap-label">Notification Title</label>
+            <input id="dap-notif-title" class="dap-input" placeholder="e.g. New trip assigned"/>
+          </div>
+          <div style="margin-bottom:1.25rem">
+            <label class="dap-label">Message</label>
+            <textarea id="dap-notif-msg" class="dap-input" rows="4" placeholder="Write your message to driver(s)…" style="resize:vertical"></textarea>
+          </div>
+          <button onclick="daSendNotification()" class="dap-btn dap-btn-gold" style="width:100%;justify-content:center;display:flex;align-items:center;gap:6px">
+            <span class="material-symbols-outlined" style="font-size:15px">send</span>Send Notification
+          </button>
+          <div id="dap-notif-result" style="display:none;margin-top:0.875rem;padding:0.75rem;font-size:0.8rem;border-radius:2px"></div>
+        </div>
+        <div>
+          <div style="font-family:'Work Sans',sans-serif;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#999;margin-bottom:0.875rem">Sent History</div>
+          <div id="dap-notif-history"></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /driver-app-panel -->
+
+<!-- ── ADD / EDIT DRIVER MODAL ── -->
+<div class="dap-ov" id="dap-m-driver">
+  <div class="dap-modal">
+    <div class="dap-modal-hd">
+      <h3 id="dap-m-driver-title">Add Driver</h3>
+      <button onclick="daCloseM('dap-m-driver')" style="background:none;border:none;cursor:pointer;font-size:1.3rem;color:#888;line-height:1">✕</button>
+    </div>
+    <div class="dap-modal-bd">
+      <input type="hidden" id="dap-drv-id"/>
+      <div style="font-family:'Work Sans',sans-serif;font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#999;margin-bottom:1rem">Personal Info</div>
+      <div class="dap-grid2" style="margin-bottom:1rem">
+        <div><label class="dap-label">Full Name *</label><input id="dap-drv-name" class="dap-input" placeholder="Driver full name"/></div>
+        <div><label class="dap-label">Phone *</label><input id="dap-drv-phone" class="dap-input" type="tel" placeholder="+1 (000) 000-0000"/></div>
+        <div><label class="dap-label">Email</label><input id="dap-drv-email" class="dap-input" type="email" placeholder="driver@email.com"/></div>
+        <div>
+          <label class="dap-label">Status</label>
+          <select id="dap-drv-status" class="dap-input" style="cursor:pointer">
+            <option value="pending">Pending</option>
+            <option value="active">Active</option>
+            <option value="suspended">Suspended</option>
+            <option value="rejected">Rejected</option>
+          </select>
+        </div>
+      </div>
+      <div style="font-family:'Work Sans',sans-serif;font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#999;margin-bottom:1rem;margin-top:1.25rem;padding-top:1.25rem;border-top:1px solid #f0f0f0">Vehicle Info</div>
+      <div class="dap-grid2" style="margin-bottom:1rem">
+        <div><label class="dap-label">Make</label><input id="dap-drv-vmake" class="dap-input" placeholder="e.g. Toyota"/></div>
+        <div><label class="dap-label">Model</label><input id="dap-drv-vmodel" class="dap-input" placeholder="e.g. Camry"/></div>
+        <div><label class="dap-label">Year</label><input id="dap-drv-vyear" class="dap-input" type="number" placeholder="2022"/></div>
+        <div><label class="dap-label">Plate</label><input id="dap-drv-vplate" class="dap-input" placeholder="e.g. ABC-1234"/></div>
+        <div><label class="dap-label">Color</label><input id="dap-drv-vcolor" class="dap-input" placeholder="e.g. Black"/></div>
+        <div><label class="dap-label">Driver Share %</label><input id="dap-drv-share" class="dap-input" type="number" value="80" min="0" max="100"/></div>
+      </div>
+      <div style="margin-bottom:1.25rem;padding-top:1.25rem;border-top:1px solid #f0f0f0">
+        <label class="dap-label">Admin Notes</label>
+        <textarea id="dap-drv-notes" class="dap-input" rows="3" placeholder="Internal notes about this driver…" style="resize:vertical"></textarea>
+      </div>
+      <div style="display:flex;gap:0.75rem;justify-content:flex-end">
+        <button onclick="daCloseM('dap-m-driver')" class="dap-btn-outline">Cancel</button>
+        <button onclick="daSaveDriver()" class="dap-btn dap-btn-gold">Save Driver</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── DRIVER PROFILE MODAL ── -->
+<div class="dap-ov" id="dap-m-profile">
+  <div class="dap-modal" style="max-width:760px">
+    <div class="dap-modal-hd">
+      <h3 id="dap-profile-name">Driver Profile</h3>
+      <div style="display:flex;gap:0.5rem;align-items:center">
+        <button id="dap-profile-edit-btn" onclick="daEditFromProfile()" class="dap-btn-outline" style="font-size:0.6rem">Edit</button>
+        <button onclick="daCloseM('dap-m-profile')" style="background:none;border:none;cursor:pointer;font-size:1.3rem;color:#888;line-height:1">✕</button>
+      </div>
+    </div>
+    <div class="dap-modal-bd" id="dap-profile-body"></div>
+  </div>
+</div>
+
+<!-- ── PAYOUT PREVIEW MODAL ── -->
+<div class="dap-ov" id="dap-m-payout">
+  <div class="dap-modal" style="max-width:800px">
+    <div class="dap-modal-hd">
+      <h3>Payout Statement</h3>
+      <div style="display:flex;gap:0.5rem;align-items:center">
+        <button onclick="window.print()" class="dap-btn" style="font-size:0.6rem;display:flex;align-items:center;gap:5px"><span class="material-symbols-outlined" style="font-size:13px">print</span>Print</button>
+        <button onclick="daCloseM('dap-m-payout')" style="background:none;border:none;cursor:pointer;font-size:1.3rem;color:#888;line-height:1">✕</button>
+      </div>
+    </div>
+    <div class="dap-modal-bd" id="dap-payout-modal-body"></div>
+  </div>
+</div>
+
+<!-- ── ASSIGN TRIP MODAL ── -->
+<div class="dap-ov" id="dap-m-assign">
+  <div class="dap-modal" style="max-width:500px">
+    <div class="dap-modal-hd">
+      <h3>Assign Trip to Driver</h3>
+      <button onclick="daCloseM('dap-m-assign')" style="background:none;border:none;cursor:pointer;font-size:1.3rem;color:#888;line-height:1">✕</button>
+    </div>
+    <div class="dap-modal-bd">
+      <div id="dap-assign-trip-info" style="background:#f9f9f9;border:1px solid #eee;padding:1rem;margin-bottom:1.25rem;font-size:0.82rem;line-height:1.7"></div>
+      <div style="margin-bottom:1.25rem">
+        <label class="dap-label">Assign to Driver</label>
+        <select id="dap-assign-driver" class="dap-input" style="cursor:pointer"></select>
+      </div>
+      <div style="margin-bottom:1.25rem">
+        <label class="dap-label">Notes for Driver</label>
+        <textarea id="dap-assign-notes" class="dap-input" rows="3" placeholder="Any instructions for the driver…" style="resize:vertical"></textarea>
+      </div>
+      <div style="display:flex;gap:0.75rem;justify-content:flex-end">
+        <button onclick="daCloseM('dap-m-assign')" class="dap-btn-outline">Cancel</button>
+        <button onclick="daConfirmAssign()" class="dap-btn dap-btn-gold">Assign Driver →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════
+   DRIVER APP MANAGEMENT — ALL VARS/FUNCTIONS PREFIXED da_
+   ═══════════════════════════════════════════════════ */
+var _daDrivers    = [];
+var _daPayouts    = [];
+var _daBookings   = [];
+var _daNotifs     = [];
+var _daFilter     = 'all';
+var _daAssignTripId = null;
+var _daProfileId  = null;
+var _daEditingId  = null;
+var _daUnsubDrivers = null;
+var _daUnsubPayouts = null;
+var _daUnsubNotifs  = null;
+var _daUnsubBookings = null;
+
+function openDriverAppPanel() {
+  document.getElementById('driver-app-panel').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+  daGoTab('overview');
+  daLoadAll();
+}
+
+function closeDriverAppPanel() {
+  document.getElementById('driver-app-panel').style.display = 'none';
+  document.body.style.overflow = '';
+  // Tear down listeners
+  if (_daUnsubDrivers) { _daUnsubDrivers(); _daUnsubDrivers = null; }
+  if (_daUnsubPayouts) { _daUnsubPayouts(); _daUnsubPayouts = null; }
+  if (_daUnsubNotifs)  { _daUnsubNotifs();  _daUnsubNotifs  = null; }
+  if (_daUnsubBookings){ _daUnsubBookings(); _daUnsubBookings = null; }
+}
+
+function daGoTab(tab) {
+  document.querySelectorAll('.dap-tab-btn').forEach(function(b){ b.classList.toggle('dap-tab-active', b.dataset.tab === tab); });
+  document.querySelectorAll('.dap-section').forEach(function(s){ s.style.display = 'none'; });
+  var sec = document.getElementById('dap-sec-' + tab);
+  if (sec) sec.style.display = 'block';
+}
+
+function daOpenM(id) { var el = document.getElementById(id); if(el){ el.style.display='flex'; document.body.style.overflow='hidden'; } }
+function daCloseM(id) { var el = document.getElementById(id); if(el){ el.style.display='none'; } }
+
+// ─── LOAD ALL ───
+function daLoadAll() {
+  if (_daUnsubDrivers) _daUnsubDrivers();
+  _daUnsubDrivers = db.collection('drivers').orderBy('createdAt','desc').onSnapshot(function(snap) {
+    _daDrivers = snap.docs.map(function(d){ return Object.assign({id:d.id}, d.data()); });
+    daRenderAll();
+  }, function(e){ console.warn('da drivers:', e); });
+
+  if (_daUnsubPayouts) _daUnsubPayouts();
+  _daUnsubPayouts = db.collection('driverPayouts').orderBy('generatedAt','desc').limit(50).onSnapshot(function(snap) {
+    _daPayouts = snap.docs.map(function(d){ return Object.assign({id:d.id}, d.data()); });
+    daRenderPayouts();
+    daRenderOverview();
+  }, function(e){ console.warn('da payouts:', e); });
+
+  if (_daUnsubNotifs) _daUnsubNotifs();
+  _daUnsubNotifs = db.collection('driverNotifications').orderBy('sentAt','desc').limit(30).onSnapshot(function(snap) {
+    _daNotifs = snap.docs.map(function(d){ return Object.assign({id:d.id}, d.data()); });
+    daRenderNotifHistory();
+  }, function(e){ console.warn('da notifs:', e); });
+
+  // Load confirmed bookings for dispatch
+  if (_daUnsubBookings) _daUnsubBookings();
+  _daUnsubBookings = db.collection('bookings').where('status','==','Confirmed').onSnapshot(function(snap) {
+    _daBookings = snap.docs.map(function(d){ return Object.assign({id:d.id}, d.data()); });
+    daRenderDispatch();
+  }, function(e){
+    db.collection('bookings').onSnapshot(function(snap2){
+      _daBookings = snap2.docs.map(function(d){ return Object.assign({id:d.id}, d.data()); }).filter(function(b){ return b.status==='Confirmed'; });
+      daRenderDispatch();
+    });
+  });
+}
+
+function daRenderAll() {
+  daRenderOverview();
+  daRenderDrivers();
+  daRenderOnboarding();
+  daRenderDispatch();
+  daPopulateDriverSelects();
+}
+
+// ─── OVERVIEW ───
+function daRenderOverview() {
+  var active    = _daDrivers.filter(function(d){ return d.status==='active'; }).length;
+  var pending   = _daDrivers.filter(function(d){ return d.status==='pending'; }).length;
+  var pendPay   = _daPayouts.filter(function(p){ return p.status==='pending'; }).length;
+  document.getElementById('dap-s-active').textContent  = active;
+  document.getElementById('dap-s-pending').textContent = pending;
+  document.getElementById('dap-s-total').textContent   = _daDrivers.length;
+  document.getElementById('dap-s-payouts').textContent = pendPay;
+  // Onboarding badge
+  var badge = document.getElementById('dap-onb-badge');
+  if (badge) { badge.textContent = pending; badge.style.display = pending > 0 ? 'inline-block' : 'none'; }
+
+  // Recent drivers (last 5)
+  var drvEl = document.getElementById('dap-ov-drivers');
+  if (drvEl) {
+    if (!_daDrivers.length) { drvEl.innerHTML = '<p style="font-size:0.78rem;color:#aaa">No drivers yet.</p>'; }
+    else {
+      drvEl.innerHTML = _daDrivers.slice(0,5).map(function(d){
+        return '<div class="dap-card" style="display:flex;align-items:center;gap:0.875rem;margin-bottom:0.75rem;padding:0.875rem 1rem;cursor:pointer" onclick="daOpenProfile(\'' + d.id + '\')">' +
+          '<div class="dap-avatar">' + (d.name||'?')[0].toUpperCase() + '</div>' +
+          '<div style="flex:1;min-width:0">' +
+            '<div style="font-weight:600;font-size:0.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + daEsc(d.name||'—') + '</div>' +
+            '<div style="font-size:0.72rem;color:#888">' + daEsc(d.phone||'') + '</div>' +
+          '</div>' +
+          '<span class="dap-badge dap-badge-' + (d.status||'pending') + '">' + (d.status||'pending') + '</span>' +
+        '</div>';
+      }).join('');
+    }
+  }
+  // Recent payouts (last 5)
+  var poEl = document.getElementById('dap-ov-payouts');
+  if (poEl) {
+    if (!_daPayouts.length) { poEl.innerHTML = '<p style="font-size:0.78rem;color:#aaa">No payouts yet.</p>'; }
+    else {
+      poEl.innerHTML = _daPayouts.slice(0,5).map(function(p){
+        return '<div class="dap-card" style="margin-bottom:0.75rem;padding:0.875rem 1rem">' +
+          '<div style="display:flex;justify-content:space-between;align-items:center">' +
+            '<div>' +
+              '<div style="font-weight:600;font-size:0.82rem">' + daEsc(p.driverName||'—') + '</div>' +
+              '<div style="font-size:0.7rem;color:#888">' + (p.periodStart||'') + ' → ' + (p.periodEnd||'') + '</div>' +
+            '</div>' +
+            '<div style="text-align:right">' +
+              '<div style="font-weight:700;font-size:0.95rem">$' + parseFloat(p.netPayout||0).toFixed(2) + '</div>' +
+              '<span class="dap-badge ' + (p.status==='paid'?'dap-badge-active':'dap-badge-pending') + '">' + (p.status||'pending') + '</span>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+    }
+  }
+}
+
+// ─── DRIVERS LIST ───
+function daFilterDrivers(f) {
+  _daFilter = f;
+  ['all','active','pending','suspended'].forEach(function(s){
+    var btn = document.getElementById('dap-f-'+s);
+    if (!btn) return;
+    btn.className = s===f ? 'dap-btn' : 'dap-btn-outline';
+    btn.style.fontSize = '0.6rem';
+  });
+  daRenderDrivers();
+}
+
+function daRenderDrivers() {
+  var el = document.getElementById('dap-drv-list');
+  if (!el) return;
+  var q = (document.getElementById('dap-drv-search')||{}).value||'';
+  var list = _daDrivers.filter(function(d){
+    if (_daFilter !== 'all' && d.status !== _daFilter) return false;
+    if (q && !(d.name||'').toLowerCase().includes(q.toLowerCase()) && !(d.phone||'').includes(q)) return false;
+    return true;
+  });
+  if (!list.length) { el.innerHTML = '<p style="font-size:0.82rem;color:#aaa;padding:1rem 0">No drivers found.</p>'; return; }
+  el.innerHTML = '<table class="dap-table"><thead><tr>' +
+    '<th>Driver</th><th>Vehicle</th><th>Status</th><th>Share %</th><th>Joined</th><th></th>' +
+    '</tr></thead><tbody>' +
+    list.map(function(d){
+      var v = d.vehicle || {};
+      var initials = (d.name||'?')[0].toUpperCase();
+      var joined = d.createdAt ? (new Date(d.createdAt.seconds ? d.createdAt.seconds*1000 : d.createdAt)).toLocaleDateString() : '—';
+      return '<tr>' +
+        '<td><div style="display:flex;align-items:center;gap:10px">' +
+          '<div class="dap-avatar" style="width:32px;height:32px;font-size:0.85rem">' + initials + '</div>' +
+          '<div><div style="font-weight:600">' + daEsc(d.name||'—') + '</div><div style="font-size:0.72rem;color:#888">' + daEsc(d.phone||'') + '</div></div>' +
+        '</div></td>' +
+        '<td style="font-size:0.78rem;color:#666">' + daEsc([v.year,v.make,v.model].filter(Boolean).join(' ')||'—') + (v.plate?'<div style="font-size:0.68rem;color:#aaa">'+daEsc(v.plate)+'</div>':'') + '</td>' +
+        '<td><span class="dap-badge dap-badge-' + (d.status||'pending') + '">' + (d.status||'pending') + '</span></td>' +
+        '<td style="font-size:0.82rem">' + (d.driverShare ? Math.round(d.driverShare*100) : '80') + '%</td>' +
+        '<td style="font-size:0.75rem;color:#888">' + joined + '</td>' +
+        '<td><div style="display:flex;gap:5px">' +
+          '<button onclick="daOpenProfile(\'' + d.id + '\')" class="dap-btn-outline" style="font-size:0.6rem;padding:0.3rem 0.6rem">View</button>' +
+          (d.status==='pending' ? '<button onclick="daSetStatus(\'' + d.id + '\',\'active\')" class="dap-btn dap-btn-green" style="font-size:0.6rem;padding:0.3rem 0.6rem">Approve</button>' : '') +
+          (d.status==='active'  ? '<button onclick="daSetStatus(\'' + d.id + '\',\'suspended\')" class="dap-btn dap-btn-red" style="font-size:0.6rem;padding:0.3rem 0.6rem">Suspend</button>' : '') +
+          (d.status==='suspended'?'<button onclick="daSetStatus(\'' + d.id + '\',\'active\')" class="dap-btn dap-btn-green" style="font-size:0.6rem;padding:0.3rem 0.6rem">Reactivate</button>' : '') +
+        '</div></td>' +
+      '</tr>';
+    }).join('') + '</tbody></table>';
+}
+
+// ─── ONBOARDING ───
+function daRenderOnboarding() {
+  var el = document.getElementById('dap-onb-list');
+  if (!el) return;
+  var pending = _daDrivers.filter(function(d){ return d.status==='pending'; });
+  if (!pending.length) { el.innerHTML = '<p style="font-size:0.82rem;color:#aaa">No pending applications.</p>'; return; }
+  el.innerHTML = pending.map(function(d){
+    var v = d.vehicle || {};
+    var joined = d.createdAt ? (new Date(d.createdAt.seconds ? d.createdAt.seconds*1000 : d.createdAt)).toLocaleDateString() : '—';
+    return '<div class="dap-card" style="margin-bottom:1rem;border-left:3px solid #f57c00">' +
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:0.75rem">' +
+        '<div style="display:flex;align-items:center;gap:0.875rem">' +
+          '<div class="dap-avatar" style="background:#f57c00">' + (d.name||'?')[0].toUpperCase() + '</div>' +
+          '<div>' +
+            '<div style="font-family:\'Times New Roman\',serif;font-size:1rem;font-weight:700">' + daEsc(d.name||'—') + '</div>' +
+            '<div style="font-size:0.75rem;color:#888">' + daEsc(d.phone||'') + ' · ' + daEsc(d.email||'') + '</div>' +
+            '<div style="font-size:0.75rem;color:#888;margin-top:2px">Applied: ' + joined + '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div style="display:flex;gap:0.5rem;flex-wrap:wrap">' +
+          '<button onclick="daSetStatus(\'' + d.id + '\',\'active\')" class="dap-btn dap-btn-green" style="font-size:0.62rem;display:flex;align-items:center;gap:4px"><span class="material-symbols-outlined" style="font-size:13px">check</span>Approve</button>' +
+          '<button onclick="daSetStatus(\'' + d.id + '\',\'rejected\')" class="dap-btn dap-btn-red" style="font-size:0.62rem;display:flex;align-items:center;gap:4px"><span class="material-symbols-outlined" style="font-size:13px">close</span>Reject</button>' +
+          '<button onclick="daOpenProfile(\'' + d.id + '\')" class="dap-btn-outline" style="font-size:0.62rem">View Details</button>' +
+        '</div>' +
+      '</div>' +
+      (v.make ? '<div style="margin-top:0.875rem;padding-top:0.875rem;border-top:1px solid #f0f0f0;font-size:0.78rem;color:#555">' +
+        '<span class="material-symbols-outlined" style="font-size:13px;vertical-align:middle;margin-right:4px">directions_car</span>' +
+        daEsc([v.year,v.make,v.model].filter(Boolean).join(' ')) + (v.plate ? ' · ' + daEsc(v.plate) : '') + (v.color ? ' · ' + daEsc(v.color) : '') +
+      '</div>' : '') +
+      (d.notes ? '<div style="margin-top:0.75rem;font-size:0.75rem;color:#888;font-style:italic">Notes: ' + daEsc(d.notes) + '</div>' : '') +
+    '</div>';
+  }).join('');
+}
+
+// ─── DISPATCH ───
+function daRenderDispatch() {
+  var tripsEl = document.getElementById('dap-dispatch-trips');
+  var drvsEl  = document.getElementById('dap-dispatch-drivers');
+  if (!tripsEl || !drvsEl) return;
+
+  // Trips
+  if (!_daBookings.length) { tripsEl.innerHTML = '<p style="font-size:0.82rem;color:#aaa">No confirmed trips awaiting assignment.</p>'; }
+  else {
+    tripsEl.innerHTML = _daBookings.map(function(b){
+      var assigned = b.driverName ? ('<div style="font-size:0.7rem;color:#2e7d32;margin-top:4px">✓ Assigned: ' + daEsc(b.driverName) + '</div>') : '';
+      return '<div class="dap-card" style="margin-bottom:0.75rem">' +
+        '<div style="display:flex;justify-content:space-between;align-items:flex-start">' +
+          '<div>' +
+            '<div style="font-family:\'Times New Roman\',serif;font-size:0.95rem;font-weight:700">' + daEsc(b.service||b.name||'Booking') + '</div>' +
+            '<div style="font-size:0.75rem;color:#888;margin-top:2px">' + daEsc(b.date||'') + ' at ' + daEsc(b.time||'') + '</div>' +
+            '<div style="font-size:0.72rem;color:#aaa;margin-top:2px">' + daEsc(b.pickup||'') + ' → ' + daEsc(b.destination||'') + '</div>' +
+            assigned +
+          '</div>' +
+          '<button onclick="daOpenAssign(\'' + b.id + '\')" class="dap-btn" style="font-size:0.6rem;flex-shrink:0">' + (b.driverName?'Reassign':'Assign') + '</button>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  // Available drivers
+  var active = _daDrivers.filter(function(d){ return d.status==='active'; });
+  if (!active.length) { drvsEl.innerHTML = '<p style="font-size:0.82rem;color:#aaa">No active drivers yet. Approve drivers in Onboarding.</p>'; }
+  else {
+    drvsEl.innerHTML = active.map(function(d){
+      var v = d.vehicle || {};
+      return '<div class="dap-card" style="margin-bottom:0.75rem;display:flex;align-items:center;gap:0.875rem">' +
+        '<div class="dap-avatar">' + (d.name||'?')[0].toUpperCase() + '</div>' +
+        '<div style="flex:1">' +
+          '<div style="font-weight:600;font-size:0.85rem">' + daEsc(d.name||'—') + '</div>' +
+          '<div style="font-size:0.72rem;color:#888">' + daEsc(d.phone||'') + '</div>' +
+          '<div style="font-size:0.7rem;color:#aaa">' + daEsc([v.make,v.model].filter(Boolean).join(' ')||'') + (v.color?' · '+daEsc(v.color):'') + '</div>' +
+        '</div>' +
+        '<span class="dap-badge dap-badge-active">Available</span>' +
+      '</div>';
+    }).join('');
+  }
+}
+
+// ─── PAYOUTS ───
+function daRenderPayouts() {
+  // Populate driver select
+  daPopulateDriverSelects();
+  // Payout history
+  var el = document.getElementById('dap-payout-history');
+  if (!el) return;
+  if (!_daPayouts.length) { el.innerHTML = '<p style="font-size:0.82rem;color:#aaa">No payouts generated yet.</p>'; return; }
+  el.innerHTML = '<table class="dap-table"><thead><tr>' +
+    '<th>Driver</th><th>Period</th><th>Trips</th><th>Gross</th><th>Net Payout</th><th>Status</th><th></th>' +
+    '</tr></thead><tbody>' +
+    _daPayouts.map(function(p){
+      return '<tr>' +
+        '<td style="font-weight:600">' + daEsc(p.driverName||'—') + '</td>' +
+        '<td style="font-size:0.75rem;color:#888">' + (p.periodStart||'') + ' → ' + (p.periodEnd||'') + '</td>' +
+        '<td>' + (p.trips ? p.trips.length : 0) + '</td>' +
+        '<td>$' + parseFloat(p.grossEarnings||0).toFixed(2) + '</td>' +
+        '<td style="font-weight:700">$' + parseFloat(p.netPayout||0).toFixed(2) + '</td>' +
+        '<td><span class="dap-badge ' + (p.status==='paid'?'dap-badge-active':'dap-badge-pending') + '">' + (p.status||'pending') + '</span></td>' +
+        '<td><div style="display:flex;gap:4px">' +
+          '<button onclick="daViewPayoutStatement(\'' + p.id + '\')" class="dap-btn-outline" style="font-size:0.6rem;padding:0.3rem 0.6rem">View</button>' +
+          (p.status==='pending' ? '<button onclick="daMarkPaid(\'' + p.id + '\')" class="dap-btn dap-btn-green" style="font-size:0.6rem;padding:0.3rem 0.6rem">Mark Paid</button>' : '') +
+        '</div></td>' +
+      '</tr>';
+    }).join('') + '</tbody></table>';
+}
+
+async function daGeneratePayout() {
+  var driverId = document.getElementById('dap-po-driver').value;
+  var start    = document.getElementById('dap-po-start').value;
+  var end      = document.getElementById('dap-po-end').value;
+  var sharePct = parseFloat(document.getElementById('dap-po-share').value) / 100;
+  if (!driverId || !start || !end) { alert('Please select a driver and date range.'); return; }
+  var driver = _daDrivers.find(function(d){ return d.id===driverId; });
+  if (!driver) return;
+
+  // Fetch completed trips for this driver in date range
+  var snap = await db.collection('bookings')
+    .where('driverId','==',driverId)
+    .where('status','==','Completed')
+    .get().catch(function(){
+      return db.collection('bookings').where('status','==','Completed').get();
+    });
+
+  var trips = snap.docs
+    .map(function(d){ return Object.assign({id:d.id},d.data()); })
+    .filter(function(b){
+      if (b.driverId && b.driverId !== driverId) return false;
+      return b.date >= start && b.date <= end;
+    });
+
+  var grossEarnings = trips.reduce(function(s,t){ return s+parseFloat(t.price||0)+parseFloat(t.tip||0); }, 0);
+  var platformFee   = parseFloat((grossEarnings*(1-sharePct)).toFixed(2));
+  var netPayout     = parseFloat((grossEarnings*sharePct).toFixed(2));
+
+  var payout = {
+    driverId:      driverId,
+    driverName:    driver.name,
+    driverPhone:   driver.phone||'',
+    periodStart:   start,
+    periodEnd:     end,
+    driverShare:   sharePct,
+    trips:         trips.map(function(t){ return {id:t.id,date:t.date,service:t.service||t.name||'',fare:parseFloat(t.price||0),tip:parseFloat(t.tip||0),client:t.name||''}; }),
+    grossEarnings: grossEarnings,
+    platformFee:   platformFee,
+    netPayout:     netPayout,
+    status:        'pending',
+    generatedAt:   new Date().toISOString(),
+    generatedBy:   'admin'
+  };
+
+  var ref = await db.collection('driverPayouts').add(payout);
+  payout.id = ref.id;
+  daShowPayoutStatement(payout);
+  daOpenM('dap-m-payout');
+}
+
+function daShowPayoutStatement(p) {
+  var el = document.getElementById('dap-payout-modal-body');
+  if (!el) return;
+  el.innerHTML =
+    '<div style="font-family:\'Times New Roman\',serif;font-size:1.5rem;font-weight:700;margin-bottom:0.25rem">Seacoast RVIP</div>' +
+    '<div style="font-family:\'Work Sans\',sans-serif;font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#C9A84C;margin-bottom:1.5rem">Driver Payout Statement</div>' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem;padding-bottom:1.5rem;border-bottom:1px solid #eee">' +
+      '<div><div style="font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#999;margin-bottom:3px">Driver</div><div style="font-weight:600">' + daEsc(p.driverName) + '</div><div style="font-size:0.78rem;color:#888">' + daEsc(p.driverPhone||'') + '</div></div>' +
+      '<div><div style="font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#999;margin-bottom:3px">Period</div><div style="font-weight:600">' + p.periodStart + ' — ' + p.periodEnd + '</div><div style="font-size:0.78rem;color:#888">Generated ' + new Date(p.generatedAt).toLocaleDateString() + '</div></div>' +
+    '</div>' +
+    '<table class="dap-table" style="margin-bottom:1.5rem">' +
+      '<thead><tr><th>Date</th><th>Service / Client</th><th>Fare</th><th>Tip</th><th>Total</th></tr></thead><tbody>' +
+      (p.trips||[]).map(function(t){
+        return '<tr><td style="font-size:0.78rem">' + (t.date||'') + '</td>' +
+          '<td style="font-size:0.78rem">' + daEsc(t.service||'') + (t.client?'<div style="font-size:0.7rem;color:#aaa">'+daEsc(t.client)+'</div>':'') + '</td>' +
+          '<td>$' + parseFloat(t.fare||0).toFixed(2) + '</td>' +
+          '<td>$' + parseFloat(t.tip||0).toFixed(2) + '</td>' +
+          '<td style="font-weight:600">$' + (parseFloat(t.fare||0)+parseFloat(t.tip||0)).toFixed(2) + '</td>' +
+        '</tr>';
+      }).join('') +
+      '</tbody></table>' +
+    '<div style="background:#f9f9f9;border:1px solid #eee;padding:1.25rem;max-width:320px;margin-left:auto">' +
+      '<div style="display:flex;justify-content:space-between;margin-bottom:0.4rem;font-size:0.82rem"><span>Gross Earnings</span><span>$' + parseFloat(p.grossEarnings).toFixed(2) + '</span></div>' +
+      '<div style="display:flex;justify-content:space-between;margin-bottom:0.4rem;font-size:0.82rem;color:#888"><span>Platform Fee (' + Math.round((1-p.driverShare)*100) + '%)</span><span>- $' + parseFloat(p.platformFee).toFixed(2) + '</span></div>' +
+      '<div style="display:flex;justify-content:space-between;padding-top:0.75rem;border-top:2px solid #000;font-family:\'Work Sans\',sans-serif;font-size:0.95rem;font-weight:700"><span>NET PAYOUT</span><span>$' + parseFloat(p.netPayout).toFixed(2) + '</span></div>' +
+    '</div>' +
+    '<div style="margin-top:1.5rem;display:flex;gap:0.75rem;justify-content:flex-end">' +
+      '<button onclick="daMarkPaid(\'' + p.id + '\')" class="dap-btn dap-btn-green" style="font-size:0.65rem;display:flex;align-items:center;gap:5px"><span class="material-symbols-outlined" style="font-size:14px">check_circle</span>Mark as Paid</button>' +
+    '</div>';
+}
+
+function daViewPayoutStatement(payoutId) {
+  var p = _daPayouts.find(function(x){ return x.id===payoutId; });
+  if (!p) return;
+  daShowPayoutStatement(p);
+  daOpenM('dap-m-payout');
+}
+
+async function daMarkPaid(payoutId) {
+  await db.collection('driverPayouts').doc(payoutId).update({ status:'paid', paidAt: new Date().toISOString() });
+  daCloseM('dap-m-payout');
+}
+
+// ─── NOTIFICATIONS ───
+function daNotifRecipientChange() {
+  var val = document.getElementById('dap-notif-to').value;
+  document.getElementById('dap-notif-driver-sel').style.display = val==='single' ? 'block' : 'none';
+}
+
+async function daSendNotification() {
+  var to     = document.getElementById('dap-notif-to').value;
+  var title  = (document.getElementById('dap-notif-title').value||'').trim();
+  var msg    = (document.getElementById('dap-notif-msg').value||'').trim();
+  var res    = document.getElementById('dap-notif-result');
+  if (!title||!msg) { alert('Please enter a title and message.'); return; }
+
+  var notif = {
+    title:    title,
+    message:  msg,
+    sentTo:   to==='single' ? document.getElementById('dap-notif-driver').value : 'all',
+    sentToLabel: to==='single' ? ((document.getElementById('dap-notif-driver').options[document.getElementById('dap-notif-driver').selectedIndex]||{}).text||'Driver') : 'All Active Drivers',
+    sentAt:   new Date().toISOString(),
+    sentBy:   'admin'
+  };
+
+  await db.collection('driverNotifications').add(notif);
+  document.getElementById('dap-notif-title').value = '';
+  document.getElementById('dap-notif-msg').value   = '';
+  if (res) { res.style.display='block'; res.style.background='#e8f5e9'; res.style.border='1px solid #c8e6c9'; res.style.color='#2e7d32'; res.textContent = '✓ Notification sent to ' + notif.sentToLabel; setTimeout(function(){ res.style.display='none'; }, 4000); }
+}
+
+function daRenderNotifHistory() {
+  var el = document.getElementById('dap-notif-history');
+  if (!el) return;
+  if (!_daNotifs.length) { el.innerHTML = '<p style="font-size:0.78rem;color:#aaa">No notifications sent yet.</p>'; return; }
+  el.innerHTML = _daNotifs.map(function(n){
+    var d = n.sentAt ? new Date(n.sentAt).toLocaleString() : '';
+    return '<div class="dap-card" style="margin-bottom:0.75rem">' +
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.25rem">' +
+        '<div style="font-weight:600;font-size:0.85rem">' + daEsc(n.title) + '</div>' +
+        '<div style="font-size:0.68rem;color:#aaa;white-space:nowrap;margin-left:8px">' + d + '</div>' +
+      '</div>' +
+      '<div style="font-size:0.78rem;color:#555;margin-bottom:0.4rem">' + daEsc(n.message) + '</div>' +
+      '<div style="font-size:0.68rem;color:#aaa">Sent to: <strong>' + daEsc(n.sentToLabel||n.sentTo||'—') + '</strong></div>' +
+    '</div>';
+  }).join('');
+}
+
+// ─── ADD / EDIT / SAVE DRIVER ───
+function daOpenAddDriver() {
+  _daEditingId = null;
+  document.getElementById('dap-m-driver-title').textContent = 'Add Driver';
+  document.getElementById('dap-drv-id').value      = '';
+  document.getElementById('dap-drv-name').value    = '';
+  document.getElementById('dap-drv-phone').value   = '';
+  document.getElementById('dap-drv-email').value   = '';
+  document.getElementById('dap-drv-status').value  = 'pending';
+  document.getElementById('dap-drv-vmake').value   = '';
+  document.getElementById('dap-drv-vmodel').value  = '';
+  document.getElementById('dap-drv-vyear').value   = '';
+  document.getElementById('dap-drv-vplate').value  = '';
+  document.getElementById('dap-drv-vcolor').value  = '';
+  document.getElementById('dap-drv-share').value   = '80';
+  document.getElementById('dap-drv-notes').value   = '';
+  daOpenM('dap-m-driver');
+}
+
+function daEditDriver(id) {
+  var d = _daDrivers.find(function(x){ return x.id===id; });
+  if (!d) return;
+  _daEditingId = id;
+  var v = d.vehicle || {};
+  document.getElementById('dap-m-driver-title').textContent = 'Edit Driver';
+  document.getElementById('dap-drv-id').value      = id;
+  document.getElementById('dap-drv-name').value    = d.name||'';
+  document.getElementById('dap-drv-phone').value   = d.phone||'';
+  document.getElementById('dap-drv-email').value   = d.email||'';
+  document.getElementById('dap-drv-status').value  = d.status||'pending';
+  document.getElementById('dap-drv-vmake').value   = v.make||'';
+  document.getElementById('dap-drv-vmodel').value  = v.model||'';
+  document.getElementById('dap-drv-vyear').value   = v.year||'';
+  document.getElementById('dap-drv-vplate').value  = v.plate||'';
+  document.getElementById('dap-drv-vcolor').value  = v.color||'';
+  document.getElementById('dap-drv-share').value   = d.driverShare ? Math.round(d.driverShare*100) : '80';
+  document.getElementById('dap-drv-notes').value   = d.notes||'';
+  daOpenM('dap-m-driver');
+}
+
+async function daSaveDriver() {
+  var name  = document.getElementById('dap-drv-name').value.trim();
+  var phone = document.getElementById('dap-drv-phone').value.trim();
+  if (!name||!phone) { alert('Name and phone are required.'); return; }
+  var data = {
+    name:   name,
+    phone:  phone,
+    email:  document.getElementById('dap-drv-email').value.trim(),
+    status: document.getElementById('dap-drv-status').value,
+    vehicle:{ make:document.getElementById('dap-drv-vmake').value.trim(), model:document.getElementById('dap-drv-vmodel').value.trim(), year:document.getElementById('dap-drv-vyear').value.trim(), plate:document.getElementById('dap-drv-vplate').value.trim(), color:document.getElementById('dap-drv-vcolor').value.trim() },
+    driverShare: parseFloat(document.getElementById('dap-drv-share').value)/100,
+    notes:  document.getElementById('dap-drv-notes').value.trim(),
+    updatedAt: new Date().toISOString()
+  };
+  if (_daEditingId) {
+    await db.collection('drivers').doc(_daEditingId).update(data);
+  } else {
+    data.createdAt = new Date().toISOString();
+    await db.collection('drivers').add(data);
+  }
+  daCloseM('dap-m-driver');
+}
+
+// ─── DRIVER PROFILE ───
+function daOpenProfile(id) {
+  _daProfileId = id;
+  var d = _daDrivers.find(function(x){ return x.id===id; });
+  if (!d) return;
+  document.getElementById('dap-profile-name').textContent = d.name || 'Driver Profile';
+  var v = d.vehicle || {};
+  var body = document.getElementById('dap-profile-body');
+  var joined = d.createdAt ? new Date(d.createdAt.seconds ? d.createdAt.seconds*1000 : d.createdAt).toLocaleDateString() : '—';
+  body.innerHTML =
+    '<div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem;padding-bottom:1.5rem;border-bottom:1px solid #eee">' +
+      '<div class="dap-avatar" style="width:56px;height:56px;font-size:1.5rem">' + (d.name||'?')[0].toUpperCase() + '</div>' +
+      '<div>' +
+        '<div style="font-family:\'Times New Roman\',serif;font-size:1.2rem;font-weight:700">' + daEsc(d.name||'—') + '</div>' +
+        '<div style="font-size:0.8rem;color:#888">' + daEsc(d.phone||'') + (d.email?' · '+daEsc(d.email):'') + '</div>' +
+        '<div style="margin-top:5px"><span class="dap-badge dap-badge-' + (d.status||'pending') + '">' + (d.status||'pending') + '</span></div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="dap-grid2" style="margin-bottom:1.25rem">' +
+      '<div style="background:#f9f9f9;padding:1rem">' +
+        '<div style="font-size:0.58rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#999;margin-bottom:0.5rem">Vehicle</div>' +
+        '<div style="font-size:0.85rem;font-weight:600">' + daEsc([v.year,v.make,v.model].filter(Boolean).join(' ')||'Not set') + '</div>' +
+        (v.plate?'<div style="font-size:0.75rem;color:#888">Plate: '+daEsc(v.plate)+'</div>':'') +
+        (v.color?'<div style="font-size:0.75rem;color:#888">Color: '+daEsc(v.color)+'</div>':'') +
+      '</div>' +
+      '<div style="background:#f9f9f9;padding:1rem">' +
+        '<div style="font-size:0.58rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#999;margin-bottom:0.5rem">Compensation</div>' +
+        '<div style="font-family:\'Times New Roman\',serif;font-size:1.3rem;font-weight:700">' + (d.driverShare?Math.round(d.driverShare*100):80) + '%</div>' +
+        '<div style="font-size:0.72rem;color:#888">Driver share of each fare</div>' +
+        '<div style="font-size:0.72rem;color:#888;margin-top:2px">Joined: ' + joined + '</div>' +
+      '</div>' +
+    '</div>' +
+    (d.notes?'<div style="background:#fffbf0;border:1px solid #ffe082;padding:0.875rem 1rem;margin-bottom:1.25rem;font-size:0.82rem;color:#775a19"><strong>Admin Notes:</strong> '+daEsc(d.notes)+'</div>':'') +
+    '<div style="display:flex;gap:0.75rem;flex-wrap:wrap">' +
+      '<button onclick="daEditFromProfile()" class="dap-btn dap-btn-gold" style="font-size:0.65rem">Edit Profile</button>' +
+      (d.status==='pending'   ?'<button onclick="daSetStatus(\''+id+'\',\'active\')" class="dap-btn dap-btn-green" style="font-size:0.65rem">Approve Driver</button>':'') +
+      (d.status==='active'    ?'<button onclick="daSetStatus(\''+id+'\',\'suspended\')" class="dap-btn dap-btn-red" style="font-size:0.65rem">Suspend</button>':'') +
+      (d.status==='suspended' ?'<button onclick="daSetStatus(\''+id+'\',\'active\')" class="dap-btn dap-btn-green" style="font-size:0.65rem">Reactivate</button>':'') +
+      '<button onclick="daOpenPayoutForDriver(\''+id+'\')" class="dap-btn" style="font-size:0.65rem;display:flex;align-items:center;gap:4px"><span class="material-symbols-outlined" style="font-size:13px">payments</span>Generate Payout</button>' +
+    '</div>';
+  daOpenM('dap-m-profile');
+}
+
+function daEditFromProfile() {
+  daCloseM('dap-m-profile');
+  daEditDriver(_daProfileId);
+}
+
+function daOpenPayoutForDriver(id) {
+  daCloseM('dap-m-profile');
+  daGoTab('payouts');
+  document.getElementById('dap-po-driver').value = id;
+  // Set default period: this month
+  var now = new Date();
+  var y = now.getFullYear(), m = String(now.getMonth()+1).padStart(2,'0');
+  document.getElementById('dap-po-start').value = y+'-'+m+'-01';
+  var lastDay = new Date(y,now.getMonth()+1,0).getDate();
+  document.getElementById('dap-po-end').value = y+'-'+m+'-'+lastDay;
+}
+
+// ─── STATUS CHANGE ───
+async function daSetStatus(id, status) {
+  var data = { status: status };
+  if (status==='active') data.approvedAt = new Date().toISOString();
+  await db.collection('drivers').doc(id).update(data);
+  if (document.getElementById('dap-m-profile').style.display==='flex') daCloseM('dap-m-profile');
+}
+
+// ─── DISPATCH ASSIGN ───
+function daOpenAssign(bookingId) {
+  _daAssignTripId = bookingId;
+  var b = _daBookings.find(function(x){ return x.id===bookingId; });
+  var info = document.getElementById('dap-assign-trip-info');
+  if (b && info) {
+    info.innerHTML =
+      '<strong>' + daEsc(b.service||b.name||'Booking') + '</strong><br>' +
+      daEsc(b.date||'') + ' at ' + daEsc(b.time||'') + '<br>' +
+      '<span style="color:#888">' + daEsc(b.pickup||'') + ' → ' + daEsc(b.destination||'') + '</span>' +
+      (b.name ? '<br><span style="color:#aaa;font-size:0.75rem">Client: ' + daEsc(b.name) + '</span>' : '');
+  }
+  // Populate driver select
+  var sel = document.getElementById('dap-assign-driver');
+  if (sel) {
+    var active = _daDrivers.filter(function(d){ return d.status==='active'; });
+    sel.innerHTML = '<option value="">— Select Driver —</option>' +
+      active.map(function(d){ return '<option value="'+d.id+'">'+daEsc(d.name)+(d.vehicle&&d.vehicle.make?' ('+daEsc(d.vehicle.make+' '+d.vehicle.model)+')')+'</option>'; }).join('');
+    if (b && b.driverId) sel.value = b.driverId;
+  }
+  document.getElementById('dap-assign-notes').value = '';
+  daOpenM('dap-m-assign');
+}
+
+async function daConfirmAssign() {
+  var driverId = document.getElementById('dap-assign-driver').value;
+  if (!driverId || !_daAssignTripId) { alert('Please select a driver.'); return; }
+  var driver = _daDrivers.find(function(d){ return d.id===driverId; });
+  if (!driver) return;
+  var notes = document.getElementById('dap-assign-notes').value.trim();
+  await db.collection('bookings').doc(_daAssignTripId).update({
+    driverId:    driverId,
+    driverName:  driver.name,
+    driverPhone: driver.phone||'',
+    assignedAt:  new Date().toISOString(),
+    assignedBy:  'admin',
+    driverNotes: notes
+  });
+  daCloseM('dap-m-assign');
+}
+
+// ─── POPULATE SELECTS ───
+function daPopulateDriverSelects() {
+  var selects = ['dap-po-driver','dap-notif-driver'];
+  var active = _daDrivers.filter(function(d){ return d.status==='active'; });
+  selects.forEach(function(selId){
+    var sel = document.getElementById(selId);
+    if (!sel) return;
+    var cur = sel.value;
+    var allOpt = selId==='dap-po-driver' ? '<option value="">— Select Driver —</option>' : '';
+    sel.innerHTML = allOpt + active.map(function(d){ return '<option value="'+d.id+'">'+daEsc(d.name)+'</option>'; }).join('');
+    if (cur) sel.value = cur;
+  });
+}
+
+// ─── UTILS ───
+function daEsc(str) {
+  return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
 
 <script>
 function initAdminAutocomplete(){
