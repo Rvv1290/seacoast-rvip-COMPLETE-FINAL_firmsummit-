@@ -1920,7 +1920,7 @@ function renderPayments(){
   tbody.innerHTML=_trips.map(function(t){
     var d=new Date(t.date);
     var dateStr=d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
-    var bdg=t.status==='Completed'?'<span class="bdg bdg-com">Paid</span>':'<span class="bdg bdg-pen">Due</span>';
+    var bdg=t.status==='Paid'?'<span class="bdg bdg-com">Paid</span>':'<span class="bdg bdg-pen">Due</span>';
     return '<tr><td>'+dateStr+'</td><td style="font-weight:600;color:#775a19">'+(t.code||'—')+'</td><td>'+escH(t.service||'—')+'</td><td>'+escH((t.pickup||'—').substring(0,20))+'→'+escH((t.destination||'—').substring(0,20))+'</td><td><strong>'+(t.price||'—')+'</strong></td><td>'+bdg+'</td></tr>';
   }).join('');
   document.getElementById('pay-cycle').textContent=(sess.billingCycle||'Monthly (NET-30)')+' billing';
@@ -2536,7 +2536,7 @@ function filterStmt(){
     tbody.innerHTML = _stmtFiltered.map(function(t){
       var d=new Date(t.date+'T12:00:00');
       var ds=d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
-      var bdg=t.status==='Completed'?'<span class="bdg bdg-com">Paid</span>':'<span class="bdg bdg-pen">Due</span>';
+      var bdg=t.status==='Paid'?'<span class="bdg bdg-com">Paid</span>':'<span class="bdg bdg-pen">Due</span>';
       return '<tr><td>'+ds+'</td><td style="color:#775a19;font-weight:600">'+escH(t.code||'—')+'</td><td>'+escH(t.name||'—')+'</td><td>'+escH(t.service||'—')+'</td><td>'+escH((t.pickup||'—').substring(0,18))+'→'+escH((t.destination||'—').substring(0,18))+'</td><td><strong>'+(t.price||'—')+'</strong></td><td>'+bdg+'</td></tr>';
     }).join('');
   }
