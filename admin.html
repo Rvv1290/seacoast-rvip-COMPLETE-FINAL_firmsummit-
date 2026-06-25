@@ -1624,7 +1624,12 @@
       });
       renderer.setMap(map);
       _admCardDirSvc.route({origin:pickup,destination:dest,travelMode:google.maps.TravelMode.DRIVING},function(result,status){
-        if(status!=='OK'){el.style.display='none';return;}
+        if(status!=='OK'){
+          console.warn('Admin card route failed ('+status+'):',pickup,'->',dest,'— check that the Directions API is enabled for this Maps API key in Google Cloud Console.');
+          map.setCenter({lat:43.07,lng:-70.77});
+          new google.maps.Geocoder().geocode({address:pickup},function(res,s){if(s==='OK'&&res[0])map.setCenter(res[0].geometry.location);});
+          return;
+        }
         renderer.setDirections(result);
         map.fitBounds(result.routes[0].bounds,{top:28,right:28,bottom:44,left:28});
         var legs=result.routes[0].legs;
