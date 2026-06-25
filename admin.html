@@ -6220,6 +6220,8 @@ function initAdminAutocomplete(){
   if(puEl) new google.maps.places.Autocomplete(puEl,opts);
   if(deEl) new google.maps.places.Autocomplete(deEl,opts);
   if(adEl) new google.maps.places.Autocomplete(adEl,{types:['address'],componentRestrictions:{country:'us'},fields:['formatted_address']});
+  // Maps API may finish loading after renderBks() already tried (and bailed) on the booking-card mini maps — retry now that google.maps exists
+  if(typeof admInitCardMaps==='function') admInitCardMaps();
 }
 </script>
 <script async defer
