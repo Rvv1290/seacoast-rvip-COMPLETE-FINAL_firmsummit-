@@ -118,7 +118,10 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .stop-rm:hover{border-color:#b91c1c;color:#b91c1c}
 .stop-add{margin-top:0.65rem;background:none;border:1px dashed #c9a84c;color:#775a19;padding:0.5rem 0.75rem;font-family:'Work Sans',sans-serif;font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;cursor:pointer}
 .trip-link-btn{font-family:'Work Sans',sans-serif;font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#775a19;cursor:pointer;text-decoration:none;background:none;border:none;padding:0}
-.pac-container{z-index:13050!important}
+.pac-container{z-index:13050!important;background:#fff;box-shadow:0 4px 12px rgba(0,0,0,.15);border-radius:4px;overflow:hidden;font-family:'Inter',sans-serif}
+.pac-item{padding:8px 12px;font-size:13px;cursor:pointer;border-bottom:1px solid #f0f0f0;color:#1a1a1a}
+.pac-item:last-child{border-bottom:none}
+.pac-item:hover,.pac-item.pac-item-selected{background:#fdfaf4}
 
 /* ─── CALENDAR ─── */
 .cal-grid{display:grid;grid-template-columns:repeat(7, 1fr);border:1px solid var(--border);border-top:none}
@@ -2391,20 +2394,92 @@ function initAcctMap(){
   _acctDirSvc = new google.maps.DirectionsService();
   _acctDirRenderer = new google.maps.DirectionsRenderer({ suppressMarkers:false, polylineOptions:{strokeColor:'#C9A84C',strokeWeight:4,strokeOpacity:0.9} });
   _acctDirRenderer.setMap(_acctMap);
-  const acOpts = {types:['geocode','establishment'],componentRestrictions:{country:'us'},fields:['geometry','formatted_address','name']};
-  _acctACPickup = new google.maps.places.Autocomplete(document.getElementById('bk-pickup'), acOpts);
-  _acctACDest = new google.maps.places.Autocomplete(document.getElementById('bk-dest'), acOpts);
-  _acctACPickup.addListener('place_changed', function(){ _acctPickupPlace = _acctACPickup.getPlace(); tryAcctRoute(); });
-  _acctACDest.addListener('place_changed', function(){ _acctDestPlace = _acctACDest.getPlace(); tryAcctRoute(); });
+  installAddressAutocomplete(document.getElementById('bk-pickup'), {
+    onSelect: function(p){ _acctPickupPlace = p; tryAcctRoute(); }
+  });
+  installAddressAutocomplete(document.getElementById('bk-dest'), {
+    onSelect: function(p){ _acctDestPlace = p; tryAcctRoute(); }
+  });
+  installAddressAutocomplete(document.getElementById('e-pickup'), { onSelect: tryAcctRoute });
+  installAddressAutocomplete(document.getElementById('e-dest'),   { onSelect: tryAcctRoute });
   bindStopAutocompletes();
 }
 
 function attachStopAutocomplete(inputEl){
+  installAddressAutocomplete(inputEl, { onSelect: tryAcctRoute });
+}
+
+// New Places API helper (replaces deprecated google.maps.places.Autocomplete)
+function installAddressAutocomplete(inputEl, opts){
+  opts = opts || {};
   if(!inputEl || inputEl.dataset.acBound==='1') return;
-  if(typeof google==='undefined' || !google.maps || !google.maps.places) return;
-  var ac = new google.maps.places.Autocomplete(inputEl, {types:['geocode','establishment'],componentRestrictions:{country:'us'},fields:['geometry','formatted_address','name']});
+  if(typeof google==='undefined' || !google.maps || !google.maps.importLibrary) return;
   inputEl.dataset.acBound='1';
-  ac.addListener('place_changed', tryAcctRoute);
+  var dropdown=null, suggestions=[], debounceT=null, sessionToken=null, libs=null;
+  google.maps.importLibrary('places').then(function(places){
+    libs=places; sessionToken=new places.AutocompleteSessionToken();
+  }).catch(function(err){ console.error('Places import failed', err); });
+  function ensureDropdown(){
+    if(dropdown) return;
+    dropdown=document.createElement('div');
+    dropdown.className='pac-container';
+    dropdown.style.position='absolute';
+    dropdown.style.display='none';
+    document.body.appendChild(dropdown);
+  }
+  function position(){
+    var r=inputEl.getBoundingClientRect();
+    dropdown.style.left=(r.left+window.scrollX)+'px';
+    dropdown.style.top=(r.bottom+window.scrollY)+'px';
+    dropdown.style.width=r.width+'px';
+  }
+  function hide(){ if(dropdown) dropdown.style.display='none'; }
+  function render(){
+    ensureDropdown(); position();
+    dropdown.innerHTML='';
+    if(!suggestions.length){ dropdown.style.display='none'; return; }
+    suggestions.forEach(function(sug){
+      var item=document.createElement('div');
+      item.className='pac-item';
+      item.textContent=sug.placePrediction.text.toString();
+      item.addEventListener('mousedown', function(e){
+        e.preventDefault();
+        try {
+          var place=sug.placePrediction.toPlace();
+          place.fetchFields({fields:['displayName','formattedAddress','location']}).then(function(){
+            inputEl.value = place.formattedAddress || sug.placePrediction.text.toString();
+            hide();
+            sessionToken = new libs.AutocompleteSessionToken();
+            inputEl.dispatchEvent(new Event('change',{bubbles:true}));
+            if(opts.onSelect) opts.onSelect({
+              geometry: place.location ? {location: place.location} : null,
+              formatted_address: place.formattedAddress || inputEl.value,
+              name: place.displayName || ''
+            });
+          }).catch(function(err){ console.error('fetchFields failed', err); });
+        } catch(err){ console.error('toPlace failed', err); }
+      });
+      dropdown.appendChild(item);
+    });
+    dropdown.style.display='block';
+  }
+  function fetchSugs(q){
+    if(!libs){ setTimeout(function(){ fetchSugs(q); }, 150); return; }
+    if(!q || q.length<2){ hide(); return; }
+    var req={input:q, sessionToken:sessionToken, includedRegionCodes:['us']};
+    libs.AutocompleteSuggestion.fetchAutocompleteSuggestions(req).then(function(res){
+      suggestions=(res.suggestions||[]).filter(function(s){return s.placePrediction;});
+      render();
+    }).catch(function(err){ console.error('fetchAutocompleteSuggestions failed', err); });
+  }
+  inputEl.addEventListener('input', function(){
+    clearTimeout(debounceT);
+    debounceT=setTimeout(function(){ fetchSugs(inputEl.value.trim()); }, 180);
+  });
+  inputEl.addEventListener('blur', function(){ setTimeout(hide, 180); });
+  inputEl.addEventListener('focus', function(){ if(suggestions.length) render(); });
+  window.addEventListener('resize', function(){ if(dropdown && dropdown.style.display!=='none') position(); });
+  window.addEventListener('scroll', function(){ if(dropdown && dropdown.style.display!=='none') position(); }, true);
 }
 
 function bindStopAutocompletes(){
@@ -3322,8 +3397,8 @@ window.addEventListener('load', function(){
 const stmtMonth = document.getElementById('stmt-month');
 if(stmtMonth) stmtMonth.value = new Date().getMonth();
 </script>
-<script async defer
-  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDGel0ktZDQYcdlOuoZo4bAqZWCuGvOVbc&libraries=places&callback=initAcctMap">
+<script async
+  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDGel0ktZDQYcdlOuoZo4bAqZWCuGvOVbc&libraries=places&loading=async&callback=initAcctMap">
 </script>
 </body>
 </html>
