@@ -14,7 +14,7 @@
 <script>
 (function(){
   var c={apiKey:"AIzaSyDGel0ktZDQYcdlOuoZo4bAqZWCuGvOVbc",authDomain:"seacoast-rip.firebaseapp.com",projectId:"seacoast-rip",storageBucket:"seacoast-rip.firebasestorage.app",messagingSenderId:"684535453116",appId:"1:684535453116:web:922c843b5bad3b81ad47b9"};
-  try{if(!firebase.apps.length)firebase.initializeApp(c);window._db=firebase.firestore();window._funcs=firebase.functions();}catch(e){window._db=null;window._funcs=null;}
+  try{if(!firebase.apps.length)firebase.initializeApp(c);window._db=firebase.firestore();window._funcs=firebase.functions();window._auth=firebase.auth();window._auth.onAuthStateChanged(function(u){ if(!u) window._auth.signInAnonymously().catch(function(e){ console.warn('anon sign-in failed', e); }); });}catch(e){window._db=null;window._funcs=null;}
 })();
 </script>
 <style>
@@ -62,10 +62,8 @@ body{font-family:'Inter',sans-serif;background:#f7f7f7;color:#1a1c1c;min-height:
 .sec-title{font-family:'Times New Roman',serif;font-size:1.1rem;font-weight:700;color:#000}
 .sec-sub{font-family:Inter,sans-serif;font-size:0.75rem;color:#888;margin-top:2px}
 /* ─── TRIP CARDS ─── */
-.trip-card{background:#fff;border-left:3px solid #e2e2e2;margin-bottom:0.875rem;display:flex;flex-direction:column;overflow:hidden;border-radius:2px;box-shadow:0 1px 4px rgba(0,0,0,0.07)}
-.trip-left{padding:1.1rem 1.25rem}
-.trip-head{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap}
-.trip-map-side{width:100%;height:180px;background:#1a1a1a;overflow:hidden;position:relative;flex-shrink:0}
+.trip-card{background:#fff;border-left:3px solid #e2e2e2;padding:1.1rem 1.25rem;margin-bottom:0.75rem;display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.trip-head{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap;width:100%}
 .trip-main{min-width:240px;flex:1}
 .trip-actions{display:flex;flex-direction:column;align-items:flex-end;gap:0.5rem;flex-shrink:0}
 .trip-card.pending{border-left-color:#f59e0b}
@@ -74,8 +72,8 @@ body{font-family:'Inter',sans-serif;background:#f7f7f7;color:#1a1c1c;min-height:
 .trip-date{font-family:'Work Sans',sans-serif;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#775a19;margin-bottom:3px}
 .trip-route{font-family:Inter,sans-serif;font-size:0.88rem;font-weight:600;color:#000;margin-bottom:2px}
 .trip-meta{font-family:Inter,sans-serif;font-size:0.75rem;color:#888}
-.trip-map-wrap{display:none}
-.trip-map-frame{display:block;width:100%;height:100%;min-height:185px;border:0}
+.trip-map-wrap{width:100%;margin-top:0.85rem;border:1px solid #ececec;border-radius:4px;overflow:hidden;background:#f3f3f3}
+.trip-map-frame{display:block;width:100%;height:165px;border:0}
 .trip-link-btn{font-family:'Work Sans',sans-serif;font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#775a19;cursor:pointer;text-decoration:none;background:none;border:none;padding:0}
 .stop-list{display:flex;flex-direction:column;gap:0.65rem}
 .stop-row{display:flex;align-items:center;gap:0.5rem}
@@ -95,7 +93,6 @@ body{font-family:'Inter',sans-serif;background:#f7f7f7;color:#1a1c1c;min-height:
 .bdg-pen{background:#fef3c7;color:#92400e}
 .bdg-con{background:#dcfce7;color:#166534}
 .bdg-com{background:#f3f4f6;color:#6b7280}
-.bdg-pay{background:#d1fae5;color:#065f46}
 .empty-state{text-align:center;padding:3rem 1rem;color:#bbb;font-family:Inter,sans-serif;font-size:0.85rem}
 .empty-state .material-symbols-outlined{font-size:2.5rem;display:block;margin-bottom:0.75rem;opacity:0.4}
 /* ─── BOOKING FORM ─── */
@@ -198,8 +195,7 @@ body{font-family:'Inter',sans-serif;background:#f7f7f7;color:#1a1c1c;min-height:
   .stat-row{grid-template-columns:1fr}
   .topbar-right{display:none}
   .trip-actions{align-items:flex-start}
-  .trip-map-side{height:150px}
-  .trip-map-frame{min-height:150px}
+  .trip-map-frame{height:150px}
   .stop-row{flex-direction:column;align-items:stretch}
 }
 @media(min-width:1001px){.mob-nav{display:none}.mob-menu-btn{display:none!important}}
@@ -659,9 +655,7 @@ var _sess = null;
         <div style="display:flex;gap:0.5rem;flex-wrap:wrap" id="trip-filters">
           <button class="veh-btn on" onclick="filterTrips('all',this)">All</button>
           <button class="veh-btn" onclick="filterTrips('upcoming',this)">Upcoming</button>
-          <button class="veh-btn" onclick="filterTrips('Confirmed',this)">Confirmed</button>
           <button class="veh-btn" onclick="filterTrips('Completed',this)">Completed</button>
-          <button class="veh-btn" onclick="filterTrips('Paid',this)">Paid</button>
           <button class="veh-btn" onclick="filterTrips('Pending',this)">Pending</button>
         </div>
       </div>
@@ -975,105 +969,7 @@ var _tripFilter = 'all';
 var _calDate = new Date();
 var _veh = 'Black SUV Luxury';
 var _accountBalance = 0;
-var _balanceUpdatedAt = null; // ISO string — set by admin via SET BALANCE DUE / CLEAR
 var _cardData = null;
-
-// Start of the current (still-open) billing period.
-function currentPeriodStart() {
-  var now = new Date();
-  var cycle = (sess.billingCycle || 'Monthly').toLowerCase();
-  if (cycle.includes('bi') || cycle.includes('2')) {
-    var anchor = new Date('2024-01-01T00:00:00');
-    var days = Math.floor((now - anchor) / 864e5);
-    var start = new Date(anchor);
-    start.setDate(start.getDate() + Math.floor(days / 14) * 14);
-    return start;
-  }
-  if (cycle.includes('week')) {
-    var dow = now.getDay();
-    var diff = dow === 0 ? 6 : dow - 1;
-    var start = new Date(now);
-    start.setDate(now.getDate() - diff);
-    start.setHours(0, 0, 0, 0);
-    return start;
-  }
-  return new Date(now.getFullYear(), now.getMonth(), 1);
-}
-
-// Start of the PREVIOUS (most-recently-closed) billing period.
-function previousPeriodStart() {
-  var now = new Date();
-  var cycle = (sess.billingCycle || 'Monthly').toLowerCase();
-  if (cycle.includes('bi') || cycle.includes('2')) {
-    var anchor = new Date('2024-01-01T00:00:00');
-    var days = Math.floor((now - anchor) / 864e5);
-    var periodIdx = Math.floor(days / 14);
-    var start = new Date(anchor);
-    start.setDate(start.getDate() + (periodIdx - 1) * 14);
-    return start;
-  }
-  if (cycle.includes('week')) {
-    var dow = now.getDay();
-    var diff = dow === 0 ? 6 : dow - 1;
-    var start = new Date(now);
-    start.setDate(now.getDate() - diff - 7);
-    start.setHours(0, 0, 0, 0);
-    return start;
-  }
-  // Monthly: first of previous month
-  return new Date(now.getFullYear(), now.getMonth() - 1, 1);
-}
-
-// Outstanding balance = Completed (done, not yet paid) trips from ANY past closed billing period,
-// scoped strictly to trips linked to this account via corporateAccountId (not by email/company
-// which could accidentally include other accounts' bookings).
-// If admin manually set/cleared the balance more recently than the last period start,
-// that stored value is used instead (see renderDashBalance / calcStats).
-function calcPeriodBalance() {
-  var cutoff = currentPeriodStart(); // anything before this is a past (closed) period
-  var total = 0;
-  // Only use corporateAccountId-matched trips — never fall back to _trips which
-  // includes email/phone/company listeners that can pull in other accounts' bookings.
-  _tripsByAccId.forEach(function(t) {
-    if (t.status !== 'Completed') return; // only rides that happened and haven't been paid
-    var d = new Date((t.date || '') + 'T12:00:00');
-    if (isNaN(d.getTime()) || d >= cutoff) return; // current-period or undated trips not due yet
-    var p = parseFloat((t.price + '').replace(/[^0-9.]/g, ''));
-    var tip = parseFloat(t.tip) || 0;
-    if (!isNaN(p)) total += p + tip;
-  });
-  return total;
-}
-
-// Which balance to display: if admin updated it after last period start, respect that;
-// otherwise calculate from all unpaid past-period trips.
-function getDisplayBalance() {
-  var prevStart = previousPeriodStart();
-  var manuallySet = _balanceUpdatedAt && new Date(_balanceUpdatedAt) >= prevStart;
-  return manuallySet ? _accountBalance : calcPeriodBalance();
-}
-
-// After a successful payment, mark all closed-period trips as Paid so the balance reads $0.
-async function markPastPeriodTripsAsPaid() {
-  if (!db || !sess || !sess.accountId) return;
-  var cutoff = currentPeriodStart();
-  try {
-    var snap = await db.collection('bookings')
-      .where('corporateAccountId', '==', sess.accountId)
-      .get();
-    var batch = db.batch();
-    var count = 0;
-    snap.forEach(function(d) {
-      var t = d.data();
-      if (t.status === 'Cancelled' || t.status === 'Paid') return;
-      var tripDate = new Date((t.date || '') + 'T12:00:00');
-      if (isNaN(tripDate.getTime()) || tripDate >= cutoff) return;
-      batch.update(d.ref, { status: 'Paid', balanceAdded: false, updatedAt: new Date().toISOString() });
-      count++;
-    });
-    if (count > 0) await batch.commit();
-  } catch(e) { console.warn('markPastPeriodTripsAsPaid:', e.message); }
-}
 
 function toggleSidebar() {
   document.getElementById('sidebar').classList.toggle('open');
@@ -1086,9 +982,8 @@ function loadAccountLive(){
   db.collection('corporate_accounts').doc(sess.accountId).onSnapshot(function(snap){
     if(!snap.exists) return;
     var d = snap.data();
-    _accountBalance    = d.balance || 0;
-    _balanceUpdatedAt  = d.balanceUpdatedAt || d.lastPaymentDate || null;
-
+    _accountBalance = d.balance || 0;
+    
     // Stripe card data
     if(d.cardBrand && d.cardLast4){
       _cardData = { brand: d.cardBrand, last4: d.cardLast4 };
@@ -1151,19 +1046,18 @@ function renderDashBalance(){
     if(setupBtn)  setupBtn.style.display  = 'flex';
     if(manageBox) manageBox.style.display = 'none';
   }
-  // Use admin-set balance if it was updated this billing period, otherwise calculate
-  // from completed trips in the last closed period.
-  var periodBal = getDisplayBalance();
+  // ─── PAYMENTS INITIALIZATION ───
   block.style.display = 'block';
-  if(periodBal > 0){
+  if(_accountBalance > 0){
     due.style.display   = 'block';
     clear.style.display = 'none';
-    document.getElementById('dash-bal-amt').textContent = '$' + periodBal.toFixed(2);
+    document.getElementById('dash-bal-amt').textContent = '$' + _accountBalance.toFixed(2);
+    // Also update the stats card
     var statBal = document.getElementById('stat-bal');
-    if(statBal) statBal.textContent = '$' + periodBal.toFixed(2);
+    if(statBal) statBal.textContent = '$' + _accountBalance.toFixed(2);
   } else {
     due.style.display   = 'none';
-    clear.style.display = 'flex';
+    clear.style.display = 'flex';   // was 'block' — matches the flexbox layout
     var statBal = document.getElementById('stat-bal');
     if(statBal) statBal.textContent = '$0.00';
   }
@@ -1258,19 +1152,14 @@ function corpApplyCustomTip(val) {
 }
 
 function _corpUpdateTipDisplay() {
-  var subtotal = _corpBasePay + _corpTipAmt;
-  var fee      = parseFloat((_corpBasePay * 0.029).toFixed(2));
-  var total    = parseFloat((subtotal + fee).toFixed(2));
+  var total = _corpBasePay + _corpTipAmt;
   document.getElementById('corp-tip-display').textContent       = '$' + _corpTipAmt.toFixed(2);
-  document.getElementById('corp-fee-display').textContent       = '$' + fee.toFixed(2);
   document.getElementById('corp-tip-total-display').textContent = '$' + total.toFixed(2);
 }
 
 function corpConfirmTip() {
-  // Lock in base + tip + 2.9% fee on fare only as final charge amount
-  var subtotal = _corpBasePay + _corpTipAmt;
-  var fee      = parseFloat((_corpBasePay * 0.029).toFixed(2));
-  _corpPayAmt  = parseFloat((subtotal + fee).toFixed(2));
+  // Lock in base + tip as final charge amount
+  _corpPayAmt = parseFloat((_corpBasePay + _corpTipAmt).toFixed(2));
   document.getElementById('corp-modal-amt').textContent = '$' + _corpPayAmt.toFixed(2);
 
   // Hide tip step, reveal card entry
@@ -1371,8 +1260,6 @@ async function payWithCorpSavedCard() {
   try {
     var res = await funcs.httpsCallable('chargeSavedCard')({ accountId: sess.accountId, amount: _corpPayAmt });
     if (res.data && res.data.success) {
-      // Mark all past-period trips as Paid so calcPeriodBalance() returns $0
-      await markPastPeriodTripsAsPaid();
       // Immediately zero balance in memory so stat card + banner update without waiting for onSnapshot
       _accountBalance = 0;
       renderDashBalance();
@@ -1451,9 +1338,6 @@ async function corpSubmitPayment() {
       }).catch(function(){});
     }
 
-    // Mark all past-period trips as Paid so calcPeriodBalance() returns $0
-    await markPastPeriodTripsAsPaid();
-
     // Immediately zero balance in memory so stat card + banner update without waiting for onSnapshot
     _accountBalance = 0;
     renderDashBalance();
@@ -1473,8 +1357,7 @@ async function corpSubmitPayment() {
 
 /* --- PAYMENT WRAPPERS --- */
 function settleBalanceWithCard() {
-  var due = getDisplayBalance();
-  openCardModal(due > 0 ? due : 0);
+  openCardModal(_accountBalance > 0 ? _accountBalance : 0);
 }
 
 function payVenmo() {
@@ -1605,9 +1488,8 @@ function loadTrips(){
     return arr;
   }
 
-  function addListener(field, value, targetCollection, retries) {
+  function addListener(field, value, targetCollection) {
     if(!value) return;
-    retries = retries || 0;
     try {
       var unsub = db.collection('bookings').where(field, '==', value)
         .onSnapshot(function(snap){
@@ -1618,12 +1500,6 @@ function loadTrips(){
           mergeTripCaches();
         }, function(err){
           console.warn('Listener failed for ' + field + ':', err.message);
-          // Retry with exponential backoff up to 3 times
-          if(retries < 3){
-            setTimeout(function(){
-              addListener(field, value, targetCollection, retries + 1);
-            }, 1000 * Math.pow(2, retries));
-          }
         });
       _unsubs.push(unsub);
     } catch(e) { console.error(e); }
@@ -1633,54 +1509,24 @@ function loadTrips(){
   addListener('corporateAccountId', sess.accountId, 'accId');
   addListener('corporateCompany', sess.company, 'company');
 
-  // 2. Identity Matches (Primary) — try all phone formats so booking storage differences don't miss trips
+  // 2. Identity Matches (Primary)
   addListener('email', sess.contactEmail);
   if(sess.contactPhone) {
     var raw = sess.contactPhone.replace(/\D/g,'');
-    if(raw.length >= 10) {
-      addListener('phone', sess.contactPhone);
-      var r10 = raw.slice(-10), rFull = '+1' + r10;
-      if(rFull !== sess.contactPhone) addListener('phone', rFull);
-      if(r10  !== sess.contactPhone) addListener('phone', r10);
-    }
+    if(raw.length >= 10) addListener('phone', sess.contactPhone);
   }
 
-  // 3. Member Identity Matches — same normalized phone approach
+  // 3. Member Identity Matches
   (sess.members || []).forEach(function(m) {
     if(m.email) addListener('email', m.email);
     if(m.phone) {
-      var mr = m.phone.replace(/\D/g,'');
-      if(mr.length >= 10) {
-        addListener('phone', m.phone);
-        var m10 = mr.slice(-10), mFull = '+1' + m10;
-        if(mFull !== m.phone) addListener('phone', mFull);
-        if(m10  !== m.phone) addListener('phone', m10);
-      }
+       var mr = m.phone.replace(/\D/g,'');
+       if(mr.length >= 10) addListener('phone', m.phone);
     }
   });
 
-  // Immediate one-time query so trips show before onSnapshot resolves
-  var initQueries = [];
-  if(sess.accountId) initQueries.push(db.collection('bookings').where('corporateAccountId','==',sess.accountId).get());
-  if(sess.company)   initQueries.push(db.collection('bookings').where('corporateCompany','==',sess.company).get());
-  if(sess.contactEmail) initQueries.push(db.collection('bookings').where('email','==',sess.contactEmail).get());
-  if(initQueries.length) {
-    Promise.all(initQueries.map(function(q){ return q.catch(function(){ return null; }); }))
-      .then(function(results) {
-        var seen = {};
-        results.forEach(function(snap) {
-          if(!snap) return;
-          snap.forEach(function(d) {
-            var t = d.data(); t._docId = d.id;
-            var key = t.id || t._docId || '';
-            if(key && !seen[key]) { seen[key]=true; _tripsByAccId.push(t); }
-          });
-        });
-        mergeTripCaches();
-      }).catch(function(){});
-  }
-  // Final fallback merge in case only slow listeners are pending
-  setTimeout(mergeTripCaches, 2000);
+  // Fallback for initial render if no listeners hit yet
+  setTimeout(mergeTripCaches, 1000);
 }
 
 // ─── BONUS POINTS — load once at startup, not on every calcStats ───
@@ -1766,13 +1612,14 @@ function calcStats(){
     if(d.getMonth()===thisMonth&&d.getFullYear()===thisYear)monthCount++;
     var p=parseFloat((t.price+'').replace(/[^0-9.]/g,''));
     if(t.status==='Completed'){completedCount++;if(!isNaN(p))totalSpend+=p;}
-    else if(t.price&&!isNaN(p))totalBal+=p+(parseFloat(t.tip)||0);
+    else if(t.price&&!isNaN(p))totalBal+=p;
   });
   document.getElementById('stat-month').textContent=monthCount;
   document.getElementById('stat-total').textContent=_trips.length;
-  var periodBal = getDisplayBalance();
-  document.getElementById('stat-bal').textContent='$'+periodBal.toFixed(2);
-  document.getElementById('pay-balance').textContent='$'+periodBal.toFixed(2);
+  // Use the live Firestore balance (_accountBalance) — not trip-price sum — so stat card stays in sync after payment
+  var livebal = (_accountBalance > 0) ? _accountBalance : 0;
+  document.getElementById('stat-bal').textContent='$'+livebal.toFixed(2);
+  document.getElementById('pay-balance').textContent='$'+livebal.toFixed(2);
   if(upcoming.length){
     var nxt=upcoming[0];
     var nd=new Date(nxt.date);
@@ -1790,14 +1637,13 @@ function renderDashUpcoming(){
   var upcoming=_trips.filter(function(t){return new Date(t.date+' '+(t.time||'23:59'))>=now;}).sort(function(a,b){return new Date(a.date)-new Date(b.date);}).slice(0,3);
   if(!upcoming.length){el.innerHTML='<div class="empty-state"><span class="material-symbols-outlined">event_available</span>No upcoming trips. <span style="color:#775a19;cursor:pointer" onclick="goTab(\'book\',null)">Book one now →</span></div>';return;}
   el.innerHTML=upcoming.map(function(t){return tripCard(t);}).join('');
-  setTimeout(initCardMaps,80);
 }
 
 function tripCard(t){
   var d=new Date(t.date);
   var dateStr=d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'});
-  var bdg=t.status==='Confirmed'?'<span class="bdg bdg-con">Confirmed</span>':t.status==='Completed'?'<span class="bdg bdg-com">Completed</span>':t.status==='Paid'?'<span class="bdg bdg-pay">Paid</span>':t.status==='Cancelled'?'<span class="bdg" style="background:#fee2e2;color:#991b1b">Cancelled</span>':'<span class="bdg bdg-pen">Pending</span>';
-  var cls=t.status==='Confirmed'?'confirmed':t.status==='Completed'?'completed':t.status==='Paid'?'completed':'pending';
+  var bdg=t.status==='Confirmed'?'<span class="bdg bdg-con">Confirmed</span>':t.status==='Completed'?'<span class="bdg bdg-com">Completed</span>':'<span class="bdg bdg-pen">Pending</span>';
+  var cls=t.status==='Confirmed'?'confirmed':t.status==='Completed'?'completed':'pending';
   var tripId = encodeURIComponent(t.id||t._docId||'');
   var canEdit = t.status!=='Completed' && !!tripId;
   var time12='';
@@ -1807,15 +1653,16 @@ function tripCard(t){
   var stopList = Array.isArray(t.stopList) ? t.stopList.filter(Boolean) : [];
   if(!stopList.length && t.stops && typeof t.stops==='string') stopList = t.stops.split('|').map(function(s){return s.trim();}).filter(Boolean);
   var stopMeta = stopCount ? (' · '+stopCount+' stop'+(stopCount>1?'s':'')) : '';
-  var mapSide='';
+  var routeMap='';
   var navUrl='';
   if(t.pickup&&t.destination){
+    var routeParts = stopList.concat([t.destination]).filter(Boolean);
+    var routeDest = routeParts.join('+to:');
+    var mapSrc='https://maps.google.com/maps?saddr='+encodeURIComponent(t.pickup)+'&daddr='+encodeURIComponent(routeDest)+'&output=embed';
     navUrl='https://www.google.com/maps/dir/?api=1&origin='+encodeURIComponent(t.pickup)+'&destination='+encodeURIComponent(t.destination)+(stopList.length?'&waypoints='+encodeURIComponent(stopList.join('|')):'');
-    var wptAttr=stopList.length?' data-waypoints="'+escH(stopList.join('|'))+'"':'';
-    mapSide='<div class="trip-map-side"><div class="trip-map-frame trip-map-js" data-pickup="'+escH(t.pickup)+'" data-dest="'+escH(t.destination)+'"'+wptAttr+'></div></div>';
+    routeMap='<div class="trip-map-wrap"><iframe class="trip-map-frame" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="'+mapSrc+'" title="Trip route map"></iframe></div>';
   }
   return '<div class="trip-card '+cls+'">'+
-    '<div class="trip-left">'+
     '<div class="trip-head"><div class="trip-main"><div class="trip-date">'+dateStr+(time12?' · '+time12:'')+'</div>'+
     '<div class="trip-route">'+escH(t.pickup||'—')+' → '+escH(t.destination||'—')+'</div>'+
     '<div class="trip-meta">'+escH(t.name||'')+(t.service?' · '+escH(t.service):'')+(t.vehicle?' · '+escH(t.vehicle):'')+stopMeta+(t.price?' · <strong>'+escH(t.price+'')+'</strong>':'')+'</div></div>'+
@@ -1823,77 +1670,7 @@ function tripCard(t){
     (canEdit?'<button type="button" class="trip-link-btn" onclick="openEditTrip(\''+tripId+'\')">Edit</button>':'')+
     (t.status==='Completed'?'<span class="trip-link-btn" onclick="rebookTrip(\''+escH(t.pickup||'')+'\',\''+escH(t.destination||'')+'\',\''+escH(t.service||'')+'\',\''+escH(t.name||'')+'\',\''+escH(t.phone||'')+'\')">↻ Rebook</span>':'')+
     (navUrl?'<a href="'+navUrl+'" target="_blank" class="trip-link-btn">Navigate</a>':'')+'</div></div>'+
-    '</div>'+mapSide+'</div>';
-}
-
-// ─── STYLED CARD MAPS (dark/gold — matches booking map) ───
-var _cardDirSvc=null, _cardMapObs=null;
-var _cardMapStyles=[
-  {featureType:'all',elementType:'geometry',stylers:[{color:'#1a1a1a'}]},
-  {featureType:'water',elementType:'geometry',stylers:[{color:'#0d0d0d'}]},
-  {featureType:'road',elementType:'geometry',stylers:[{color:'#2a2a2a'}]},
-  {featureType:'road.highway',elementType:'geometry',stylers:[{color:'#353535'}]},
-  {featureType:'road.arterial',elementType:'geometry',stylers:[{color:'#252525'}]},
-  {featureType:'poi',elementType:'all',stylers:[{visibility:'off'}]},
-  {featureType:'transit',stylers:[{visibility:'off'}]},
-  {featureType:'all',elementType:'labels.text.fill',stylers:[{color:'#555'}]},
-  {featureType:'all',elementType:'labels.text.stroke',stylers:[{color:'#000'},{weight:2}]},
-  {featureType:'administrative.locality',elementType:'labels.text.fill',stylers:[{color:'#C9A84C'}]},
-  {featureType:'administrative.province',elementType:'labels',stylers:[{visibility:'off'}]},
-  {featureType:'administrative.country',elementType:'labels',stylers:[{visibility:'off'}]},
-  {featureType:'administrative.neighborhood',elementType:'labels',stylers:[{visibility:'off'}]},
-  {featureType:'administrative.land_parcel',elementType:'labels',stylers:[{visibility:'off'}]}
-];
-function _renderCardMap(el){
-  if(!el||el.dataset.rendered||typeof google==='undefined'||!google.maps) return;
-  el.dataset.rendered='1';
-  var pickup=el.dataset.pickup, dest=el.dataset.dest;
-  if(!pickup||!dest) return;
-  if(!_cardDirSvc) _cardDirSvc=new google.maps.DirectionsService();
-  var map=new google.maps.Map(el,{
-    zoom:9,center:{lat:43.07,lng:-70.77},
-    styles:_cardMapStyles,
-    disableDefaultUI:true,gestureHandling:'none',clickableIcons:false
-  });
-  var renderer=new google.maps.DirectionsRenderer({
-    suppressMarkers:true,suppressInfoWindows:true,preserveViewport:true,
-    polylineOptions:{strokeColor:'#C9A84C',strokeWeight:3,strokeOpacity:1}
-  });
-  renderer.setMap(map);
-  var waypoints=[];
-  if(el.dataset.waypoints) waypoints=el.dataset.waypoints.split('|').filter(Boolean).map(function(w){return {location:w,stopover:true};});
-  _cardDirSvc.route({
-    origin:pickup,destination:dest,waypoints:waypoints,
-    travelMode:google.maps.TravelMode.DRIVING
-  },function(result,status){
-    if(status!=='OK'){el.style.display='none';return;}
-    renderer.setDirections(result);
-    map.fitBounds(result.routes[0].bounds,{top:28,right:28,bottom:44,left:28});
-    var legs=result.routes[0].legs;
-    // Gold circle at pickup
-    new google.maps.Marker({position:legs[0].start_location,map:map,icon:{path:google.maps.SymbolPath.CIRCLE,fillColor:'#C9A84C',fillOpacity:1,strokeColor:'#fff',strokeWeight:2,scale:7}});
-    // White circle at destination
-    new google.maps.Marker({position:legs[legs.length-1].end_location,map:map,icon:{path:google.maps.SymbolPath.CIRCLE,fillColor:'#ffffff',fillOpacity:1,strokeColor:'#C9A84C',strokeWeight:2,scale:7}});
-    var totalDist=legs.reduce(function(s,l){return s+l.distance.value;},0);
-    var totalTime=legs.reduce(function(s,l){return s+l.duration.value;},0);
-    var distMi=(totalDist/1609.34).toFixed(1)+' mi';
-    var mins=Math.round(totalTime/60);
-    var timeStr=mins>=60?(Math.floor(mins/60)+'h '+(mins%60)+'m'):(mins+' min');
-    var info=document.createElement('div');
-    info.style.cssText='position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.92);color:#fff;font-family:\'Work Sans\',sans-serif;font-size:0.75rem;font-weight:700;padding:6px 12px;pointer-events:none;text-align:center;letter-spacing:0.06em;border-top:1px solid rgba(201,168,76,0.35)';
-    info.textContent=distMi+' · '+timeStr;
-    el.style.position='relative';
-    el.appendChild(info);
-  });
-}
-function initCardMaps(){
-  if(typeof google==='undefined'||!google.maps) return;
-  if(!_cardMapObs){
-    _cardMapObs=new IntersectionObserver(function(entries){
-      entries.forEach(function(e){if(e.isIntersecting){_cardMapObs.unobserve(e.target);_renderCardMap(e.target);}});
-    },{threshold:0.05,rootMargin:'300px'});
-  }
-  document.querySelectorAll('.trip-map-js:not([data-rendered])').forEach(function(el){_cardMapObs.observe(el);});
+    routeMap+'</div>';
 }
 
 function renderTrips(){
@@ -1905,7 +1682,6 @@ function renderTrips(){
   list=list.slice().sort(function(a,b){return new Date(b.date)-new Date(a.date);});
   if(!list.length){el.innerHTML='<div class="empty-state"><span class="material-symbols-outlined">directions_car</span>No trips found.</div>';return;}
   el.innerHTML=list.map(function(t){return tripCard(t);}).join('');
-  setTimeout(initCardMaps,80);
 }
 
 function filterTrips(f,el){
@@ -1923,7 +1699,7 @@ function renderPayments(){
   tbody.innerHTML=_trips.map(function(t){
     var d=new Date(t.date);
     var dateStr=d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
-    var bdg=t.status==='Paid'?'<span class="bdg bdg-com">Paid</span>':'<span class="bdg bdg-pen">Due</span>';
+    var bdg=t.status==='Completed'?'<span class="bdg bdg-com">Paid</span>':'<span class="bdg bdg-pen">Due</span>';
     return '<tr><td>'+dateStr+'</td><td style="font-weight:600;color:#775a19">'+(t.code||'—')+'</td><td>'+escH(t.service||'—')+'</td><td>'+escH((t.pickup||'—').substring(0,20))+'→'+escH((t.destination||'—').substring(0,20))+'</td><td><strong>'+(t.price||'—')+'</strong></td><td>'+bdg+'</td></tr>';
   }).join('');
   document.getElementById('pay-cycle').textContent=(sess.billingCycle||'Monthly (NET-30)')+' billing';
@@ -2257,7 +2033,7 @@ function printNet30(){
   var now=new Date();
   var thirtyAgo=new Date(now.getTime()-30*24*60*60*1000);
   var recent=_trips.filter(function(t){return new Date(t.date)>=thirtyAgo;});
-  var total=recent.reduce(function(s,t){var p=parseFloat((t.price+'').replace(/[^0-9.]/g,''));var tip=parseFloat(t.tip)||0;return s+(isNaN(p)?0:p+tip);},0);
+  var total=recent.reduce(function(s,t){var p=parseFloat((t.price+'').replace(/[^0-9.]/g,''));return s+(isNaN(p)?0:p);},0);
   var rows=recent.map(function(t){
     return '<tr><td>'+t.date+'</td><td>'+escH(t.code||'')+'</td><td>'+escH(t.service||'')+'</td><td>'+escH(t.pickup||'')+'</td><td>'+escH(t.destination||'')+'</td><td style="text-align:right">$'+(parseFloat(t.price)||0).toFixed(2)+'</td><td>'+t.status+'</td></tr>';
   }).join('');
@@ -2580,7 +2356,7 @@ function filterStmt(){
     var d = new Date(t.date+'T12:00:00');
     return d>=from && d<=to;
   });
-  var total = _stmtFiltered.reduce(function(s,t){var p=parseFloat((t.price+'').replace(/[^0-9.]/g,''));var tip=parseFloat(t.tip)||0;return s+(isNaN(p)?0:p+tip);},0);
+  var total = _stmtFiltered.reduce(function(s,t){var p=parseFloat((t.price+'').replace(/[^0-9.]/g,''));return s+(isNaN(p)?0:p);},0);
   document.getElementById('stmt-period-lbl').textContent = periodLabel;
   document.getElementById('stmt-trip-count').textContent = _stmtFiltered.length;
   document.getElementById('stmt-total-amt').textContent  = '$'+total.toFixed(2);
@@ -2593,7 +2369,7 @@ function filterStmt(){
     tbody.innerHTML = _stmtFiltered.map(function(t){
       var d=new Date(t.date+'T12:00:00');
       var ds=d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
-      var bdg=t.status==='Paid'?'<span class="bdg bdg-com">Paid</span>':'<span class="bdg bdg-pen">Due</span>';
+      var bdg=t.status==='Completed'?'<span class="bdg bdg-com">Paid</span>':'<span class="bdg bdg-pen">Due</span>';
       return '<tr><td>'+ds+'</td><td style="color:#775a19;font-weight:600">'+escH(t.code||'—')+'</td><td>'+escH(t.name||'—')+'</td><td>'+escH(t.service||'—')+'</td><td>'+escH((t.pickup||'—').substring(0,18))+'→'+escH((t.destination||'—').substring(0,18))+'</td><td><strong>'+(t.price||'—')+'</strong></td><td>'+bdg+'</td></tr>';
     }).join('');
   }
@@ -2603,46 +2379,28 @@ function filterStmt(){
 function printStmtPDF(){
   if(!_stmtFiltered.length){alert('Generate a statement first.');return;}
   var periodLbl = document.getElementById('stmt-period-lbl').textContent;
-  var total = _stmtFiltered.reduce(function(s,t){var p=parseFloat((t.price+'').replace(/[^0-9.]/g,''));var tip=parseFloat(t.tip)||0;return s+(isNaN(p)?0:p+tip);},0);
-  var paidBase = _stmtFiltered.filter(function(t){return t.status==='Paid'||t.status==='Completed';}).reduce(function(s,t){return s+(parseFloat(t.price)||0)+(parseFloat(t.tip)||0);},0);
-  var feeTotal = parseFloat((paidBase*0.029).toFixed(2));
-  var grandTotal = total + feeTotal;
+  var total = _stmtFiltered.reduce(function(s,t){var p=parseFloat((t.price+'').replace(/[^0-9.]/g,''));return s+(isNaN(p)?0:p);},0);
   var rows = _stmtFiltered.map(function(t){
-    var base=parseFloat(t.price)||0;
-    return '<tr><td>'+t.date+'</td><td>'+escH(t.code||'')+'</td><td>'+escH(t.name||'')+'</td><td>'+escH(t.service||'')+'</td><td>'+escH(t.pickup||'')+'</td><td>'+escH(t.destination||'')+'</td><td style="text-align:right">$'+base.toFixed(2)+'</td><td>'+t.status+'</td></tr>';
+    return '<tr><td>'+t.date+'</td><td>'+escH(t.code||'')+'</td><td>'+escH(t.name||'')+'</td><td>'+escH(t.service||'')+'</td><td>'+escH(t.pickup||'')+'</td><td>'+escH(t.destination||'')+'</td><td style="text-align:right">$'+(parseFloat(t.price)||0).toFixed(2)+'</td><td>'+t.status+'</td></tr>';
   }).join('');
-  var css='body{font-family:\'Helvetica Neue\',Arial,sans-serif;padding:2.5rem;max-width:960px;margin:0 auto;color:#111;font-size:14px}'+
-    'h1{font-family:Georgia,serif;font-size:1.8rem;margin:0;letter-spacing:-.5px}.gold{color:#775a19}.sub{font-size:.78rem;color:#888}'+
-    'hr.thick{border:none;border-top:2px solid #111;margin:1.25rem 0}hr.thin{border:none;border-top:1px solid #eee;margin:.75rem 0}'+
-    'table.trips{width:100%;border-collapse:collapse;margin:1.25rem 0}'+
-    'table.trips th{padding:8px 10px;font-size:.6rem;text-transform:uppercase;letter-spacing:.08em;color:#aaa;border-bottom:2px solid #eee;text-align:left}'+
-    'table.trips td{padding:8px 10px;font-size:.8rem;border-bottom:1px solid #f3f3f3}'+
-    '.totals-wrap{display:flex;justify-content:flex-end;margin-top:1.75rem}'+
-    '.totals-box{min-width:300px;border:1px solid #e5e5e5}'+
-    '.totals-box td{padding:9px 18px;font-size:.85rem;border:none}'+
-    '.totals-box .amt{text-align:right}.totals-box .lbl{color:#555}'+
-    '.totals-box .sep td{border-top:1px solid #e5e5e5!important}'+
-    '.totals-box .divider td{border-top:2px solid #111!important;padding-top:11px}'+
-    '.totals-box .grand .lbl{font-weight:700;font-size:.95rem;text-transform:uppercase;letter-spacing:.03em}'+
-    '.totals-box .grand .amt{font-weight:700;font-size:1.1rem;color:#000}'+
-    'footer{margin-top:2.5rem;font-size:.7rem;color:#aaa;border-top:1px solid #eee;padding-top:1rem;text-align:center}'+
-    '@media print{body{padding:1rem}}';
   var w=window.open('','_blank');
-  w.document.write('<html><head><title>Statement — '+escH(sess.company)+'</title><style>'+css+'</style></head><body>');
-  w.document.write('<div style="display:flex;justify-content:space-between;align-items:flex-start"><div><h1>Seacoast <span class="gold">RVIP</span> LLC</h1><div class="sub" style="margin-top:3px">Premium Ground Transportation</div></div><div style="text-align:right"><div style="font-size:1rem;font-weight:700;letter-spacing:.08em">TRIP STATEMENT</div><div style="font-size:.82rem;color:#555;margin-top:2px">'+escH(periodLbl)+'</div><div class="sub">'+new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})+'</div></div></div>');
-  w.document.write('<hr class="thick">');
-  w.document.write('<div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin:.75rem 0"><div><div class="sub" style="text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px">Bill To</div><div style="font-weight:600">'+escH(sess.company)+'</div>'+(sess.contactName?'<div class="sub">'+escH(sess.contactName)+'</div>':'')+(sess.billingAddress?'<div class="sub">'+escH(sess.billingAddress)+'</div>':'')+'</div></div>');
-  w.document.write('<hr class="thin">');
-  w.document.write('<table class="trips"><thead><tr><th>Date</th><th>Conf #</th><th>Passenger</th><th>Service</th><th>Pickup</th><th>Destination</th><th style="text-align:right">Amount</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table>');
-  w.document.write('<div class="totals-wrap"><table class="totals-box"><tbody><tr><td class="lbl">Subtotal</td><td class="amt">$'+total.toFixed(2)+'</td></tr><tr class="sep"><td class="lbl">Processing Fee (2.9%)</td><td class="amt">$'+feeTotal.toFixed(2)+'</td></tr><tr class="divider grand"><td class="lbl">Grand Total</td><td class="amt">$'+grandTotal.toFixed(2)+'</td></tr></tbody></table></div>');
-  w.document.write('<footer>Seacoast RVIP LLC &nbsp;·&nbsp; (978) 255-3140 &nbsp;·&nbsp; info@seacoastrvip.com &nbsp;·&nbsp; seacoastrvip.com</footer>');
+  w.document.write('<html><head><title>Statement — '+escH(sess.company)+'</title><style>body{font-family:Arial,sans-serif;padding:2.5rem;max-width:900px;margin:0 auto}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ddd;padding:7px 9px;text-align:left;font-size:0.8rem}th{background:#f3f3f3}h1{font-size:1.4rem;margin-bottom:0.2rem}.total{font-size:1.1rem;font-weight:700;margin-top:1rem;text-align:right}.header{border-bottom:3px solid #000;padding-bottom:1rem;margin-bottom:1.5rem}@media print{body{padding:1rem}}</style></head><body>');
+  w.document.write('<div class="header"><h1>SEACOAST RVIP LLC</h1><p style="color:#888;font-size:.85rem">Premium Ground Transportation</p><p style="font-weight:700">TRIP STATEMENT</p></div>');
+  w.document.write('<p><strong>Bill To:</strong> '+escH(sess.company)+'</p>');
+  w.document.write('<p><strong>Contact:</strong> '+escH(sess.contactName||'')+'</p>');
+  w.document.write('<p><strong>Address:</strong> '+escH(sess.billingAddress||'')+'</p>');
+  w.document.write('<p><strong>Period:</strong> '+escH(periodLbl)+'</p>');
+  w.document.write('<p><strong>Generated:</strong> '+new Date().toLocaleDateString('en-US')+'</p><br>');
+  w.document.write('<table><thead><tr><th>Date</th><th>Conf#</th><th>Passenger</th><th>Service</th><th>Pickup</th><th>Destination</th><th style="text-align:right">Amount</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table>');
+  w.document.write('<div class="total">Total: $'+total.toFixed(2)+'</div>');
+  w.document.write('<p style="margin-top:2rem;font-size:0.75rem;color:#888">Questions: info@seacoastrvip.com | (978) 255-3140 | seacoastrvip.com</p>');
   w.document.write('</body></html>');w.document.close();w.print();
 }
 
 function printNet30Filtered(){
   if(!_stmtFiltered.length){alert('Generate a statement first.');return;}
   var periodLbl = document.getElementById('stmt-period-lbl').textContent;
-  var total = _stmtFiltered.reduce(function(s,t){var p=parseFloat((t.price+'').replace(/[^0-9.]/g,''));var tip=parseFloat(t.tip)||0;return s+(isNaN(p)?0:p+tip);},0);
+  var total = _stmtFiltered.reduce(function(s,t){var p=parseFloat((t.price+'').replace(/[^0-9.]/g,''));return s+(isNaN(p)?0:p);},0);
   var rows = _stmtFiltered.map(function(t){
     return '<tr><td>'+t.date+'</td><td>'+escH(t.code||'')+'</td><td>'+escH(t.service||'')+'</td><td>'+escH(t.pickup||'')+'</td><td>'+escH(t.destination||'')+'</td><td style="text-align:right">$'+(parseFloat(t.price)||0).toFixed(2)+'</td><td>'+t.status+'</td></tr>';
   }).join('');
@@ -2909,7 +2667,7 @@ addBookingStop();
 // Stripe Integration (Pure)
 </script>
 <script async
-  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDGel0ktZDQYcdlOuoZo4bAqZWCuGvOVbc&libraries=places&loading=async&callback=initCorpMap">
+  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAtiBZ-MmvzTnOg3hDluVDCVy7mcersqe4&libraries=places&loading=async&callback=initCorpMap">
 </script>
 
 <!-- ── STRIPE BUY BUTTON MODAL ── -->
@@ -3009,10 +2767,6 @@ addBookingStop();
         <div style="display:flex;justify-content:space-between;margin-bottom:0.5rem">
           <span style="font-family:Inter,sans-serif;font-size:0.8rem;color:#888">Gratuity</span>
           <span style="font-family:Inter,sans-serif;font-size:0.8rem;color:#775a19;font-weight:600" id="corp-tip-display">$0.00</span>
-        </div>
-        <div style="display:flex;justify-content:space-between;margin-bottom:0.5rem">
-          <span style="font-family:Inter,sans-serif;font-size:0.8rem;color:#888">Processing Fee (2.9%)</span>
-          <span style="font-family:Inter,sans-serif;font-size:0.8rem;color:#888" id="corp-fee-display">$0.00</span>
         </div>
         <div style="border-top:1px solid #f0e8cc;padding-top:0.5rem;display:flex;justify-content:space-between">
           <span style="font-family:'Work Sans',sans-serif;font-size:0.82rem;font-weight:700;color:#000;text-transform:uppercase;letter-spacing:0.04em">Total Charge</span>

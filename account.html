@@ -72,7 +72,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .l-fill{height:100%;background:var(--gold);width:0%;transition:1.2s ease-out}
 
 /* ─── TRIP CARDS ─── */
-.trip-card{border:1px solid var(--border);margin-bottom:1rem;display:flex;flex-direction:column;overflow:hidden;border-radius:2px;transition:all 0.2s}
+.trip-card{border:1px solid var(--border);padding:1.5rem;margin-bottom:1rem;display:flex;justify-content:space-between;align-items:center;gap:1.5rem;transition:all 0.2s}
 .trip-card:hover{background:#fafafa;border-color:#ccc}
 .t-main{flex:1}
 .t-header{display:flex;align-items:center;gap:12px;margin-bottom:10px}
@@ -81,15 +81,12 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .ts-pending{background:#fff8e1;color:#f57c00} /* Amber */
 .ts-upcoming, .ts-confirmed{background:#e3f2fd;color:#1976d2} /* Blue */
 .ts-completed{background:#e8f5e9;color:#2e7d32} /* Green */
-.ts-cancelled{background:#fef2f2;color:#c62828} /* Red */
-.ts-paid{background:#e8f5e9;color:#2e7d32} /* Green — same as completed */
 .ts-cancelled{background:#ffebee;color:#c62828} /* Red */
 
 .t-info{display:flex;flex-wrap:wrap;gap:1.25rem;font-size:0.82rem;color:var(--text-sec)}
 .t-actions{display:flex;flex-direction:column;align-items:flex-end;gap:0.75rem}
-.trip-map-wrap{display:none}
-.trip-map-side{width:100%;height:180px;background:#1a1a1a;overflow:hidden;position:relative;flex-shrink:0}
-.trip-map-frame{display:block;width:100%;height:100%;min-height:180px;border:0}
+.trip-map-wrap{width:100%;margin-top:0.85rem;border:1px solid #ececec;border-radius:4px;overflow:hidden;background:#f3f3f3}
+.trip-map-frame{display:block;width:100%;height:160px;border:0}
 
 /* ─── BOOK TAB ─── */
 .book-layout{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:1.5rem;align-items:start}
@@ -101,19 +98,6 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .stop-list{display:flex;flex-direction:column;gap:0.65rem}
 .stop-row{display:flex;align-items:center;gap:0.5rem}
 .stop-row .f-input{flex:1}
-/* Vehicle cards */
-.v-card input[type="radio"]{display:none}
-.v-card label{display:block;cursor:pointer;border-bottom:2px solid transparent;transition:all 0.2s;background:#f3f3f3;padding:1rem}
-.v-card input[type="radio"]:checked+label{border-bottom-color:#775a19;background:white}
-.v-card label:hover{background:white}
-/* Payment method cards */
-.pay-card input[type="radio"]{display:none}
-.pay-card label{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1.2rem 0.75rem;border:1.5px solid #e2e2e2;cursor:pointer;transition:all 0.2s;background:white;gap:6px;text-align:center}
-.pay-card input[type="radio"]:checked+label{border-color:#775a19;background:#fdfaf4}
-.pay-card label:hover{border-color:#775a19}
-/* Passenger / luggage selector buttons */
-.p-btn{transition:all 0.15s;width:3rem;height:3rem;border-radius:50%;border:1px solid #c4c7c7;font-weight:700;font-size:0.875rem;font-family:'Work Sans',sans-serif;cursor:pointer;background:white;min-width:44px;min-height:44px}
-.p-btn.sel{background:#000;color:white;border-color:#000}
 .stop-rm{background:none;border:1px solid #ddd;color:#777;padding:0.35rem 0.6rem;font-family:'Work Sans',sans-serif;font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;cursor:pointer}
 .stop-rm:hover{border-color:#b91c1c;color:#b91c1c}
 .stop-add{margin-top:0.65rem;background:none;border:1px dashed #c9a84c;color:#775a19;padding:0.5rem 0.75rem;font-family:'Work Sans',sans-serif;font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;cursor:pointer}
@@ -174,7 +158,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
   .main-content{padding:1.5rem 1rem 5rem}
   .mobile-bottom-nav{display:flex}
   .mobile-menu-btn{display:flex;align-items:center}
-  .trip-map-side{height:150px}
+  .trip-card{flex-direction:column;align-items:flex-start}
   .t-actions{flex-direction:row;width:100%;justify-content:space-between;align-items:center}
   .trip-filter-row{flex-wrap:wrap;gap:8px}
   .trips-header{flex-direction:column;align-items:flex-start;gap:1rem}
@@ -216,9 +200,6 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .auth-toggle{display:flex;margin-bottom:2rem;border:1px solid var(--border);border-radius:4px;overflow:hidden}
 .auth-toggle-btn{flex:1;padding:0.85rem;font-family:'Work Sans',sans-serif;font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;background:#fff;color:#888;border:none;cursor:pointer;transition:all 0.2s}
 .auth-toggle-btn.active{background:#000;color:#fff}
-.login-method-tabs{display:flex;margin-bottom:1.25rem;border:1px solid var(--border);border-radius:4px;overflow:hidden}
-.login-method-tab{flex:1;padding:0.7rem;font-family:'Work Sans',sans-serif;font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;background:#fff;color:#888;border:none;cursor:pointer;transition:all 0.2s}
-.login-method-tab.active{background:#111;color:#fff}
 
 .social-auth{display:flex;flex-direction:column;gap:0.75rem;margin-bottom:2rem;padding-bottom:1.5rem;border-bottom:1px solid var(--border)}
 .btn-social{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;padding:0.75rem;border:1px solid #ddd;background:#fff;color:#000;font-family:'Work Sans',sans-serif;font-size:0.75rem;font-weight:600;cursor:pointer;transition:0.2s}
@@ -239,12 +220,16 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 <div id="toast"></div>
 
 <!-- NAV -->
-<nav class="nav" style="justify-content:space-between">
-  <button class="mobile-menu-btn" id="hamburger-btn" onclick="toggleMobileSidebar()"><span class="material-symbols-outlined">menu</span></button>
-  <a href="index.html" class="nav-logo" style="position:absolute;left:50%;transform:translateX(-50%)">Seacoast RVIP</a>
-  <button id="nav-btn-logout" style="display:none;background:none;border:none;cursor:pointer;color:#999;padding:8px;line-height:1" onclick="doLogout()" title="Sign Out">
-    <span class="material-symbols-outlined" style="font-size:20px">logout</span>
-  </button>
+<nav class="nav">
+  <div style="display:flex;align-items:center;gap:1.5rem">
+    <button class="mobile-menu-btn" id="hamburger-btn" onclick="toggleMobileSidebar()"><span class="material-symbols-outlined">menu</span></button>
+    <a href="index.html" class="nav-logo">Seacoast RVIP</a>
+    <div style="display:flex;gap:1.5rem;font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em">
+       <a href="index.html" style="text-decoration:none;color:#000">Home</a>
+       <a href="schedule.html" style="text-decoration:none;color:var(--gold-dark)">Book Ride</a>
+    </div>
+  </div>
+  <button id="nav-btn-logout" style="display:none" onclick="doLogout()" class="btn-out">Sign Out</button>
 </nav>
 
 <!-- ═══════════ LOGIN PAGE ═══════════ -->
@@ -277,21 +262,22 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
       <p class="auth-help">Quick sign-in options are simplified to reduce confusion: Google, Apple, or Phone/Email login.</p>
     </div>
 
-    <div class="divider">Or sign in directly</div>
+    <div class="divider">Or use phone or email credentials</div>
 
+    <!-- Login Method Toggle -->
+    <!-- Login View Tabs -->
     <div id="view-login">
-    <!-- Login method tabs -->
-    <div class="login-method-tabs">
-      <button id="ltab-phone" class="login-method-tab active" onclick="switchLoginTab('phone')">Phone</button>
-      <button id="ltab-email" class="login-method-tab" onclick="switchLoginTab('email')">Email</button>
-    </div>
+      <div style="display:flex;margin-bottom:2rem;border:1px solid var(--border);border-radius:4px;overflow:hidden">
+        <button id="tab-phone-btn" onclick="switchLoginTab('phone')" style="flex:1;padding:0.75rem;font-family:'Work Sans',sans-serif;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;background:#000;color:#fff;border:none;cursor:pointer;transition:0.2s">Phone / Password</button>
+        <button id="tab-email-btn" onclick="switchLoginTab('email')" style="flex:1;padding:0.75rem;font-family:'Work Sans',sans-serif;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;background:transparent;color:#888;border:none;cursor:pointer;transition:0.2s">Email / Password</button>
+      </div>
 
-    <!-- ── UNIFIED LOGIN ── -->
+    <!-- ── PHONE METHOD ── -->
     <div id="login-phone-method">
       <div id="step-phone">
         <div class="f-group">
-          <label id="login-identity-label" class="f-label">Phone Number</label>
-          <input id="phone-inp" type="tel" class="f-input" placeholder="(603) 000-0000" oninput="formatIdentityInput(this)" onkeydown="if(event.key==='Enter')document.getElementById('phone-pwd-inp').focus()"/>
+          <label class="f-label">Phone or Email</label>
+          <input id="phone-inp" type="text" class="f-input" placeholder="(603) 000-0000 or you@email.com" oninput="formatIdentityInput(this)" onkeydown="if(event.key==='Enter')document.getElementById('phone-pwd-inp').focus()"/>
         </div>
         <div class="f-group">
           <label class="f-label">Password</label>
@@ -299,18 +285,12 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
         </div>
         <div id="phone-err" style="display:none;color:#d32f2f;font-size:0.8rem;margin-bottom:1rem"></div>
         <button id="phone-btn" onclick="doPhoneLogin()" class="btn-k" style="width:100%">Sign In →</button>
-        <button id="forgot-pwd-btn" onclick="sendForgotPwdLink('email')" style="display:none;width:100%;margin-top:0.75rem;background:transparent;border:none;color:#888;font-size:0.85rem;cursor:pointer;text-decoration:underline;padding:0.75rem 0;min-height:44px">Forgot Password?</button>
+        <button onclick="sendForgotPwdLink('identity')" style="width:100%;margin-top:0.75rem;background:transparent;border:none;color:#888;font-size:0.85rem;cursor:pointer;text-decoration:underline;padding:0.75rem 0;min-height:44px">Forgot Password?</button>
         
         <div id="migration-prompt" style="display:none;margin-top:1.5rem;padding:1rem;background:#fff8e1;border:1px solid #ffe082;border-radius:4px;font-size:0.8rem">
           <div><strong>First-time sign in?</strong></div>
-          <div style="margin:0.5rem 0 1rem;color:#5d4037">If you used our old system, you need to set a password once. We'll send a secure setup link to your email.</div>
-          <div id="migration-email-wrap" style="display:none;margin-bottom:0.75rem">
-            <label class="f-label" style="display:block;margin-bottom:0.25rem">Your Email</label>
-            <input id="migration-email-inp" type="email" class="f-input" placeholder="you@email.com" style="margin-bottom:0.5rem"/>
-            <div style="font-size:0.7rem;color:#5d4037">We don't have an email on file. Enter the one you'd like to use.</div>
-          </div>
-          <button id="migration-btn" onclick="startMigration()" class="btn-k" style="width:100%;background:#5d4037;font-size:0.7rem">Set Up My Password</button>
-          <div id="migration-success" style="display:none;margin-top:0.75rem;background:#e8f5e9;border:1px solid #66bb6a;color:#1b5e20;padding:0.75rem;border-radius:4px;font-size:0.78rem"></div>
+          <div style="margin:0.5rem 0 1rem;color:#5d4037">If you used our old system, you need to set a password once.</div>
+          <button onclick="startMigration()" class="btn-k" style="width:100%;background:#5d4037;font-size:0.7rem">Verify via SMS & Setup Password</button>
         </div>
       </div>
 
@@ -348,6 +328,26 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 
     </div><!-- /login-phone-method -->
     <div id="recaptcha-container"></div>
+
+    <!-- ── EMAIL METHOD ── -->
+    <div id="login-email-method" style="display:none">
+      <div id="step-email">
+        <div class="f-group">
+          <label class="f-label">Email Address</label>
+          <input id="email-login-inp" type="email" class="f-input" placeholder="your@email.com" onkeydown="if(event.key==='Enter')document.getElementById('email-pwd-inp').focus()"/>
+        </div>
+        <div class="f-group">
+          <label class="f-label">Password</label>
+          <input id="email-pwd-inp" type="password" class="f-input" placeholder="Enter your password" onkeydown="if(event.key==='Enter')doEmailLogin()"/>
+        </div>
+        <div id="email-err" style="display:none;color:#d32f2f;font-size:0.8rem;margin-bottom:1rem"></div>
+        <button id="email-login-btn" onclick="doEmailLogin()" class="btn-k" style="width:100%">Sign In →</button>
+        <button onclick="sendForgotPwdLink('email')" style="width:100%;margin-top:0.75rem;background:transparent;border:none;color:#888;font-size:0.85rem;cursor:pointer;text-decoration:underline;padding:0.75rem 0;min-height:44px">Forgot Password?</button>
+      </div>
+      <div id="step-email-sent" style="display:none;background:#f9f9f9;padding:1.25rem;border-left:4px solid #775a19;font-size:0.85rem;color:#444">
+        A sign-in link has been sent to your email. Click it to log in securely.
+      </div>
+    </div><!-- /login-email-method -->
 
     </div><!-- /view-login -->
 
@@ -435,62 +435,68 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
       <div id="tab-dash" class="tab-panel on">
 
         <!-- Welcome Header -->
-        <div style="margin-bottom:1.75rem">
-          <p style="font-family:'Work Sans',sans-serif;font-size:0.58rem;font-weight:700;text-transform:uppercase;letter-spacing:0.16em;color:var(--gold-dark);margin-bottom:0.4rem">Client Dashboard</p>
-          <h1 id="welcome-msg" style="font-family:'Times New Roman',serif;font-size:2rem;color:#000;margin:0 0 0.1rem">Welcome, User</h1>
-          <div style="width:36px;height:2px;background:var(--gold);margin-top:0.6rem"></div>
+        <div class="dash-welcome">
+          <h1 id="welcome-msg" style="font-family:'Times New Roman',serif;font-size:2.2rem;color:#000;margin-bottom:0.25rem">Welcome, User</h1>
+          <p style="color:var(--text-sec);font-size:0.9rem;line-height:1.6">Your travel summary and loyalty status.</p>
         </div>
 
-        <!-- Stat Cards Row -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.875rem;margin-bottom:1.25rem">
-          <div style="background:#fff;border:1px solid var(--border);padding:1.1rem 1rem">
-            <div style="font-family:'Work Sans',sans-serif;font-size:0.55rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-sec);margin-bottom:6px">Total Trips</div>
-            <div style="font-family:'Times New Roman',serif;font-size:2rem;font-weight:700;color:#000;line-height:1" id="stat-total">0</div>
+        <!-- Stat Cards Row — compact, horizontal scroll on mobile -->
+        <div class="dash-stats-row">
+          <div class="stat-card-sm">
+            <div class="stat-lbl">Total Trips</div>
+            <div class="stat-val-sm" id="stat-total">0</div>
           </div>
-          <div style="background:#fff;border:1px solid var(--border);padding:1.1rem 1rem">
-            <div style="font-family:'Work Sans',sans-serif;font-size:0.55rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-sec);margin-bottom:6px">Loyalty Points</div>
-            <div style="font-family:'Times New Roman',serif;font-size:2rem;font-weight:700;color:var(--gold-dark);line-height:1" id="stat-loyalty">0</div>
+          <div class="stat-card-sm">
+            <div class="stat-lbl">Loyalty Points</div>
+            <div class="stat-val-sm" id="stat-loyalty" style="color:var(--gold-dark)">0</div>
+          </div>
+          <div class="stat-card-sm">
+            <div class="stat-lbl">Balance Due</div>
+            <div class="stat-val-sm" id="stat-balance" style="color:#d32f2f">$0.00</div>
+            <button id="stat-pay-btn" onclick="payTotalBalance()" class="btn-k" style="display:none;margin-top:0.6rem;padding:0.4rem 0.8rem;font-size:0.6rem;width:100%">Pay Now →</button>
           </div>
         </div>
 
-        <!-- Balance Due Card (always shown) -->
-        <div id="balance-card" style="background:#fff;border:1px solid var(--border);border-left:3px solid #d32f2f;padding:1.25rem 1.25rem 1rem;margin-bottom:1.25rem">
-          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.5rem">
-            <div style="font-family:'Work Sans',sans-serif;font-size:0.55rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-sec)">Outstanding Balance</div>
-            <span class="material-symbols-outlined" style="font-size:16px;color:#d32f2f">account_balance_wallet</span>
-          </div>
-          <div style="font-family:'Times New Roman',serif;font-size:1.6rem;font-weight:700;color:#d32f2f;line-height:1;margin-bottom:0.875rem" id="stat-balance">$0.00</div>
-          <div id="stat-pay-btn" style="display:none;display:grid;grid-template-columns:1fr 1fr;gap:0.5rem">
-            <button onclick="settleBalanceWithCard()" class="btn-k" style="font-size:0.6rem;padding:0.6rem 0.5rem;display:flex;align-items:center;justify-content:center;gap:5px">
-              <span class="material-symbols-outlined" style="font-size:13px">lock</span>Card
-            </button>
-            <button onclick="openVenmoPayModal()" style="font-size:0.6rem;padding:0.6rem 0.5rem;background:#3D95CE;color:#fff;border:none;border-bottom:2px solid #2a6a94;font-family:'Work Sans',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="white"><path d="M17.4 2C14.6 2 12.4 3.5 11 6.2 9.9 4.3 8.3 3.3 6.2 3.3c-3 0-4.2 2.2-4.2 4.8 0 5 7 14.4 9.2 14.4 1.3 0 2.4-1.5 4-4.3.4.1.7.1 1.1.1 3.4 0 6.1-3.1 6.1-7.8C22.4 4.5 20.3 2 17.4 2z"/></svg>Venmo
-            </button>
-          </div>
-          <p id="balance-zero-msg" style="font-size:0.72rem;color:#aaa;margin:0">No outstanding balance. You're all clear.</p>
-        </div>
-
-        <!-- Loyalty Tier Card -->
-        <div style="background:#fff;border:1px solid var(--border);border-top:2px solid var(--gold);padding:1.25rem;margin-bottom:1.25rem">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
-            <span style="font-family:'Work Sans',sans-serif;font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:var(--text-sec)">Loyalty Rewards</span>
-            <span id="tier-badge-dash" style="font-family:'Work Sans',sans-serif;font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--gold-dark);background:rgba(201,168,76,0.1);padding:3px 10px;border-radius:20px">Member</span>
-          </div>
-          <div style="height:3px;background:#f0f0f0;border-radius:2px;margin-bottom:0.75rem;overflow:hidden"><div class="l-fill" id="loyalty-bar-dash" style="height:100%"></div></div>
-          <p id="rewards-status-msg" style="font-size:0.75rem;color:var(--text-sec);margin:0 0 0.875rem">Loading rewards status...</p>
-          <div style="display:flex;justify-content:space-between;padding-top:0.75rem;border-top:1px solid var(--border)">
-            <div style="text-align:center">
-              <div style="font-size:0.58rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#bbb">Member</div>
-              <div style="font-size:0.6rem;color:#aaa;margin-top:2px">0–9</div>
+        <!-- Loyalty Tier — compact single card -->
+        <div class="loyalty-overview-card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;flex-wrap:wrap;gap:0.5rem">
+            <span style="font-family:'Work Sans',sans-serif;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:var(--text-sec)">Loyalty Rewards</span>
+            <div style="display:flex;gap:0.5rem;align-items:center">
+              <span id="tier-badge-dash" style="font-family:'Work Sans',sans-serif;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--gold-dark);background:rgba(201,168,76,0.1);padding:3px 10px;border-radius:20px">Member</span>
             </div>
-            <div style="text-align:center">
-              <div style="font-size:0.58rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#888">Silver</div>
-              <div style="font-size:0.6rem;color:#888;margin-top:2px">10–24</div>
+          </div>
+          <div class="l-bar" style="margin-bottom:0.5rem"><div class="l-fill" id="loyalty-bar-dash"></div></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.5rem">
+            <p id="rewards-status-msg" style="font-size:0.75rem;color:var(--text-sec);margin:0">Loading rewards status...</p>
+            <div style="display:flex;gap:1.5rem">
+              <div style="text-align:center">
+                <div style="font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#aaa">Member</div>
+                <div style="font-size:0.65rem;color:#888">0–9</div>
+              </div>
+              <div style="text-align:center">
+                <div style="font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#888">Silver</div>
+                <div style="font-size:0.65rem;color:#888">10–24</div>
+              </div>
+              <div style="text-align:center">
+                <div style="font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--gold-dark)">Gold</div>
+                <div style="font-size:0.65rem;color:var(--gold-dark)">25+</div>
+              </div>
             </div>
-            <div style="text-align:center">
-              <div style="font-size:0.58rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--gold-dark)">Gold</div>
-              <div style="font-size:0.6rem;color:var(--gold-dark);margin-top:2px">25+</div>
+          </div>
+        </div>
+
+        <!-- Balance Quick Pay (shown only when balance > 0) -->
+        <div id="pay-box" style="display:none;background:#fffbf0;border:1px solid #ffe082;border-left:4px solid var(--gold);padding:1.25rem 1.5rem;margin-bottom:1.5rem;border-radius:2px">
+          <div class="pay-box-row" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem">
+            <div>
+              <div style="font-family:'Work Sans',sans-serif;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#775a19;margin-bottom:4px">Unpaid Balance</div>
+              <div style="font-family:'Times New Roman',serif;font-size:1.5rem;color:#000">Amount due: <strong id="pay-total-lbl">$0.00</strong></div>
+            </div>
+            <div class="pay-box-btns" style="display:flex;gap:0.75rem;flex-wrap:wrap">
+              <button onclick="settleBalanceWithCard()" class="btn-k" style="font-size:0.65rem;padding:0.6rem 1.2rem">Pay with Card →</button>
+              <button onclick="payVenmo()" class="btn-v" style="border:none;cursor:pointer;font-size:0.65rem;padding:0.6rem 1.2rem">
+                <span class="material-symbols-outlined" style="font-size:14px">savings</span>Venmo
+              </button>
             </div>
           </div>
         </div>
@@ -506,209 +512,57 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 
       </div>
 
-      <!-- Tab: Book a Ride -->
+      <!-- Tab: My Calendar -->
       <div id="tab-book" class="tab-panel">
-        <div id="acct-book-ok" style="display:none;margin-bottom:1.5rem;padding:1.25rem 1.5rem;background:#f0fdf4;border-left:3px solid #10b981;color:#047857;font-size:0.85rem;line-height:1.6"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2rem;flex-wrap:wrap;gap:1rem">
+          <h2 style="font-family:'Times New Roman',serif;font-size:2.2rem;color:#000">Book a Ride</h2>
+          <span style="font-size:0.75rem;color:#777">Create and manage your own reservations directly here.</span>
+        </div>
+        <div id="acct-book-ok" style="display:none;margin-bottom:1rem;padding:0.75rem 1rem;background:#f0fdf4;border-left:3px solid #10b981;color:#047857;font-size:0.82rem"></div>
         <div id="acct-book-err" style="display:none;margin-bottom:1rem;padding:0.75rem 1rem;background:#fef2f2;border-left:3px solid #ef4444;color:#b91c1c;font-size:0.82rem"></div>
 
         <div class="book-layout">
-          <!-- LEFT: FORM -->
-          <div>
-            <!-- Header -->
-            <div style="margin-bottom:2.5rem">
-              <span style="font-family:'Work Sans',sans-serif;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.15em;color:#775a19;display:block;margin-bottom:0.5rem">The Ride You Can Count On</span>
-              <h2 style="font-family:'Times New Roman',serif;font-size:2.5rem;font-weight:700;color:#000;margin:0 0 0.5rem">Reservation</h2>
-              <p style="font-family:Inter,sans-serif;font-size:0.85rem;color:#444748;margin:0">We confirm within minutes by text &amp; email.</p>
-              <div style="margin-top:0.75rem;display:inline-block;background:rgba(119,90,25,0.1);color:#775a19;font-family:'Work Sans',sans-serif;font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;padding:4px 12px">✦ First ride 10% off — mention when booking</div>
+          <div class="book-card">
+            <div class="book-grid">
+              <div class="f-group"><label class="f-label">Passenger Name *</label><input id="bk-name" class="f-input" type="text"/></div>
+              <div class="f-group"><label class="f-label">Phone *</label><input id="bk-phone" class="f-input" type="tel" oninput="fmtPhone(this)"/></div>
+              <div class="f-group book-full"><label class="f-label">Email</label><input id="bk-email" class="f-input" type="email"/></div>
+              <div class="f-group"><label class="f-label">Date *</label><input id="bk-date" class="f-input" type="date"/></div>
+              <div class="f-group"><label class="f-label">Pickup Time *</label><input id="bk-time" class="f-input" type="time"/></div>
+              <div class="f-group book-full"><label class="f-label">Pickup Location *</label><input id="bk-pickup" class="f-input" type="text" autocomplete="off"/></div>
+              <div class="f-group book-full"><label class="f-label">Destination *</label><input id="bk-dest" class="f-input" type="text" autocomplete="off"/></div>
+              <div class="f-group book-full">
+                <label class="f-label">Additional Stops</label>
+                <div id="bk-stops-list" class="stop-list"></div>
+                <button type="button" class="stop-add" onclick="addAccountStop()">+ Add Stop</button>
+              </div>
+              <div class="f-group"><label class="f-label">Service Type</label>
+                <select id="bk-service" class="f-input">
+                  <option value="">Select...</option>
+                  <option value="Airport Transfer — BOS Logan">✈ Airport Transfer — Boston Logan (BOS)</option>
+                  <option value="Airport Transfer — MHT Manchester">✈ Airport Transfer — Manchester (MHT)</option>
+                  <option value="New York Transfer (NY)">🗽 New York Transfer (NY)</option>
+                  <option value="Hotel Transfer">🏨 Hotel Transfer</option>
+                  <option value="Night Out">🌆 Night Out</option>
+                  <option value="Concert / Live Event">🎵 Concert / Live Event</option>
+                  <option value="Casino Run">🎰 Casino Run</option>
+                  <option value="Special Event / Gala">🎭 Special Event / Gala</option>
+                  <option value="Medical Appointment">🏥 Medical Appointment</option>
+                  <option value="Multi-Stop">📍 Multi-Stop</option>
+                  <option value="Other / Custom">⚙ Other / Custom</option>
+                </select>
+              </div>
+              <div class="f-group"><label class="f-label">Vehicle</label><input id="bk-vehicle" class="f-input" type="text" placeholder="Luxury Black SUV"/></div>
+              <div class="f-group"><label class="f-label">Passengers</label><input id="bk-passengers" class="f-input" type="text" value="1"/></div>
+              <div class="f-group"><label class="f-label">Luggage</label><input id="bk-luggage" class="f-input" type="text" value="0"/></div>
+              <div class="f-group book-full"><label class="f-label">Special Instructions</label><textarea id="bk-notes" class="f-input" rows="2" style="resize:vertical"></textarea></div>
             </div>
-
-            <!-- STEP 01 -->
-            <div style="margin-bottom:2.5rem">
-              <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:1.25rem">
-                <span style="font-family:'Work Sans',sans-serif;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:#775a19">Step 01</span>
-                <h3 style="font-family:'Times New Roman',serif;font-size:1.5rem;font-weight:700;color:#000;margin:0">Personal Info</h3>
-              </div>
-              <div class="book-grid">
-                <div class="f-group book-full"><label class="f-label">Full Name *</label><input id="bk-name" class="f-input" type="text" required placeholder="Your full name"/></div>
-                <div class="f-group"><label class="f-label">Phone *</label><input id="bk-phone" class="f-input" type="tel" required placeholder="Your phone number" oninput="fmtPhone(this)"/></div>
-                <div class="f-group"><label class="f-label">Email <span style="font-weight:400;color:#888;font-size:0.85em">(for receipts)</span></label><input id="bk-email" class="f-input" type="email" placeholder="your@email.com"/></div>
-                <div class="f-group book-full"><label class="f-label">Company Name <span style="font-weight:400;color:#888;font-size:0.85em">(leave blank if personal)</span></label><input id="bk-company" class="f-input" type="text" placeholder="e.g. Acme Corp — leave blank if personal"/></div>
-              </div>
+            <div style="display:flex;justify-content:flex-end;gap:0.75rem;flex-wrap:wrap">
+              <button type="button" class="btn-out" onclick="clearAccountBookingForm()">Clear</button>
+              <button type="button" id="bk-submit-btn" class="btn-k" onclick="submitAccountBooking()">Request Ride →</button>
             </div>
+          </div>
 
-            <!-- STEP 02 -->
-            <div style="margin-bottom:2.5rem">
-              <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:1.25rem">
-                <span style="font-family:'Work Sans',sans-serif;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:#775a19">Step 02</span>
-                <h3 style="font-family:'Times New Roman',serif;font-size:1.5rem;font-weight:700;color:#000;margin:0">Vehicle Class</h3>
-              </div>
-              <div class="book-grid">
-                <div class="v-card">
-                  <input type="radio" name="bk-vehicle-class" id="bk-v1" value="Black SUV Luxury (7 passengers)" checked/>
-                  <label for="bk-v1">
-                    <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuCVUPBh5oQxrX7I9qlzu6QDGpuuiaZdhBH0UBkLAVKxzR4in41bPEhhffL8dvdYhbmeIRRjn5BVfDNw971kuJzVCN5SglGulLfrFmLfzx6mgQx59omvwObM4z9798Z4qkSkzBxZ401j19rXBjIpqO10fBqx8D1lfWXrPcRDGkI7uYsItkG4YE4f2uVrtSoiZlQbpT3ksAza03T_Lwps90Og60b2UQa1oQepmTFJf_SXIWnooRTQcNyXYgPQupPAxCvraJgH-Sxg-35C" style="width:100%;height:112px;object-fit:cover;margin-bottom:8px" alt="Black SUV Luxury"/>
-                    <p style="font-family:'Times New Roman',serif;font-weight:700;font-size:0.9rem;color:#000;margin:0 0 4px">Black SUV Luxury</p>
-                    <p style="font-family:Inter,sans-serif;font-size:0.75rem;color:#444748;margin:0">👤 7 &nbsp;|&nbsp; 🧳 5</p>
-                  </label>
-                </div>
-                <div class="v-card">
-                  <input type="radio" name="bk-vehicle-class" id="bk-v2" value="Regular SUV (6 passengers)"/>
-                  <label for="bk-v2">
-                    <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuBU2xk2TUq20eeEwO5dmeetrkexgALL6bqqA1QFc3aZipQUqCbPJRO1MnOLkEKbsRTg_d4dwwbr1F5MEg3kwHfqyaAHqOi5HWC7tTxMZ4g2Qg0dgqPA7qg_EYkLuFNFhYWSAABexk262XX2xjAcv74w7OOFl21ayeMP6zbznNiaeIIxltrNr7B7quxmSl2HHvoAXrUXcpTVpFigrTtW0EE6yp6s798MWGyG6lYhJaKsDbOQffha2q1h9LawQfsi93MNrKvGfMM0J400" style="width:100%;height:112px;object-fit:cover;margin-bottom:8px" alt="Regular SUV"/>
-                    <p style="font-family:'Times New Roman',serif;font-weight:700;font-size:0.9rem;color:#000;margin:0 0 4px">Regular SUV</p>
-                    <p style="font-family:Inter,sans-serif;font-size:0.75rem;color:#444748;margin:0">👤 6 &nbsp;|&nbsp; 🧳 4</p>
-                  </label>
-                </div>
-              </div>
-            </div>
-
-            <!-- STEP 03 -->
-            <div style="margin-bottom:2.5rem">
-              <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:1.25rem">
-                <span style="font-family:'Work Sans',sans-serif;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:#775a19">Step 03</span>
-                <h3 style="font-family:'Times New Roman',serif;font-size:1.5rem;font-weight:700;color:#000;margin:0">Trip Details</h3>
-              </div>
-              <div class="book-grid">
-                <div class="f-group">
-                  <label class="f-label">Service Type *</label>
-                  <select id="bk-service" class="f-input" required>
-                    <option value="">Select...</option>
-                    <option value="Airport — Boston Logan (BOS)">Airport — Boston Logan (BOS)</option>
-                    <option value="Airport — Manchester MHT">Airport — Manchester MHT</option>
-                    <option value="New York Transfer (NY)">New York Transfer (NY)</option>
-                    <option value="Night Out">Night Out</option>
-                    <option value="Concert / Live Event">Concert / Live Event</option>
-                    <option value="Casino Run">Casino Run</option>
-                    <option value="Special Event">Special Event</option>
-                    <option value="Medical Appointment">Medical Appointment</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </div>
-                <div class="f-group">
-                  <label class="f-label">Flight Number <span style="font-weight:400;color:#888;font-size:0.85em">(we'll track delays)</span></label>
-                  <input id="bk-flight" class="f-input" type="text" placeholder="AA 1234" style="text-transform:uppercase"/>
-                </div>
-                <div class="f-group">
-                  <label class="f-label">Date *</label>
-                  <input id="bk-date" class="f-input" type="date" required/>
-                </div>
-                <div class="f-group">
-                  <label class="f-label">Pickup Time *</label>
-                  <input id="bk-time" class="f-input" type="time" required/>
-                  <label style="display:flex;align-items:center;gap:6px;margin-top:6px;cursor:pointer;font-family:Inter,sans-serif;font-size:0.75rem;color:#444748">
-                    <input type="checkbox" id="bk-time-tbd" onchange="bkToggleTimeTBD(this)" style="accent-color:#775a19;width:15px;height:15px"/>
-                    TBD — Admin will confirm pickup time
-                  </label>
-                </div>
-                <div class="f-group book-full">
-                  <label class="f-label">Pickup Address *</label>
-                  <div style="position:relative">
-                    <input id="bk-pickup" class="f-input" type="text" required placeholder="Start typing your address..." autocomplete="off" style="padding-right:2rem"/>
-                    <span class="material-symbols-outlined" style="position:absolute;right:0;bottom:10px;color:#444748;font-size:18px">my_location</span>
-                  </div>
-                </div>
-                <div class="f-group book-full">
-                  <label class="f-label">Destination *</label>
-                  <div style="position:relative">
-                    <input id="bk-dest" class="f-input" type="text" required placeholder="Airport, venue, or address..." autocomplete="off" style="padding-right:2rem"/>
-                    <span class="material-symbols-outlined" style="position:absolute;right:0;bottom:10px;color:#444748;font-size:18px">location_on</span>
-                  </div>
-                </div>
-                <div class="f-group book-full">
-                  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-                    <label class="f-label" style="margin:0">Additional Stops <span style="font-weight:400;color:#888;font-size:0.85em">(Optional — up to 3)</span></label>
-                    <button type="button" id="bk-add-stop-btn" onclick="addAccountStop()" style="font-family:'Work Sans',sans-serif;font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#775a19;background:none;border:1px solid #775a19;padding:4px 10px;cursor:pointer">+ Add Stop</button>
-                  </div>
-                  <div id="bk-stops-list" class="stop-list"></div>
-                </div>
-                <!-- Route preview -->
-                <div id="bk-route-card" class="book-full" style="display:none;padding:1rem;background:#fff;border:1px solid #e8c97a;border-left:3px solid #775a19">
-                  <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
-                    <span class="material-symbols-outlined" style="color:#775a19;font-size:16px">route</span>
-                    <span style="font-family:'Work Sans',sans-serif;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#775a19">Live Route Estimate</span>
-                  </div>
-                  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;text-align:center">
-                    <div><p style="font-family:'Times New Roman',serif;font-size:1.35rem;font-weight:700;color:#000;margin:0" id="bk-route-distance">—</p><p style="font-family:'Work Sans',sans-serif;font-size:0.6rem;text-transform:uppercase;letter-spacing:0.08em;color:#444748;margin:4px 0 0">Distance</p></div>
-                    <div><p style="font-family:'Times New Roman',serif;font-size:1.35rem;font-weight:700;color:#000;margin:0" id="bk-route-duration">—</p><p style="font-family:'Work Sans',sans-serif;font-size:0.6rem;text-transform:uppercase;letter-spacing:0.08em;color:#444748;margin:4px 0 0">Drive Time</p></div>
-                    <div><p style="font-family:'Times New Roman',serif;font-size:1.35rem;font-weight:700;color:#775a19;margin:0" id="bk-route-price">—</p><p style="font-family:'Work Sans',sans-serif;font-size:0.6rem;text-transform:uppercase;letter-spacing:0.08em;color:#444748;margin:4px 0 0">Est. Rate</p></div>
-                  </div>
-                </div>
-                <!-- Passengers -->
-                <div class="f-group">
-                  <label class="f-label">Passengers *</label>
-                  <div style="display:flex;gap:8px;flex-wrap:wrap" id="bk-pass-btns">
-                    <button type="button" onclick="bkSelPass(this,'1')" class="p-btn sel">1</button>
-                    <button type="button" onclick="bkSelPass(this,'2')" class="p-btn">2</button>
-                    <button type="button" onclick="bkSelPass(this,'3')" class="p-btn">3</button>
-                    <button type="button" onclick="bkSelPass(this,'4')" class="p-btn">4</button>
-                    <button type="button" onclick="bkSelPass(this,'5')" class="p-btn">5</button>
-                    <button type="button" onclick="bkSelPass(this,'6+')" class="p-btn">6+</button>
-                  </div>
-                  <input type="hidden" id="bk-hid-pass" value="1"/>
-                </div>
-                <!-- Luggage -->
-                <div class="f-group">
-                  <label class="f-label">Luggage Bags</label>
-                  <div style="display:flex;gap:8px;flex-wrap:wrap" id="bk-lug-btns">
-                    <button type="button" onclick="bkSelLug(this,'0')" class="p-btn sel">0</button>
-                    <button type="button" onclick="bkSelLug(this,'1')" class="p-btn">1</button>
-                    <button type="button" onclick="bkSelLug(this,'2')" class="p-btn">2</button>
-                    <button type="button" onclick="bkSelLug(this,'3')" class="p-btn">3</button>
-                    <button type="button" onclick="bkSelLug(this,'4+')" class="p-btn">4+</button>
-                  </div>
-                  <input type="hidden" id="bk-hid-lug" value="0"/>
-                </div>
-                <div class="f-group book-full">
-                  <label class="f-label">Special Requests</label>
-                  <textarea id="bk-notes" class="f-input" rows="3" style="resize:vertical" placeholder="Child seat, extra stop, accessibility needs, early morning pickup..."></textarea>
-                </div>
-              </div>
-            </div>
-
-            <!-- TOS ACCORDION -->
-            <div style="margin-bottom:1.5rem;border:1px solid #e2e2e2">
-              <button type="button" id="bk-tos-toggle" onclick="bkToggleTos()" style="width:100%;background:#f3f3f3;border:0;padding:1rem 1.25rem;font-family:'Work Sans',sans-serif;font-size:0.73rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;text-align:left;cursor:pointer;display:flex;justify-content:space-between;align-items:center;color:#1a1c1c">
-                <span style="display:flex;align-items:center;gap:8px"><span>📋</span> Terms of Service &amp; Cancellation Policy</span>
-                <span id="bk-tos-arrow" style="font-size:0.72rem;color:#775a19;white-space:nowrap">▼ Read &amp; Accept</span>
-              </button>
-              <div id="bk-tos-content" style="display:none;background:#fff;border-top:2px solid #775a19;padding:1.25rem 1.5rem;max-height:280px;overflow-y:auto;font-family:Inter,sans-serif;font-size:0.78rem;line-height:1.75;color:#444748">
-                <p style="font-family:'Times New Roman',serif;font-size:1rem;font-weight:700;color:#1a1c1c;margin-bottom:0.25rem">Seacoast RVIP LLC — Terms of Service</p>
-                <p style="font-size:0.7rem;color:#888;margin-bottom:1.25rem">Last updated: April 2, 2025</p>
-                <p style="font-weight:700;color:#1a1c1c;margin-bottom:0.35rem">1. Acceptance of Terms</p>
-                <p style="margin-bottom:1rem">By submitting a booking request, you agree to these Terms of Service.</p>
-                <p style="font-weight:700;color:#1a1c1c;margin-bottom:0.35rem">5. Cancellation &amp; Refund Policy</p>
-                <div style="background:#f9f9f9;border-left:3px solid #775a19;padding:0.75rem 1rem;margin-bottom:1rem">
-                  <p style="margin-bottom:0.35rem">✅ <strong>24+ hours before pickup</strong> — Full refund of any deposit paid.</p>
-                  <p style="margin-bottom:0.35rem">⚠️ <strong>12–24 hours before pickup</strong> — 50% cancellation fee.</p>
-                  <p style="margin-bottom:0.35rem">❌ <strong>Less than 12 hours</strong> — 100% of the confirmed fare is due.</p>
-                  <p style="margin-bottom:0">❌ <strong>No-show</strong> — 100% of the fare is due.</p>
-                </div>
-                <p><a href="terms.html" target="_blank" style="color:#775a19;text-decoration:underline">View full Terms page →</a></p>
-              </div>
-            </div>
-
-            <!-- TOS CHECKBOX -->
-            <div style="margin-bottom:1.75rem;padding:1rem 1.25rem;background:#fdfaf4;border:1.5px solid #775a19">
-              <label style="display:flex;align-items:flex-start;gap:0.875rem;cursor:pointer">
-                <input type="checkbox" id="bk-tos-check" onchange="bkTosSyncBtn()" style="margin-top:3px;width:18px;height:18px;accent-color:#775a19;flex-shrink:0;cursor:pointer">
-                <span style="font-family:Inter,sans-serif;font-size:0.875rem;color:#1a1c1c;line-height:1.55">
-                  I have read and agree to <a href="terms.html" target="_blank" style="color:#775a19;font-weight:600;text-decoration:underline">Seacoast RVIP LLC's Terms of Service</a> and <strong>Cancellation Policy</strong>.
-                </span>
-              </label>
-            </div>
-
-            <!-- SUBMIT -->
-            <button type="button" id="bk-submit-btn" onclick="submitAccountBooking()" disabled
-              style="width:100%;background:#000;color:#fff;padding:1.25rem;font-family:'Times New Roman',serif;font-size:1.25rem;font-weight:700;text-transform:uppercase;letter-spacing:0.03em;border:none;cursor:not-allowed;border-bottom:4px solid #775a19;transition:opacity 0.2s;opacity:0.4">
-              Request My Ride →
-            </button>
-            <p style="text-align:center;font-family:Inter,sans-serif;font-size:0.75rem;color:#444748;margin-top:1rem">
-              Prefer to call? <a href="tel:9782553140" style="color:#775a19;font-weight:600;text-decoration:underline">(978) 255-3140</a> &nbsp;|&nbsp;
-              <a href="sms:9782553140" style="color:#775a19;font-weight:600;text-decoration:underline">Text Us</a>
-            </p>
-          </div><!-- end left col -->
-
-          <!-- RIGHT: MAP -->
           <div class="book-map-wrap">
             <div id="acct-book-map" class="book-map"></div>
           </div>
@@ -768,10 +622,6 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
                <button onclick="settleBalanceWithCard()" class="btn-k" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px">
                  <span class="material-symbols-outlined" style="font-size:17px">lock</span>
                  Pay Now via Stripe
-               </button>
-               <button onclick="openVenmoPayModal()" style="width:100%;margin-top:0.625rem;display:flex;align-items:center;justify-content:center;gap:8px;background:#3D95CE;color:#fff;border:none;border-bottom:2px solid #2a6a94;padding:0.75rem;font-family:'Work Sans',sans-serif;font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;cursor:pointer">
-                 <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M17.4 2C14.6 2 12.4 3.5 11 6.2 9.9 4.3 8.3 3.3 6.2 3.3c-3 0-4.2 2.2-4.2 4.8 0 5 7 14.4 9.2 14.4 1.3 0 2.4-1.5 4-4.3.4.1.7.1 1.1.1 3.4 0 6.1-3.1 6.1-7.8C22.4 4.5 20.3 2 17.4 2z"/></svg>
-                 Pay via Venmo
                </button>
                <p style="font-size:0.65rem;color:#aaa;text-align:center;margin-top:0.75rem">Visa · MC · Amex · Apple Pay · Google Pay · Klarna</p>
             </div>
@@ -962,10 +812,6 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
           <span style="font-family:Inter,sans-serif;font-size:0.8rem;color:#888">Gratuity</span>
           <span style="font-family:Inter,sans-serif;font-size:0.8rem;color:#775a19;font-weight:600" id="acct-tip-display">$0.00</span>
         </div>
-        <div style="display:flex;justify-content:space-between;margin-bottom:0.5rem">
-          <span style="font-family:Inter,sans-serif;font-size:0.8rem;color:#888">Processing Fee (2.9%)</span>
-          <span style="font-family:Inter,sans-serif;font-size:0.8rem;color:#888" id="acct-fee-display">$0.00</span>
-        </div>
         <div style="border-top:1px solid #f0e8cc;padding-top:0.5rem;display:flex;justify-content:space-between">
           <span style="font-family:'Work Sans',sans-serif;font-size:0.82rem;font-weight:700;color:#000;text-transform:uppercase;letter-spacing:0.04em">Total Charge</span>
           <span style="font-family:'Work Sans',sans-serif;font-size:0.95rem;font-weight:700;color:#000" id="acct-tip-total-display">$0.00</span>
@@ -1016,75 +862,6 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
   </div>
 </div>
 
-<!-- VENMO PAYMENT SHEET MODAL -->
-<div id="acct-venmo-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:9999;align-items:center;justify-content:center;padding:1rem;overflow-y:auto">
-  <div style="background:#fff;width:100%;max-width:480px;border-radius:6px;overflow-y:auto;box-shadow:0 25px 60px rgba(0,0,0,0.35);max-height:90vh;margin:auto">
-    <!-- Header -->
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:1rem 1.25rem;border-bottom:1px solid #eee">
-      <div style="display:flex;align-items:center;gap:0.625rem">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="#3D95CE"><path d="M17.4 2C14.6 2 12.4 3.5 11 6.2 9.9 4.3 8.3 3.3 6.2 3.3c-3 0-4.2 2.2-4.2 4.8 0 5 7 14.4 9.2 14.4 1.3 0 2.4-1.5 4-4.3.4.1.7.1 1.1.1 3.4 0 6.1-3.1 6.1-7.8C22.4 4.5 20.3 2 17.4 2z"/></svg>
-        <span style="font-family:'Times New Roman',serif;font-size:1rem;font-weight:700">Seacoast RVIP — Pay via Venmo</span>
-      </div>
-      <button onclick="closeVenmoPayModal()" style="background:none;border:none;cursor:pointer;color:#888;font-size:1.4rem;line-height:1;padding:0.25rem">✕</button>
-    </div>
-    <!-- Amount -->
-    <div style="background:#e8f4fd;padding:0.75rem 1.25rem;border-bottom:1px solid #b3d9f5;text-align:center">
-      <p style="font-family:Inter,sans-serif;font-size:0.82rem;color:#1a6a9e;margin:0">
-        Total due: <strong id="venmo-modal-amt" style="font-size:1rem">$0</strong>
-      </p>
-    </div>
-
-    <!-- Tip Step -->
-    <div style="padding:1.5rem">
-      <div style="text-align:center;margin-bottom:1.25rem">
-        <div style="font-family:'Work Sans',sans-serif;font-size:0.58rem;font-weight:700;text-transform:uppercase;letter-spacing:0.14em;color:#1a6a9e;margin-bottom:4px">Outstanding Balance</div>
-        <div style="font-family:'Times New Roman',serif;font-size:2rem;font-weight:700;color:#000" id="venmo-tip-base">$0.00</div>
-      </div>
-      <div style="font-family:'Work Sans',sans-serif;font-size:0.68rem;font-weight:700;color:#444;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.75rem;text-align:center">Add a Gratuity for Your Driver 🙏</div>
-      <!-- Preset tip buttons -->
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0.5rem;margin-bottom:0.5rem">
-        <button onclick="venmoSelectTip(0.15)" id="venmo-tip-15" style="padding:0.75rem 0.25rem;border:1.5px solid #e2e2e2;background:#fff;font-family:'Work Sans',sans-serif;font-size:0.78rem;font-weight:700;cursor:pointer;border-radius:3px;transition:all 0.15s;min-height:44px">15%</button>
-        <button onclick="venmoSelectTip(0.18)" id="venmo-tip-18" style="padding:0.75rem 0.25rem;border:1.5px solid #e2e2e2;background:#fff;font-family:'Work Sans',sans-serif;font-size:0.78rem;font-weight:700;cursor:pointer;border-radius:3px;transition:all 0.15s;min-height:44px">18%</button>
-        <button onclick="venmoSelectTip(0.20)" id="venmo-tip-20" style="padding:0.75rem 0.25rem;border:1.5px solid #3D95CE;background:#3D95CE;color:#fff;font-family:'Work Sans',sans-serif;font-size:0.78rem;font-weight:700;cursor:pointer;border-radius:3px;transition:all 0.15s;min-height:44px">20%</button>
-        <button onclick="venmoSelectTip(0.25)" id="venmo-tip-25" style="padding:0.75rem 0.25rem;border:1.5px solid #e2e2e2;background:#fff;font-family:'Work Sans',sans-serif;font-size:0.78rem;font-weight:700;cursor:pointer;border-radius:3px;transition:all 0.15s;min-height:44px">25%</button>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-bottom:1.25rem">
-        <button onclick="venmoSelectTip(0)" id="venmo-tip-none" style="padding:0.75rem;border:1.5px solid #e2e2e2;background:#fff;font-family:'Work Sans',sans-serif;font-size:0.72rem;font-weight:600;cursor:pointer;border-radius:3px;color:#888;transition:all 0.15s;min-height:44px">No Tip</button>
-        <button onclick="venmoToggleCustomTip()" id="venmo-tip-custom-btn" style="padding:0.75rem;border:1.5px solid #e2e2e2;background:#fff;font-family:'Work Sans',sans-serif;font-size:0.72rem;font-weight:600;cursor:pointer;border-radius:3px;color:#000;transition:all 0.15s;min-height:44px">Custom $</button>
-      </div>
-      <!-- Custom tip input -->
-      <div id="venmo-custom-tip-wrap" style="display:none;margin-bottom:1.25rem">
-        <div style="display:flex;align-items:center;border-bottom:2px solid #3D95CE;padding-bottom:0.5rem;gap:0.5rem">
-          <span style="font-family:'Work Sans',sans-serif;font-size:1.1rem;font-weight:700;color:#3D95CE">$</span>
-          <input id="venmo-custom-tip-input" type="number" min="0" step="0.01" placeholder="0.00"
-            style="flex:1;border:none;background:transparent;font-family:'Work Sans',sans-serif;font-size:16px;font-weight:700;color:#000;outline:none"
-            oninput="venmoApplyCustomTip(this.value)"/>
-        </div>
-      </div>
-      <!-- Summary -->
-      <div style="background:#e8f4fd;border:1px solid #b3d9f5;border-radius:3px;padding:1rem;margin-bottom:1.25rem">
-        <div style="display:flex;justify-content:space-between;margin-bottom:0.4rem">
-          <span style="font-family:Inter,sans-serif;font-size:0.8rem;color:#888">Ride Total</span>
-          <span style="font-family:Inter,sans-serif;font-size:0.8rem;color:#333" id="venmo-tip-sub-display">$0.00</span>
-        </div>
-        <div style="display:flex;justify-content:space-between;margin-bottom:0.5rem">
-          <span style="font-family:Inter,sans-serif;font-size:0.8rem;color:#888">Gratuity</span>
-          <span style="font-family:Inter,sans-serif;font-size:0.8rem;color:#3D95CE;font-weight:600" id="venmo-tip-display">$0.00</span>
-        </div>
-        <div style="border-top:1px solid #b3d9f5;padding-top:0.5rem;display:flex;justify-content:space-between">
-          <span style="font-family:'Work Sans',sans-serif;font-size:0.82rem;font-weight:700;color:#000;text-transform:uppercase;letter-spacing:0.04em">Total</span>
-          <span style="font-family:'Work Sans',sans-serif;font-size:0.95rem;font-weight:700;color:#000" id="venmo-tip-total-display">$0.00</span>
-        </div>
-      </div>
-      <button onclick="venmoConfirmAndPay()" style="width:100%;background:#3D95CE;color:#fff;border:none;border-bottom:3px solid #2a6a94;padding:1rem;font-family:'Work Sans',sans-serif;font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;cursor:pointer;min-height:44px;display:flex;align-items:center;justify-content:center;gap:8px">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M17.4 2C14.6 2 12.4 3.5 11 6.2 9.9 4.3 8.3 3.3 6.2 3.3c-3 0-4.2 2.2-4.2 4.8 0 5 7 14.4 9.2 14.4 1.3 0 2.4-1.5 4-4.3.4.1.7.1 1.1.1 3.4 0 6.1-3.1 6.1-7.8C22.4 4.5 20.3 2 17.4 2z"/></svg>
-        Continue to Venmo →
-      </button>
-      <p style="text-align:center;font-size:0.65rem;color:#aaa;margin-top:0.75rem">No processing fee · Opens Venmo app with total pre-filled</p>
-    </div>
-  </div>
-</div>
-
 <!-- MOBILE BOTTOM NAV -->
 <div class="mobile-bottom-nav" id="mobile-bottom-nav" style="display:none">
   <button class="mbn-item active" id="mbn-dash" onclick="showTab('tab-dash',null);setMbnActive(this)">
@@ -1120,6 +897,10 @@ const auth = firebase.auth();
 const funcs = firebase.functions();
 // Keep user signed in across browser sessions
 auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+// Anonymous auth gate — every visitor gets a Firebase Auth token so
+// Firestore rules can require request.auth != null. Real sign-ins
+// (email/phone) transparently replace the anon session.
+try { auth.onAuthStateChanged(function(u){ if(!u) auth.signInAnonymously().catch(function(e){ console.warn('anon sign-in failed', e); }); }); } catch(e){}
 
 let currentUser = null;
 let allTrips = [];
@@ -1140,7 +921,6 @@ function friendlyAuthError(e) {
     'auth/popup-closed-by-user':       'Sign-in window was closed. Please try again.',
     'auth/popup-blocked':              'Pop-up was blocked by your browser. Please allow pop-ups for this site.',
     'auth/cancelled-popup-request':    'Sign-in cancelled. Please try again.',
-    'auth/user-cancelled':             'Sign-in was cancelled. Please try again.',
     'auth/account-exists-with-different-credential': 'An account already exists with this email using a different sign-in method (Google or Apple). Please use that method.',
     'auth/operation-not-allowed':      'This sign-in method is not enabled. Please contact support.',
     'auth/invalid-action-code':        'This link has expired or already been used. Please request a new one.',
@@ -1172,35 +952,10 @@ function showAuthMode(mode) {
   document.getElementById('toggle-login-btn').classList.toggle('active', isLogin);
   document.getElementById('toggle-signup-btn').classList.toggle('active', !isLogin);
 
+  // Keep login simple by default: Phone method visible, Email method hidden.
   if (isLogin) {
     document.getElementById('login-phone-method').style.display = 'block';
-  }
-}
-
-function switchLoginTab(tab) {
-  const inp = document.getElementById('phone-inp');
-  const label = document.getElementById('login-identity-label');
-  const forgotBtn = document.getElementById('forgot-pwd-btn');
-  const phoneTab = document.getElementById('ltab-phone');
-  const emailTab = document.getElementById('ltab-email');
-  document.getElementById('phone-err').style.display = 'none';
-  document.getElementById('migration-prompt').style.display = 'none';
-  inp.value = '';
-  document.getElementById('phone-pwd-inp').value = '';
-  if (tab === 'phone') {
-    inp.type = 'tel';
-    inp.placeholder = '(603) 000-0000';
-    label.textContent = 'Phone Number';
-    if (forgotBtn) forgotBtn.style.display = 'none';
-    phoneTab.classList.add('active');
-    emailTab.classList.remove('active');
-  } else {
-    inp.type = 'email';
-    inp.placeholder = 'you@email.com';
-    label.textContent = 'Email Address';
-    if (forgotBtn) forgotBtn.style.display = '';
-    phoneTab.classList.remove('active');
-    emailTab.classList.add('active');
+    document.getElementById('login-email-method').style.display = 'none';
   }
 }
 
@@ -1218,14 +973,29 @@ async function doSocialAuth(providerName) {
   const socialErr = document.getElementById('social-auth-err');
   if (socialErr) socialErr.style.display = 'none';
 
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+  if (isMobile) {
+    try {
+      localStorage.setItem('rvip-social-pending', providerName);
+      await auth.signInWithRedirect(provider);
+    } catch (e) {
+      showSocialError(friendlyAuthError(e));
+    }
+    return;
+  }
+
   try {
     const result = await auth.signInWithPopup(provider);
     await handleSocialResult(result, providerName);
   } catch (e) {
-    if (e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') {
-      // User dismissed — no error needed
-    } else if (e.code === 'auth/popup-blocked') {
-      showSocialError('Pop-up was blocked by your browser. Please allow pop-ups for this site and try again.');
+    if (e.code === 'auth/popup-blocked' || e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') {
+      try {
+        localStorage.setItem('rvip-social-pending', providerName);
+        await auth.signInWithRedirect(provider);
+      } catch (e2) {
+        showSocialError(friendlyAuthError(e2));
+      }
     } else {
       showSocialError(friendlyAuthError(e));
     }
@@ -1264,8 +1034,6 @@ async function handleSocialResult(result, providerName) {
     if (!client.firebaseUid) {
       await db.collection('clients').doc(client.id).update({ firebaseUid: user.uid });
     }
-    // Tag any unlinked personal bookings so admin can see them in the client profile
-    _linkPersonalBookings(client.id, email, user.phoneNumber || '');
     loginUser(client);
   } else {
     // New user — create Firestore profile
@@ -1280,37 +1048,9 @@ async function handleSocialResult(result, providerName) {
       authProvider: providerName
     };
     await ref.set(data);
-    const newClient = {id: ref.id, ...data};
-    // Tag any pre-existing personal bookings with the new client ID
-    _linkPersonalBookings(ref.id, email, user.phoneNumber || '');
-    loginUser(newClient);
+    loginUser({id: ref.id, ...data});
     toast(`Welcome, ${data.name}! Your account has been created.`);
   }
-}
-
-// Tags personal (non-corporate) bookings that match email or phone with the
-// client's ID so admin can see them in the client profile view.
-async function _linkPersonalBookings(clientId, email, phone) {
-  if (!db || (!email && !phone)) return;
-  try {
-    const batch = db.batch();
-    let linked = 0;
-    const check = (snap) => {
-      snap.forEach(d => {
-        const data = d.data();
-        if (!data.corporateAccountId && data.clientId !== clientId) {
-          batch.update(d.ref, { clientId });
-          linked++;
-        }
-      });
-    };
-    if (email) check(await db.collection('bookings').where('email', '==', email).get());
-    if (phone) {
-      const raw = phone.replace(/\D/g, '');
-      if (raw) check(await db.collection('bookings').where('phone', '==', phone).get());
-    }
-    if (linked > 0) await batch.commit();
-  } catch(e) { console.warn('_linkPersonalBookings:', e.message); }
 }
 
 // Handle redirect result on page load (for mobile Apple/Google sign-in)
@@ -1321,11 +1061,11 @@ auth.getRedirectResult().then(function(result) {
     handleSocialResult(result, providerName).catch(function(e) {
       showSocialError(friendlyAuthError(e));
     });
-  } else {
-    localStorage.removeItem('rvip-social-pending');
   }
 }).catch(function(e) {
-  localStorage.removeItem('rvip-social-pending');
+  if (e.code && e.code !== 'auth/no-current-user') {
+    showSocialError(friendlyAuthError(e));
+  }
 });
 
 async function doSignup() {
@@ -1414,131 +1154,61 @@ async function doPhoneLogin(){
   const btn = document.getElementById('phone-btn');
   const err = document.getElementById('phone-err');
   const mig = document.getElementById('migration-prompt');
-
+  
   err.style.display='none';
   mig.style.display='none';
-  _pendingClient = null;
-  var _migBtnReset = document.getElementById('migration-btn');
-  var _migSuccReset = document.getElementById('migration-success');
-  var _migEmailWrapReset = document.getElementById('migration-email-wrap');
-  if (_migBtnReset) { _migBtnReset.style.display = ''; _migBtnReset.disabled = false; _migBtnReset.textContent = 'Set Up My Password'; }
-  if (_migSuccReset) { _migSuccReset.style.display = 'none'; _migSuccReset.innerHTML = ''; }
-  if (_migEmailWrapReset) _migEmailWrapReset.style.display = 'none';
 
   if(!raw) { err.textContent='Please enter your phone or email.'; err.style.display='block'; return; }
-  if(!isEmail && digits.length < 10) { err.textContent='Please enter a valid 10-digit phone number.'; err.style.display='block'; return; }
+  if(!isEmail && digits.length < 10) { err.textContent='Please enter a valid 10-digit phone or a valid email.'; err.style.display='block'; return; }
   if(isEmail && !/^\S+@\S+\.\S+$/.test(raw)) { err.textContent='Please enter a valid email address.'; err.style.display='block'; return; }
   if(!pwd) { err.textContent='Please enter your password.'; err.style.display='block'; return; }
-
+  
   btn.disabled=true; btn.textContent='Signing In...';
-
+  
   try {
-    // ── EMAIL PATH ────────────────────────────────────────────────────────────
-    // Accounts created via Sign Up use Firebase Auth for passwords.
-    // Legacy/admin-created accounts may have a plain-text password in Firestore.
-    // Try Firebase Auth first; fall back to Firestore for legacy accounts.
+    let foundDoc = null;
+
     if(isEmail){
-      const emailLower = raw.toLowerCase();
-
-      // 1. Try Firebase Auth (covers all accounts created via the sign-up form)
-      try {
-        await auth.signInWithEmailAndPassword(emailLower, pwd);
-        // Succeeded — find or create the Firestore client doc
-        let snap = await db.collection('clients').where('email','==',emailLower).limit(1).get();
-        if(snap.empty) snap = await db.collection('clients').where('email','==',raw).limit(1).get();
-        if(!snap.empty){
-          let client; snap.forEach(d => client = {id:d.id, ...d.data()});
-          loginUser(client);
-          return;
-        }
-        // Firebase Auth user exists but no Firestore doc — create one now
-        const fbUser = auth.currentUser;
-        const ref = db.collection('clients').doc();
-        const data = {
-          name: fbUser.displayName || emailLower.split('@')[0],
-          email: emailLower, phone: '',
-          status: 'Approved', createdAt: new Date().toISOString(), authProvider: 'email'
-        };
-        await ref.set(data);
-        loginUser({id: ref.id, ...data});
-        return;
-      } catch(authErr) {
-        // wrong-password or invalid-credential means the Firebase Auth account
-        // exists but the password is wrong — show error immediately, no fallback
-        if(authErr.code === 'auth/wrong-password' || authErr.code === 'auth/invalid-credential'){
-          err.textContent = 'Incorrect password. Use Forgot Password to reset it.';
-          err.style.display='block';
-          btn.disabled=false; btn.textContent='Sign In →';
-          return;
-        }
-        // user-not-found / invalid-email → could be a legacy Firestore-only account; fall through
-        if(authErr.code !== 'auth/user-not-found' && authErr.code !== 'auth/invalid-email'){
-          err.textContent = friendlyAuthError(authErr);
-          err.style.display='block';
-          btn.disabled=false; btn.textContent='Sign In →';
-          return;
-        }
-      }
-
-      // 2. Fallback: legacy account — look up Firestore doc and check plain-text password
-      let foundDoc = null;
-      for(const e of [raw, emailLower]){
+      const identity = raw.toLowerCase();
+      var emailVariants = [raw, identity];
+      for(const e of emailVariants){
         const snap = await db.collection('clients').where('email','==',e).limit(1).get();
         if(!snap.empty){ snap.forEach(d => foundDoc = {id:d.id, ...d.data()}); break; }
       }
-      if(!foundDoc){
-        err.textContent='No account found with that email.';
-        err.style.display='block';
-      } else if(!foundDoc.password){
-        err.innerHTML='Account found, but <strong>no password is set</strong>.<br>Tap below to set one up via email.';
-        err.style.display='block';
-        mig.style.display='block';
-        _pendingClient = foundDoc;
-        var migEmailWrap = document.getElementById('migration-email-wrap');
-        if(migEmailWrap) migEmailWrap.style.display = 'none';
-      } else if(foundDoc.password !== pwd){
-        err.textContent='Incorrect password.';
-        err.style.display='block';
-      } else {
-        loginUser(foundDoc);
-        return;
-      }
-
-    // ── PHONE PATH ────────────────────────────────────────────────────────────
-    // Phone accounts always use a plain-text password stored in Firestore by admin.
     } else {
+      // Try multiple phone formats (+1, plain, formatted)
       const pFmt1 = `(${digits.substring(0,3)}) ${digits.substring(3,6)}-${digits.substring(6,10)}`;
       const pFmt2 = `${digits.substring(0,3)}-${digits.substring(3,6)}-${digits.substring(6,10)}`;
       const formats = ['+1'+digits, digits, pFmt1, pFmt2];
-      let foundDoc = null;
       for(const p of formats){
         const snap = await db.collection('clients').where('phone','==',p).limit(1).get();
         if(!snap.empty){ snap.forEach(d => foundDoc = {id:d.id, ...d.data()}); break; }
       }
+    }
 
-      if(!foundDoc){
-        err.textContent='No account found with that phone number.';
-        err.style.display='block';
-      } else {
-        const status = foundDoc.status || 'Approved';
-        if(status !== 'Approved'){
-          err.innerHTML='<strong>Account Pending Approval</strong><br>Your profile is currently being reviewed. We will notify you by text once it is active.';
-          err.style.display='block';
-        } else if(!foundDoc.password){
-          err.innerHTML='Account found, but <strong>no password is set</strong>.<br>Tap below to set one up via email.';
+    if(!foundDoc){
+      err.textContent='Incorrect phone/email or password.';
+      err.style.display='block';
+    } else {
+      // Check status
+      const status = foundDoc.status || 'Approved'; // Default to Approved if not set
+      if (status !== 'Approved') {
+          err.innerHTML = '<strong>Account Pending Approval</strong><br>Your profile is currently being reviewed. We will notify you by text once it is active.';
+          err.style.display = 'block';
+      } else if(!foundDoc.password && !isEmail){
+          // User found but no password
+          err.innerHTML='Account found, but <strong>no password is set</strong>.<br>Please use the migration link below.';
           err.style.display='block';
           mig.style.display='block';
-          _pendingClient = foundDoc;
-          var migEmailWrap = document.getElementById('migration-email-wrap');
-          if(!foundDoc.email && migEmailWrap) migEmailWrap.style.display = 'block';
-          else if(migEmailWrap) migEmailWrap.style.display = 'none';
-        } else if(foundDoc.password !== pwd){
-          err.textContent='Incorrect password.';
+      } else if(!foundDoc.password && isEmail){
+          err.innerHTML='Account found, but <strong>no password is set</strong>.<br>Use Google/Apple sign-in or reset with your email.';
           err.style.display='block';
-        } else {
+      } else if(foundDoc.password !== pwd){
+          err.textContent='Incorrect phone/email or password.';
+          err.style.display='block';
+      } else {
           loginUser(foundDoc);
-          return;
-        }
+          return; // Success
       }
     }
   } catch(e){
@@ -1551,108 +1221,60 @@ async function doPhoneLogin(){
 // ─── MIGRATION FLOW (OTP fallback for first password setup) ───
 
 async function startMigration(){
-  const btn       = document.getElementById('migration-btn');
-  const succBox   = document.getElementById('migration-success');
-  const err       = document.getElementById('phone-err');
-  const emailWrap = document.getElementById('migration-email-wrap');
-  const emailInp  = document.getElementById('migration-email-inp');
-  const inputVal  = document.getElementById('phone-inp').value.trim();
-  const isEmail   = inputVal.includes('@');
-  const digits    = inputVal.replace(/\D/g,'');
-
-  err.style.display = 'none';
-  succBox.style.display = 'none';
-  btn.disabled = true; btn.textContent = 'Looking up account…';
-
+  const digits = document.getElementById('phone-inp').value.replace(/\D/g,'');
+  if(digits.length < 10) return alert('Enter your 10-digit phone number first.');
+  
+  const phone = '+1' + digits;
+  _pendingPhone = phone;
+  
+  const btn = document.querySelector('#migration-prompt button');
+  btn.disabled = true; btn.textContent = 'Verifying...';
+  
   try {
-    // Locate the client (use cached lookup from doPhoneLogin if available)
-    let client = _pendingClient || null;
-    if (!client) {
-      if (isEmail) {
-        const variants = [inputVal, inputVal.toLowerCase()];
-        for (const v of variants) {
-          const snap = await db.collection('clients').where('email','==',v).limit(1).get();
-          if (!snap.empty) { snap.forEach(d => client = {id:d.id, ...d.data()}); break; }
+    // Check if user exists
+    const pFmt1 = `(${digits.substring(0,3)}) ${digits.substring(3,6)}-${digits.substring(6,10)}`;
+    const pFmt2 = `${digits.substring(0,3)}-${digits.substring(3,6)}-${digits.substring(6,10)}`;
+    const formats = [phone, digits, pFmt1, pFmt2];
+    
+    let client = null;
+    for(const p of formats){
+        const snap = await db.collection('clients').where('phone','==',p).limit(1).get();
+        if(!snap.empty){
+            snap.forEach(d => client = {id:d.id, ...d.data()});
+            break;
         }
-      } else if (digits.length >= 10) {
-        const d10 = digits.slice(-10);
-        const phoneFull = '+1' + d10;
-        const pFmt1 = `(${d10.substring(0,3)}) ${d10.substring(3,6)}-${d10.substring(6,10)}`;
-        const pFmt2 = `${d10.substring(0,3)}-${d10.substring(3,6)}-${d10.substring(6,10)}`;
-        const formats = [phoneFull, digits, d10, pFmt1, pFmt2];
-        for (const p of formats) {
-          const snap = await db.collection('clients').where('phone','==',p).limit(1).get();
-          if (!snap.empty) { snap.forEach(d => client = {id:d.id, ...d.data()}); break; }
-        }
-      }
     }
-
-    if (!client) {
-      err.innerHTML = "We couldn't find an account matching that " + (isEmail ? 'email' : 'phone number') + ". Please <strong>create a new account</strong> by booking a ride, or call <a href=\"tel:9782553140\" style=\"color:#775a19\">(978) 255-3140</a>.";
-      err.style.display = 'block';
-      btn.disabled = false; btn.textContent = 'Set Up My Password';
-      return;
+    
+    if(!client){
+        alert('We couldn\'t find an account with that number. Please start a new booking.');
+        btn.disabled = false; btn.textContent = 'Verify via SMS & Setup Password';
+        return;
     }
-
+    
     _pendingClient = client;
-    if (digits.length >= 10) _pendingPhone = '+1' + digits.slice(-10);
-
-    // Determine the email to send the setup link to
-    let targetEmail = client.email || '';
-    if (!targetEmail && isEmail) targetEmail = inputVal.toLowerCase();
-    if (!targetEmail && emailInp && emailInp.value.trim()) targetEmail = emailInp.value.trim().toLowerCase();
-
-    // If still no email, expose the input field and ask the user to enter one
-    if (!targetEmail) {
-      if (emailWrap) emailWrap.style.display = 'block';
-      err.textContent = 'Please enter the email address you want to use for sign-in.';
-      err.style.display = 'block';
-      btn.disabled = false; btn.textContent = 'Send Setup Link';
-      if (emailInp) emailInp.focus();
-      return;
-    }
-    if (targetEmail && !/^\S+@\S+\.\S+$/.test(targetEmail)) {
-      err.textContent = 'Please enter a valid email address.';
-      err.style.display = 'block';
-      btn.disabled = false; btn.textContent = 'Send Setup Link';
-      return;
-    }
-
-    btn.textContent = 'Sending link…';
-
-    // If the user typed a new email (not on file), save it before sending
-    if (!client.email && targetEmail) {
-      try { await db.collection('clients').doc(client.id).update({ email: targetEmail }); } catch(e) {}
-      client.email = targetEmail;
-    }
-
-    // Send Firebase sign-in email link (works without Phone Auth)
-    const returnUrl = window.location.origin + '/account.html';
-    const actionCodeSettings = { url: returnUrl, handleCodeInApp: true };
-    await auth.sendSignInLinkToEmail(targetEmail, actionCodeSettings);
-    localStorage.setItem('rvip-email-signin', targetEmail);
-    // Tag the client so the next sign-in forces the password setup modal
-    try { await db.collection('clients').doc(client.id).update({ passwordResetRequired: true }); } catch(e) {}
-
-    // Success — replace the prompt with a clear success message
-    succBox.innerHTML =
-      '<div style="font-weight:700;margin-bottom:0.35rem">✓ Setup link sent!</div>' +
-      'Check your inbox at <strong>' + escH(targetEmail) + '</strong> and tap the link to finish signing in and set your password.' +
-      '<div style="font-size:0.7rem;color:#555;margin-top:0.4rem">Don\'t see it? Check your <strong>Spam</strong> or <strong>Junk</strong> folder. The email comes from <em>noreply@seacoastrvip.com</em>.</div>';
-    succBox.style.display = 'block';
-    btn.style.display = 'none';
-    if (emailWrap) emailWrap.style.display = 'none';
-  } catch(e) {
-    console.error('[Migration]', e.code, e.message);
-    if (e.code === 'auth/invalid-email') {
-      err.textContent = 'That email address is invalid. Please double-check and try again.';
-    } else if (e.code === 'auth/too-many-requests') {
-      err.textContent = 'Too many attempts. Please wait a few minutes and try again.';
-    } else {
-      err.textContent = 'Could not send setup link: ' + (e.message || 'unknown error') + '. Please try again or call (978) 255-3140.';
-    }
-    err.style.display = 'block';
-    btn.disabled = false; btn.textContent = 'Set Up My Password';
+    
+    // Trigger Phone Auth
+    try {
+      if(window._recaptchaVerifier) { window._recaptchaVerifier.clear(); window._recaptchaVerifier = null; }
+    } catch(e) { window._recaptchaVerifier = null; }
+    // Recreate the container so reCAPTCHA doesn't complain about a used element
+    var rcEl = document.getElementById('recaptcha-container');
+    if(rcEl) { rcEl.innerHTML = ''; }
+    window._recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
+      size: 'invisible',
+      callback: function() {},
+      'expired-callback': function() { window._recaptchaVerifier = null; }
+    });
+    
+    const prov = new firebase.auth.PhoneAuthProvider();
+    _confirmationResult = await firebase.auth().signInWithPhoneNumber(phone, window._recaptchaVerifier);
+    
+    document.getElementById('otp-phone-display').textContent = phone;
+    document.getElementById('step-phone').style.display='none';
+    document.getElementById('step-otp').style.display='block';
+  } catch(e){
+    alert('Error: ' + e.message);
+    btn.disabled = false; btn.textContent = 'Verify via SMS & Setup Password';
   }
 }
 
@@ -1736,7 +1358,7 @@ function loginUser(client){
   // New logic: Check if a password reset is forced (Temporary Password usage)
   if (currentUser.passwordResetRequired) {
     setTimeout(() => {
-      try { toast('Welcome! Please set your private password.'); } catch(e) {}
+      showToast('Welcome! Please set your private password.');
       openM('m-cpwd');
     }, 1000);
   }
@@ -1755,34 +1377,13 @@ async function initDashboard(){
   document.getElementById('welcome-msg').textContent = `Welcome, ${currentUser.name.split(' ')[0]}`;
   const parts = currentUser.name.split(' ');
   document.getElementById('avatar-initials').textContent = (parts[0][0] + (parts[1]?parts[1][0]:'')).toUpperCase();
-
-  // Auto-link corporate account on first login so future queries are scoped
-  // correctly — prevents old test bookings with matching email/phone from
-  // inflating the trip list.
-  if (!currentUser.corporateAccountId && currentUser.email) {
-    try {
-      const corpSnap = await db.collection('corporate_accounts')
-        .where('contactEmail', '==', currentUser.email)
-        .where('status', 'in', ['Approved', 'Active'])
-        .limit(1).get();
-      if (!corpSnap.empty) {
-        const corpId = corpSnap.docs[0].id;
-        await db.collection('clients').doc(currentUser.id).update({ corporateAccountId: corpId });
-        currentUser.corporateAccountId = corpId;
-      }
-    } catch(e) {}
-  }
-
+  
   // Real-time Listeners with Merging Logic
   const tripMap = new Map();
   const mergeTrips = (snapshot) => {
     snapshot.forEach(d => {
       const trip = { id: d.id, ...d.data() };
-      // When a subcollection trip was assigned from a booking it carries a
-      // bookingId field. Key by that so the same trip loaded from both the
-      // subcollection and the bookings-by-email/phone query doesn't appear twice.
-      const key = trip.bookingId || trip.id;
-      tripMap.set(key, trip);
+      tripMap.set(trip.id, trip);
     });
     allTrips = Array.from(tripMap.values()).sort((a,b) => new Date(b.date + ' ' + b.time) - new Date(a.date + ' ' + a.time));
     updateDashboardUI();
@@ -1791,30 +1392,16 @@ async function initDashboard(){
 
   // 1. Subcollection (assigned trips)
   db.collection('clients').doc(currentUser.id).collection('trips').orderBy('date','desc').onSnapshot(mergeTrips);
-
-  if (currentUser.corporateAccountId) {
-    // Corporate client: scope to this corporate account only. This matches
-    // exactly what the admin sees and excludes unrelated test bookings that
-    // happen to share the same email or phone number.
-    db.collection('bookings').where('corporateAccountId', '==', currentUser.corporateAccountId).onSnapshot(mergeTrips);
-  } else {
-    // 2. Global bookings explicitly assigned to this client by the admin
-    db.collection('bookings').where('clientId', '==', currentUser.id).onSnapshot(mergeTrips);
-    // 3. Global bookings (matching email)
-    if (currentUser.email) {
-      db.collection('bookings').where('email', '==', currentUser.email).onSnapshot(mergeTrips);
-    }
-    // 4. Global bookings (matching phone) — query both stored format and digits-only
-    //    to catch bookings saved with a different phone format than the client doc
-    if (currentUser.phone) {
-      const rawPh = currentUser.phone.replace(/\D/g,'');
-      if (rawPh) {
-        db.collection('bookings').where('phone', '==', currentUser.phone).onSnapshot(mergeTrips);
-        // If the stored phone has formatting, also try digits-only in case bookings were saved without formatting
-        if (rawPh !== currentUser.phone) {
-          db.collection('bookings').where('phone', '==', rawPh).onSnapshot(mergeTrips);
-        }
-      }
+  
+  // 2. Global bookings (matching email)
+  if (currentUser.email) {
+    db.collection('bookings').where('email', '==', currentUser.email).onSnapshot(mergeTrips);
+  }
+  // 3. Global bookings (matching phone)
+  if (currentUser.phone) {
+    const rawPh = currentUser.phone.replace(/\D/g,'');
+    if (rawPh) {
+      db.collection('bookings').where('phone', '==', currentUser.phone).onSnapshot(mergeTrips);
     }
   }
 
@@ -1822,7 +1409,6 @@ async function initDashboard(){
     if(d.exists) {
       currentUser = {id:d.id, ...d.data()};
       renderSavedCardInfo();
-      updateDashboardUI();
     }
   });
 
@@ -1830,28 +1416,26 @@ async function initDashboard(){
 }
 
 function updateDashboardUI(){
-  const completed = allTrips.filter(t => ['completed','paid'].includes((t.status||'').toLowerCase())).length;
-  // Only Completed trips count toward outstanding balance (not Confirmed)
-  const confirmed = allTrips.filter(t => (t.status||'').toLowerCase() === 'completed');
+  const completed = allTrips.filter(t => (t.status||'').toLowerCase()==='completed').length;
+  const confirmed = allTrips.filter(t => (t.status||'').toLowerCase()==='confirmed');
   const upcoming  = allTrips.filter(t => ['upcoming','scheduled','pending','confirmed'].includes((t.status||'').toLowerCase())).length;
-
+  
   // Stats
   document.getElementById('stat-total').textContent = allTrips.length;
   document.getElementById('stat-loyalty').textContent = completed;
-
-  // Always sum Completed + Confirmed trips — never use the manual balance field
-  // (manual balance was masking trips because balance:0 in Firestore matched typeof===number)
-  const balance = confirmed.reduce((s, t) => s + parseFloat(t.price || 0) + parseFloat(t.tip || 0), 0);
+  
+  // Balance calculation
+  let balance = 0;
+  confirmed.forEach(t => balance += parseFloat(t.price || 0));
   document.getElementById('stat-balance').textContent = `$${balance.toFixed(2)}`;
-
-  var payBtns = document.getElementById('stat-pay-btn');
-  var zeroMsg = document.getElementById('balance-zero-msg');
+  
   if(balance > 0){
-     if(payBtns){ payBtns.style.display='grid'; }
-     if(zeroMsg){ zeroMsg.style.display='none'; }
+     document.getElementById('pay-box').style.display='block';
+     document.getElementById('pay-total-lbl').textContent = `$${balance.toFixed(2)}`;
+     document.getElementById('stat-pay-btn').style.display='block';
   } else {
-     if(payBtns){ payBtns.style.display='none'; }
-     if(zeroMsg){ zeroMsg.style.display='block'; }
+     document.getElementById('pay-box').style.display='none';
+     document.getElementById('stat-pay-btn').style.display='none';
   }
 
   updateLoyaltyUI(completed);
@@ -1904,74 +1488,6 @@ function renderRecentActivity(){
   const slice = allTrips.slice(0,3);
   if(!slice.length) return el.innerHTML='<p style="color:#aaa;font-size:0.8rem">No recent activity.</p>';
   el.innerHTML = slice.map(t => tripCard(t)).join('');
-  setTimeout(initCardMaps,80);
-}
-
-// ─── STYLED CARD MAPS (dark/gold — matches booking map) ───
-var _cardDirSvc=null, _cardMapObs=null;
-var _cardMapStyles=[
-  {featureType:'all',elementType:'geometry',stylers:[{color:'#1a1a1a'}]},
-  {featureType:'water',elementType:'geometry',stylers:[{color:'#0d0d0d'}]},
-  {featureType:'road',elementType:'geometry',stylers:[{color:'#2a2a2a'}]},
-  {featureType:'road.highway',elementType:'geometry',stylers:[{color:'#353535'}]},
-  {featureType:'road.arterial',elementType:'geometry',stylers:[{color:'#252525'}]},
-  {featureType:'poi',elementType:'all',stylers:[{visibility:'off'}]},
-  {featureType:'transit',stylers:[{visibility:'off'}]},
-  {featureType:'all',elementType:'labels.text.fill',stylers:[{color:'#555'}]},
-  {featureType:'all',elementType:'labels.text.stroke',stylers:[{color:'#000'},{weight:2}]},
-  {featureType:'administrative.locality',elementType:'labels.text.fill',stylers:[{color:'#C9A84C'}]},
-  {featureType:'administrative.province',elementType:'labels',stylers:[{visibility:'off'}]},
-  {featureType:'administrative.country',elementType:'labels',stylers:[{visibility:'off'}]},
-  {featureType:'administrative.neighborhood',elementType:'labels',stylers:[{visibility:'off'}]},
-  {featureType:'administrative.land_parcel',elementType:'labels',stylers:[{visibility:'off'}]}
-];
-function _renderCardMap(el){
-  if(!el||el.dataset.rendered||typeof google==='undefined'||!google.maps) return;
-  el.dataset.rendered='1';
-  const pickup=el.dataset.pickup, dest=el.dataset.dest;
-  if(!pickup||!dest) return;
-  if(!_cardDirSvc) _cardDirSvc=new google.maps.DirectionsService();
-  const map=new google.maps.Map(el,{
-    zoom:9,center:{lat:43.07,lng:-70.77},
-    styles:_cardMapStyles,
-    disableDefaultUI:true,gestureHandling:'none',clickableIcons:false
-  });
-  const renderer=new google.maps.DirectionsRenderer({
-    suppressMarkers:true,suppressInfoWindows:true,preserveViewport:true,
-    polylineOptions:{strokeColor:'#C9A84C',strokeWeight:3,strokeOpacity:1}
-  });
-  renderer.setMap(map);
-  const waypoints=el.dataset.waypoints?el.dataset.waypoints.split('|').filter(Boolean).map(w=>({location:w,stopover:true})):[];
-  _cardDirSvc.route({origin:pickup,destination:dest,waypoints,travelMode:google.maps.TravelMode.DRIVING},
-    (result,status)=>{
-      if(status!=='OK'){el.style.display='none';return;}
-      renderer.setDirections(result);
-      map.fitBounds(result.routes[0].bounds,{top:28,right:28,bottom:44,left:28});
-      const legs=result.routes[0].legs;
-      // Gold circle at pickup
-      new google.maps.Marker({position:legs[0].start_location,map:map,icon:{path:google.maps.SymbolPath.CIRCLE,fillColor:'#C9A84C',fillOpacity:1,strokeColor:'#fff',strokeWeight:2,scale:7}});
-      // White circle at destination
-      new google.maps.Marker({position:legs[legs.length-1].end_location,map:map,icon:{path:google.maps.SymbolPath.CIRCLE,fillColor:'#ffffff',fillOpacity:1,strokeColor:'#C9A84C',strokeWeight:2,scale:7}});
-      const totalDist=legs.reduce((s,l)=>s+l.distance.value,0);
-      const totalTime=legs.reduce((s,l)=>s+l.duration.value,0);
-      const distMi=(totalDist/1609.34).toFixed(1)+' mi';
-      const mins=Math.round(totalTime/60);
-      const timeStr=mins>=60?`${Math.floor(mins/60)}h ${mins%60}m`:`${mins} min`;
-      const info=document.createElement('div');
-      info.style.cssText='position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.92);color:#fff;font-family:\'Work Sans\',sans-serif;font-size:0.75rem;font-weight:700;padding:6px 12px;pointer-events:none;text-align:center;letter-spacing:0.06em;border-top:1px solid rgba(201,168,76,0.35)';
-      info.textContent=`${distMi} · ${timeStr}`;
-      el.style.position='relative';
-      el.appendChild(info);
-    });
-}
-function initCardMaps(){
-  if(typeof google==='undefined'||!google.maps) return;
-  if(!_cardMapObs){
-    _cardMapObs=new IntersectionObserver((entries)=>{
-      entries.forEach(e=>{if(e.isIntersecting){_cardMapObs.unobserve(e.target);_renderCardMap(e.target);}});
-    },{threshold:0.05,rootMargin:'300px'});
-  }
-  document.querySelectorAll('.trip-map-js:not([data-rendered])').forEach(el=>_cardMapObs.observe(el));
 }
 
 function renderTripsList(filter){
@@ -1981,7 +1497,6 @@ function renderTripsList(filter){
   if(filter==='completed') list = allTrips.filter(t => (t.status||'').toLowerCase()==='completed');
   if(!list.length) return el.innerHTML='<div style="padding:2rem;text-align:center;color:#ccc">No records found.</div>';
   el.innerHTML = list.map(t => tripCard(t, true)).join('');
-  setTimeout(initCardMaps,80);
 }
 
 function renderInvoicesList(list){
@@ -1994,11 +1509,8 @@ function renderInvoicesList(list){
           <div style="font-size:0.75rem;color:#666">${t.pickup} → ${t.destination}</div>
        </div>
        <div style="text-align:right">
-          <div style="font-weight:700;color:#d32f2f;margin-bottom:6px">$${(parseFloat(t.price||0)+parseFloat(t.tip||0)).toFixed(2)}${parseFloat(t.tip||0)>0?`<span style="font-size:0.65rem;font-weight:400;color:#888;display:block">incl. $${parseFloat(t.tip).toFixed(2)} tip</span>`:''}</div>
-          <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
-            <button onclick="payTrip('${t.id}',${(parseFloat(t.price||0)+parseFloat(t.tip||0))})" class="btn-k" style="padding:0.4rem 0.8rem;font-size:0.6rem">Pay with Card</button>
-            <button onclick="openVenmoPayModal('${t.id}')" style="padding:0.4rem 0.8rem;font-size:0.6rem;background:#3D95CE;color:#fff;border:none;cursor:pointer;font-family:'Work Sans',sans-serif;font-weight:700">Venmo</button>
-          </div>
+          <div style="font-weight:700;color:#d32f2f;margin-bottom:6px">$${parseFloat(t.price).toFixed(2)}</div>
+          <button onclick="payTrip('${t.id}',${t.price})" class="btn-k" style="padding:0.4rem 0.8rem;font-size:0.6rem">Pay Now</button>
        </div>
     </div>
   `).join('');
@@ -2009,38 +1521,34 @@ function tripCard(t, showBtns=false){
   const stopMeta = stops.length ? ` · ${stops.length} stop${stops.length>1?'s':''}` : '';
   const routeParts = stops.concat([t.destination]).filter(Boolean);
   const routeDest = routeParts.join('+to:');
+  const mapSrc = (t.pickup && t.destination) ? `https://maps.google.com/maps?saddr=${encodeURIComponent(t.pickup)}&daddr=${encodeURIComponent(routeDest)}&output=embed` : '';
   const navUrl = (t.pickup && t.destination)
     ? `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(t.pickup)}&destination=${encodeURIComponent(t.destination)}${stops.length?`&waypoints=${encodeURIComponent(stops.join('|'))}`:''}`
     : '';
-  const statusLow = (t.status||'').toLowerCase();
-  const canEdit   = !['completed','cancelled','paid'].includes(statusLow);
-  const canCancel = ['confirmed','upcoming','scheduled','pending'].includes(statusLow);
+  const canEdit = (t.status||'').toLowerCase() !== 'completed';
   return `
-    <div class="trip-card">
-      <div style="flex:1;min-width:0;padding:1rem 1.25rem">
-        <div class="t-main" style="min-width:0">
-          <div class="t-header">
-            <span class="t-service">${escH(t.service||'Private Hire')}</span>
-            <span class="t-status ts-${statusLow}">${escH(t.status||'Scheduled')}</span>
-          </div>
-          <div class="t-info">
-            <span><span class="material-symbols-outlined" style="font-size:14px">calendar_today</span>${escH(t.date||'')} at ${escH(t.time||'')}</span>
-            <span><span class="material-symbols-outlined" style="font-size:14px">pin_drop</span>${escH(t.pickup||'—')} → ${escH(t.destination||'—')}${stopMeta}</span>
-          </div>
+    <div class="trip-card" style="flex-wrap:wrap;align-items:flex-start">
+      <div class="t-main" style="min-width:240px">
+        <div class="t-header">
+          <span class="t-service">${escH(t.service||'Private Hire')}</span>
+          <span class="t-status ts-${(t.status||'pending').toLowerCase()}">${escH(t.status||'Scheduled')}</span>
         </div>
-        <div class="t-actions">
-          ${t.price?`<div style="font-weight:700">$${(parseFloat(t.price||0)+parseFloat(t.tip||0)).toFixed(2)}${parseFloat(t.tip||0)>0?`<div style="font-size:0.65rem;font-weight:400;color:#888">incl. $${parseFloat(t.tip).toFixed(2)} tip</div>`:''}</div>`:''}
-          ${showBtns?`
-            <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
-               ${canEdit?`<button onclick="openEditTrip('${t.id}')" class="trip-link-btn">Modify</button>`:''}
-               ${canCancel?`<button onclick="cancelTrip('${t.id}')" class="trip-link-btn" style="color:#c62828;border-color:#c62828">Cancel</button>`:''}
-               <button onclick="rebook('${t.id}')" class="trip-link-btn">Rebook</button>
-               ${navUrl?`<a href="${navUrl}" target="_blank" class="trip-link-btn">Navigate</a>`:''}
-               <button onclick="receiptPDF('${t.id}')" class="trip-link-btn">Receipt</button>
-            </div>`:''}
+        <div class="t-info">
+          <span><span class="material-symbols-outlined" style="font-size:14px">calendar_today</span>${escH(t.date||'')} at ${escH(t.time||'')}</span>
+          <span><span class="material-symbols-outlined" style="font-size:14px">pin_drop</span>${escH(t.pickup||'—')} → ${escH(t.destination||'—')}${stopMeta}</span>
         </div>
       </div>
-      ${(t.pickup&&t.destination)?`<div class="trip-map-side"><div class="trip-map-frame trip-map-js" data-pickup="${escH(t.pickup)}" data-dest="${escH(t.destination)}"${stops.length?` data-waypoints="${escH(stops.join('|'))}"`:''} ></div></div>`:''}
+      <div class="t-actions">
+        ${t.price?`<div style="font-weight:700">$${parseFloat(t.price).toFixed(2)}</div>`:''}
+        ${showBtns?`
+          <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
+             ${canEdit?`<button onclick="openEditTrip('${t.id}')" class="trip-link-btn">Edit</button>`:''}
+             <button onclick="rebook('${t.id}')" class="trip-link-btn">Rebook</button>
+             ${navUrl?`<a href="${navUrl}" target="_blank" class="trip-link-btn">Navigate</a>`:''}
+             <button onclick="receiptPDF('${t.id}')" class="trip-link-btn">Receipt</button>
+          </div>`:''}
+      </div>
+      ${mapSrc?`<div class="trip-map-wrap"><iframe class="trip-map-frame" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="${mapSrc}" title="Trip route map"></iframe></div>`:''}
     </div>
   `;
 }
@@ -2098,37 +1606,9 @@ function initAccountBookingForm(){
   if(dEl){ dEl.min = today; if(!dEl.value) dEl.value = today; }
   document.getElementById('bk-name').value = currentUser.name || '';
   document.getElementById('bk-phone').value = currentUser.phone || '';
-  var emailEl = document.getElementById('bk-email'); if(emailEl) emailEl.value = currentUser.email || '';
+  document.getElementById('bk-email').value = currentUser.email || '';
+  if(!document.querySelector('#bk-stops-list .stop-row')) addAccountStop();
   bindStopAutocompletes();
-}
-
-function bkSelPass(btn, val){
-  document.querySelectorAll('#bk-pass-btns .p-btn').forEach(function(b){ b.classList.remove('sel'); });
-  btn.classList.add('sel');
-  var h=document.getElementById('bk-hid-pass'); if(h) h.value=val;
-}
-function bkSelLug(btn, val){
-  document.querySelectorAll('#bk-lug-btns .p-btn').forEach(function(b){ b.classList.remove('sel'); });
-  btn.classList.add('sel');
-  var h=document.getElementById('bk-hid-lug'); if(h) h.value=val;
-}
-function bkToggleTimeTBD(cb){
-  var inp=document.getElementById('bk-time');
-  if(!inp) return;
-  if(cb.checked){ inp.removeAttribute('required'); inp.value=''; inp.disabled=true; inp.style.opacity='0.35'; }
-  else { inp.setAttribute('required','required'); inp.disabled=false; inp.style.opacity='1'; }
-}
-function bkToggleTos(){
-  var c=document.getElementById('bk-tos-content'), a=document.getElementById('bk-tos-arrow');
-  var open=c.style.display==='block';
-  c.style.display=open?'none':'block';
-  a.textContent=open?'▼ Read & Accept':'▲ Close';
-}
-function bkTosSyncBtn(){
-  var cb=document.getElementById('bk-tos-check'), btn=document.getElementById('bk-submit-btn');
-  if(!btn) return;
-  var ok=cb&&cb.checked;
-  btn.disabled=!ok; btn.style.opacity=ok?'1':'0.4'; btn.style.cursor=ok?'pointer':'not-allowed';
 }
 
 function collectStops(listId){
@@ -2159,21 +1639,20 @@ function addAccountStop(v){
 }
 
 function clearAccountBookingForm(){
-  ['bk-date','bk-time','bk-pickup','bk-dest','bk-notes','bk-company','bk-flight'].forEach(function(id){ var e=document.getElementById(id); if(e) e.value=''; });
-  var svcEl=document.getElementById('bk-service'); if(svcEl) svcEl.value='';
-  var v1=document.getElementById('bk-v1'); if(v1) v1.checked=true;
-  var phid=document.getElementById('bk-hid-pass'); if(phid) phid.value='1';
-  document.querySelectorAll('#bk-pass-btns .p-btn').forEach(function(b,i){ b.classList.toggle('sel',i===0); });
-  var lhid=document.getElementById('bk-hid-lug'); if(lhid) lhid.value='0';
-  document.querySelectorAll('#bk-lug-btns .p-btn').forEach(function(b,i){ b.classList.toggle('sel',i===0); });
-  var tbdCb=document.getElementById('bk-time-tbd'); if(tbdCb){ tbdCb.checked=false; bkToggleTimeTBD(tbdCb); }
-  var tosChk=document.getElementById('bk-tos-check'); if(tosChk){ tosChk.checked=false; bkTosSyncBtn(); }
-  var stopList=document.getElementById('bk-stops-list'); if(stopList) stopList.innerHTML='';
-  var rc=document.getElementById('bk-route-card'); if(rc) rc.style.display='none';
-  var today=new Date().toISOString().split('T')[0];
-  var dEl=document.getElementById('bk-date'); if(dEl){ dEl.min=today; dEl.value=today; }
+  ['bk-date','bk-time','bk-pickup','bk-dest','bk-notes'].forEach(function(id){ var e=document.getElementById(id); if(e) e.value=''; });
+  document.getElementById('bk-service').value='Airport Transfer';
+  document.getElementById('bk-vehicle').value='Luxury Black SUV';
+  document.getElementById('bk-passengers').value='1';
+  document.getElementById('bk-luggage').value='0';
+  var stopList=document.getElementById('bk-stops-list');
+  if(stopList) stopList.innerHTML='';
+  addAccountStop();
+  var today = new Date().toISOString().split('T')[0];
+  var dEl = document.getElementById('bk-date');
+  if(dEl){ dEl.min=today; dEl.value=today; }
   var ok=document.getElementById('acct-book-ok'), err=document.getElementById('acct-book-err');
-  if(ok) ok.style.display='none'; if(err) err.style.display='none';
+  if(ok) ok.style.display='none';
+  if(err) err.style.display='none';
 }
 
 async function submitAccountBooking(){
@@ -2182,41 +1661,34 @@ async function submitAccountBooking(){
   var err=document.getElementById('acct-book-err');
   ok.style.display='none'; err.style.display='none';
 
-  var name=(document.getElementById('bk-name')||{value:''}).value.trim();
-  var phone=(document.getElementById('bk-phone')||{value:''}).value.trim();
-  var date=(document.getElementById('bk-date')||{value:''}).value;
-  var tbdCb=document.getElementById('bk-time-tbd');
-  var timeTBD=tbdCb&&tbdCb.checked;
-  var time=timeTBD?'TBD':(document.getElementById('bk-time')||{value:''}).value;
-  var pickup=(document.getElementById('bk-pickup')||{value:''}).value.trim();
-  var dest=(document.getElementById('bk-dest')||{value:''}).value.trim();
-
-  if(!name||!phone||!date||(!timeTBD&&!time)||!pickup||!dest){
-    err.textContent='Please fill all required fields.'; err.style.display='block'; return;
-  }
-
-  var vehicleEl=document.querySelector('[name="bk-vehicle-class"]:checked');
   var booking={
     id:'rvip_'+Date.now(),
     code:'RVIP'+Math.floor(10000+Math.random()*90000),
-    name:name, phone:phone,
-    email:(document.getElementById('bk-email')||{value:''}).value.trim(),
-    company:(document.getElementById('bk-company')||{value:''}).value.trim(),
-    date:date, time:time, pickupTimeTBD:timeTBD,
-    pickup:pickup, destination:dest,
-    service:(document.getElementById('bk-service')||{value:''}).value.trim()||'',
-    vehicle:vehicleEl?vehicleEl.value:'Black SUV Luxury (7 passengers)',
-    passengers:(document.getElementById('bk-hid-pass')||{value:'1'}).value||'1',
-    luggage:(document.getElementById('bk-hid-lug')||{value:'0'}).value||'0',
-    flightNumber:(document.getElementById('bk-flight')||{value:''}).value.trim(),
-
-    notes:(document.getElementById('bk-notes')||{value:''}).value.trim(),
+    name:document.getElementById('bk-name').value.trim(),
+    phone:document.getElementById('bk-phone').value.trim(),
+    email:document.getElementById('bk-email').value.trim(),
+    date:document.getElementById('bk-date').value,
+    time:document.getElementById('bk-time').value,
+    pickup:document.getElementById('bk-pickup').value.trim(),
+    destination:document.getElementById('bk-dest').value.trim(),
+    service:document.getElementById('bk-service').value.trim() || 'Airport Transfer',
+    vehicle:document.getElementById('bk-vehicle').value.trim() || 'Luxury Black SUV',
+    passengers:document.getElementById('bk-passengers').value.trim() || '1',
+    luggage:document.getElementById('bk-luggage').value.trim() || '0',
+    notes:document.getElementById('bk-notes').value.trim(),
     stopList:collectStops('bk-stops-list'),
-    status:'Pending', source:'account-portal',
-    clientId:currentUser?currentUser.id:'',
+    status:'Pending',
+    source:'account-portal',
+    clientId:currentUser ? currentUser.id : '',
     createdAt:new Date().toISOString()
   };
-  booking.stops=booking.stopList.join(' | ');
+  booking.stops = booking.stopList.join(' | ');
+
+  if(!booking.name || !booking.phone || !booking.date || !booking.time || !booking.pickup || !booking.destination){
+    err.textContent='Please fill all required fields.';
+    err.style.display='block';
+    return;
+  }
 
   btn.disabled=true; btn.textContent='Booking…';
   try{
@@ -2224,14 +1696,16 @@ async function submitAccountBooking(){
     allTrips.unshift(booking);
     updateDashboardUI();
     buildCal();
-    ok.innerHTML='<span style="font-size:1rem;font-weight:700;display:block;margin-bottom:4px">✓ Booking Request Sent!</span>Confirmation code: <strong>'+booking.code+'</strong>. We\'ll confirm your ride within minutes by text and email.';
+    ok.textContent='Ride request submitted. You can edit it from Trip History.';
     ok.style.display='block';
     clearAccountBookingForm();
-    showTab('tab-trips',null);
+    setTimeout(function(){ if(ok.style.display!=='none') ok.style.display='block'; }, 0);
+    showTab('tab-trips', null);
   }catch(e){
-    err.textContent=e.message||'Could not submit booking. Try again.'; err.style.display='block';
+    err.textContent=e.message || 'Could not submit booking. Try again.';
+    err.style.display='block';
   }
-  btn.disabled=false; btn.style.opacity='0.4'; btn.style.cursor='not-allowed'; btn.textContent='Request My Ride →';
+  btn.disabled=false; btn.textContent='Request Ride →';
 }
 
 function openEditTrip(tripId){
@@ -2303,8 +1777,6 @@ async function saveEditedTrip(){
   btn.disabled=true; btn.textContent='Saving…';
   try{
     await db.collection('bookings').doc(_editingTripId).update(payload);
-    // Also update subcollection if the trip lives there
-    try { await db.collection('clients').doc(currentUser.id).collection('trips').doc(_editingTripId).update(payload); } catch(e){}
     var idx = allTrips.findIndex(function(x){ return x.id===_editingTripId; });
     if(idx>=0) allTrips[idx] = Object.assign({}, allTrips[idx], payload);
     updateDashboardUI();
@@ -2319,25 +1791,6 @@ async function saveEditedTrip(){
   btn.disabled=false; btn.textContent='Save Changes';
 }
 
-async function cancelTrip(tripId) {
-  var t = allTrips.find(function(x){ return x.id === tripId; });
-  if (!t) return;
-  var msg = 'Cancel your ' + (t.service || 'ride') + ' on ' + (t.date || '') + (t.time ? ' at ' + t.time : '') + '?\n\nThis cannot be undone.';
-  if (!confirm(msg)) return;
-  var upd = { status: 'Cancelled', cancelledAt: new Date().toISOString(), cancelledBy: 'client' };
-  try {
-    await db.collection('bookings').doc(tripId).update(upd);
-    try { await db.collection('clients').doc(currentUser.id).collection('trips').doc(tripId).update(upd); } catch(e){}
-    var idx = allTrips.findIndex(function(x){ return x.id === tripId; });
-    if (idx >= 0) allTrips[idx] = Object.assign({}, allTrips[idx], upd);
-    updateDashboardUI();
-    buildCal();
-    toast('Reservation cancelled.');
-  } catch(e) {
-    toast('Could not cancel — please call (978) 255-3140.');
-  }
-}
-
 function rebook(tripId){
   const t = allTrips.find(x => x.id === tripId);
   if(!t) return toast('Trip not found.');
@@ -2348,28 +1801,20 @@ function rebook(tripId){
 
   document.getElementById('bk-name').value = t.name || currentUser.name || '';
   document.getElementById('bk-phone').value = t.phone || currentUser.phone || '';
-  var bkEmailEl=document.getElementById('bk-email'); if(bkEmailEl) bkEmailEl.value = t.email || currentUser.email || '';
+  document.getElementById('bk-email').value = t.email || currentUser.email || '';
   document.getElementById('bk-date').value = t.date || '';
-  document.getElementById('bk-time').value = (t.time==='TBD'?'':t.time) || '';
+  document.getElementById('bk-time').value = t.time || '';
   document.getElementById('bk-pickup').value = t.pickup || '';
   document.getElementById('bk-dest').value = t.destination || '';
-  var svcEl=document.getElementById('bk-service'); if(svcEl) svcEl.value = t.service || '';
-  // Vehicle: match radio
-  var vMatch=document.querySelector('[name="bk-vehicle-class"][value="'+escH(t.vehicle||'')+'"]');
-  if(!vMatch){ var v1=document.getElementById('bk-v1'); if(v1) v1.checked=true; }
-  else vMatch.checked=true;
-  // Passengers
-  var passVal=String(t.passengers||'1');
-  var passHid=document.getElementById('bk-hid-pass'); if(passHid) passHid.value=passVal;
-  document.querySelectorAll('#bk-pass-btns .p-btn').forEach(function(b){ b.classList.toggle('sel',b.textContent.trim()===passVal); });
-  // Luggage
-  var lugVal=String(t.luggage||'0');
-  var lugHid=document.getElementById('bk-hid-lug'); if(lugHid) lugHid.value=lugVal;
-  document.querySelectorAll('#bk-lug-btns .p-btn').forEach(function(b){ b.classList.toggle('sel',b.textContent.trim()===lugVal); });
-  var notesEl=document.getElementById('bk-notes'); if(notesEl) notesEl.value = t.notes || '';
+  document.getElementById('bk-service').value = t.service || '';
+  document.getElementById('bk-vehicle').value = t.vehicle || '';
+  document.getElementById('bk-passengers').value = t.passengers || '1';
+  document.getElementById('bk-luggage').value = t.luggage || '0';
+  document.getElementById('bk-notes').value = t.notes || '';
   var stops = Array.isArray(t.stopList) ? t.stopList.filter(Boolean) : (typeof t.stops==='string' ? t.stops.split('|').map(function(s){return s.trim();}).filter(Boolean) : []);
   var list = document.getElementById('bk-stops-list'); list.innerHTML='';
   stops.forEach(function(s){ addAccountStop(s); });
+  if(!list.querySelector('.stop-row')) addAccountStop();
   bindStopAutocompletes();
   tryAcctRoute();
 }
@@ -2400,8 +1845,13 @@ function initAcctMap(){
   installAddressAutocomplete(document.getElementById('bk-dest'), {
     onSelect: function(p){ _acctDestPlace = p; tryAcctRoute(); }
   });
-  installAddressAutocomplete(document.getElementById('e-pickup'), { onSelect: tryAcctRoute });
-  installAddressAutocomplete(document.getElementById('e-dest'),   { onSelect: tryAcctRoute });
+  // Also wire the edit modal pickup/dest if present
+  installAddressAutocomplete(document.getElementById('e-pickup'), {
+    onSelect: function(){ tryAcctRoute(); }
+  });
+  installAddressAutocomplete(document.getElementById('e-dest'), {
+    onSelect: function(){ tryAcctRoute(); }
+  });
   bindStopAutocompletes();
 }
 
@@ -2495,16 +1945,6 @@ function tryAcctRoute(){
   _acctDirSvc.route({ origin:pickup, destination:dest, waypoints:stops, travelMode:google.maps.TravelMode.DRIVING, optimizeWaypoints:false }, function(result,status){
     if(status!=='OK') return;
     _acctDirRenderer.setDirections(result);
-    var leg = result.routes[0].legs[0];
-    var distMiles = (leg.distance.value / 1609.34).toFixed(1);
-    var estPrice = Math.max(15 + (distMiles * 2.50), 45).toFixed(0);
-    var rc = document.getElementById('bk-route-card');
-    if(rc){
-      document.getElementById('bk-route-distance').textContent = distMiles + ' mi';
-      document.getElementById('bk-route-duration').textContent = leg.duration.text;
-      document.getElementById('bk-route-price').textContent = '$' + estPrice + '+';
-      rc.style.display = 'block';
-    }
   });
 }
 
@@ -2598,19 +2038,14 @@ function acctApplyCustomTip(val) {
 }
 
 function _acctUpdateTipDisplay() {
-  var subtotal = _acctBasePay + _acctTipAmt;
-  var fee      = parseFloat((_acctBasePay * 0.029).toFixed(2));
-  var total    = parseFloat((subtotal + fee).toFixed(2));
+  var total = _acctBasePay + _acctTipAmt;
   document.getElementById('acct-tip-display').textContent       = '$' + _acctTipAmt.toFixed(2);
-  document.getElementById('acct-fee-display').textContent       = '$' + fee.toFixed(2);
   document.getElementById('acct-tip-total-display').textContent = '$' + total.toFixed(2);
 }
 
 function acctConfirmTip() {
-  // Lock in base + tip + 2.9% fee on fare only as final charge amount
-  var subtotal = _acctBasePay + _acctTipAmt;
-  var fee      = parseFloat((_acctBasePay * 0.029).toFixed(2));
-  _acctPayAmt  = parseFloat((subtotal + fee).toFixed(2));
+  // Lock in the final amount (base + tip)
+  _acctPayAmt = parseFloat((_acctBasePay + _acctTipAmt).toFixed(2));
   document.getElementById('acct-modal-amt').textContent = '$' + _acctPayAmt.toFixed(2);
 
   // Hide tip step, reveal card entry
@@ -2645,8 +2080,7 @@ async function _acctMountPaymentElement() {
       var custRes = await funcs.httpsCallable('getStripeCustomer')({
         accountId: currentUser ? currentUser.id : '',
         email: currentUser ? (currentUser.email || '') : '',
-        company: currentUser ? (currentUser.name || '') : '',
-        collection: 'clients'
+        company: currentUser ? (currentUser.name || '') : ''
       });
       customerId = custRes.data.customerId;
     } catch(custErr) { console.warn('Could not get Stripe customer:', custErr.message); }
@@ -2709,7 +2143,7 @@ async function payWithSavedCard() {
   lbl.innerHTML = '<span style="display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,0.35);border-top:2px solid white;border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:6px"></span>Processing…';
 
   try {
-    var res = await funcs.httpsCallable('chargeSavedCard')({ accountId: currentUser.id, amount: _acctPayAmt, collection: 'clients' });
+    var res = await funcs.httpsCallable('chargeSavedCard')({ accountId: currentUser.id, amount: _acctPayAmt });
     if (res.data && res.data.success) {
       await _markTripsCompleted();
       // Immediately zero the balance display — don't wait for onSnapshot latency
@@ -2774,8 +2208,8 @@ async function acctSubmitPayment() {
           ? result.paymentIntent.payment_method
           : result.paymentIntent.payment_method.id;
         // Ensure valid Stripe customer exists before saving PM
-        await funcs.httpsCallable('getStripeCustomer')({ accountId: currentUser.id, email: currentUser.email, company: currentUser.name, collection: 'clients' });
-        await funcs.httpsCallable('savePaymentMethod')({ accountId: currentUser.id, paymentMethodId: pmId, collection: 'clients' });
+        await funcs.httpsCallable('getStripeCustomer')({ accountId: currentUser.id, email: currentUser.email, company: currentUser.name });
+        await funcs.httpsCallable('savePaymentMethod')({ accountId: currentUser.id, paymentMethodId: pmId });
       } catch(e) { console.warn('Could not save card:', e.message); }
     }
 
@@ -2802,13 +2236,12 @@ function _acctZeroBalanceDisplay() {
   // Stats bar balance
   var statBal = document.getElementById('stat-balance');
   if (statBal) statBal.textContent = '$0.00';
-  // Pay-now buttons in balance card
+  // Pay-now button in stats bar
   var statPayBtn = document.getElementById('stat-pay-btn');
   if (statPayBtn) statPayBtn.style.display = 'none';
-  var zm = document.getElementById('balance-zero-msg');
-  if (zm) zm.style.display = 'block';
-  var payBtnsZ = document.getElementById('stat-pay-btn');
-  if (payBtnsZ) payBtnsZ.style.display = 'none';
+  // Pay box in dashboard
+  var payBox = document.getElementById('pay-box');
+  if (payBox) payBox.style.display = 'none';
   // Balance reminder in pay tab
   var rem = document.getElementById('acct-balance-reminder');
   if (rem) rem.style.display = 'none';
@@ -2826,7 +2259,7 @@ function _acctZeroBalanceDisplay() {
   if (typeof updateDashboardUI === 'function') updateDashboardUI();
 }
 
-// Mark all confirmed trips Completed and zero the client balance field
+// Mark all confirmed trips Completed so the balance resets to $0 in the UI
 async function _markTripsCompleted() {
   if (!db || !currentUser) return;
   const confirmed = allTrips.filter(t => (t.status || '').toLowerCase() === 'confirmed');
@@ -2835,136 +2268,24 @@ async function _markTripsCompleted() {
     try { await db.collection('bookings').doc(t.id).update(upd); } catch(e) {}
     try { await db.collection('clients').doc(currentUser.id).collection('trips').doc(t.id).update(upd); } catch(e) {}
   }
-  // Zero balance and record payment date so the next billing period starts clean
-  try {
-    await db.collection('clients').doc(currentUser.id).update({
-      balance: 0,
-      lastPaymentDate: new Date().toISOString()
-    });
-    currentUser.balance = 0;
-    currentUser.lastPaymentDate = new Date().toISOString();
-  } catch(e) {}
 }
 
 function settleBalanceWithCard() {
-  // Use admin-managed balance when available; otherwise derive from confirmed trips (fare + tip)
-  let total;
-  if (typeof currentUser.balance === 'number') {
-    total = currentUser.balance;
-  } else {
-    const confirmed = allTrips.filter(t => (t.status||'').toLowerCase()==='confirmed');
-    total = confirmed.reduce((s, t) => s + parseFloat(t.price||0) + parseFloat(t.tip||0), 0);
-  }
+  const confirmed = allTrips.filter(t => (t.status||'').toLowerCase()==='confirmed');
+  let total = 0; confirmed.forEach(t => total += parseFloat(t.price||0));
   openStripePayModal(total > 0 ? total.toFixed(2) : '0');
 }
 
 function openCardModal() { settleBalanceWithCard(); }
 
-// ─── VENMO PAYMENT SHEET MODAL ───
-var _venmoBasePay = 0;
-var _venmoTipAmt  = 0;
-var _venmoTripId  = null;
-
-function openVenmoPayModal(tripId) {
-  _venmoTripId = tripId || null;
-  var baseAmt;
-  if (tripId) {
-    var t = allTrips.find(function(x){ return x.id === tripId; });
-    baseAmt = t ? parseFloat(t.price||0) : 0;
-  } else {
-    var completed = allTrips.filter(function(t){ return (t.status||'').toLowerCase()==='completed'; });
-    baseAmt = completed.reduce(function(s,t){ return s + parseFloat(t.price||0); }, 0);
-    if (baseAmt <= 0) {
-      var confirmed = allTrips.filter(function(t){ return (t.status||'').toLowerCase()==='confirmed'; });
-      baseAmt = confirmed.reduce(function(s,t){ return s + parseFloat(t.price||0); }, 0);
-    }
-  }
-  if (baseAmt <= 0) { toast('No outstanding balance to pay.'); return; }
-  var modal = document.getElementById('acct-venmo-modal');
-  modal.style.display = 'flex';
-  document.body.style.overflow = 'hidden';
-  _venmoShowTipStep(baseAmt);
+function payVenmo() {
+  window.open('https://venmo.com/u/Ramon-Vargas-83', '_blank');
 }
-
-function _venmoShowTipStep(baseAmt) {
-  _venmoBasePay = parseFloat(baseAmt) || 0;
-  _venmoTipAmt  = parseFloat((_venmoBasePay * 0.20).toFixed(2));
-  document.getElementById('venmo-tip-base').textContent = '$' + _venmoBasePay.toFixed(2);
-  _venmoUpdateDisplay();
-  ['venmo-tip-15','venmo-tip-18','venmo-tip-20','venmo-tip-25','venmo-tip-none','venmo-tip-custom-btn'].forEach(function(id){
-    var el = document.getElementById(id); if (!el) return;
-    el.style.borderColor = '#e2e2e2'; el.style.background = '#fff'; el.style.color = '#000';
-  });
-  var def = document.getElementById('venmo-tip-20');
-  if (def) { def.style.borderColor='#3D95CE'; def.style.background='#3D95CE'; def.style.color='#fff'; }
-  document.getElementById('venmo-custom-tip-wrap').style.display = 'none';
-  var ci = document.getElementById('venmo-custom-tip-input'); if (ci) ci.value = '';
-}
-
-function venmoSelectTip(pct) {
-  _venmoTipAmt = parseFloat((_venmoBasePay * pct).toFixed(2));
-  document.getElementById('venmo-custom-tip-wrap').style.display = 'none';
-  var ci = document.getElementById('venmo-custom-tip-input'); if (ci) ci.value = '';
-  var map = { '0.15':'venmo-tip-15','0.18':'venmo-tip-18','0.20':'venmo-tip-20','0.25':'venmo-tip-25','0':'venmo-tip-none' };
-  ['venmo-tip-15','venmo-tip-18','venmo-tip-20','venmo-tip-25','venmo-tip-none','venmo-tip-custom-btn'].forEach(function(id){
-    var el = document.getElementById(id); if (!el) return;
-    el.style.borderColor = '#e2e2e2'; el.style.background = '#fff'; el.style.color = '#000';
-  });
-  var selId = map[pct.toString()];
-  if (selId) { var sel = document.getElementById(selId); if (sel) { sel.style.borderColor='#3D95CE'; sel.style.background='#3D95CE'; sel.style.color='#fff'; } }
-  _venmoUpdateDisplay();
-}
-
-function venmoToggleCustomTip() {
-  var wrap = document.getElementById('venmo-custom-tip-wrap');
-  var show = wrap.style.display === 'none';
-  wrap.style.display = show ? 'block' : 'none';
-  ['venmo-tip-15','venmo-tip-18','venmo-tip-20','venmo-tip-25','venmo-tip-none','venmo-tip-custom-btn'].forEach(function(id){
-    var el = document.getElementById(id); if (!el) return;
-    el.style.borderColor = '#e2e2e2'; el.style.background = '#fff'; el.style.color = '#000';
-  });
-  if (show) {
-    var btn = document.getElementById('venmo-tip-custom-btn');
-    if (btn) { btn.style.borderColor='#3D95CE'; btn.style.background='#3D95CE'; btn.style.color='#fff'; }
-    var ci = document.getElementById('venmo-custom-tip-input'); if (ci) ci.focus();
-  }
-}
-
-function venmoApplyCustomTip(val) {
-  _venmoTipAmt = parseFloat(val) || 0;
-  _venmoUpdateDisplay();
-}
-
-function _venmoUpdateDisplay() {
-  var total = parseFloat((_venmoBasePay + _venmoTipAmt).toFixed(2));
-  document.getElementById('venmo-tip-sub-display').textContent   = '$' + _venmoBasePay.toFixed(2);
-  document.getElementById('venmo-tip-display').textContent       = '$' + _venmoTipAmt.toFixed(2);
-  document.getElementById('venmo-tip-total-display').textContent = '$' + total.toFixed(2);
-  document.getElementById('venmo-modal-amt').textContent         = '$' + total.toFixed(2);
-}
-
-function venmoConfirmAndPay() {
-  var total = parseFloat((_venmoBasePay + _venmoTipAmt).toFixed(2));
-  var note = encodeURIComponent('Seacoast RVIP - Ride Payment');
-  closeVenmoPayModal();
-  window.open('https://venmo.com/u/Ramon-Vargas-83?txn=pay&amount=' + total.toFixed(2) + '&note=' + note, '_blank');
-}
-
-function closeVenmoPayModal() {
-  document.getElementById('acct-venmo-modal').style.display = 'none';
-  document.body.style.overflow = '';
-}
-
-document.addEventListener('click', function(e) {
-  if (e.target === document.getElementById('acct-venmo-modal')) closeVenmoPayModal();
-});
-
-function payVenmo(tripId) { openVenmoPayModal(tripId); }
 
 function renderSavedCardInfo() {
-  // Update balance reminder display (fare + tip)
+  // Update balance reminder display
   const confirmed = allTrips.filter(t => (t.status||'').toLowerCase()==='confirmed');
-  let total = 0; confirmed.forEach(t => total += parseFloat(t.price||0) + parseFloat(t.tip||0));
+  let total = 0; confirmed.forEach(t => total += parseFloat(t.price||0));
   var rem = document.getElementById('acct-balance-reminder');
   var remAmt = document.getElementById('acct-balance-amt');
   if (total > 0 && rem) {
@@ -2998,40 +2319,12 @@ function payTotalBalance() {
 function receiptPDF(id){
    const t = allTrips.find(x => x.id===id);
    if(!t) return;
-   const base = parseFloat(t.price||0);
-   const tip  = parseFloat(t.tip||0);
-   const isPaid = t.status==='Paid'||t.status==='Completed';
-   const fee  = isPaid ? parseFloat((base * 0.029).toFixed(2)) : 0;
-   const totalAmt = parseFloat((base + tip + fee).toFixed(2));
-   const tipRow = tip > 0 ? `<tr><td style="padding:7px 14px;color:#555;font-size:.85rem;border:none">Gratuity</td><td style="padding:7px 14px;text-align:right;font-size:.85rem;border:none">$${tip.toFixed(2)}</td></tr>` : '';
-   const feeRow = isPaid ? `<tr><td style="padding:7px 14px;color:#555;font-size:.85rem;border:none">Processing Fee (2.9%)</td><td style="padding:7px 14px;text-align:right;font-size:.85rem;border:none">$${fee.toFixed(2)}</td></tr>` : '';
-   const css = `body{font-family:'Helvetica Neue',Arial,sans-serif;padding:3rem;max-width:680px;margin:0 auto;color:#111;font-size:14px}
-h1{margin:0;font-family:Georgia,serif;font-size:1.8rem;letter-spacing:-.5px}
-.gold{color:#775a19}.sub{font-size:.78rem;color:#888}
-hr.thick{border:none;border-top:2px solid #111;margin:1.25rem 0}
-hr.thin{border:none;border-top:1px solid #eee;margin:.75rem 0}
-.detail-table{width:100%;border-collapse:collapse;margin:1.25rem 0}
-.detail-table td,.detail-table th{padding:8px 10px;font-size:.82rem;border-bottom:1px solid #f0f0f0;text-align:left}
-.detail-table th{color:#aaa;font-size:.6rem;text-transform:uppercase;letter-spacing:.08em;font-weight:600}
-.totals-wrap{display:flex;justify-content:flex-end;margin-top:1.5rem}
-.totals-box{min-width:260px;border:1px solid #e5e5e5}
-.totals-box tr td{padding:8px 16px;font-size:.85rem;border:none}
-.totals-box .lbl{color:#555}
-.totals-box .amt{text-align:right}
-.totals-box .divider td{border-top:2px solid #111!important;padding-top:10px}
-.totals-box .grand .lbl{font-weight:700;font-size:.95rem;text-transform:uppercase;letter-spacing:.04em}
-.totals-box .grand .amt{font-weight:700;font-size:1.1rem;color:#000}
-footer{margin-top:2.5rem;font-size:.7rem;color:#aaa;border-top:1px solid #eee;padding-top:1rem;text-align:center}
-@media print{body{padding:1rem}}`;
    const w=window.open('','_blank');
-   w.document.write(`<html><head><title>Receipt ${t.code||''}</title><style>${css}</style></head><body>`);
-   w.document.write(`<div style="display:flex;justify-content:space-between;align-items:flex-start"><div><h1>Seacoast <span class="gold">RVIP</span> LLC</h1><div class="sub" style="margin-top:3px">Premium Luxury Transportation</div></div><div style="text-align:right"><div style="font-size:1rem;font-weight:700;letter-spacing:.08em">RECEIPT</div><div style="font-size:.82rem;color:#555">${t.code||'—'}</div><div class="sub">${new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}</div></div></div>`);
-   w.document.write(`<hr class="thick">`);
-   w.document.write(`<div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin:1rem 0"><div><div class="sub" style="text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px">Passenger</div><div style="font-weight:600;font-size:.9rem">${t.name}</div>${t.phone?`<div class="sub">${t.phone}</div>`:''}</div><div><div class="sub" style="text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px">Trip Date</div><div style="font-weight:600;font-size:.9rem">${t.date}${t.time?' at '+t.time:''}</div><div class="sub">${t.service||''}</div></div></div>`);
-   w.document.write(`<hr class="thin">`);
-   w.document.write(`<table class="detail-table"><thead><tr><th>Trip Details</th><th></th></tr></thead><tbody><tr><td style="color:#888;width:38%">Pickup</td><td>${t.pickup||'—'}</td></tr><tr><td style="color:#888">Destination</td><td>${t.destination||'—'}</td></tr><tr><td style="color:#888">Vehicle</td><td>${t.vehicle||'Luxury Black Sedan/SUV'}</td></tr><tr><td style="color:#888">Status</td><td>${t.status||'—'}</td></tr></tbody></table>`);
-   w.document.write(`<div class="totals-wrap"><table class="totals-box"><tbody><tr><td class="lbl">Base Fare</td><td class="amt">$${base.toFixed(2)}</td></tr>${tipRow}${feeRow}<tr class="divider grand"><td class="lbl">Total Charged</td><td class="amt">$${totalAmt.toFixed(2)}</td></tr></tbody></table></div>`);
-   w.document.write(`<footer>Seacoast RVIP LLC &nbsp;·&nbsp; (978) 255-3140 &nbsp;·&nbsp; info@seacoastrvip.com &nbsp;·&nbsp; seacoastrvip.com</footer></body></html>`);
+   w.document.write(`<html><head><title>Receipt ${t.code||''}</title><style>body{font-family:Arial;padding:3rem;line-height:1.6}h1{margin:0}table{width:100%;border-collapse:collapse;margin-top:2rem}td,th{border:1px solid #ddd;padding:12px;text-align:left}</style></head><body>`);
+   w.document.write(`<div><h1 style="color:var(--gold-dark)">SEACOAST RVIP</h1><p>Premium Car Service</p></div><hr>`);
+   w.document.write(`<h2>Individual Ride Receipt</h2><p><strong>Passenger:</strong> ${t.name}<br><strong>Confirmation:</strong> ${t.code||'N/A'}<br><strong>Date:</strong> ${t.date} ${t.time}</p>`);
+   w.document.write(`<table><tr><th>Pickup</th><td>${t.pickup}</td></tr><tr><th>Destination</th><td>${t.destination}</td></tr><tr><th>Vehicle</th><td>${t.vehicle||'Luxury Black Sedan/SUV'}</td></tr><tr><th>Service</th><td>${t.service}</td></tr><tr><th style="font-size:1.4rem">Total</th><td style="font-size:1.4rem"><strong>$${parseFloat(t.price||0).toFixed(2)}</strong></td></tr></table>`);
+   w.document.write(`<p style="margin-top:3rem;font-size:0.8rem;color:#888">Thank you for traveling with Seacoast RVIP. Questions? Call (978) 255-3140</p></body></html>`);
    w.document.close(); w.print();
 }
 function generateStatement(){
@@ -3041,38 +2334,13 @@ function generateStatement(){
    const filtered = allTrips.filter(t => { const d=new Date(t.date+'T12:00:00'); return d.getMonth()===m && d.getFullYear()===y; });
    if(!filtered.length) return alert('No rides found for this period.');
    let total = 0; filtered.forEach(t => total += parseFloat(t.price||0));
-   let tips = 0; filtered.forEach(t => tips += parseFloat(t.tip||0));
-   const paidTrips = filtered.filter(t => t.status==='Paid'||t.status==='Completed');
-   const paidBase = paidTrips.reduce((s,t) => s + (parseFloat(t.price||0)), 0);
-   const feeTotal = parseFloat((paidBase * 0.029).toFixed(2));
-   const rows = filtered.map(t => {
-     const base = parseFloat(t.price||0);
-     return `<tr><td>${t.date}</td><td>${t.code||''}</td><td>${t.service}</td><td style="text-align:right">$${base.toFixed(2)}</td><td>${t.status}</td></tr>`;
-   }).join('');
-   const grandTotal = total + tips + feeTotal;
-   const tipRow2 = tips > 0 ? `<tr><td style="padding:7px 16px;color:#555;border:none">Gratuity</td><td style="padding:7px 16px;text-align:right;border:none">$${tips.toFixed(2)}</td></tr>` : '';
-   const css2 = `body{font-family:'Helvetica Neue',Arial,sans-serif;padding:3rem;max-width:800px;margin:0 auto;color:#111;font-size:14px}
-h1{font-family:Georgia,serif;font-size:1.8rem;margin:0;letter-spacing:-.5px}.gold{color:#775a19}.sub{font-size:.78rem;color:#888}
-hr.thick{border:none;border-top:2px solid #111;margin:1.25rem 0}hr.thin{border:none;border-top:1px solid #eee;margin:.75rem 0}
-table.trips{width:100%;border-collapse:collapse;margin:1.25rem 0}
-table.trips th{padding:8px 10px;font-size:.6rem;text-transform:uppercase;letter-spacing:.08em;color:#aaa;border-bottom:2px solid #eee;text-align:left}
-table.trips td{padding:8px 10px;font-size:.82rem;border-bottom:1px solid #f3f3f3}
-.totals-wrap{display:flex;justify-content:flex-end;margin-top:1.75rem}
-.totals-box{min-width:280px;border:1px solid #e5e5e5}
-.totals-box td{padding:8px 16px;font-size:.85rem;border:none}
-.totals-box .amt{text-align:right}.totals-box .lbl{color:#555}
-.totals-box .divider td{border-top:2px solid #111!important;padding-top:10px}
-.totals-box .grand .lbl{font-weight:700;font-size:.95rem;text-transform:uppercase}
-.totals-box .grand .amt{font-weight:700;font-size:1.1rem}
-footer{margin-top:2.5rem;font-size:.7rem;color:#aaa;border-top:1px solid #eee;padding-top:1rem;text-align:center}
-@media print{body{padding:1rem}}`;
+   const rows = filtered.map(t => `<tr><td>${t.date}</td><td>${t.code||''}</td><td>${t.service}</td><td>$${parseFloat(t.price||0).toFixed(2)}</td><td>${t.status}</td></tr>`).join('');
    const w=window.open('','_blank');
-   w.document.write(`<html><head><title>Statement ${mNames[m]} ${y}</title><style>${css2}</style></head><body>`);
-   w.document.write(`<div style="display:flex;justify-content:space-between;align-items:flex-start"><div><h1>Seacoast <span class="gold">RVIP</span> LLC</h1><div class="sub" style="margin-top:3px">Premium Luxury Transportation</div></div><div style="text-align:right"><div style="font-size:1rem;font-weight:700;letter-spacing:.08em">CLIENT STATEMENT</div><div class="sub" style="margin-top:2px">${mNames[m]} ${y}</div></div></div>`);
-   w.document.write(`<hr class="thick"><div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin:.75rem 0"><div><div class="sub" style="text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px">Client</div><div style="font-weight:600">${currentUser.name}</div></div><div><div class="sub" style="text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px">Generated</div><div style="font-weight:600">${new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}</div></div></div><hr class="thin">`);
-   w.document.write(`<table class="trips"><thead><tr><th>Date</th><th>Conf #</th><th>Service</th><th style="text-align:right">Amount</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table>`);
-   w.document.write(`<div class="totals-wrap"><table class="totals-box"><tbody><tr><td class="lbl">Subtotal</td><td class="amt">$${total.toFixed(2)}</td></tr>${tipRow2}<tr><td class="lbl">Processing Fee (2.9%)</td><td class="amt">$${feeTotal.toFixed(2)}</td></tr><tr class="divider grand"><td class="lbl">Grand Total</td><td class="amt">$${grandTotal.toFixed(2)}</td></tr></tbody></table></div>`);
-   w.document.write(`<footer>Seacoast RVIP LLC &nbsp;·&nbsp; (978) 255-3140 &nbsp;·&nbsp; info@seacoastrvip.com &nbsp;·&nbsp; seacoastrvip.com</footer></body></html>`);
+   w.document.write(`<html><head><title>Statement ${mNames[m]} ${y}</title><style>body{font-family:serif;padding:3rem;max-width:800px;margin:auto}table{width:100%;border-collapse:collapse;margin-top:1.5rem}th,td{border:1px solid #ddd;padding:8px;font-size:0.85rem}.total{text-align:right;font-size:1.2rem;font-weight:700;margin-top:1.5rem}</style></head><body>`);
+   w.document.write(`<h1>SEACOAST RVIP</h1><h3>Client Monthly Statement</h3><p><strong>Client:</strong> ${currentUser.name}<br><strong>Period:</strong> ${mNames[m]} ${y}</p>`);
+   w.document.write(`<table><thead><tr><th>Date</th><th>Conf#</th><th>Service</th><th>Amount</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table>`);
+   w.document.write(`<div class="total">Total Period Billing: $${total.toFixed(2)}</div>`);
+   w.document.write(`<p style="margin-top:3rem;color:#888;font-size:0.75rem">Generated automatically for ${currentUser.name} on ${new Date().toLocaleDateString()}</p></body></html>`);
    w.document.close(); w.print();
 }
 
@@ -3082,6 +2350,20 @@ function filterTrips(filter, el){
   document.querySelectorAll('.trip-filter-btn').forEach(b => b.classList.remove('selected'));
   if(el) el.classList.add('selected');
   renderTripsList(filter);
+}
+
+// ─── LOGIN TAB SWITCH ───
+function switchLoginTab(tab){
+  const isPhone = tab === 'phone';
+  document.getElementById('login-phone-method').style.display = isPhone ? 'block' : 'none';
+  document.getElementById('login-email-method').style.display = isPhone ? 'none' : 'block';
+  document.getElementById('tab-phone-btn').style.cssText += isPhone ? ';background:#000;color:#fff' : ';background:transparent;color:#888';
+  document.getElementById('tab-email-btn').style.cssText += isPhone ? ';background:transparent;color:#888' : ';background:#000;color:#fff';
+  // Reset email steps when switching back
+  if(isPhone){
+    document.getElementById('step-email').style.display='block';
+    document.getElementById('step-email-sent').style.display='none';
+  }
 }
 
 // ─── EMAIL LOGIN ───
@@ -3191,7 +2473,7 @@ async function forceChangeClientPwd(){
 // ─── FORGOT PASSWORD ───
 function sendForgotPwdLink(type) {
   let initialEmail = '';
-  if (type === 'email') initialEmail = document.getElementById('phone-inp').value.trim();
+  if (type === 'email') initialEmail = document.getElementById('email-login-inp').value.trim();
   if (type === 'identity') {
     const v = document.getElementById('phone-inp').value.trim();
     if (v.includes('@')) initialEmail = v;
@@ -3223,7 +2505,11 @@ async function submitForgotPwd() {
     await auth.sendPasswordResetEmail(email, { url: returnUrl });
     succ.innerHTML = `
       <strong>Password reset email sent!</strong><br>
-      A reset link has been sent to <strong>${email}</strong>. Please allow a minute for delivery and click the link to set a new password.`;
+      Check your inbox at <strong>${email}</strong> for a link from Seacoast RVIP.<br>
+      <span style="font-size:0.75rem;color:#555;margin-top:4px;display:block">
+        Don't see it? Check your <strong>Spam</strong> or <strong>Junk</strong> folder.
+        The email comes from <em>noreply@seacoastrvip.com</em>.
+      </span>`;
     succ.style.display = 'block';
   } catch(error) {
     if(error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
@@ -3276,6 +2562,9 @@ async function checkEmailLink(){
       // New user — show create profile, pre-fill email
       document.getElementById('pg-login').style.display='flex';
       document.getElementById('login-phone-method').style.display='none';
+      document.getElementById('login-email-method').style.display='none';
+      document.getElementById('tab-phone-btn').style.display='none';
+      document.getElementById('tab-email-btn').style.display='none';
       document.getElementById('step-newuser').style.display='block';
       document.getElementById('email-inp').value = email;
       _pendingIsNewUser = true;
@@ -3335,7 +2624,6 @@ function fmtPhone(el){
   el.value = out;
 }
 function formatIdentityInput(el){
-  if(el.type === 'email') return; // email tab — leave raw
   const v = (el.value || '').trim();
   if(v.includes('@')) return; // keep email raw
   fmtPhone(el);
@@ -3368,11 +2656,6 @@ async function saveProfile(){
 
 // ─── AUTO LOGIN (check localStorage session) ───
 (function(){
-  // Email link from forgot-password flow takes priority over saved session
-  if(auth.isSignInWithEmailLink(window.location.href)){
-    checkEmailLink();
-    return;
-  }
   const saved = localStorage.getItem('rvip-client-id');
   if(saved && db){
     db.collection('clients').doc(saved).get().then(d=>{
@@ -3398,7 +2681,7 @@ const stmtMonth = document.getElementById('stmt-month');
 if(stmtMonth) stmtMonth.value = new Date().getMonth();
 </script>
 <script async
-  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDGel0ktZDQYcdlOuoZo4bAqZWCuGvOVbc&libraries=places&loading=async&callback=initAcctMap">
+  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAtiBZ-MmvzTnOg3hDluVDCVy7mcersqe4&libraries=places&loading=async&callback=initAcctMap">
 </script>
 </body>
 </html>

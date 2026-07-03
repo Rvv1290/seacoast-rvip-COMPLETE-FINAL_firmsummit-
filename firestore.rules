@@ -2,56 +2,128 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // ── Website / Admin collections ───────────────────────────────
-    // The admin portal writes directly to Firestore from the client
-    // (bookings, corporate_accounts, clients, trips, drivers, etc.).
-    // Reads are open for login pages; writes are also open because the
-    // admin has its own credential layer and all pages use Firebase
-    // client SDK directly (not Cloud Functions) for persistence.
+    // ─────────────────────────────────────────────────────────────
+    // iOS APP RULES (unchanged — do not edit)
+    // These collections use real Firebase Auth (UID-based).
+    // ─────────────────────────────────────────────────────────────
 
-    match /bookings/{docId} {
-      allow read, write: if true;
+    match /users/{userId} {
+      allow read:   if request.auth != null;
+      allow write:  if request.auth != null && request.auth.uid == userId;
     }
 
-    match /corporate_accounts/{docId} {
-      allow read, write: if true;
+    match /drivers/{driverId} {
+      allow read:   if request.auth != null;
+      allow write:  if request.auth != null && request.auth.uid == driverId;
+
+      match /complianceDocuments/{docType} {
+        allow read:  if request.auth != null;
+        allow write: if request.auth != null && request.auth.uid == driverId;
+      }
+      match /payouts/{weekKey} {
+        allow read:  if request.auth != null && request.auth.uid == driverId;
+        allow write: if false;
+      }
     }
 
-    match /clients/{docId} {
-      allow read, write: if true;
+    match /rides/{rideId} {
+      allow read:   if request.auth != null && (
+                       resource == null ||
+                       request.auth.uid == resource.data.riderId ||
+                       request.auth.uid == resource.data.driverId ||
+                       resource.data.status == 'pending'
+                    );
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.riderId;
+      allow update: if request.auth != null && (
+                       request.auth.uid == resource.data.riderId ||
+                       request.auth.uid == resource.data.driverId ||
+                       resource.data.driverId == 'none'
+                    );
+      match /messages/{msgId} {
+        allow read:   if request.auth != null;
+        allow create: if request.auth != null && request.auth.uid == request.resource.data.senderId;
+      }
     }
 
-    match /clients/{clientId}/trips/{tripId} {
-      allow read, write: if true;
+    match /pings/{userId} {
+      allow read:  if request.auth != null && request.auth.uid == userId;
+      allow write: if request.auth != null;
     }
 
-    match /trips/{docId} {
-      allow read, write: if true;
+    match /_meta/{any} {
+      allow read: if true;
+      allow write: if false;
     }
 
-    match /client_trips/{docId} {
-      allow read, write: if true;
+    match /__warmup/{any} {
+      allow read: if request.auth != null;
+      allow write: if false;
     }
 
-    match /drivers/{docId} {
-      allow read, write: if true;
+    // ─────────────────────────────────────────────────────────────
+    // WEBSITE RULES
+    // Every website page signs in anonymously on load, so we require
+    // request.auth != null everywhere. This blocks random internet
+    // traffic that hasn't opened the site.
+    //
+    // TIP: Enable Firebase Authentication → Sign-in method →
+    // "Anonymous" in the Firebase console for these to work.
+    // ─────────────────────────────────────────────────────────────
+
+    // Corporate accounts — read/write require an auth token.
+    // Delete restricted so a scraper with an anon token cannot wipe rows.
+    match /corporate_accounts/{accountId} {
+      allow read:   if request.auth != null;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null;
+      allow delete: if false;
     }
 
-    match /quotes/{docId} {
-      allow read, write: if true;
+    // Website bookings.
+    match /bookings/{bookingId} {
+      allow read:   if request.auth != null;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null;
+      allow delete: if request.auth != null;
     }
 
-    match /invoices/{docId} {
-      allow read, write: if true;
+    // Client accounts (account.html signup / sign-in flow).
+    match /clients/{clientId} {
+      allow read:   if request.auth != null;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null;
+      allow delete: if false;
+
+      match /trips/{tripId} {
+        allow read:   if request.auth != null;
+        allow create: if request.auth != null;
+        allow update: if request.auth != null;
+        allow delete: if request.auth != null;
+      }
     }
 
-    // ── App collections ──────────────────────────────────────────────
-    // Any collection not explicitly listed above falls here.
-    // Authenticated app users can read and write; unauthenticated
-    // requests are blocked to protect the app's private data.
+    // Quote requests (quote.html → admin.html).
+    match /quotes/{quoteId} {
+      allow read:   if request.auth != null;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null;
+      allow delete: if request.auth != null;
+    }
 
-    match /{document=**} {
-      allow read, write: if request.auth != null;
+    // Firebase "Trigger Email" extension queue. Create-only.
+    match /mail/{mailId} {
+      allow read:   if false;
+      allow create: if request.auth != null;
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    // Shared trips collection.
+    match /trips/{tripId} {
+      allow read:   if request.auth != null;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null;
+      allow delete: if request.auth != null;
     }
   }
 }
