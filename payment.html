@@ -61,7 +61,6 @@ body{font-family:'Inter',sans-serif;background:#f9f9f9;margin:0;padding:0}
 </style>
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script>
 <!-- Stripe.js -->
@@ -595,9 +594,6 @@ try {
   }
   db = firebase.firestore();
   funcs = firebase.functions();
-  // Anonymous auth gate.
-  var _a = firebase.auth();
-  _a.onAuthStateChanged(function(u){ if(!u) _a.signInAnonymously().catch(function(e){ console.warn('anon sign-in failed', e); }); });
   console.log('✅ Firebase connected');
 } catch(e) {
   console.log('Firebase init failed - using localStorage fallback');

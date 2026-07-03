@@ -1076,12 +1076,6 @@
         });
       }
       db = firebase.firestore();
-      // Anonymous auth gate — the driver phone-auth flow below still
-      // works normally; anon is just the fallback before real login.
-      try {
-        var _a = firebase.auth();
-        _a.onAuthStateChanged(function(u){ if(!u) _a.signInAnonymously().catch(function(e){ console.warn('anon sign-in failed', e); }); });
-      } catch(e){}
     }
 
     function getMapEmbedHtml(pickup, dest, height) {
