@@ -808,9 +808,13 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
           <span style="font-family:Inter,sans-serif;font-size:0.8rem;color:#888">Ride Total</span>
           <span style="font-family:Inter,sans-serif;font-size:0.8rem;color:#333" id="acct-tip-sub-display">$0.00</span>
         </div>
-        <div style="display:flex;justify-content:space-between;margin-bottom:0.5rem">
+        <div style="display:flex;justify-content:space-between;margin-bottom:0.4rem">
           <span style="font-family:Inter,sans-serif;font-size:0.8rem;color:#888">Gratuity</span>
           <span style="font-family:Inter,sans-serif;font-size:0.8rem;color:#775a19;font-weight:600" id="acct-tip-display">$0.00</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:0.5rem">
+          <span style="font-family:Inter,sans-serif;font-size:0.72rem;color:#888">Card processing fee (2.9%)</span>
+          <span style="font-family:Inter,sans-serif;font-size:0.72rem;color:#888" id="acct-fee-display">$0.00</span>
         </div>
         <div style="border-top:1px solid #f0e8cc;padding-top:0.5rem;display:flex;justify-content:space-between">
           <span style="font-family:'Work Sans',sans-serif;font-size:0.82rem;font-weight:700;color:#000;text-transform:uppercase;letter-spacing:0.04em">Total Charge</span>
@@ -2041,15 +2045,24 @@ function acctApplyCustomTip(val) {
   _acctUpdateTipDisplay();
 }
 
+// Card processing fee (Stripe standard): 2.9% of (base + tip).
+var ACCT_CARD_FEE_RATE = 0.029;
+
 function _acctUpdateTipDisplay() {
-  var total = _acctBasePay + _acctTipAmt;
+  var subtotal = _acctBasePay + _acctTipAmt;
+  var fee      = parseFloat((subtotal * ACCT_CARD_FEE_RATE).toFixed(2));
+  var total    = parseFloat((subtotal + fee).toFixed(2));
   document.getElementById('acct-tip-display').textContent       = '$' + _acctTipAmt.toFixed(2);
+  var feeEl = document.getElementById('acct-fee-display');
+  if (feeEl) feeEl.textContent = '$' + fee.toFixed(2);
   document.getElementById('acct-tip-total-display').textContent = '$' + total.toFixed(2);
 }
 
 function acctConfirmTip() {
-  // Lock in the final amount (base + tip)
-  _acctPayAmt = parseFloat((_acctBasePay + _acctTipAmt).toFixed(2));
+  // Lock in the final amount (base + tip + card fee)
+  var subtotal = _acctBasePay + _acctTipAmt;
+  var fee      = parseFloat((subtotal * ACCT_CARD_FEE_RATE).toFixed(2));
+  _acctPayAmt  = parseFloat((subtotal + fee).toFixed(2));
   document.getElementById('acct-modal-amt').textContent = '$' + _acctPayAmt.toFixed(2);
 
   // Hide tip step, reveal card entry
