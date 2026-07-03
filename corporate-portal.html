@@ -1611,7 +1611,9 @@ function calcStats(){
     var d=new Date(t.date);
     if(d.getMonth()===thisMonth&&d.getFullYear()===thisYear)monthCount++;
     var p=parseFloat((t.price+'').replace(/[^0-9.]/g,''));
-    if(t.status==='Completed'){completedCount++;if(!isNaN(p))totalSpend+=p;}
+    // Loyalty "Completed" + "Total Spend" include both Paid AND Completed
+    // rides (all finished rides). Completed alone means done-but-unpaid.
+    if(t.status==='Paid' || t.status==='Completed'){completedCount++;if(!isNaN(p))totalSpend+=p;}
     else if(t.price&&!isNaN(p))totalBal+=p;
   });
   document.getElementById('stat-month').textContent=monthCount;

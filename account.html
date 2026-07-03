@@ -1416,17 +1416,21 @@ async function initDashboard(){
 }
 
 function updateDashboardUI(){
-  const completed = allTrips.filter(t => (t.status||'').toLowerCase()==='completed').length;
-  const confirmed = allTrips.filter(t => (t.status||'').toLowerCase()==='confirmed');
-  const upcoming  = allTrips.filter(t => ['upcoming','scheduled','pending','confirmed'].includes((t.status||'').toLowerCase())).length;
-  
+  const status = t => (t.status||'').toLowerCase();
+  const paid       = allTrips.filter(t => status(t)==='paid');
+  const completed  = allTrips.filter(t => status(t)==='completed');   // done but not paid
+  const upcoming   = allTrips.filter(t => ['upcoming','scheduled','pending','confirmed'].includes(status(t))).length;
+  // Loyalty points = finished rides (Paid + Completed).
+  const finishedCount = paid.length + completed.length;
+
   // Stats
   document.getElementById('stat-total').textContent = allTrips.length;
-  document.getElementById('stat-loyalty').textContent = completed;
-  
-  // Balance calculation
+  document.getElementById('stat-loyalty').textContent = finishedCount;
+
+  // Balance Due = sum of trips that have been Completed but not yet Paid.
+  // (Matches the corporate model: Revenue = Paid, Pending Balance = Completed.)
   let balance = 0;
-  confirmed.forEach(t => balance += parseFloat(t.price || 0));
+  completed.forEach(t => balance += parseFloat(t.price || 0));
   document.getElementById('stat-balance').textContent = `$${balance.toFixed(2)}`;
   
   if(balance > 0){

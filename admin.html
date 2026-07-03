@@ -1566,9 +1566,11 @@
     function renderBks() {
       var bks = getBks();
       var up = bks.filter(function (b) { return b.status === 'Confirmed' || b.status === 'Pending'; }).length;
-      var rev = bks.filter(function (b) { return b.status === 'Paid' || b.status === 'Completed'; })
+      // Revenue = money already received (Paid only). Completed but unpaid
+      // trips show up in the Awaiting Pay bucket, not Revenue.
+      var rev = bks.filter(function (b) { return b.status === 'Paid'; })
         .reduce(function (s, b) { return s + (parseFloat(b.price) || 0); }, 0);
-      var pendingPayCount = bks.filter(function (b) { return b.status === 'Pending' || b.status === 'Confirmed'; }).length;
+      var pendingPayCount = bks.filter(function (b) { return b.status === 'Pending' || b.status === 'Confirmed' || b.status === 'Completed'; }).length;
       document.getElementById('s1').textContent = bks.length;
       document.getElementById('s2').textContent = up;
       document.getElementById('s3').textContent = '$' + rev.toFixed(0);
@@ -3144,11 +3146,16 @@
 
     function renderCdTrips(trips, bonusPoints){
       document.getElementById('cd-trips-loading').textContent = trips.length+' trip'+(trips.length!==1?'s':'')+' found';
+      // Revenue = trips that have been PAID (money received).
+      // Pending Balance = trips that are COMPLETED but not yet paid
+      // (the monthly-invoice bucket for corporate accounts).
+      // Loyalty "Completed" count = Paid + Completed (finished rides).
       var completed=0, revenue=0, pending=0, pendingBal=0;
       trips.forEach(function(t){
         var p=parseFloat((t.price+'').replace(/[^0-9.]/g,''))||0;
-        if(t.status==='Completed'){ completed++; revenue+=p; }
-        else { pending++; pendingBal+=p; }
+        if(t.status==='Paid'){ revenue+=p; completed++; }
+        else if(t.status==='Completed'){ pendingBal+=p; completed++; }
+        else { pending++; }
       });
       document.getElementById('cd-stat-total').textContent = trips.length;
       document.getElementById('cd-stat-done').textContent  = completed;
