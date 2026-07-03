@@ -1034,20 +1034,25 @@ function previousPeriodStart() {
   return new Date(now.getFullYear(), now.getMonth() - 1, 1);
 }
 
-// Outstanding balance = Completed (done, not yet paid) trips from ANY past closed billing period,
-// scoped strictly to trips linked to this account via corporateAccountId (not by email/company
-// which could accidentally include other accounts' bookings).
+// Outstanding balance = Completed (done, not yet paid) trips from the MOST RECENT closed
+// billing period only (last month for monthly, last 2 weeks for biweekly, last week for weekly).
+// Trips from any earlier unpaid period are NOT included here — they're considered past-due
+// and handled separately by admin. Scoped strictly to trips linked to this account via
+// corporateAccountId (not by email/company, which could accidentally include other accounts).
 // If admin manually set/cleared the balance more recently than the last period start,
 // that stored value is used instead (see renderDashBalance / calcStats).
 function calcPeriodBalance() {
-  var cutoff = currentPeriodStart(); // anything before this is a past (closed) period
+  var periodEnd   = currentPeriodStart();  // exclusive — start of the still-open period
+  var periodStart = previousPeriodStart(); // inclusive — start of the just-closed period
   var total = 0;
   // Only use corporateAccountId-matched trips — never fall back to _trips which
   // includes email/phone/company listeners that can pull in other accounts' bookings.
   _tripsByAccId.forEach(function(t) {
     if (t.status !== 'Completed') return; // only rides that happened and haven't been paid
     var d = new Date((t.date || '') + 'T12:00:00');
-    if (isNaN(d.getTime()) || d >= cutoff) return; // current-period or undated trips not due yet
+    if (isNaN(d.getTime())) return;
+    if (d >= periodEnd)   return; // current (still-open) period — not due yet
+    if (d <  periodStart) return; // older than the just-closed period — not part of this balance
     var p = parseFloat((t.price + '').replace(/[^0-9.]/g, ''));
     var tip = parseFloat(t.tip) || 0;
     if (!isNaN(p)) total += p + tip;
