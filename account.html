@@ -3121,9 +3121,86 @@ function receiptPDF(id){
    openM('m-share-receipt');
 }
 
+// Build a plain-text email body summary of a trip receipt (for mailto:).
+function _buildReceiptEmailBody(t){
+   var base = parseFloat(t.price||0);
+   var tip  = parseFloat(t.tip||0);
+   var isPaid = t.status==='Paid'||t.status==='Completed';
+   var fee  = isPaid ? parseFloat((base * 0.029).toFixed(2)) : 0;
+   var total = (base + tip + fee).toFixed(2);
+   var tripDate = t.date ? new Date(t.date+'T12:00:00').toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}) : '—';
+   var lines = [];
+   lines.push('Thank you for choosing Seacoast RVIP.');
+   lines.push('');
+   lines.push('RECEIPT');
+   lines.push('Confirmation: ' + (t.code || '—'));
+   lines.push('Trip Date:    ' + tripDate + (t.time ? ' at ' + t.time : ''));
+   lines.push('Passenger:    ' + (t.name || (currentUser && currentUser.name) || '—'));
+   lines.push('Service:      ' + (t.service || 'Private Transfer'));
+   if (t.pickup)      lines.push('Pickup:       ' + t.pickup);
+   if (t.destination) lines.push('Destination:  ' + t.destination);
+   lines.push('');
+   lines.push('Base Fare:            $' + base.toFixed(2));
+   if (tip > 0) lines.push('Gratuity:             $' + tip.toFixed(2));
+   if (isPaid)  lines.push('Processing Fee (2.9%): $' + fee.toFixed(2));
+   lines.push('TOTAL CHARGED:        $' + total);
+   lines.push('');
+   lines.push('For a printable PDF copy, sign in at https://www.seacoastrvip.com/account.html');
+   lines.push('');
+   lines.push('Questions? (978) 255-3140 · info@seacoastrvip.com');
+   return lines.join('\n');
+}
+
+// Lazily load a CDN script exactly once. Returns a Promise.
+function _loadScriptOnce(src){
+   if (window._loadedScripts && window._loadedScripts[src]) return window._loadedScripts[src];
+   window._loadedScripts = window._loadedScripts || {};
+   var p = new Promise(function(resolve, reject){
+     var s = document.createElement('script');
+     s.src = src;
+     s.onload = function(){ resolve(); };
+     s.onerror = function(){ reject(new Error('Failed to load ' + src)); };
+     document.head.appendChild(s);
+   });
+   window._loadedScripts[src] = p;
+   return p;
+}
+
+// Render the receipt HTML to a PDF Blob using html2pdf.js.
+function _receiptToPDFBlob(t){
+   return _loadScriptOnce('https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js').then(function(){
+     return new Promise(function(resolve, reject){
+       var html = _buildReceiptHTML(t);
+       // html2pdf needs an actual DOM element. Render into a hidden container
+       // positioned off-screen so layout is calculated correctly.
+       var host = document.createElement('div');
+       host.style.cssText = 'position:fixed;left:-99999px;top:0;width:8.5in;background:#fff';
+       host.innerHTML = html;
+       document.body.appendChild(host);
+       // The inner .sheet is the printable region; fall back to host if not present.
+       var target = host.querySelector('.sheet') || host;
+       var opt = {
+         margin: 0,
+         filename: 'receipt-' + (t.code || 'seacoast') + '.pdf',
+         image: { type: 'jpeg', quality: 0.95 },
+         html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
+         jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+       };
+       window.html2pdf().set(opt).from(target).outputPdf('blob').then(function(blob){
+         document.body.removeChild(host);
+         resolve(blob);
+       }).catch(function(err){
+         if (host.parentNode) document.body.removeChild(host);
+         reject(err);
+       });
+     });
+   });
+}
+
 function shareReceiptAction(action){
    var t = _shareReceiptTrip;
    if (!t) { closeM('m-share-receipt'); return; }
+
    if (action === 'pdf') {
      var html = _buildReceiptHTML(t);
      var w = window.open('', '_blank');
@@ -3134,40 +3211,55 @@ function shareReceiptAction(action){
      closeM('m-share-receipt');
      return;
    }
+
    if (action === 'email') {
+     // mailto: opens the client's email app with subject + summary pre-filled.
+     // Works without any Firebase Trigger Email extension. Client hits Send.
      var defaultTo = (currentUser && currentUser.email) ? currentUser.email : '';
-     var to = window.prompt('Email receipt to:', defaultTo);
+     var to = window.prompt('Send receipt to which email address?', defaultTo);
      if (!to) return;
      to = to.trim();
      if (!/^\S+@\S+\.\S+$/.test(to)) { alert('Please enter a valid email address.'); return; }
-     if (!db) { alert('Not connected. Try again in a moment.'); return; }
-     var html = _buildReceiptHTML(t);
-     db.collection('mail').add({
-       to: to,
-       message: {
-         subject: 'Your Seacoast RVIP Receipt · ' + (t.code || ''),
-         html: html
-       },
-       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-       kind: 'receipt',
-       tripId: t.id || null
-     }).then(function(){
-       closeM('m-share-receipt');
-       toast('Receipt emailed to ' + to);
-     }).catch(function(err){
-       alert('Failed to email receipt: ' + (err && err.message ? err.message : 'unknown error'));
-     });
+     var subject = 'Seacoast RVIP Receipt · ' + (t.code || '');
+     var body = _buildReceiptEmailBody(t);
+     var url = 'mailto:' + encodeURIComponent(to) +
+               '?subject=' + encodeURIComponent(subject) +
+               '&body=' + encodeURIComponent(body);
+     closeM('m-share-receipt');
+     // Give the modal a tick to close before navigating.
+     setTimeout(function(){ window.location.href = url; }, 100);
      return;
    }
+
    if (action === 'share') {
-     if (!navigator.share) { alert('Sharing is not supported on this browser.'); return; }
-     var lineTotal = (parseFloat(t.price||0) + parseFloat(t.tip||0)).toFixed(2);
-     navigator.share({
-       title: 'Seacoast RVIP Receipt',
-       text: 'Seacoast RVIP · Receipt ' + (t.code || '') + ' · $' + lineTotal
-     }).then(function(){
-       closeM('m-share-receipt');
-     }).catch(function(){ /* user cancelled */ });
+     var filename = 'receipt-' + (t.code || 'seacoast') + '.pdf';
+     toast('Preparing PDF…');
+     _receiptToPDFBlob(t).then(function(blob){
+       var file = new File([blob], filename, { type: 'application/pdf' });
+       var canShareFile = !!(navigator.canShare && navigator.canShare({ files: [file] }));
+       if (canShareFile) {
+         navigator.share({
+           title: 'Seacoast RVIP Receipt',
+           text: 'Receipt ' + (t.code || ''),
+           files: [file]
+         }).then(function(){
+           closeM('m-share-receipt');
+         }).catch(function(){ /* user cancelled — no-op */ });
+       } else {
+         // Browser can't share files (or navigator.share missing). Download the PDF instead.
+         var a = document.createElement('a');
+         a.href = URL.createObjectURL(blob);
+         a.download = filename;
+         document.body.appendChild(a);
+         a.click();
+         setTimeout(function(){ URL.revokeObjectURL(a.href); document.body.removeChild(a); }, 1000);
+         closeM('m-share-receipt');
+         toast('Receipt PDF downloaded');
+       }
+     }).catch(function(err){
+       console.error('PDF generation failed', err);
+       alert('Could not prepare the PDF. Please use Save / Print as PDF instead.');
+     });
      return;
    }
 }
