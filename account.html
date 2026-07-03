@@ -906,6 +906,31 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
   </div>
 </div>
 
+<!-- RECEIPT SHARE MODAL -->
+<div class="ov" id="m-share-receipt" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;align-items:center;justify-content:center;padding:1rem">
+  <div style="background:#fff;width:100%;max-width:380px;border-radius:6px;padding:1.5rem 1.5rem 1.25rem;box-shadow:0 20px 50px rgba(0,0,0,0.28)">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem">
+      <div style="font-family:'Times New Roman',serif;font-size:1.15rem;font-weight:700;color:#000">Share Receipt</div>
+      <button onclick="closeM('m-share-receipt')" style="background:none;border:none;cursor:pointer;padding:0;color:#666"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <div id="share-receipt-code" style="font-family:'Work Sans',sans-serif;font-size:0.68rem;color:#888;text-transform:uppercase;letter-spacing:0.12em;margin-bottom:1.25rem"></div>
+
+    <button onclick="shareReceiptAction('pdf')" style="width:100%;padding:0.85rem;background:#000;color:#fff;border:none;border-radius:4px;font-family:Inter,sans-serif;font-size:0.82rem;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:0.55rem;margin-bottom:0.55rem;letter-spacing:0.02em">
+      <span class="material-symbols-outlined" style="font-size:18px">picture_as_pdf</span>Save / Print as PDF
+    </button>
+
+    <button onclick="shareReceiptAction('email')" style="width:100%;padding:0.85rem;background:#fff;color:#000;border:1.5px solid #000;border-radius:4px;font-family:Inter,sans-serif;font-size:0.82rem;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:0.55rem;margin-bottom:0.55rem;letter-spacing:0.02em">
+      <span class="material-symbols-outlined" style="font-size:18px">mail</span>Email Receipt
+    </button>
+
+    <button id="btn-share-native" onclick="shareReceiptAction('share')" style="display:none;width:100%;padding:0.85rem;background:#fff;color:#000;border:1.5px solid #000;border-radius:4px;font-family:Inter,sans-serif;font-size:0.82rem;font-weight:600;cursor:pointer;align-items:center;justify-content:center;gap:0.55rem;letter-spacing:0.02em">
+      <span class="material-symbols-outlined" style="font-size:18px">share</span>Share via…
+    </button>
+
+    <div style="text-align:center;margin-top:1rem;font-family:Inter,sans-serif;font-size:0.7rem;color:#999">On mobile the print dialog also offers AirDrop, Messages, and Files.</div>
+  </div>
+</div>
+
 <!-- STRIPE BUY BUTTON MODAL -->
 <!-- ── EMBEDDED STRIPE PAYMENT MODAL ── -->
 <div id="acct-stripe-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:9999;align-items:center;justify-content:center;padding:1rem;overflow-y:auto">
@@ -3043,9 +3068,9 @@ function stmtLuxuryCSS(){
 
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
-function receiptPDF(id){
-   const t = allTrips.find(x => x.id===id);
-   if(!t) return;
+// Build the receipt HTML for a trip. Used both for print (opens a window) and
+// email (writes to the /mail Firestore extension queue).
+function _buildReceiptHTML(t){
    const base = parseFloat(t.price||0);
    const tip  = parseFloat(t.tip||0);
    const isPaid = t.status==='Paid'||t.status==='Completed';
@@ -3061,27 +3086,90 @@ function receiptPDF(id){
    const totalsExtra =
      (tip>0 ? '<div class="tot-row"><span class="tot-lbl">Gratuity</span><span class="tot-val">$'+tip.toFixed(2)+'</span></div>' : '')+
      (isPaid ? '<div class="tot-row"><span class="tot-lbl">Processing Fee (2.9%)</span><span class="tot-val">$'+fee.toFixed(2)+'</span></div>' : '');
-   const w=window.open('','_blank');
-   w.document.write('<html><head><title>Receipt '+esc(t.code||'')+'</title><style>'+stmtLuxuryCSS()+'</style></head><body><div class="sheet">');
-   w.document.write('<header class="stmt-hdr"><div class="wordmark">Seacoast <span class="gold">RVIP</span></div><div class="wordmark-sub">Premium Ground Transportation · Receipt</div></header>');
-   w.document.write('<section class="meta">'+
-     '<div class="meta-l"><div class="meta-lbl">Passenger</div><div class="meta-val">'+esc(t.name||currentUser.name||'—')+'</div>'+
-       (t.phone?'<div class="meta-sub">'+esc(t.phone)+'</div>':'')+
-     '</div>'+
-     '<div class="meta-r"><div class="meta-lbl">Receipt</div><div class="meta-val mono">'+esc(t.code||'—')+'</div>'+
-       '<div class="meta-sub">Issued '+today+'</div>'+
-       '<div class="meta-sub">Trip '+esc(tripDate)+(t.time?' · '+esc(t.time):'')+'</div>'+
-     '</div></section>');
-   w.document.write('<section class="items"><div class="items-hdr"><span>Date</span><span>Conf.</span><span>Service</span><span class="ta-r">Amount</span></div><table class="items-tbl"><tbody>'+rows+'</tbody></table></section>');
-   w.document.write('<section class="totals">'+
-     '<div class="tot-row"><span class="tot-lbl">Base Fare</span><span class="tot-val">$'+base.toFixed(2)+'</span></div>'+
-     totalsExtra+
-     '<div class="tot-row grand"><span class="tot-lbl">Total Charged</span><span class="tot-val">$'+totalAmt.toFixed(2)+'</span></div>'+
-   '</section>');
-   w.document.write('<footer class="stmt-ft"><div class="ft-line">Thank you for choosing Seacoast RVIP.</div><div class="ft-line">(978) 255-3140 &nbsp;·&nbsp; info@seacoastrvip.com &nbsp;·&nbsp; seacoastrvip.com</div></footer>');
-   w.document.write('</div></body></html>');
-   w.document.close();
-   setTimeout(function(){w.print();},250);
+   return '<html><head><title>Receipt '+esc(t.code||'')+'</title><style>'+stmtLuxuryCSS()+'</style></head><body><div class="sheet">'
+     + '<header class="stmt-hdr"><div class="wordmark">Seacoast <span class="gold">RVIP</span></div><div class="wordmark-sub">Premium Ground Transportation · Receipt</div></header>'
+     + '<section class="meta">'
+     +   '<div class="meta-l"><div class="meta-lbl">Passenger</div><div class="meta-val">'+esc(t.name||currentUser.name||'—')+'</div>'
+     +     (t.phone?'<div class="meta-sub">'+esc(t.phone)+'</div>':'')
+     +   '</div>'
+     +   '<div class="meta-r"><div class="meta-lbl">Receipt</div><div class="meta-val mono">'+esc(t.code||'—')+'</div>'
+     +     '<div class="meta-sub">Issued '+today+'</div>'
+     +     '<div class="meta-sub">Trip '+esc(tripDate)+(t.time?' · '+esc(t.time):'')+'</div>'
+     +   '</div></section>'
+     + '<section class="items"><div class="items-hdr"><span>Date</span><span>Conf.</span><span>Service</span><span class="ta-r">Amount</span></div><table class="items-tbl"><tbody>'+rows+'</tbody></table></section>'
+     + '<section class="totals">'
+     +   '<div class="tot-row"><span class="tot-lbl">Base Fare</span><span class="tot-val">$'+base.toFixed(2)+'</span></div>'
+     +   totalsExtra
+     +   '<div class="tot-row grand"><span class="tot-lbl">Total Charged</span><span class="tot-val">$'+totalAmt.toFixed(2)+'</span></div>'
+     + '</section>'
+     + '<footer class="stmt-ft"><div class="ft-line">Thank you for choosing Seacoast RVIP.</div><div class="ft-line">(978) 255-3140 &nbsp;·&nbsp; info@seacoastrvip.com &nbsp;·&nbsp; seacoastrvip.com</div></footer>'
+     + '</div></body></html>';
+}
+
+// Entry point from the "Receipt" button on the trip row.
+// Opens the share modal instead of jumping straight to print, giving the client
+// the choice between Save as PDF, Email, or native Share.
+var _shareReceiptTrip = null;
+function receiptPDF(id){
+   const t = allTrips.find(x => x.id===id);
+   if(!t) return;
+   _shareReceiptTrip = t;
+   var codeEl = document.getElementById('share-receipt-code');
+   if (codeEl) codeEl.textContent = 'Receipt · ' + (t.code || '—');
+   var shareBtn = document.getElementById('btn-share-native');
+   if (shareBtn) shareBtn.style.display = (navigator.share ? 'flex' : 'none');
+   openM('m-share-receipt');
+}
+
+function shareReceiptAction(action){
+   var t = _shareReceiptTrip;
+   if (!t) { closeM('m-share-receipt'); return; }
+   if (action === 'pdf') {
+     var html = _buildReceiptHTML(t);
+     var w = window.open('', '_blank');
+     if (!w) { alert('Please allow pop-ups to save the PDF.'); return; }
+     w.document.write(html);
+     w.document.close();
+     setTimeout(function(){ w.print(); }, 250);
+     closeM('m-share-receipt');
+     return;
+   }
+   if (action === 'email') {
+     var defaultTo = (currentUser && currentUser.email) ? currentUser.email : '';
+     var to = window.prompt('Email receipt to:', defaultTo);
+     if (!to) return;
+     to = to.trim();
+     if (!/^\S+@\S+\.\S+$/.test(to)) { alert('Please enter a valid email address.'); return; }
+     if (!db) { alert('Not connected. Try again in a moment.'); return; }
+     var html = _buildReceiptHTML(t);
+     db.collection('mail').add({
+       to: to,
+       message: {
+         subject: 'Your Seacoast RVIP Receipt · ' + (t.code || ''),
+         html: html
+       },
+       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+       kind: 'receipt',
+       tripId: t.id || null
+     }).then(function(){
+       closeM('m-share-receipt');
+       toast('Receipt emailed to ' + to);
+     }).catch(function(err){
+       alert('Failed to email receipt: ' + (err && err.message ? err.message : 'unknown error'));
+     });
+     return;
+   }
+   if (action === 'share') {
+     if (!navigator.share) { alert('Sharing is not supported on this browser.'); return; }
+     var lineTotal = (parseFloat(t.price||0) + parseFloat(t.tip||0)).toFixed(2);
+     navigator.share({
+       title: 'Seacoast RVIP Receipt',
+       text: 'Seacoast RVIP · Receipt ' + (t.code || '') + ' · $' + lineTotal
+     }).then(function(){
+       closeM('m-share-receipt');
+     }).catch(function(){ /* user cancelled */ });
+     return;
+   }
 }
 function generateStatement(){
    const m = parseInt(document.getElementById('stmt-month').value);
