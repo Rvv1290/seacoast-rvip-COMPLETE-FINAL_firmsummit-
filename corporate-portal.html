@@ -41,10 +41,32 @@ body{font-family:'Inter',sans-serif;background:#f7f7f7;color:#1a1c1c;min-height:
 .sb-logout{display:flex;align-items:center;gap:0.5rem;color:rgba(255,255,255,0.3);font-family:Inter,sans-serif;font-size:0.72rem;cursor:pointer;transition:color 0.15s;padding:0.5rem 0}
 .sb-logout:hover{color:#ef4444}
 /* ─── TOP BAR ─── */
-.topbar{background:#fff;border-bottom:1px solid #eee;padding:1rem 2rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
+.topbar{background:rgba(255,255,255,0.94);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid #eee;padding:0 2rem;height:70px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
+.topbar-left,.topbar-right{display:flex;align-items:center;gap:0.75rem;flex:0 0 auto;min-width:44px}
+.topbar-right{justify-content:flex-end}
+.tb-logo{position:absolute;left:50%;transform:translateX(-50%);font-family:'Times New Roman',serif;font-size:1.4rem;font-weight:700;color:#000;letter-spacing:0.02em;text-decoration:none;white-space:nowrap}
+.tb-logout-btn{background:none;border:none;cursor:pointer;color:#999;padding:8px;line-height:1;display:flex;align-items:center;justify-content:center;transition:color 0.15s}
+.tb-logout-btn:hover{color:#000}
 .topbar-title{font-family:'Times New Roman',serif;font-size:1.25rem;font-weight:700;color:#000}
-.topbar-right{display:flex;align-items:center;gap:1rem}
-.tb-badge{background:#f3f3f3;padding:0.375rem 0.875rem;font-family:'Work Sans',sans-serif;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#555}
+.tb-badge{background:transparent;padding:0;font-family:'Work Sans',sans-serif;font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:#775a19}
+/* ─── SECTION TITLE (used at top of each tab, replaces old topbar title) ─── */
+.tab-hdr{margin-bottom:1.5rem}
+.tab-hdr-eyebrow{font-family:'Work Sans',sans-serif;font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.18em;color:#775a19;margin-bottom:6px}
+.tab-hdr-title{font-family:'Times New Roman',serif;font-size:1.6rem;font-weight:700;color:#000;letter-spacing:-0.01em}
+/* ─── WELCOME CARD (minimalist replacement for stat banner + black block) ─── */
+.welcome-card{background:#fff;padding:2.25rem 2rem;margin-bottom:2rem;border-top:1px solid #eee;border-bottom:1px solid #eee;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1.5rem}
+.welcome-eyebrow{font-family:'Work Sans',sans-serif;font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.18em;color:#775a19;margin-bottom:8px}
+.welcome-title{font-family:'Times New Roman',serif;font-size:2rem;font-weight:700;color:#000;line-height:1.15;letter-spacing:-0.01em}
+.welcome-title span{color:#000}
+.welcome-meta{font-family:Inter,sans-serif;font-size:0.78rem;color:#888;margin-top:8px;letter-spacing:0.02em}
+.welcome-actions{display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
+.welcome-balance{text-align:right}
+.welcome-bal-lbl{font-family:'Work Sans',sans-serif;font-size:0.58rem;font-weight:700;text-transform:uppercase;letter-spacing:0.14em;color:#888;margin-bottom:4px}
+.welcome-bal-amt{font-family:'Times New Roman',serif;font-size:1.5rem;font-weight:700;color:#000;line-height:1}
+.welcome-bal-amt.owing{color:#775a19}
+.btn-book{background:#000;color:#fff;border:none;padding:0.9rem 1.75rem;font-family:'Work Sans',sans-serif;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.14em;cursor:pointer;transition:all 0.2s;text-decoration:none;display:inline-flex;align-items:center;gap:8px}
+.btn-book:hover{background:#775a19}
+.hidden-stats{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;pointer-events:none;visibility:hidden}
 /* ─── CONTENT ─── */
 .content{padding:2rem;flex:1}
 .tab-panel{display:none}
@@ -321,97 +343,85 @@ var _sess = null;
 <div class="main">
   <!-- Top Bar -->
   <div class="topbar">
-    <div style="display:flex;align-items:center;gap:1rem">
-      <button class="mob-menu-btn" onclick="toggleSidebar()"><span class="material-symbols-outlined">menu</span></button>
-      <div class="topbar-title" id="tab-title">Dashboard</div>
+    <div class="topbar-left">
+      <button class="mob-menu-btn" onclick="toggleSidebar()" style="background:none;border:none;cursor:pointer;padding:8px"><span class="material-symbols-outlined">menu</span></button>
     </div>
+    <a href="index.html" class="tb-logo">Seacoast RVIP</a>
     <div class="topbar-right">
-      <span class="tb-badge" id="tb-billing">Monthly (NET-30)</span>
-      <a href="tel:+19782553140" style="font-family:Inter,sans-serif;font-size:0.75rem;color:#775a19;text-decoration:none;font-weight:600">(978) 255-3140</a>
+      <button class="tb-logout-btn" onclick="logout()" title="Sign Out">
+        <span class="material-symbols-outlined" style="font-size:20px">logout</span>
+      </button>
     </div>
+    <!-- Hidden legacy elements preserved for JS references -->
+    <span class="topbar-title" id="tab-title" style="display:none">Dashboard</span>
+    <span class="tb-badge" id="tb-billing" style="display:none">Monthly (NET-30)</span>
   </div>
 
   <div class="content">
 
     <!-- ══════════ DASHBOARD ══════════ -->
     <div id="tab-dash" class="tab-panel on">
-      <div class="stat-row" style="grid-template-columns:repeat(5,1fr)">
-        <div class="stat-card gold">
-          <div class="stat-val" id="stat-next">—</div>
-          <div class="stat-lbl">Next Trip</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-val" id="stat-month">0</div>
-          <div class="stat-lbl">Rides This Month</div>
-        </div>
-        <div class="stat-card green">
-          <div class="stat-val" id="stat-total">0</div>
-          <div class="stat-lbl">Total Rides</div>
-        </div>
-        <div class="stat-card amber">
-          <div class="stat-val" id="stat-bal">$0</div>
-          <div class="stat-lbl">Pending Balance</div>
-        </div>
-        <div class="stat-card" style="border-left-color:#C9A84C;cursor:pointer" onclick="goTab('rewards',null)">
-          <div class="stat-val" id="stat-tier-lbl" style="font-size:1rem">—</div>
-          <div class="stat-lbl">Loyalty Tier</div>
-        </div>
-      </div>
 
-      <!-- Welcome Banner -->
-      <div style="background:#000;color:#fff;padding:1.75rem 2rem;margin-bottom:2rem;border-left:4px solid #775a19;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem">
+      <!-- Welcome Card — minimalist replacement for stats + banner -->
+      <div class="welcome-card">
         <div>
-          <div style="font-family:'Work Sans',sans-serif;font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.14em;color:#775a19;margin-bottom:4px">Corporate Account</div>
-          <div style="font-family:'Times New Roman',serif;font-size:1.35rem;font-weight:700">Welcome back, <span id="dash-company">your company</span></div>
-          <div style="font-family:Inter,sans-serif;font-size:0.8rem;color:rgba(255,255,255,0.5);margin-top:4px">You have priority dispatch status · <span id="dash-billing">Monthly (NET-30)</span> billing</div>
+          <div class="welcome-eyebrow">Corporate Account · <span id="dash-billing">Monthly (NET-30)</span></div>
+          <div class="welcome-title">Welcome back, <span id="dash-company">your company</span></div>
+          <div class="welcome-meta">Priority dispatch is included with your account.</div>
         </div>
-        <button class="btn-blk" style="border-bottom-color:#e8c97a" onclick="goTab('book',null)">+ Book a Ride</button>
+        <div class="welcome-actions">
+          <div id="welcome-balance-wrap" class="welcome-balance" style="display:none">
+            <div class="welcome-bal-lbl">Outstanding</div>
+            <div class="welcome-bal-amt owing" id="welcome-bal-amt">$0.00</div>
+          </div>
+          <button class="btn-book" onclick="goTab('book',null)">Book a Ride</button>
+        </div>
       </div>
 
-      <!-- Balance & Quick Pay -->
+      <!-- Hidden legacy stat DOM (preserved for JS references) -->
+      <div class="hidden-stats" aria-hidden="true">
+        <span id="stat-next">—</span>
+        <span id="stat-month">0</span>
+        <span id="stat-total">0</span>
+        <span id="stat-bal">$0</span>
+        <span id="stat-tier-lbl">—</span>
+      </div>
+
+      <!-- Balance & Quick Pay (shown inline below welcome when balance > 0) -->
       <div id="dash-pay-block" style="display:none;margin-bottom:2rem">
         <!-- Balance Due -->
-        <div id="dash-pay-due" style="display:none;background:#fff;border:1px solid #e8e8e8;border-left:4px solid #000">
-          <div style="padding:1.5rem 2rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1.5rem;border-bottom:1px solid #f0f0f0">
+        <div id="dash-pay-due" style="display:none;background:#fff;border-top:1px solid #eee;border-bottom:1px solid #eee">
+          <div style="padding:1.75rem 2rem;display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:1.5rem">
             <div>
-              <div style="font-family:'Work Sans',sans-serif;font-size:0.58rem;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:#888;margin-bottom:6px">Outstanding Balance</div>
-              <div style="font-family:'Times New Roman',serif;font-size:2.5rem;font-weight:700;color:#000;line-height:1.1" id="dash-bal-amt">$0.00</div>
-              <div style="font-family:Inter,sans-serif;font-size:0.75rem;color:#888;margin-top:8px" id="dash-bal-note">Pay securely below or contact billing for wire/ACH options.</div>
+              <div style="font-family:'Work Sans',sans-serif;font-size:0.58rem;font-weight:700;text-transform:uppercase;letter-spacing:0.16em;color:#775a19;margin-bottom:8px">Outstanding Balance</div>
+              <div style="font-family:'Times New Roman',serif;font-size:2.4rem;font-weight:700;color:#000;line-height:1;letter-spacing:-0.01em" id="dash-bal-amt">$0.00</div>
+              <div style="font-family:Inter,sans-serif;font-size:0.75rem;color:#999;margin-top:10px;max-width:32ch;line-height:1.5" id="dash-bal-note">Settle securely below, or contact billing for wire &amp; ACH options.</div>
             </div>
-            <div style="display:flex;gap:0.75rem;flex-wrap:wrap;align-items:center;justify-content:flex-end">
-              <!-- Integrated Stripe Pay (Auto-Settles Balance) -->
-              <button onclick="settleBalanceWithCard()" style="display:flex;align-items:center;gap:0.5rem;background:#000;color:#fff;border:none;border-bottom:3px solid #775a19;padding:0.875rem 1.75rem;font-family:'Work Sans',sans-serif;font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;cursor:pointer;transition:opacity 0.2s">
-                <span class="material-symbols-outlined" style="font-size:18px">payments</span>
+            <div style="display:flex;flex-direction:column;gap:0.65rem;align-items:flex-end">
+              <button onclick="settleBalanceWithCard()" style="display:inline-flex;align-items:center;gap:0.5rem;background:#000;color:#fff;border:none;padding:0.85rem 1.75rem;font-family:'Work Sans',sans-serif;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.14em;cursor:pointer;transition:background 0.2s" onmouseover="this.style.background='#775a19'" onmouseout="this.style.background='#000'">
+                <span class="material-symbols-outlined" style="font-size:16px">payments</span>
                 Pay with Card
               </button>
-
-              <!-- Venmo (Secondary) -->
-              <button onclick="payVenmo()" style="display:flex;align-items:center;gap:0.5rem;background:#3D95CE;color:#fff;border:none;padding:0.875rem 1.75rem;font-family:'Work Sans',sans-serif;font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;cursor:pointer;transition:opacity 0.2s">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M17.4 2C14.6 2 12.4 3.5 11 6.2 9.9 4.3 8.3 3.3 6.2 3.3c-3 0-4.2 2.2-4.2 4.8 0 5 7 14.4 9.2 14.4 1.3 0 2.4-1.5 4-4.3.4.1.7.1 1.1.1 3.4 0 6.1-3.1 6.1-7.8C22.4 4.5 20.3 2 17.4 2z"/></svg>
-                Venmo
+              <button onclick="payVenmo()" style="display:inline-flex;align-items:center;gap:0.5rem;background:transparent;color:#555;border:1px solid #ddd;padding:0.7rem 1.5rem;font-family:'Work Sans',sans-serif;font-size:0.65rem;font-weight:600;text-transform:uppercase;letter-spacing:0.12em;cursor:pointer;transition:all 0.2s" onmouseover="this.style.borderColor='#775a19';this.style.color='#775a19'" onmouseout="this.style.borderColor='#ddd';this.style.color='#555'">
+                Pay via Venmo
               </button>
-            </div>
-            
-            <!-- Link to change card if one exists -->
-            <div id="dash-manage-card" style="display:none;width:100%;text-align:right;margin-top:8px">
-              <span id="dash-card-info" style="font-family:Inter,sans-serif;font-size:0.68rem;color:#888;margin-right:10px"></span>
-              <span onclick="openCardModal(_accountBalance)" style="font-family:Inter,sans-serif;font-size:0.68rem;color:#775a19;cursor:pointer;font-weight:600;text-decoration:underline">Pay Now</span>
+              <div id="dash-manage-card" style="display:none;text-align:right;margin-top:2px">
+                <span id="dash-card-info" style="font-family:Inter,sans-serif;font-size:0.68rem;color:#888;margin-right:8px"></span>
+                <span onclick="openCardModal(_accountBalance)" style="font-family:Inter,sans-serif;font-size:0.68rem;color:#775a19;cursor:pointer;font-weight:600;text-decoration:underline">Pay Now</span>
+              </div>
             </div>
           </div>
-          <div style="padding:0.875rem 2rem;background:#fafafa;display:flex;align-items:center;gap:0.5rem">
-            <span style="font-family:Inter,sans-serif;font-size:0.75rem;color:#888">Wire / ACH / Check:</span>
-            <a href="mailto:billing@seacoastrvip.com" style="font-family:Inter,sans-serif;font-size:0.75rem;color:#775a19;font-weight:600;text-decoration:none">billing@seacoastrvip.com</a>
-            <span style="color:#ddd;margin:0 0.5rem">|</span>
-            <span style="font-family:Inter,sans-serif;font-size:0.75rem;color:#888">(978) 255-3140</span>
+          <div style="padding:0.875rem 2rem;border-top:1px solid #f5f5f5;display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;font-family:Inter,sans-serif;font-size:0.72rem;color:#aaa">
+            <span>Wire · ACH · Check —</span>
+            <a href="mailto:billing@seacoastrvip.com" style="color:#775a19;font-weight:600;text-decoration:none">billing@seacoastrvip.com</a>
+            <span style="color:#ddd">·</span>
+            <span>(978) 255-3140</span>
           </div>
         </div>
         <!-- Account Clear -->
-        <div id="dash-pay-clear" style="display:none;background:#f0fdf4;border-left:3px solid #22c55e;padding:0.875rem 1.25rem;align-items:center;gap:0.75rem">
-          <span style="color:#22c55e;font-size:1.2rem;line-height:1">✓</span>
-          <div>
-            <div style="font-family:'Work Sans',sans-serif;font-size:0.72rem;font-weight:700;color:#15803d;text-transform:uppercase;letter-spacing:0.06em">Account is current</div>
-            <div style="font-family:Inter,sans-serif;font-size:0.75rem;color:#4ade80">No outstanding balance — thank you for your prompt payment.</div>
-          </div>
+        <div id="dash-pay-clear" style="display:none;padding:1rem 2rem;border-top:1px solid #eee;border-bottom:1px solid #eee;align-items:center;gap:0.75rem;font-family:Inter,sans-serif;font-size:0.8rem;color:#666">
+          <span class="material-symbols-outlined" style="font-size:18px;color:#775a19">check_circle</span>
+          Account is current — thank you for your prompt payment.
         </div>
       </div>
 
@@ -1155,17 +1165,22 @@ function renderDashBalance(){
   // from completed trips in the last closed period.
   var periodBal = getDisplayBalance();
   block.style.display = 'block';
+  var wcWrap = document.getElementById('welcome-balance-wrap');
+  var wcAmt  = document.getElementById('welcome-bal-amt');
   if(periodBal > 0){
     due.style.display   = 'block';
     clear.style.display = 'none';
     document.getElementById('dash-bal-amt').textContent = '$' + periodBal.toFixed(2);
     var statBal = document.getElementById('stat-bal');
     if(statBal) statBal.textContent = '$' + periodBal.toFixed(2);
+    if(wcWrap){ wcWrap.style.display = 'block'; }
+    if(wcAmt){ wcAmt.textContent = '$' + periodBal.toFixed(2); wcAmt.classList.add('owing'); }
   } else {
     due.style.display   = 'none';
     clear.style.display = 'flex';
     var statBal = document.getElementById('stat-bal');
     if(statBal) statBal.textContent = '$0.00';
+    if(wcWrap){ wcWrap.style.display = 'none'; }
   }
 }
 
@@ -2107,18 +2122,41 @@ function submitBooking(){
 
 // ─── PRINT INVOICE ───
 function printInvoice(){
-  var rows=_trips.map(function(t){
-    return '<tr><td>'+t.date+'</td><td>'+escH(t.code||'')+'</td><td>'+escH(t.service||'')+'</td><td>'+escH(t.pickup||'')+'</td><td>'+escH(t.destination||'')+'</td><td>'+(t.price||'—')+'</td><td>'+t.status+'</td></tr>';
+  var total = _trips.reduce(function(s,t){var p=parseFloat((t.price+'').replace(/[^0-9.]/g,''));return s+(isNaN(p)?0:p);},0);
+  var rows = _trips.map(function(t){
+    var base=parseFloat(t.price)||0;
+    var d=new Date(t.date+'T12:00:00');
+    var ds=isNaN(d.getTime())?escH(t.date||'—'):d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+    var route=escH((t.pickup||'').split(',')[0])+' <span class="arr">→</span> '+escH((t.destination||'').split(',')[0]);
+    return '<tr>'+
+      '<td class="c-date">'+ds+'</td>'+
+      '<td class="c-conf">'+escH(t.code||'—')+'</td>'+
+      '<td class="c-svc"><div class="svc-name">'+escH(t.service||'—')+'</div><div class="svc-route">'+route+'</div></td>'+
+      '<td class="c-amt">$'+base.toFixed(2)+'</td>'+
+      '</tr>';
   }).join('');
+  var invNum = 'RVIP-'+(new Date().getFullYear())+'-'+String(Date.now()).slice(-6);
+  var today  = new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
   var w=window.open('','_blank');
-  w.document.write('<html><head><title>Invoice — '+escH(sess.company)+'</title><style>body{font-family:Arial,sans-serif;padding:2rem}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ddd;padding:8px;text-align:left}th{background:#f3f3f3}h1{margin-bottom:0.25rem}p{color:#666;font-size:0.85rem;margin-bottom:1.5rem}</style></head><body>');
-  w.document.write('<h1>Seacoast RVIP — Corporate Invoice</h1>');
-  w.document.write('<p>Company: <strong>'+escH(sess.company)+'</strong> &nbsp;|&nbsp; Billing: '+escH(sess.billingCycle||'Monthly')+'&nbsp;|&nbsp; Generated: '+new Date().toLocaleDateString('en-US')+'</p>');
-  w.document.write('<table><thead><tr><th>Date</th><th>Conf#</th><th>Service</th><th>Pickup</th><th>Destination</th><th>Amount</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table>');
-  w.document.write('<p style="margin-top:2rem">Questions: info@seacoastrvip.com | (978) 255-3140 | seacoastrvip.com</p>');
-  w.document.write('</body></html>');
+  w.document.write('<html><head><title>Invoice — '+escH(sess.company)+'</title><style>'+stmtLuxuryCSS()+'</style></head><body><div class="sheet">');
+  w.document.write('<header class="stmt-hdr"><div class="wordmark">Seacoast <span class="gold">RVIP</span></div><div class="wordmark-sub">Premium Ground Transportation</div></header>');
+  w.document.write('<section class="meta">'+
+    '<div class="meta-l"><div class="meta-lbl">Bill To</div><div class="meta-val">'+escH(sess.company)+'</div>'+
+      (sess.contactName?'<div class="meta-sub">'+escH(sess.contactName)+'</div>':'')+
+      (sess.billingAddress?'<div class="meta-sub">'+escH(sess.billingAddress)+'</div>':'')+
+    '</div>'+
+    '<div class="meta-r"><div class="meta-lbl">Invoice</div><div class="meta-val mono">'+invNum+'</div>'+
+      '<div class="meta-sub">Issued '+today+'</div>'+
+      '<div class="meta-sub">Billing '+escH(sess.billingCycle||'Monthly')+'</div>'+
+    '</div></section>');
+  w.document.write('<section class="items"><div class="items-hdr"><span>Date</span><span>Conf.</span><span>Service</span><span class="ta-r">Amount</span></div><table class="items-tbl"><tbody>'+rows+'</tbody></table></section>');
+  w.document.write('<section class="totals">'+
+    '<div class="tot-row grand"><span class="tot-lbl">Total</span><span class="tot-val">$'+total.toFixed(2)+'</span></div>'+
+  '</section>');
+  w.document.write('<footer class="stmt-ft"><div class="ft-line">Payable to Seacoast RVIP LLC.</div><div class="ft-line">(978) 255-3140 &nbsp;·&nbsp; info@seacoastrvip.com &nbsp;·&nbsp; seacoastrvip.com</div></footer>');
+  w.document.write('</div></body></html>');
   w.document.close();
-  w.print();
+  setTimeout(function(){w.print();},250);
 }
 
 // ─── REBOOK ───
@@ -2253,28 +2291,56 @@ async function saveEditedTrip(){
 }
 
 // ─── NET-30 STATEMENT ───
+function _renderLuxuryStatement(opts){
+  // opts: {title, invNum, periodLbl, dueLbl, trips}
+  var total = opts.trips.reduce(function(s,t){var p=parseFloat((t.price+'').replace(/[^0-9.]/g,''));var tip=parseFloat(t.tip)||0;return s+(isNaN(p)?0:p+tip);},0);
+  var rows = opts.trips.map(function(t){
+    var base=parseFloat(t.price)||0;
+    var d=new Date(t.date+'T12:00:00');
+    var ds=isNaN(d.getTime())?escH(t.date||'—'):d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+    var route=escH((t.pickup||'').split(',')[0])+' <span class="arr">→</span> '+escH((t.destination||'').split(',')[0]);
+    return '<tr>'+
+      '<td class="c-date">'+ds+'</td>'+
+      '<td class="c-conf">'+escH(t.code||'—')+'</td>'+
+      '<td class="c-svc"><div class="svc-name">'+escH(t.service||'—')+'</div><div class="svc-route">'+route+'</div></td>'+
+      '<td class="c-amt">$'+base.toFixed(2)+'</td>'+
+      '</tr>';
+  }).join('');
+  var today  = new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+  var w=window.open('','_blank');
+  w.document.write('<html><head><title>'+escH(opts.title)+' — '+escH(sess.company)+'</title><style>'+stmtLuxuryCSS()+'</style></head><body><div class="sheet">');
+  w.document.write('<header class="stmt-hdr"><div class="wordmark">Seacoast <span class="gold">RVIP</span></div><div class="wordmark-sub">Premium Ground Transportation · Net 30</div></header>');
+  w.document.write('<section class="meta">'+
+    '<div class="meta-l"><div class="meta-lbl">Bill To</div><div class="meta-val">'+escH(sess.company)+'</div>'+
+      (sess.contactName?'<div class="meta-sub">'+escH(sess.contactName)+'</div>':'')+
+      (sess.billingAddress?'<div class="meta-sub">'+escH(sess.billingAddress)+'</div>':'')+
+    '</div>'+
+    '<div class="meta-r"><div class="meta-lbl">'+escH(opts.title)+'</div><div class="meta-val mono">'+escH(opts.invNum)+'</div>'+
+      '<div class="meta-sub">Issued '+today+'</div>'+
+      '<div class="meta-sub">Period '+escH(opts.periodLbl)+'</div>'+
+      '<div class="meta-sub">Due '+escH(opts.dueLbl)+'</div>'+
+    '</div></section>');
+  w.document.write('<section class="items"><div class="items-hdr"><span>Date</span><span>Conf.</span><span>Service</span><span class="ta-r">Amount</span></div><table class="items-tbl"><tbody>'+rows+'</tbody></table></section>');
+  w.document.write('<section class="totals">'+
+    '<div class="tot-row grand"><span class="tot-lbl">Total Due</span><span class="tot-val">$'+total.toFixed(2)+'</span></div>'+
+  '</section>');
+  w.document.write('<footer class="stmt-ft"><div class="ft-line">Payment Terms — Net 30 from statement date. Payable to Seacoast RVIP LLC.</div><div class="ft-line">(978) 255-3140 &nbsp;·&nbsp; info@seacoastrvip.com &nbsp;·&nbsp; seacoastrvip.com</div></footer>');
+  w.document.write('</div></body></html>');
+  w.document.close();
+  setTimeout(function(){w.print();},250);
+}
+
 function printNet30(){
   var now=new Date();
   var thirtyAgo=new Date(now.getTime()-30*24*60*60*1000);
   var recent=_trips.filter(function(t){return new Date(t.date)>=thirtyAgo;});
-  var total=recent.reduce(function(s,t){var p=parseFloat((t.price+'').replace(/[^0-9.]/g,''));var tip=parseFloat(t.tip)||0;return s+(isNaN(p)?0:p+tip);},0);
-  var rows=recent.map(function(t){
-    return '<tr><td>'+t.date+'</td><td>'+escH(t.code||'')+'</td><td>'+escH(t.service||'')+'</td><td>'+escH(t.pickup||'')+'</td><td>'+escH(t.destination||'')+'</td><td style="text-align:right">$'+(parseFloat(t.price)||0).toFixed(2)+'</td><td>'+t.status+'</td></tr>';
-  }).join('');
-  var w=window.open('','_blank');
-  w.document.write('<html><head><title>NET-30 Statement — '+escH(sess.company)+'</title><style>body{font-family:Arial,sans-serif;padding:2.5rem;max-width:800px;margin:0 auto}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ddd;padding:8px;text-align:left;font-size:0.85rem}th{background:#f3f3f3}h1{font-size:1.5rem;margin-bottom:0.25rem}.total{font-size:1.25rem;font-weight:700;margin-top:1rem;text-align:right}p{color:#666;font-size:0.85rem;margin-bottom:0.5rem}.header{border-bottom:3px solid #000;padding-bottom:1rem;margin-bottom:1.5rem}@media print{body{padding:1rem}}</style></head><body>');
-  w.document.write('<div class="header"><h1>SEACOAST RVIP LLC</h1><p>Premium Ground Transportation</p><p style="color:#000;font-weight:600">NET-30 STATEMENT</p></div>');
-  w.document.write('<p><strong>Bill To:</strong> '+escH(sess.company)+'</p>');
-  w.document.write('<p><strong>Contact:</strong> '+escH(sess.contactName||'')+'</p>');
-  w.document.write('<p><strong>Address:</strong> '+escH(sess.billingAddress||'')+'</p>');
-  w.document.write('<p><strong>Period:</strong> '+thirtyAgo.toLocaleDateString('en-US')+' — '+now.toLocaleDateString('en-US')+'</p>');
-  w.document.write('<p><strong>Payment Due:</strong> '+new Date(now.getTime()+30*24*60*60*1000).toLocaleDateString('en-US')+'</p><br>');
-  w.document.write('<table><thead><tr><th>Date</th><th>Conf#</th><th>Service</th><th>Pickup</th><th>Destination</th><th style="text-align:right">Amount</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table>');
-  w.document.write('<div class="total">Total Due: $'+total.toFixed(2)+'</div>');
-  w.document.write('<p style="margin-top:2rem;font-size:0.78rem;color:#888">Payment Terms: NET-30 from statement date. Make payments to Seacoast RVIP LLC.<br>Questions: info@seacoastrvip.com | (978) 255-3140 | seacoastrvip.com</p>');
-  w.document.write('</body></html>');
-  w.document.close();
-  w.print();
+  _renderLuxuryStatement({
+    title:'Net-30 Statement',
+    invNum:'RVIP-'+now.getFullYear()+'-'+String(Date.now()).slice(-6),
+    periodLbl:thirtyAgo.toLocaleDateString('en-US',{month:'short',day:'numeric'})+' — '+now.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}),
+    dueLbl:new Date(now.getTime()+30*24*60*60*1000).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}),
+    trips:recent
+  });
 }
 
 // ─── TEAM MEMBERS ───
@@ -2607,55 +2673,115 @@ function printStmtPDF(){
   var paidBase = _stmtFiltered.filter(function(t){return t.status==='Paid'||t.status==='Completed';}).reduce(function(s,t){return s+(parseFloat(t.price)||0)+(parseFloat(t.tip)||0);},0);
   var feeTotal = parseFloat((paidBase*0.029).toFixed(2));
   var grandTotal = total + feeTotal;
+  var invNum = 'RVIP-'+(new Date().getFullYear())+'-'+String(Date.now()).slice(-6);
+  var today  = new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+  var dueDate= new Date(Date.now()+30*24*60*60*1000).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+  // Compact rows — no borders; use spacing + subtle divider
   var rows = _stmtFiltered.map(function(t){
     var base=parseFloat(t.price)||0;
-    return '<tr><td>'+t.date+'</td><td>'+escH(t.code||'')+'</td><td>'+escH(t.name||'')+'</td><td>'+escH(t.service||'')+'</td><td>'+escH(t.pickup||'')+'</td><td>'+escH(t.destination||'')+'</td><td style="text-align:right">$'+base.toFixed(2)+'</td><td>'+t.status+'</td></tr>';
+    var d=new Date(t.date+'T12:00:00');
+    var ds=d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+    var route=escH((t.pickup||'').split(',')[0])+' <span class="arr">→</span> '+escH((t.destination||'').split(',')[0]);
+    return '<tr>'+
+      '<td class="c-date">'+ds+'</td>'+
+      '<td class="c-conf">'+escH(t.code||'—')+'</td>'+
+      '<td class="c-svc"><div class="svc-name">'+escH(t.service||'—')+'</div><div class="svc-route">'+route+'</div></td>'+
+      '<td class="c-amt">$'+base.toFixed(2)+'</td>'+
+      '</tr>';
   }).join('');
-  var css='body{font-family:\'Helvetica Neue\',Arial,sans-serif;padding:2.5rem;max-width:960px;margin:0 auto;color:#111;font-size:14px}'+
-    'h1{font-family:Georgia,serif;font-size:1.8rem;margin:0;letter-spacing:-.5px}.gold{color:#775a19}.sub{font-size:.78rem;color:#888}'+
-    'hr.thick{border:none;border-top:2px solid #111;margin:1.25rem 0}hr.thin{border:none;border-top:1px solid #eee;margin:.75rem 0}'+
-    'table.trips{width:100%;border-collapse:collapse;margin:1.25rem 0}'+
-    'table.trips th{padding:8px 10px;font-size:.6rem;text-transform:uppercase;letter-spacing:.08em;color:#aaa;border-bottom:2px solid #eee;text-align:left}'+
-    'table.trips td{padding:8px 10px;font-size:.8rem;border-bottom:1px solid #f3f3f3}'+
-    '.totals-wrap{display:flex;justify-content:flex-end;margin-top:1.75rem}'+
-    '.totals-box{min-width:300px;border:1px solid #e5e5e5}'+
-    '.totals-box td{padding:9px 18px;font-size:.85rem;border:none}'+
-    '.totals-box .amt{text-align:right}.totals-box .lbl{color:#555}'+
-    '.totals-box .sep td{border-top:1px solid #e5e5e5!important}'+
-    '.totals-box .divider td{border-top:2px solid #111!important;padding-top:11px}'+
-    '.totals-box .grand .lbl{font-weight:700;font-size:.95rem;text-transform:uppercase;letter-spacing:.03em}'+
-    '.totals-box .grand .amt{font-weight:700;font-size:1.1rem;color:#000}'+
-    'footer{margin-top:2.5rem;font-size:.7rem;color:#aaa;border-top:1px solid #eee;padding-top:1rem;text-align:center}'+
-    '@media print{body{padding:1rem}}';
+  var css=stmtLuxuryCSS();
   var w=window.open('','_blank');
-  w.document.write('<html><head><title>Statement — '+escH(sess.company)+'</title><style>'+css+'</style></head><body>');
-  w.document.write('<div style="display:flex;justify-content:space-between;align-items:flex-start"><div><h1>Seacoast <span class="gold">RVIP</span> LLC</h1><div class="sub" style="margin-top:3px">Premium Ground Transportation</div></div><div style="text-align:right"><div style="font-size:1rem;font-weight:700;letter-spacing:.08em">TRIP STATEMENT</div><div style="font-size:.82rem;color:#555;margin-top:2px">'+escH(periodLbl)+'</div><div class="sub">'+new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})+'</div></div></div>');
-  w.document.write('<hr class="thick">');
-  w.document.write('<div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin:.75rem 0"><div><div class="sub" style="text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px">Bill To</div><div style="font-weight:600">'+escH(sess.company)+'</div>'+(sess.contactName?'<div class="sub">'+escH(sess.contactName)+'</div>':'')+(sess.billingAddress?'<div class="sub">'+escH(sess.billingAddress)+'</div>':'')+'</div></div>');
-  w.document.write('<hr class="thin">');
-  w.document.write('<table class="trips"><thead><tr><th>Date</th><th>Conf #</th><th>Passenger</th><th>Service</th><th>Pickup</th><th>Destination</th><th style="text-align:right">Amount</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table>');
-  w.document.write('<div class="totals-wrap"><table class="totals-box"><tbody><tr><td class="lbl">Subtotal</td><td class="amt">$'+total.toFixed(2)+'</td></tr><tr class="sep"><td class="lbl">Processing Fee (2.9%)</td><td class="amt">$'+feeTotal.toFixed(2)+'</td></tr><tr class="divider grand"><td class="lbl">Grand Total</td><td class="amt">$'+grandTotal.toFixed(2)+'</td></tr></tbody></table></div>');
-  w.document.write('<footer>Seacoast RVIP LLC &nbsp;·&nbsp; (978) 255-3140 &nbsp;·&nbsp; info@seacoastrvip.com &nbsp;·&nbsp; seacoastrvip.com</footer>');
-  w.document.write('</body></html>');w.document.close();w.print();
+  w.document.write('<html><head><title>Statement — '+escH(sess.company)+'</title><style>'+css+'</style></head><body><div class="sheet">');
+  // Header: centered wordmark
+  w.document.write('<header class="stmt-hdr"><div class="wordmark">Seacoast <span class="gold">RVIP</span></div><div class="wordmark-sub">Premium Ground Transportation</div></header>');
+  // Meta row: Bill To (left) / Invoice # + Date (right)
+  w.document.write('<section class="meta">'+
+    '<div class="meta-l"><div class="meta-lbl">Bill To</div><div class="meta-val">'+escH(sess.company)+'</div>'+
+      (sess.contactName?'<div class="meta-sub">'+escH(sess.contactName)+'</div>':'')+
+      (sess.billingAddress?'<div class="meta-sub">'+escH(sess.billingAddress)+'</div>':'')+
+    '</div>'+
+    '<div class="meta-r"><div class="meta-lbl">Statement</div><div class="meta-val mono">'+invNum+'</div>'+
+      '<div class="meta-sub">Issued '+today+'</div>'+
+      '<div class="meta-sub">Period '+escH(periodLbl)+'</div>'+
+      '<div class="meta-sub">Due '+dueDate+'</div>'+
+    '</div></section>');
+  // Line items
+  w.document.write('<section class="items"><div class="items-hdr"><span>Date</span><span>Conf.</span><span>Service</span><span class="ta-r">Amount</span></div><table class="items-tbl"><tbody>'+rows+'</tbody></table></section>');
+  // Totals
+  w.document.write('<section class="totals">'+
+    '<div class="tot-row"><span class="tot-lbl">Subtotal</span><span class="tot-val">$'+total.toFixed(2)+'</span></div>'+
+    '<div class="tot-row"><span class="tot-lbl">Processing Fee (2.9%)</span><span class="tot-val">$'+feeTotal.toFixed(2)+'</span></div>'+
+    '<div class="tot-row grand"><span class="tot-lbl">Total Due</span><span class="tot-val">$'+grandTotal.toFixed(2)+'</span></div>'+
+  '</section>');
+  // Footer
+  w.document.write('<footer class="stmt-ft"><div class="ft-line">Payable to Seacoast RVIP LLC — Net 30 from statement date.</div><div class="ft-line">(978) 255-3140 &nbsp;·&nbsp; info@seacoastrvip.com &nbsp;·&nbsp; seacoastrvip.com</div></footer>');
+  w.document.write('</div></body></html>');w.document.close();
+  setTimeout(function(){w.print();},250);
+}
+
+// Shared luxury-print CSS used by all statement/invoice PDFs.
+// Designed to fit on a single US-Letter page.
+function stmtLuxuryCSS(){
+  return '@page{size:letter;margin:0.6in}'+
+    '*{box-sizing:border-box;margin:0;padding:0}'+
+    'html,body{background:#fdfaf4;color:#1a1a1a;font-family:"Helvetica Neue",Arial,sans-serif;font-size:11pt;line-height:1.5;-webkit-font-smoothing:antialiased}'+
+    '.sheet{max-width:7.3in;margin:0.35in auto;padding:0;background:transparent}'+
+    // Header wordmark centered
+    '.stmt-hdr{text-align:center;padding-bottom:1.6rem;margin-bottom:1.6rem}'+
+    '.wordmark{font-family:"Times New Roman",Georgia,serif;font-size:1.9rem;font-weight:700;letter-spacing:0.04em;color:#000}'+
+    '.wordmark .gold{color:#775a19}'+
+    '.wordmark-sub{font-family:"Helvetica Neue",Arial,sans-serif;font-size:0.6rem;font-weight:600;text-transform:uppercase;letter-spacing:0.32em;color:#775a19;margin-top:6px}'+
+    // Meta
+    '.meta{display:flex;justify-content:space-between;align-items:flex-start;gap:2rem;margin-bottom:2rem}'+
+    '.meta-l{max-width:3in}.meta-r{text-align:right;max-width:2.6in}'+
+    '.meta-lbl{font-family:"Helvetica Neue",Arial,sans-serif;font-size:0.55rem;font-weight:700;text-transform:uppercase;letter-spacing:0.22em;color:#775a19;margin-bottom:6px}'+
+    '.meta-val{font-family:"Times New Roman",Georgia,serif;font-size:1.05rem;font-weight:700;color:#000;line-height:1.25}'+
+    '.meta-val.mono{font-family:"Helvetica Neue",Arial,sans-serif;font-size:0.85rem;letter-spacing:0.04em}'+
+    '.meta-sub{font-size:0.72rem;color:#555;margin-top:3px;line-height:1.45}'+
+    // Line items — no borders, just spacing + subtle top rule
+    '.items{margin-bottom:1.75rem}'+
+    '.items-hdr{display:grid;grid-template-columns:0.85in 0.85in 1fr 0.9in;gap:0.5rem;padding-bottom:8px;font-family:"Helvetica Neue",Arial,sans-serif;font-size:0.55rem;font-weight:700;text-transform:uppercase;letter-spacing:0.2em;color:#999;border-bottom:1px solid #e8dfc4}'+
+    '.items-hdr .ta-r{text-align:right}'+
+    '.items-tbl{width:100%;border-collapse:collapse}'+
+    '.items-tbl tr td{padding:9px 0 8px;vertical-align:top;border:none}'+
+    '.items-tbl tr:not(:last-child) td{border-bottom:1px dotted #e8dfc4}'+
+    '.c-date{width:0.85in;font-family:"Helvetica Neue",Arial,sans-serif;font-size:0.78rem;color:#555;font-variant-numeric:tabular-nums}'+
+    '.c-conf{width:0.85in;font-family:"Helvetica Neue",Arial,sans-serif;font-size:0.72rem;color:#775a19;font-weight:600;letter-spacing:0.02em}'+
+    '.c-svc{padding-right:0.5rem}'+
+    '.svc-name{font-family:"Times New Roman",Georgia,serif;font-size:0.9rem;color:#000;font-weight:600;line-height:1.25}'+
+    '.svc-route{font-size:0.68rem;color:#888;margin-top:2px;line-height:1.35}'+
+    '.svc-route .arr{color:#775a19;margin:0 4px}'+
+    '.c-amt{width:0.9in;text-align:right;font-family:"Helvetica Neue",Arial,sans-serif;font-size:0.85rem;color:#000;font-weight:600;font-variant-numeric:tabular-nums}'+
+    // Totals — no borders
+    '.totals{margin-left:auto;width:2.75in;padding-top:0.5rem;border-top:1px solid #000}'+
+    '.tot-row{display:flex;justify-content:space-between;padding:6px 0;font-size:0.82rem;color:#555;font-variant-numeric:tabular-nums}'+
+    '.tot-row .tot-lbl{letter-spacing:0.02em}'+
+    '.tot-row .tot-val{font-weight:600;color:#000}'+
+    '.tot-row.grand{border-top:1px solid #e8dfc4;margin-top:6px;padding-top:10px}'+
+    '.tot-row.grand .tot-lbl{font-family:"Times New Roman",Georgia,serif;font-size:1rem;font-weight:700;color:#000;text-transform:uppercase;letter-spacing:0.12em}'+
+    '.tot-row.grand .tot-val{font-family:"Times New Roman",Georgia,serif;font-size:1.3rem;font-weight:700;color:#775a19}'+
+    // Footer
+    '.stmt-ft{margin-top:2rem;padding-top:1rem;text-align:center;font-size:0.65rem;color:#999;letter-spacing:0.04em;line-height:1.7}'+
+    '.stmt-ft .ft-line+.ft-line{margin-top:2px}'+
+    // Print rules — enforce single page
+    '@media print{'+
+      'html,body{background:#fdfaf4 !important;-webkit-print-color-adjust:exact !important;print-color-adjust:exact}'+
+      '.sheet{margin:0;max-width:none;page-break-inside:avoid}'+
+      '.stmt-hdr,.meta,.items,.totals,.stmt-ft{page-break-inside:avoid}'+
+      '.items-tbl tr{page-break-inside:avoid}'+
+    '}';
 }
 
 function printNet30Filtered(){
   if(!_stmtFiltered.length){alert('Generate a statement first.');return;}
   var periodLbl = document.getElementById('stmt-period-lbl').textContent;
-  var total = _stmtFiltered.reduce(function(s,t){var p=parseFloat((t.price+'').replace(/[^0-9.]/g,''));var tip=parseFloat(t.tip)||0;return s+(isNaN(p)?0:p+tip);},0);
-  var rows = _stmtFiltered.map(function(t){
-    return '<tr><td>'+t.date+'</td><td>'+escH(t.code||'')+'</td><td>'+escH(t.service||'')+'</td><td>'+escH(t.pickup||'')+'</td><td>'+escH(t.destination||'')+'</td><td style="text-align:right">$'+(parseFloat(t.price)||0).toFixed(2)+'</td><td>'+t.status+'</td></tr>';
-  }).join('');
-  var w=window.open('','_blank');
-  w.document.write('<html><head><title>NET-30 Statement — '+escH(sess.company)+'</title><style>body{font-family:Arial,sans-serif;padding:2.5rem;max-width:800px;margin:0 auto}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ddd;padding:8px;text-align:left;font-size:.85rem}th{background:#f3f3f3}h1{font-size:1.5rem;margin-bottom:.25rem}.total{font-size:1.25rem;font-weight:700;margin-top:1rem;text-align:right}.header{border-bottom:3px solid #000;padding-bottom:1rem;margin-bottom:1.5rem}@media print{body{padding:1rem}}</style></head><body>');
-  w.document.write('<div class="header"><h1>SEACOAST RVIP LLC</h1><p>Premium Ground Transportation</p><p style="color:#000;font-weight:600">NET-30 STATEMENT</p></div>');
-  w.document.write('<p><strong>Bill To:</strong> '+escH(sess.company)+'</p><p><strong>Contact:</strong> '+escH(sess.contactName||'')+'</p><p><strong>Address:</strong> '+escH(sess.billingAddress||'')+'</p>');
-  w.document.write('<p><strong>Period:</strong> '+escH(periodLbl)+'</p>');
-  w.document.write('<p><strong>Payment Due:</strong> '+new Date(Date.now()+30*24*60*60*1000).toLocaleDateString('en-US')+'</p><br>');
-  w.document.write('<table><thead><tr><th>Date</th><th>Conf#</th><th>Service</th><th>Pickup</th><th>Destination</th><th style="text-align:right">Amount</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table>');
-  w.document.write('<div class="total">Total Due: $'+total.toFixed(2)+'</div>');
-  w.document.write('<p style="margin-top:2rem;font-size:.78rem;color:#888">Payment Terms: NET-30. Make payments to Seacoast RVIP LLC.<br>Questions: info@seacoastrvip.com | (978) 255-3140</p>');
-  w.document.write('</body></html>');w.document.close();w.print();
+  _renderLuxuryStatement({
+    title:'Net-30 Statement',
+    invNum:'RVIP-'+(new Date().getFullYear())+'-'+String(Date.now()).slice(-6),
+    periodLbl:periodLbl,
+    dueLbl:new Date(Date.now()+30*24*60*60*1000).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}),
+    trips:_stmtFiltered
+  });
 }
 
 function buildAnnual(){
@@ -2695,16 +2821,39 @@ function printAnnualSummary(){
   var grandTotal=months.reduce(function(s,m){return s+m.total;},0);
   var grandCount=months.reduce(function(s,m){return s+m.count;},0);
   var rows=months.map(function(m){
-    return '<tr'+(m.count?'':' style="color:#aaa"')+'><td>'+m.name+'</td><td style="text-align:center">'+(m.count||'—')+'</td><td style="text-align:right">'+(m.count?'$'+m.total.toFixed(2):'—')+'</td></tr>';
+    if(!m.count){
+      return '<tr class="empty"><td class="c-date">'+m.name+'</td><td class="c-conf">—</td><td class="c-svc">—</td><td class="c-amt">—</td></tr>';
+    }
+    return '<tr>'+
+      '<td class="c-date">'+m.name+'</td>'+
+      '<td class="c-conf">'+m.count+' '+(m.count===1?'trip':'trips')+'</td>'+
+      '<td class="c-svc"><div class="svc-name">Monthly total</div></td>'+
+      '<td class="c-amt">$'+m.total.toFixed(2)+'</td>'+
+    '</tr>';
   }).join('');
+  var invNum='RVIP-YEAR-'+year;
+  var today=new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+  var extraCSS='.items-tbl tr.empty td{color:#c9c1a3}';
   var w=window.open('','_blank');
-  w.document.write('<html><head><title>Annual Summary '+year+' — '+escH(sess.company)+'</title><style>body{font-family:Arial,sans-serif;padding:2.5rem;max-width:680px;margin:0 auto}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ddd;padding:9px 12px;text-align:left;font-size:.85rem}th{background:#f3f3f3}.grand{background:#000;color:#fff;font-weight:700}h1{font-size:1.4rem;margin-bottom:.2rem}.header{border-bottom:3px solid #000;padding-bottom:1rem;margin-bottom:1.5rem}@media print{body{padding:1rem}}</style></head><body>');
-  w.document.write('<div class="header"><h1>SEACOAST RVIP LLC</h1><p style="color:#888;font-size:.85rem">Premium Ground Transportation</p><p style="font-weight:700">ANNUAL EXPENSE SUMMARY — '+year+'</p></div>');
-  w.document.write('<p><strong>Company:</strong> '+escH(sess.company)+'</p><p><strong>Contact:</strong> '+escH(sess.contactName||'')+'</p><p><strong>Address:</strong> '+escH(sess.billingAddress||'')+'</p>');
-  w.document.write('<p style="font-size:.8rem;color:#888;margin-top:.5rem">For tax and accounting use — Fiscal Year '+year+'</p><br>');
-  w.document.write('<table><thead><tr><th>Month</th><th style="text-align:center">Trips</th><th style="text-align:right">Amount</th></tr></thead><tbody>'+rows+'<tr class="grand"><td>TOTAL '+year+'</td><td style="text-align:center">'+grandCount+'</td><td style="text-align:right">$'+grandTotal.toFixed(2)+'</td></tr></tbody></table>');
-  w.document.write('<p style="margin-top:2rem;font-size:.75rem;color:#888">Generated '+new Date().toLocaleDateString('en-US')+' | info@seacoastrvip.com | (978) 255-3140 | seacoastrvip.com</p>');
-  w.document.write('</body></html>');w.document.close();w.print();
+  w.document.write('<html><head><title>Annual Summary '+year+' — '+escH(sess.company)+'</title><style>'+stmtLuxuryCSS()+extraCSS+'</style></head><body><div class="sheet">');
+  w.document.write('<header class="stmt-hdr"><div class="wordmark">Seacoast <span class="gold">RVIP</span></div><div class="wordmark-sub">Annual Expense Summary · '+year+'</div></header>');
+  w.document.write('<section class="meta">'+
+    '<div class="meta-l"><div class="meta-lbl">Prepared For</div><div class="meta-val">'+escH(sess.company)+'</div>'+
+      (sess.contactName?'<div class="meta-sub">'+escH(sess.contactName)+'</div>':'')+
+      (sess.billingAddress?'<div class="meta-sub">'+escH(sess.billingAddress)+'</div>':'')+
+    '</div>'+
+    '<div class="meta-r"><div class="meta-lbl">Summary</div><div class="meta-val mono">'+invNum+'</div>'+
+      '<div class="meta-sub">Generated '+today+'</div>'+
+      '<div class="meta-sub">Fiscal Year '+year+'</div>'+
+    '</div></section>');
+  w.document.write('<section class="items"><div class="items-hdr"><span>Month</span><span>Trips</span><span>Detail</span><span class="ta-r">Amount</span></div><table class="items-tbl"><tbody>'+rows+'</tbody></table></section>');
+  w.document.write('<section class="totals">'+
+    '<div class="tot-row"><span class="tot-lbl">Total Trips</span><span class="tot-val">'+grandCount+'</span></div>'+
+    '<div class="tot-row grand"><span class="tot-lbl">Total '+year+'</span><span class="tot-val">$'+grandTotal.toFixed(2)+'</span></div>'+
+  '</section>');
+  w.document.write('<footer class="stmt-ft"><div class="ft-line">Prepared for tax &amp; accounting use.</div><div class="ft-line">(978) 255-3140 &nbsp;·&nbsp; info@seacoastrvip.com &nbsp;·&nbsp; seacoastrvip.com</div></footer>');
+  w.document.write('</div></body></html>');w.document.close();
+  setTimeout(function(){w.print();},250);
 }
 
 // ─── UTILS ───

@@ -2995,6 +2995,54 @@ function payTotalBalance() {
 }
 
 // ─── PDF / STATEMENTS ───
+// Shared luxury single-page CSS used by all client-side statements/receipts.
+function stmtLuxuryCSS(){
+  return '@page{size:letter;margin:0.6in}'+
+    '*{box-sizing:border-box;margin:0;padding:0}'+
+    'html,body{background:#fdfaf4;color:#1a1a1a;font-family:"Helvetica Neue",Arial,sans-serif;font-size:11pt;line-height:1.5;-webkit-font-smoothing:antialiased}'+
+    '.sheet{max-width:7.3in;margin:0.35in auto;padding:0;background:transparent}'+
+    '.stmt-hdr{text-align:center;padding-bottom:1.6rem;margin-bottom:1.6rem}'+
+    '.wordmark{font-family:"Times New Roman",Georgia,serif;font-size:1.9rem;font-weight:700;letter-spacing:0.04em;color:#000}'+
+    '.wordmark .gold{color:#775a19}'+
+    '.wordmark-sub{font-family:"Helvetica Neue",Arial,sans-serif;font-size:0.6rem;font-weight:600;text-transform:uppercase;letter-spacing:0.32em;color:#775a19;margin-top:6px}'+
+    '.meta{display:flex;justify-content:space-between;align-items:flex-start;gap:2rem;margin-bottom:2rem}'+
+    '.meta-l{max-width:3in}.meta-r{text-align:right;max-width:2.6in}'+
+    '.meta-lbl{font-family:"Helvetica Neue",Arial,sans-serif;font-size:0.55rem;font-weight:700;text-transform:uppercase;letter-spacing:0.22em;color:#775a19;margin-bottom:6px}'+
+    '.meta-val{font-family:"Times New Roman",Georgia,serif;font-size:1.05rem;font-weight:700;color:#000;line-height:1.25}'+
+    '.meta-val.mono{font-family:"Helvetica Neue",Arial,sans-serif;font-size:0.85rem;letter-spacing:0.04em}'+
+    '.meta-sub{font-size:0.72rem;color:#555;margin-top:3px;line-height:1.45}'+
+    '.items{margin-bottom:1.75rem}'+
+    '.items-hdr{display:grid;grid-template-columns:0.85in 0.85in 1fr 0.9in;gap:0.5rem;padding-bottom:8px;font-family:"Helvetica Neue",Arial,sans-serif;font-size:0.55rem;font-weight:700;text-transform:uppercase;letter-spacing:0.2em;color:#999;border-bottom:1px solid #e8dfc4}'+
+    '.items-hdr .ta-r{text-align:right}'+
+    '.items-tbl{width:100%;border-collapse:collapse}'+
+    '.items-tbl tr td{padding:9px 0 8px;vertical-align:top;border:none}'+
+    '.items-tbl tr:not(:last-child) td{border-bottom:1px dotted #e8dfc4}'+
+    '.c-date{width:0.85in;font-family:"Helvetica Neue",Arial,sans-serif;font-size:0.78rem;color:#555;font-variant-numeric:tabular-nums}'+
+    '.c-conf{width:0.85in;font-family:"Helvetica Neue",Arial,sans-serif;font-size:0.72rem;color:#775a19;font-weight:600;letter-spacing:0.02em}'+
+    '.c-svc{padding-right:0.5rem}'+
+    '.svc-name{font-family:"Times New Roman",Georgia,serif;font-size:0.9rem;color:#000;font-weight:600;line-height:1.25}'+
+    '.svc-route{font-size:0.68rem;color:#888;margin-top:2px;line-height:1.35}'+
+    '.svc-route .arr{color:#775a19;margin:0 4px}'+
+    '.c-amt{width:0.9in;text-align:right;font-family:"Helvetica Neue",Arial,sans-serif;font-size:0.85rem;color:#000;font-weight:600;font-variant-numeric:tabular-nums}'+
+    '.totals{margin-left:auto;width:2.75in;padding-top:0.5rem;border-top:1px solid #000}'+
+    '.tot-row{display:flex;justify-content:space-between;padding:6px 0;font-size:0.82rem;color:#555;font-variant-numeric:tabular-nums}'+
+    '.tot-row .tot-lbl{letter-spacing:0.02em}'+
+    '.tot-row .tot-val{font-weight:600;color:#000}'+
+    '.tot-row.grand{border-top:1px solid #e8dfc4;margin-top:6px;padding-top:10px}'+
+    '.tot-row.grand .tot-lbl{font-family:"Times New Roman",Georgia,serif;font-size:1rem;font-weight:700;color:#000;text-transform:uppercase;letter-spacing:0.12em}'+
+    '.tot-row.grand .tot-val{font-family:"Times New Roman",Georgia,serif;font-size:1.3rem;font-weight:700;color:#775a19}'+
+    '.stmt-ft{margin-top:2rem;padding-top:1rem;text-align:center;font-size:0.65rem;color:#999;letter-spacing:0.04em;line-height:1.7}'+
+    '.stmt-ft .ft-line+.ft-line{margin-top:2px}'+
+    '@media print{'+
+      'html,body{background:#fdfaf4 !important;-webkit-print-color-adjust:exact !important;print-color-adjust:exact}'+
+      '.sheet{margin:0;max-width:none;page-break-inside:avoid}'+
+      '.stmt-hdr,.meta,.items,.totals,.stmt-ft{page-break-inside:avoid}'+
+      '.items-tbl tr{page-break-inside:avoid}'+
+    '}';
+}
+
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
 function receiptPDF(id){
    const t = allTrips.find(x => x.id===id);
    if(!t) return;
@@ -3003,36 +3051,37 @@ function receiptPDF(id){
    const isPaid = t.status==='Paid'||t.status==='Completed';
    const fee  = isPaid ? parseFloat((base * 0.029).toFixed(2)) : 0;
    const totalAmt = parseFloat((base + tip + fee).toFixed(2));
-   const tipRow = tip > 0 ? `<tr><td style="padding:7px 14px;color:#555;font-size:.85rem;border:none">Gratuity</td><td style="padding:7px 14px;text-align:right;font-size:.85rem;border:none">$${tip.toFixed(2)}</td></tr>` : '';
-   const feeRow = isPaid ? `<tr><td style="padding:7px 14px;color:#555;font-size:.85rem;border:none">Processing Fee (2.9%)</td><td style="padding:7px 14px;text-align:right;font-size:.85rem;border:none">$${fee.toFixed(2)}</td></tr>` : '';
-   const css = `body{font-family:'Helvetica Neue',Arial,sans-serif;padding:3rem;max-width:680px;margin:0 auto;color:#111;font-size:14px}
-h1{margin:0;font-family:Georgia,serif;font-size:1.8rem;letter-spacing:-.5px}
-.gold{color:#775a19}.sub{font-size:.78rem;color:#888}
-hr.thick{border:none;border-top:2px solid #111;margin:1.25rem 0}
-hr.thin{border:none;border-top:1px solid #eee;margin:.75rem 0}
-.detail-table{width:100%;border-collapse:collapse;margin:1.25rem 0}
-.detail-table td,.detail-table th{padding:8px 10px;font-size:.82rem;border-bottom:1px solid #f0f0f0;text-align:left}
-.detail-table th{color:#aaa;font-size:.6rem;text-transform:uppercase;letter-spacing:.08em;font-weight:600}
-.totals-wrap{display:flex;justify-content:flex-end;margin-top:1.5rem}
-.totals-box{min-width:260px;border:1px solid #e5e5e5}
-.totals-box tr td{padding:8px 16px;font-size:.85rem;border:none}
-.totals-box .lbl{color:#555}
-.totals-box .amt{text-align:right}
-.totals-box .divider td{border-top:2px solid #111!important;padding-top:10px}
-.totals-box .grand .lbl{font-weight:700;font-size:.95rem;text-transform:uppercase;letter-spacing:.04em}
-.totals-box .grand .amt{font-weight:700;font-size:1.1rem;color:#000}
-footer{margin-top:2.5rem;font-size:.7rem;color:#aaa;border-top:1px solid #eee;padding-top:1rem;text-align:center}
-@media print{body{padding:1rem}}`;
+   const today = new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+   const tripDate = t.date ? new Date(t.date+'T12:00:00').toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}) : '—';
+   const route = esc((t.pickup||'').split(',')[0])+' <span class="arr">→</span> '+esc((t.destination||'').split(',')[0]);
+   const rows =
+     '<tr><td class="c-date">'+tripDate+'</td><td class="c-conf">'+esc(t.code||'—')+'</td>'+
+     '<td class="c-svc"><div class="svc-name">'+esc(t.service||'Private Transfer')+'</div><div class="svc-route">'+route+'</div></td>'+
+     '<td class="c-amt">$'+base.toFixed(2)+'</td></tr>';
+   const totalsExtra =
+     (tip>0 ? '<div class="tot-row"><span class="tot-lbl">Gratuity</span><span class="tot-val">$'+tip.toFixed(2)+'</span></div>' : '')+
+     (isPaid ? '<div class="tot-row"><span class="tot-lbl">Processing Fee (2.9%)</span><span class="tot-val">$'+fee.toFixed(2)+'</span></div>' : '');
    const w=window.open('','_blank');
-   w.document.write(`<html><head><title>Receipt ${t.code||''}</title><style>${css}</style></head><body>`);
-   w.document.write(`<div style="display:flex;justify-content:space-between;align-items:flex-start"><div><h1>Seacoast <span class="gold">RVIP</span> LLC</h1><div class="sub" style="margin-top:3px">Premium Luxury Transportation</div></div><div style="text-align:right"><div style="font-size:1rem;font-weight:700;letter-spacing:.08em">RECEIPT</div><div style="font-size:.82rem;color:#555">${t.code||'—'}</div><div class="sub">${new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}</div></div></div>`);
-   w.document.write(`<hr class="thick">`);
-   w.document.write(`<div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin:1rem 0"><div><div class="sub" style="text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px">Passenger</div><div style="font-weight:600;font-size:.9rem">${t.name}</div>${t.phone?`<div class="sub">${t.phone}</div>`:''}</div><div><div class="sub" style="text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px">Trip Date</div><div style="font-weight:600;font-size:.9rem">${t.date}${t.time?' at '+t.time:''}</div><div class="sub">${t.service||''}</div></div></div>`);
-   w.document.write(`<hr class="thin">`);
-   w.document.write(`<table class="detail-table"><thead><tr><th>Trip Details</th><th></th></tr></thead><tbody><tr><td style="color:#888;width:38%">Pickup</td><td>${t.pickup||'—'}</td></tr><tr><td style="color:#888">Destination</td><td>${t.destination||'—'}</td></tr><tr><td style="color:#888">Vehicle</td><td>${t.vehicle||'Luxury Black Sedan/SUV'}</td></tr><tr><td style="color:#888">Status</td><td>${t.status||'—'}</td></tr></tbody></table>`);
-   w.document.write(`<div class="totals-wrap"><table class="totals-box"><tbody><tr><td class="lbl">Base Fare</td><td class="amt">$${base.toFixed(2)}</td></tr>${tipRow}${feeRow}<tr class="divider grand"><td class="lbl">Total Charged</td><td class="amt">$${totalAmt.toFixed(2)}</td></tr></tbody></table></div>`);
-   w.document.write(`<footer>Seacoast RVIP LLC &nbsp;·&nbsp; (978) 255-3140 &nbsp;·&nbsp; info@seacoastrvip.com &nbsp;·&nbsp; seacoastrvip.com</footer></body></html>`);
-   w.document.close(); w.print();
+   w.document.write('<html><head><title>Receipt '+esc(t.code||'')+'</title><style>'+stmtLuxuryCSS()+'</style></head><body><div class="sheet">');
+   w.document.write('<header class="stmt-hdr"><div class="wordmark">Seacoast <span class="gold">RVIP</span></div><div class="wordmark-sub">Premium Ground Transportation · Receipt</div></header>');
+   w.document.write('<section class="meta">'+
+     '<div class="meta-l"><div class="meta-lbl">Passenger</div><div class="meta-val">'+esc(t.name||currentUser.name||'—')+'</div>'+
+       (t.phone?'<div class="meta-sub">'+esc(t.phone)+'</div>':'')+
+     '</div>'+
+     '<div class="meta-r"><div class="meta-lbl">Receipt</div><div class="meta-val mono">'+esc(t.code||'—')+'</div>'+
+       '<div class="meta-sub">Issued '+today+'</div>'+
+       '<div class="meta-sub">Trip '+esc(tripDate)+(t.time?' · '+esc(t.time):'')+'</div>'+
+     '</div></section>');
+   w.document.write('<section class="items"><div class="items-hdr"><span>Date</span><span>Conf.</span><span>Service</span><span class="ta-r">Amount</span></div><table class="items-tbl"><tbody>'+rows+'</tbody></table></section>');
+   w.document.write('<section class="totals">'+
+     '<div class="tot-row"><span class="tot-lbl">Base Fare</span><span class="tot-val">$'+base.toFixed(2)+'</span></div>'+
+     totalsExtra+
+     '<div class="tot-row grand"><span class="tot-lbl">Total Charged</span><span class="tot-val">$'+totalAmt.toFixed(2)+'</span></div>'+
+   '</section>');
+   w.document.write('<footer class="stmt-ft"><div class="ft-line">Thank you for choosing Seacoast RVIP.</div><div class="ft-line">(978) 255-3140 &nbsp;·&nbsp; info@seacoastrvip.com &nbsp;·&nbsp; seacoastrvip.com</div></footer>');
+   w.document.write('</div></body></html>');
+   w.document.close();
+   setTimeout(function(){w.print();},250);
 }
 function generateStatement(){
    const m = parseInt(document.getElementById('stmt-month').value);
@@ -3045,35 +3094,44 @@ function generateStatement(){
    const paidTrips = filtered.filter(t => t.status==='Paid'||t.status==='Completed');
    const paidBase = paidTrips.reduce((s,t) => s + (parseFloat(t.price||0)), 0);
    const feeTotal = parseFloat((paidBase * 0.029).toFixed(2));
+   const grandTotal = total + tips + feeTotal;
+   const today = new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+   const invNum = 'RVIP-'+y+'-'+String(m+1).padStart(2,'0');
    const rows = filtered.map(t => {
      const base = parseFloat(t.price||0);
-     return `<tr><td>${t.date}</td><td>${t.code||''}</td><td>${t.service}</td><td style="text-align:right">$${base.toFixed(2)}</td><td>${t.status}</td></tr>`;
+     const d=new Date(t.date+'T12:00:00');
+     const ds=isNaN(d.getTime())?esc(t.date||'—'):d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+     const route = esc((t.pickup||'').split(',')[0])+' <span class="arr">→</span> '+esc((t.destination||'').split(',')[0]);
+     return '<tr>'+
+       '<td class="c-date">'+ds+'</td>'+
+       '<td class="c-conf">'+esc(t.code||'—')+'</td>'+
+       '<td class="c-svc"><div class="svc-name">'+esc(t.service||'Private Transfer')+'</div><div class="svc-route">'+route+'</div></td>'+
+       '<td class="c-amt">$'+base.toFixed(2)+'</td>'+
+     '</tr>';
    }).join('');
-   const grandTotal = total + tips + feeTotal;
-   const tipRow2 = tips > 0 ? `<tr><td style="padding:7px 16px;color:#555;border:none">Gratuity</td><td style="padding:7px 16px;text-align:right;border:none">$${tips.toFixed(2)}</td></tr>` : '';
-   const css2 = `body{font-family:'Helvetica Neue',Arial,sans-serif;padding:3rem;max-width:800px;margin:0 auto;color:#111;font-size:14px}
-h1{font-family:Georgia,serif;font-size:1.8rem;margin:0;letter-spacing:-.5px}.gold{color:#775a19}.sub{font-size:.78rem;color:#888}
-hr.thick{border:none;border-top:2px solid #111;margin:1.25rem 0}hr.thin{border:none;border-top:1px solid #eee;margin:.75rem 0}
-table.trips{width:100%;border-collapse:collapse;margin:1.25rem 0}
-table.trips th{padding:8px 10px;font-size:.6rem;text-transform:uppercase;letter-spacing:.08em;color:#aaa;border-bottom:2px solid #eee;text-align:left}
-table.trips td{padding:8px 10px;font-size:.82rem;border-bottom:1px solid #f3f3f3}
-.totals-wrap{display:flex;justify-content:flex-end;margin-top:1.75rem}
-.totals-box{min-width:280px;border:1px solid #e5e5e5}
-.totals-box td{padding:8px 16px;font-size:.85rem;border:none}
-.totals-box .amt{text-align:right}.totals-box .lbl{color:#555}
-.totals-box .divider td{border-top:2px solid #111!important;padding-top:10px}
-.totals-box .grand .lbl{font-weight:700;font-size:.95rem;text-transform:uppercase}
-.totals-box .grand .amt{font-weight:700;font-size:1.1rem}
-footer{margin-top:2.5rem;font-size:.7rem;color:#aaa;border-top:1px solid #eee;padding-top:1rem;text-align:center}
-@media print{body{padding:1rem}}`;
+   const tipRow = tips > 0 ? '<div class="tot-row"><span class="tot-lbl">Gratuity</span><span class="tot-val">$'+tips.toFixed(2)+'</span></div>' : '';
    const w=window.open('','_blank');
-   w.document.write(`<html><head><title>Statement ${mNames[m]} ${y}</title><style>${css2}</style></head><body>`);
-   w.document.write(`<div style="display:flex;justify-content:space-between;align-items:flex-start"><div><h1>Seacoast <span class="gold">RVIP</span> LLC</h1><div class="sub" style="margin-top:3px">Premium Luxury Transportation</div></div><div style="text-align:right"><div style="font-size:1rem;font-weight:700;letter-spacing:.08em">CLIENT STATEMENT</div><div class="sub" style="margin-top:2px">${mNames[m]} ${y}</div></div></div>`);
-   w.document.write(`<hr class="thick"><div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin:.75rem 0"><div><div class="sub" style="text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px">Client</div><div style="font-weight:600">${currentUser.name}</div></div><div><div class="sub" style="text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px">Generated</div><div style="font-weight:600">${new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}</div></div></div><hr class="thin">`);
-   w.document.write(`<table class="trips"><thead><tr><th>Date</th><th>Conf #</th><th>Service</th><th style="text-align:right">Amount</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table>`);
-   w.document.write(`<div class="totals-wrap"><table class="totals-box"><tbody><tr><td class="lbl">Subtotal</td><td class="amt">$${total.toFixed(2)}</td></tr>${tipRow2}<tr><td class="lbl">Processing Fee (2.9%)</td><td class="amt">$${feeTotal.toFixed(2)}</td></tr><tr class="divider grand"><td class="lbl">Grand Total</td><td class="amt">$${grandTotal.toFixed(2)}</td></tr></tbody></table></div>`);
-   w.document.write(`<footer>Seacoast RVIP LLC &nbsp;·&nbsp; (978) 255-3140 &nbsp;·&nbsp; info@seacoastrvip.com &nbsp;·&nbsp; seacoastrvip.com</footer></body></html>`);
-   w.document.close(); w.print();
+   w.document.write('<html><head><title>Statement '+esc(mNames[m])+' '+y+'</title><style>'+stmtLuxuryCSS()+'</style></head><body><div class="sheet">');
+   w.document.write('<header class="stmt-hdr"><div class="wordmark">Seacoast <span class="gold">RVIP</span></div><div class="wordmark-sub">Client Statement · '+esc(mNames[m])+' '+y+'</div></header>');
+   w.document.write('<section class="meta">'+
+     '<div class="meta-l"><div class="meta-lbl">Client</div><div class="meta-val">'+esc(currentUser.name||'—')+'</div>'+
+       (currentUser.email?'<div class="meta-sub">'+esc(currentUser.email)+'</div>':'')+
+     '</div>'+
+     '<div class="meta-r"><div class="meta-lbl">Statement</div><div class="meta-val mono">'+invNum+'</div>'+
+       '<div class="meta-sub">Issued '+today+'</div>'+
+       '<div class="meta-sub">Period '+esc(mNames[m])+' '+y+'</div>'+
+     '</div></section>');
+   w.document.write('<section class="items"><div class="items-hdr"><span>Date</span><span>Conf.</span><span>Service</span><span class="ta-r">Amount</span></div><table class="items-tbl"><tbody>'+rows+'</tbody></table></section>');
+   w.document.write('<section class="totals">'+
+     '<div class="tot-row"><span class="tot-lbl">Subtotal</span><span class="tot-val">$'+total.toFixed(2)+'</span></div>'+
+     tipRow+
+     '<div class="tot-row"><span class="tot-lbl">Processing Fee (2.9%)</span><span class="tot-val">$'+feeTotal.toFixed(2)+'</span></div>'+
+     '<div class="tot-row grand"><span class="tot-lbl">Grand Total</span><span class="tot-val">$'+grandTotal.toFixed(2)+'</span></div>'+
+   '</section>');
+   w.document.write('<footer class="stmt-ft"><div class="ft-line">Payable to Seacoast RVIP LLC.</div><div class="ft-line">(978) 255-3140 &nbsp;·&nbsp; info@seacoastrvip.com &nbsp;·&nbsp; seacoastrvip.com</div></footer>');
+   w.document.write('</div></body></html>');
+   w.document.close();
+   setTimeout(function(){w.print();},250);
 }
 
 // ─── FILTER TRIPS ───
