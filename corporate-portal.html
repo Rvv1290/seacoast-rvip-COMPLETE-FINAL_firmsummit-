@@ -407,7 +407,7 @@ var _sess = null;
               </button>
               <div id="dash-manage-card" style="display:none;text-align:right;margin-top:2px">
                 <span id="dash-card-info" style="font-family:Inter,sans-serif;font-size:0.68rem;color:#888;margin-right:8px"></span>
-                <span onclick="openCardModal(_accountBalance)" style="font-family:Inter,sans-serif;font-size:0.68rem;color:#775a19;cursor:pointer;font-weight:600;text-decoration:underline">Pay Now</span>
+                <span onclick="openCardModal(getDisplayBalance())" style="font-family:Inter,sans-serif;font-size:0.68rem;color:#775a19;cursor:pointer;font-weight:600;text-decoration:underline">Pay Now</span>
               </div>
             </div>
           </div>
@@ -1034,16 +1034,14 @@ function previousPeriodStart() {
   return new Date(now.getFullYear(), now.getMonth() - 1, 1);
 }
 
-// Outstanding balance = Completed (done, not yet paid) trips from the MOST RECENT closed
-// billing period only (last month for monthly, last 2 weeks for biweekly, last week for weekly).
-// Trips from any earlier unpaid period are NOT included here — they're considered past-due
-// and handled separately by admin. Scoped strictly to trips linked to this account via
-// corporateAccountId (not by email/company, which could accidentally include other accounts).
-// If admin manually set/cleared the balance more recently than the last period start,
-// that stored value is used instead (see renderDashBalance / calcStats).
+// Outstanding balance = ALL Completed (done, not yet paid) trips from every CLOSED
+// billing period (everything before the current open period).
+// This accumulates across months — if a client hasn't paid for 3 months, all 3 show.
+// Scoped strictly to trips linked to this account via corporateAccountId.
+// If admin manually set/cleared the balance more recently than the current period start,
+// that stored value is used instead (see renderDashBalance / getDisplayBalance).
 function calcPeriodBalance() {
-  var periodEnd   = currentPeriodStart();  // exclusive — start of the still-open period
-  var periodStart = previousPeriodStart(); // inclusive — start of the just-closed period
+  var cutoff = currentPeriodStart();  // exclusive — start of the still-open period
   var total = 0;
   // Only use corporateAccountId-matched trips — never fall back to _trips which
   // includes email/phone/company listeners that can pull in other accounts' bookings.
@@ -1051,8 +1049,7 @@ function calcPeriodBalance() {
     if (t.status !== 'Completed') return; // only rides that happened and haven't been paid
     var d = new Date((t.date || '') + 'T12:00:00');
     if (isNaN(d.getTime())) return;
-    if (d >= periodEnd)   return; // current (still-open) period — not due yet
-    if (d <  periodStart) return; // older than the just-closed period — not part of this balance
+    if (d >= cutoff) return; // current (still-open) period — not due yet
     var p = parseFloat((t.price + '').replace(/[^0-9.]/g, ''));
     var tip = parseFloat(t.tip) || 0;
     if (!isNaN(p)) total += p + tip;
@@ -1060,11 +1057,11 @@ function calcPeriodBalance() {
   return total;
 }
 
-// Which balance to display: if admin updated it after last period start, respect that;
-// otherwise calculate from all unpaid past-period trips.
+// Which balance to display: if admin updated it after the current period started, respect
+// the admin-set value; otherwise calculate from ALL unpaid closed-period trips.
 function getDisplayBalance() {
-  var prevStart = previousPeriodStart();
-  var manuallySet = _balanceUpdatedAt && new Date(_balanceUpdatedAt) >= prevStart;
+  var curStart = currentPeriodStart();
+  var manuallySet = _balanceUpdatedAt && new Date(_balanceUpdatedAt) >= curStart;
   return manuallySet ? _accountBalance : calcPeriodBalance();
 }
 
