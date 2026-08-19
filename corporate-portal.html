@@ -67,6 +67,19 @@ body{font-family:'Inter',sans-serif;background:#f7f7f7;color:#1a1c1c;min-height:
 .btn-book{background:#000;color:#fff;border:none;padding:0.9rem 1.75rem;font-family:'Work Sans',sans-serif;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.14em;cursor:pointer;transition:all 0.2s;text-decoration:none;display:inline-flex;align-items:center;gap:8px}
 .btn-book:hover{background:#775a19}
 .hidden-stats{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;pointer-events:none;visibility:hidden}
+/* ─── DASHBOARD PAY BLOCK ─── */
+.dash-pay-inner{padding:1.75rem 2rem;display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:1.5rem}
+.dash-pay-info{flex:1;min-width:200px}
+.dash-pay-label{font-family:'Work Sans',sans-serif;font-size:0.58rem;font-weight:700;text-transform:uppercase;letter-spacing:0.16em;color:#775a19;margin-bottom:8px}
+.dash-pay-amount{font-family:'Times New Roman',serif;font-size:2.4rem;font-weight:700;color:#000;line-height:1;letter-spacing:-0.01em}
+.dash-pay-hint{font-family:Inter,sans-serif;font-size:0.75rem;color:#999;margin-top:10px;max-width:32ch;line-height:1.5}
+.dash-pay-actions{display:flex;flex-direction:column;gap:0.65rem;align-items:flex-end}
+.dash-pay-btn-primary{display:inline-flex;align-items:center;justify-content:center;gap:0.5rem;background:#000;color:#fff;border:none;padding:0.85rem 1.75rem;font-family:'Work Sans',sans-serif;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.14em;cursor:pointer;transition:background 0.2s}
+.dash-pay-btn-primary:hover{background:#775a19}
+.dash-pay-btn-outline{display:inline-flex;align-items:center;justify-content:center;gap:0.5rem;background:transparent;color:#555;border:1px solid #ddd;padding:0.7rem 1.5rem;font-family:'Work Sans',sans-serif;font-size:0.65rem;font-weight:600;text-transform:uppercase;letter-spacing:0.12em;cursor:pointer;transition:all 0.2s}
+.dash-pay-btn-outline:hover{border-color:#775a19;color:#775a19}
+.dash-card-row{text-align:right}
+.dash-pay-footer{padding:0.875rem 2rem;border-top:1px solid #f5f5f5;display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;font-family:Inter,sans-serif;font-size:0.72rem;color:#aaa}
 /* ─── CONTENT ─── */
 .content{padding:2rem;flex:1}
 .tab-panel{display:none}
@@ -204,12 +217,35 @@ body{font-family:'Inter',sans-serif;background:#f7f7f7;color:#1a1c1c;min-height:
   .stat-row{grid-template-columns:repeat(2,1fr)}
   .book-grid{grid-template-columns:1fr}
   .book-full{grid-column:1}
-  .content{padding:1.25rem;padding-bottom:5rem}
+  .content{padding:1rem;padding-bottom:5rem}
   .mob-nav{display:flex;position:fixed;bottom:0;left:0;right:0;background:#000;z-index:40;border-top:2px solid #775a19;padding-bottom:env(safe-area-inset-bottom)}
   .mob-nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;padding:0.75rem 4px;cursor:pointer;color:rgba(255,255,255,0.45);transition:color 0.15s;border:none;background:none;font-family:'Work Sans',sans-serif;font-size:0.55rem;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;gap:4px}
   .mob-nav-btn .material-symbols-outlined{font-size:22px}
   .mob-nav-btn.on{color:#e8c97a}
-  
+
+  /* ─── MOBILE DASHBOARD REFINEMENT ─── */
+  .welcome-card{flex-direction:column;align-items:stretch;padding:1.5rem 1.25rem;gap:0;margin-bottom:0;border:none;border-bottom:1px solid #eee}
+  .welcome-eyebrow{font-size:0.52rem;letter-spacing:0.16em;color:#999;margin-bottom:6px}
+  .welcome-title{font-size:1.5rem;letter-spacing:-0.02em}
+  .welcome-meta{font-size:0.72rem;margin-top:6px}
+  .welcome-actions{margin-top:1.25rem;flex-direction:row;justify-content:space-between;align-items:center}
+  .welcome-balance{text-align:left}
+  .welcome-bal-lbl{font-size:0.5rem;letter-spacing:0.12em;margin-bottom:2px}
+  .welcome-bal-amt{font-size:1.15rem}
+  .btn-book{padding:0.75rem 1.5rem;font-size:0.62rem;letter-spacing:0.12em}
+
+  /* ─── MOBILE OUTSTANDING BALANCE BLOCK ─── */
+  .dash-pay-block{margin-bottom:1rem!important}
+  .dash-pay-inner{padding:1.25rem;flex-direction:column;gap:1.25rem}
+  .dash-pay-label{font-size:0.52rem;margin-bottom:4px}
+  .dash-pay-amount{font-size:1.8rem}
+  .dash-pay-hint{font-size:0.7rem;margin-top:8px;max-width:none}
+  .dash-pay-actions{align-items:stretch;width:100%;gap:0.5rem}
+  .dash-pay-btn-primary{width:100%;padding:0.8rem 1.25rem;font-size:0.65rem;justify-content:center}
+  .dash-pay-btn-outline{width:100%;padding:0.7rem 1.25rem;font-size:0.6rem;justify-content:center}
+  .dash-card-row{text-align:center;display:flex;align-items:center;justify-content:center;gap:6px}
+  .dash-pay-footer{padding:0.75rem 1.25rem;font-size:0.65rem;justify-content:center;text-align:center}
+
   /* Booking Refinement */
   .book-layout-wrap{display:block!important;margin:0!important;width:100%!important;min-height:auto!important}
   .book-card{padding:1.5rem!important;border-right:none!important;max-height:none!important}
@@ -388,30 +424,30 @@ var _sess = null;
       </div>
 
       <!-- Balance & Quick Pay (shown inline below welcome when balance > 0) -->
-      <div id="dash-pay-block" style="display:none;margin-bottom:2rem">
+      <div id="dash-pay-block" style="display:none;margin-bottom:1.5rem" class="dash-pay-block">
         <!-- Balance Due -->
-        <div id="dash-pay-due" style="display:none;background:#fff;border-top:1px solid #eee;border-bottom:1px solid #eee">
-          <div style="padding:1.75rem 2rem;display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:1.5rem">
-            <div>
-              <div style="font-family:'Work Sans',sans-serif;font-size:0.58rem;font-weight:700;text-transform:uppercase;letter-spacing:0.16em;color:#775a19;margin-bottom:8px">Outstanding Balance</div>
-              <div style="font-family:'Times New Roman',serif;font-size:2.4rem;font-weight:700;color:#000;line-height:1;letter-spacing:-0.01em" id="dash-bal-amt">$0.00</div>
-              <div style="font-family:Inter,sans-serif;font-size:0.75rem;color:#999;margin-top:10px;max-width:32ch;line-height:1.5" id="dash-bal-note">Settle securely below, or contact billing for wire &amp; ACH options.</div>
+        <div id="dash-pay-due" style="display:none;background:#fff;border-top:1px solid #eee;border-bottom:1px solid #eee" class="dash-pay-due">
+          <div class="dash-pay-inner">
+            <div class="dash-pay-info">
+              <div class="dash-pay-label">Outstanding Balance</div>
+              <div class="dash-pay-amount" id="dash-bal-amt">$0.00</div>
+              <div class="dash-pay-hint" id="dash-bal-note">Settle securely below, or contact billing for wire &amp; ACH options.</div>
             </div>
-            <div style="display:flex;flex-direction:column;gap:0.65rem;align-items:flex-end">
-              <button onclick="settleBalanceWithCard()" style="display:inline-flex;align-items:center;gap:0.5rem;background:#000;color:#fff;border:none;padding:0.85rem 1.75rem;font-family:'Work Sans',sans-serif;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.14em;cursor:pointer;transition:background 0.2s" onmouseover="this.style.background='#775a19'" onmouseout="this.style.background='#000'">
+            <div class="dash-pay-actions">
+              <button onclick="settleBalanceWithCard()" class="dash-pay-btn-primary">
                 <span class="material-symbols-outlined" style="font-size:16px">payments</span>
                 Pay with Card
               </button>
-              <button onclick="payVenmo()" style="display:inline-flex;align-items:center;gap:0.5rem;background:transparent;color:#555;border:1px solid #ddd;padding:0.7rem 1.5rem;font-family:'Work Sans',sans-serif;font-size:0.65rem;font-weight:600;text-transform:uppercase;letter-spacing:0.12em;cursor:pointer;transition:all 0.2s" onmouseover="this.style.borderColor='#775a19';this.style.color='#775a19'" onmouseout="this.style.borderColor='#ddd';this.style.color='#555'">
+              <button onclick="payVenmo()" class="dash-pay-btn-outline">
                 Pay via Venmo
               </button>
-              <div id="dash-manage-card" style="display:none;text-align:right;margin-top:2px">
+              <div id="dash-manage-card" style="display:none;margin-top:2px" class="dash-card-row">
                 <span id="dash-card-info" style="font-family:Inter,sans-serif;font-size:0.68rem;color:#888;margin-right:8px"></span>
                 <span onclick="openCardModal(getDisplayBalance())" style="font-family:Inter,sans-serif;font-size:0.68rem;color:#775a19;cursor:pointer;font-weight:600;text-decoration:underline">Pay Now</span>
               </div>
             </div>
           </div>
-          <div style="padding:0.875rem 2rem;border-top:1px solid #f5f5f5;display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;font-family:Inter,sans-serif;font-size:0.72rem;color:#aaa">
+          <div class="dash-pay-footer">
             <span>Wire · ACH · Check —</span>
             <a href="mailto:billing@seacoastrvip.com" style="color:#775a19;font-weight:600;text-decoration:none">billing@seacoastrvip.com</a>
             <span style="color:#ddd">·</span>
@@ -419,7 +455,7 @@ var _sess = null;
           </div>
         </div>
         <!-- Account Clear -->
-        <div id="dash-pay-clear" style="display:none;padding:1rem 2rem;border-top:1px solid #eee;border-bottom:1px solid #eee;align-items:center;gap:0.75rem;font-family:Inter,sans-serif;font-size:0.8rem;color:#666">
+        <div id="dash-pay-clear" style="display:none;padding:1rem 1.5rem;border-top:1px solid #eee;border-bottom:1px solid #eee;align-items:center;gap:0.75rem;font-family:Inter,sans-serif;font-size:0.8rem;color:#666">
           <span class="material-symbols-outlined" style="font-size:18px;color:#775a19">check_circle</span>
           Account is current — thank you for your prompt payment.
         </div>
