@@ -69,7 +69,7 @@
 
     .topbar {
       background: #fff;
-      border-bottom: 1px solid #e0e0e0;
+      border-bottom: 1px solid #eee;
       position: sticky;
       top: 0;
       z-index: 50
@@ -78,30 +78,87 @@
     .topbar-in {
       max-width: 1080px;
       margin: 0 auto;
-      padding: .875rem 1.5rem;
+      padding: .75rem 1.25rem;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: .75rem;
-      flex-wrap: wrap
+      gap: .5rem
     }
 
+    .admin-logo {
+      font-family: 'Times New Roman', serif;
+      font-size: 1.35rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+    }
+    .admin-sub {
+      font-size: .55rem;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: #bbb;
+      margin-top: 1px;
+    }
+    .admin-topbar-actions {
+      display: flex; gap: .375rem; align-items: center;
+    }
+    .admin-topbar-actions .btn { font-size: .68rem; padding: .5rem .875rem; }
+
+    /* ── Compact search strip ── */
+    .admin-search-bar {
+      background: #fafafa;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .admin-search-in {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: .5rem 1.25rem;
+      display: flex;
+      gap: .5rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .adm-search-input {
+      flex: 2; min-width: 140px; position: relative;
+    }
+    .adm-search-input input {
+      width: 100%; padding: .5rem .5rem .5rem 2rem;
+      border: 1px solid #e8e8e8; font-family: Inter, sans-serif;
+      font-size: .78rem; outline: none; background: #fff;
+      transition: border-color .15s;
+    }
+    .adm-search-input input:focus { border-color: #C9A84C; }
+    .adm-search-input .material-symbols-outlined {
+      position: absolute; left: 8px; top: 50%; transform: translateY(-50%);
+      font-size: 16px; color: #ccc;
+    }
+    .adm-filter-sel {
+      padding: .5rem .4rem; border: 1px solid #e8e8e8;
+      font-family: Inter, sans-serif; font-size: .75rem;
+      outline: none; background: #fff; cursor: pointer; color: #555;
+      min-width: 0; max-width: 140px;
+    }
+
+    /* ── Inline stats strip ── */
     .stats {
       background: #fff;
-      border-bottom: 1px solid #e0e0e0
+      border-bottom: 1px solid #eee;
     }
-
     .stats-in {
       max-width: 1080px;
       margin: 0 auto;
-      display: grid;
-      grid-template-columns: repeat(5, 1fr)
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: .5rem 1.25rem;
+      gap: 0;
     }
 
     .sbox {
-      padding: 1rem 1.25rem;
+      padding: .5rem .875rem;
       text-align: center;
-      border-right: 1px solid #e0e0e0
+      border-right: 1px solid #f0f0f0;
+      flex: 1;
     }
 
     .sbox:last-child {
@@ -109,18 +166,18 @@
     }
 
     .snum {
-      font-family: 'Times New Roman', serif;
-      font-size: 1.75rem;
+      font-family: 'Inter', sans-serif;
+      font-size: 1.05rem;
       font-weight: 700;
       line-height: 1
     }
 
     .slbl {
-      font-size: .58rem;
+      font-size: .5rem;
       text-transform: uppercase;
-      letter-spacing: .1em;
-      color: #999;
-      margin-top: 3px
+      letter-spacing: .08em;
+      color: #bbb;
+      margin-top: 2px
     }
 
     .wrap {
@@ -434,14 +491,15 @@
     }
 
     @media(max-width:640px) {
-      .stats-in {
-        grid-template-columns: repeat(3, 1fr)
-      }
-
-      .sbox:nth-child(4),
-      .sbox:nth-child(5) {
-        border-top: 1px solid #e0e0e0
-      }
+      .admin-logo { font-size: 1.2rem; }
+      .admin-topbar-actions .btn { font-size: .62rem; padding: .4rem .65rem; }
+      .admin-search-in { padding: .4rem .75rem; gap: .375rem; }
+      .adm-search-input input { font-size: .75rem; padding: .45rem .45rem .45rem 1.8rem; }
+      .adm-filter-sel { font-size: .7rem; padding: .45rem .3rem; max-width: 110px; }
+      .stats-in { padding: .375rem .75rem; flex-wrap: wrap; }
+      .sbox { padding: .375rem .5rem; min-width: 0; }
+      .snum { font-size: .88rem; }
+      .slbl { font-size: .45rem; letter-spacing: .06em; }
 
       .g2 {
         grid-template-columns: 1fr
@@ -782,79 +840,65 @@
   <!-- DASHBOARD -->
   <div id="pg-dash">
 
+    <!-- Top bar: logo + actions -->
     <div class="topbar">
       <div class="topbar-in">
         <div>
-          <div style="font-family:'Times New Roman',serif;font-size:1.05rem;font-weight:700">Seacoast RVIP</div>
-          <div style="font-size:.6rem;text-transform:uppercase;letter-spacing:.08em;color:#aaa">Admin · <span id="today-lbl"></span></div>
+          <div class="admin-logo">Seacoast RVIP</div>
+          <div class="admin-sub">Admin · <span id="today-lbl"></span></div>
         </div>
-        
-        <!-- Global Search & Filter Bar -->
-        <div style="display:flex;gap:0.5rem;flex:1;max-width:700px;margin:0 1rem;flex-wrap:wrap">
-          <div style="position:relative;flex:2;min-width:160px">
-            <span class="material-symbols-outlined" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:18px;color:#aaa">search</span>
-            <input type="text" id="admin-search" oninput="renderBks()" placeholder="Client name, phone, or code…" style="width:100%;padding:0.6rem 0.6rem 0.6rem 2.2rem;border:1.5px solid #eee;border-radius:4px;font-family:Inter,sans-serif;font-size:0.8rem;outline:none;transition:border-color 0.2s" onfocus="this.style.borderColor='#775a19'" onblur="this.style.borderColor='#eee'"/>
-          </div>
-          <select id="admin-filter-status" onchange="renderBks()" style="padding:0.6rem;border:1.5px solid #eee;border-radius:4px;font-family:Inter,sans-serif;font-size:0.8rem;outline:none;background:#fff;cursor:pointer;min-width:130px">
-            <option value="">All Statuses</option>
-            <option value="Pending">Pending</option>
-            <option value="Confirmed">Confirmed (Unpaid)</option>
-            <option value="Paid">Paid</option>
-            <option value="Completed">Completed</option>
-            <option value="Cancelled">Cancelled</option>
-          </select>
-          <select id="admin-filter-service" onchange="renderBks()" style="padding:0.6rem;border:1.5px solid #eee;border-radius:4px;font-family:Inter,sans-serif;font-size:0.8rem;outline:none;background:#fff;cursor:pointer;min-width:130px">
-            <option value="">All Ride Types</option>
-            <option value="Boston Logan">Airport — Boston Logan</option>
-            <option value="Manchester">Airport — Manchester MHT</option>
-            <option value="New York">New York Transfer</option>
-            <option value="Night Out">Night Out</option>
-            <option value="Concert">Concert / Live Event</option>
-            <option value="Casino">Casino Run</option>
-            <option value="Special Event">Special Event</option>
-            <option value="Medical">Medical Appointment</option>
-            <option value="Hotel">Hotel Transfer</option>
-            <option value="Multi-Stop">Multi-Stop</option>
-            <option value="Other">Other</option>
-          </select>
-          <select id="admin-filter-sort" onchange="renderBks()" style="padding:0.6rem;border:1.5px solid #eee;border-radius:4px;font-family:Inter,sans-serif;font-size:0.8rem;outline:none;background:#fff;cursor:pointer;min-width:120px">
-            <option value="upcoming">Upcoming First</option>
-            <option value="oldest">Oldest First</option>
-            <option value="name">Client Name A–Z</option>
-          </select>
-        </div>
-
-        <div style="display:flex;gap:.5rem;flex-wrap:wrap">
-          <button onclick="openAdd()" class="btn bk">
-            <span class="material-symbols-outlined" style="font-size:15px">add</span>New Booking
-          </button>
-          <button onclick="doLogout()" class="btn bo">Logout</button>
+        <div class="admin-topbar-actions">
+          <button onclick="openAdd()" class="btn bk"><span class="material-symbols-outlined" style="font-size:14px">add</span>New Booking</button>
+          <button onclick="doLogout()" class="btn bo" style="color:#bbb;border-color:#e0e0e0">Logout</button>
         </div>
       </div>
     </div>
 
+    <!-- Search & filters — compact strip -->
+    <div class="admin-search-bar">
+      <div class="admin-search-in">
+        <div class="adm-search-input">
+          <span class="material-symbols-outlined">search</span>
+          <input type="text" id="admin-search" oninput="renderBks()" placeholder="Search name, phone, code…"/>
+        </div>
+        <select id="admin-filter-status" onchange="renderBks()" class="adm-filter-sel">
+          <option value="">All Statuses</option>
+          <option value="Pending">Pending</option>
+          <option value="Confirmed">Confirmed</option>
+          <option value="Paid">Paid</option>
+          <option value="Completed">Completed</option>
+          <option value="Cancelled">Cancelled</option>
+        </select>
+        <select id="admin-filter-service" onchange="renderBks()" class="adm-filter-sel">
+          <option value="">All Types</option>
+          <option value="Boston Logan">Boston Logan</option>
+          <option value="Manchester">Manchester MHT</option>
+          <option value="New York">New York</option>
+          <option value="Night Out">Night Out</option>
+          <option value="Concert">Concert</option>
+          <option value="Casino">Casino</option>
+          <option value="Special Event">Special Event</option>
+          <option value="Medical">Medical</option>
+          <option value="Hotel">Hotel</option>
+          <option value="Multi-Stop">Multi-Stop</option>
+          <option value="Other">Other</option>
+        </select>
+        <select id="admin-filter-sort" onchange="renderBks()" class="adm-filter-sel">
+          <option value="upcoming">Upcoming</option>
+          <option value="oldest">Oldest</option>
+          <option value="name">Name A–Z</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Stats — single compact row -->
     <div class="stats">
       <div class="stats-in">
-        <div class="sbox">
-          <div id="s1" class="snum">0</div>
-          <div class="slbl">Total</div>
-        </div>
-        <div class="sbox">
-          <div id="s2" class="snum" style="color:#775a19">0</div>
-          <div class="slbl">Upcoming</div>
-        </div>
-        <div class="sbox">
-          <div id="s3" class="snum" style="color:#16a34a">$0</div>
-          <div class="slbl">Revenue</div>
-        </div>
-        <div class="sbox">
-          <div id="s4" class="snum" style="color:#d97706">0</div>
-          <div class="slbl">Awaiting Pay</div>
-        </div>
-        <div class="sbox">
-          <div id="s5" class="snum" style="color:#7c3aed">—</div>
-          <div class="slbl">Clients</div>
-        </div>
+        <div class="sbox"><div id="s1" class="snum">0</div><div class="slbl">Total</div></div>
+        <div class="sbox"><div id="s2" class="snum" style="color:#775a19">0</div><div class="slbl">Upcoming</div></div>
+        <div class="sbox"><div id="s3" class="snum" style="color:#16a34a">$0</div><div class="slbl">Revenue</div></div>
+        <div class="sbox"><div id="s4" class="snum" style="color:#d97706">0</div><div class="slbl">Awaiting</div></div>
+        <div class="sbox"><div id="s5" class="snum" style="color:#7c3aed">—</div><div class="slbl">Clients</div></div>
       </div>
     </div>
 
