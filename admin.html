@@ -187,15 +187,6 @@
     }
 
     /* ── Hamburger menu ── */
-    .nav-menu-bar {
-      display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 1rem; gap: 0.5rem;
-    }
-    .nav-current-label {
-      font-family: 'Work Sans', sans-serif; font-size: .72rem;
-      font-weight: 700; text-transform: uppercase; letter-spacing: .1em;
-      color: #555;
-    }
     .hamburger-btn {
       background: #111; border: none; color: #fff; width: 36px; height: 36px;
       cursor: pointer; display: flex; align-items: center; justify-content: center;
@@ -210,7 +201,7 @@
     }
     .nav-dropdown.open { display: block; }
     .nav-dropdown-panel {
-      position: absolute; top: 0; right: 0; width: 240px;
+      position: absolute; top: 0; right: 0; width: 220px;
       height: 100%; background: #111; padding: 1.5rem 0; overflow-y: auto;
       box-shadow: -4px 0 20px rgba(0,0,0,.3);
       animation: navSlideIn .2s ease-out;
@@ -732,6 +723,23 @@
       .corp-card-name { font-size: 0.88rem; }
     }
 
+    /* ── Settings section ── */
+    .settings-card {
+      background: #fff; border: 1px solid #ebebeb; padding: 1.25rem;
+      margin-bottom: 1rem;
+    }
+    .settings-card-title {
+      font-family: 'Work Sans', sans-serif; font-size: .7rem;
+      font-weight: 700; text-transform: uppercase; letter-spacing: .1em;
+      color: #555; margin-bottom: 1rem; display: flex; align-items: center; gap: 6px;
+    }
+    .settings-row { margin-bottom: 0.75rem; }
+    .settings-label {
+      display: block; font-size: .62rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .08em;
+      color: #aaa; margin-bottom: 4px; font-family: 'Work Sans', sans-serif;
+    }
+
     /* --- NEW FEATURES CSS --- */
     #pwd-icon {
       cursor: pointer;
@@ -872,55 +880,27 @@
   <!-- DASHBOARD -->
   <div id="pg-dash">
 
-    <!-- Top bar: logo + actions -->
+    <!-- Top bar: logo + search + hamburger -->
     <div class="topbar">
       <div class="topbar-in">
         <div>
           <div class="admin-logo">Seacoast RVIP</div>
           <div class="admin-sub">Admin · <span id="today-lbl"></span></div>
         </div>
-        <div class="admin-topbar-actions">
-          <button onclick="openAdd()" class="btn bk"><span class="material-symbols-outlined" style="font-size:14px">add</span>New Booking</button>
-          <button onclick="doLogout()" class="btn bo" style="color:#bbb;border-color:#e0e0e0">Logout</button>
+        <div class="adm-search-input" style="flex:1;max-width:400px;margin:0 0.75rem">
+          <span class="material-symbols-outlined">search</span>
+          <input type="text" id="admin-search" oninput="renderBks()" placeholder="Search client or company…"/>
         </div>
+        <button class="hamburger-btn" onclick="toggleNavMenu()">
+          <span class="material-symbols-outlined">menu</span>
+        </button>
       </div>
     </div>
-
-    <!-- Search & filters — compact strip -->
-    <div class="admin-search-bar">
-      <div class="admin-search-in">
-        <div class="adm-search-input">
-          <span class="material-symbols-outlined">search</span>
-          <input type="text" id="admin-search" oninput="renderBks()" placeholder="Search name, phone, code…"/>
-        </div>
-        <select id="admin-filter-status" onchange="renderBks()" class="adm-filter-sel">
-          <option value="">All Statuses</option>
-          <option value="Pending">Pending</option>
-          <option value="Confirmed">Confirmed</option>
-          <option value="Paid">Paid</option>
-          <option value="Completed">Completed</option>
-          <option value="Cancelled">Cancelled</option>
-        </select>
-        <select id="admin-filter-service" onchange="renderBks()" class="adm-filter-sel">
-          <option value="">All Types</option>
-          <option value="Boston Logan">Boston Logan</option>
-          <option value="Manchester">Manchester MHT</option>
-          <option value="New York">New York</option>
-          <option value="Night Out">Night Out</option>
-          <option value="Concert">Concert</option>
-          <option value="Casino">Casino</option>
-          <option value="Special Event">Special Event</option>
-          <option value="Medical">Medical</option>
-          <option value="Hotel">Hotel</option>
-          <option value="Multi-Stop">Multi-Stop</option>
-          <option value="Other">Other</option>
-        </select>
-        <select id="admin-filter-sort" onchange="renderBks()" class="adm-filter-sel">
-          <option value="upcoming">Upcoming</option>
-          <option value="oldest">Oldest</option>
-          <option value="name">Name A–Z</option>
-        </select>
-      </div>
+    <!-- hidden so filter JS doesn't break -->
+    <div style="display:none">
+      <select id="admin-filter-status"><option value=""></option></select>
+      <select id="admin-filter-service"><option value=""></option></select>
+      <select id="admin-filter-sort"><option value="upcoming"></option></select>
     </div>
 
     <!-- Stats — single compact row -->
@@ -934,30 +914,28 @@
     <!-- hidden so JS doesn't break -->
     <div style="display:none"><span id="s2">0</span><span id="s4">0</span></div>
 
-    <div class="wrap">
-      <!-- Nav bar: current section label + hamburger -->
-      <div class="nav-menu-bar">
-        <div class="nav-current-label" id="nav-current-label">All Rides</div>
-        <button class="hamburger-btn" onclick="toggleNavMenu()">
-          <span class="material-symbols-outlined">menu</span>
-        </button>
-      </div>
-
-      <!-- Slide-out navigation panel -->
-      <div class="nav-dropdown" id="nav-dropdown" onclick="if(event.target===this)closeNavMenu()">
-        <div class="nav-dropdown-panel">
-          <button class="nav-dropdown-close" onclick="closeNavMenu()">&times;</button>
-          <div class="nav-dropdown-title">Navigation</div>
-          <div class="tabs" style="display:block">
-            <button class="tab on" onclick="goTab('all',this)"><span class="material-symbols-outlined" style="font-size:16px">directions_car</span>All Rides</button>
-            <button class="tab" onclick="goTab('done',this)"><span class="material-symbols-outlined" style="font-size:16px">check_circle</span>Completed</button>
-            <button class="tab" onclick="goTab('calendar',this)"><span class="material-symbols-outlined" style="font-size:16px">calendar_month</span>Calendar</button>
-            <button class="tab" onclick="goTab('clients',this)"><span class="material-symbols-outlined" style="font-size:16px">people</span>Clients</button>
-            <button class="tab" onclick="goTab('corporate',this)"><span class="material-symbols-outlined" style="font-size:16px">business</span>Corporate</button>
-            <button class="tab" onclick="goTab('estimates',this)"><span class="material-symbols-outlined" style="font-size:16px">request_quote</span>Estimates</button>
-          </div>
+    <!-- Slide-out navigation panel (fixed, triggered from topbar) -->
+    <div class="nav-dropdown" id="nav-dropdown" onclick="if(event.target===this)closeNavMenu()">
+      <div class="nav-dropdown-panel">
+        <button class="nav-dropdown-close" onclick="closeNavMenu()">&times;</button>
+        <div class="nav-dropdown-title">Menu</div>
+        <div class="tabs" style="display:block">
+          <button class="tab on" onclick="goTab('all',this)"><span class="material-symbols-outlined" style="font-size:16px">directions_car</span>Rides</button>
+          <button class="tab" onclick="goTab('calendar',this)"><span class="material-symbols-outlined" style="font-size:16px">calendar_month</span>Calendar</button>
+          <button class="tab" onclick="goTab('clients',this)"><span class="material-symbols-outlined" style="font-size:16px">people</span>Clients</button>
+          <button class="tab" onclick="goTab('corporate',this)"><span class="material-symbols-outlined" style="font-size:16px">business</span>Corporate</button>
+          <button class="tab" onclick="goTab('estimates',this)"><span class="material-symbols-outlined" style="font-size:16px">request_quote</span>Estimates</button>
         </div>
+        <div style="border-top:1px solid #222;margin:1rem 0"></div>
+        <div class="nav-dropdown-title">Actions</div>
+        <button class="tab" onclick="closeNavMenu();openAdd()"><span class="material-symbols-outlined" style="font-size:16px">add_circle</span>New Booking</button>
+        <button class="tab" onclick="goTab('settings',this)"><span class="material-symbols-outlined" style="font-size:16px">settings</span>Settings</button>
+        <div style="border-top:1px solid #222;margin:1rem 0"></div>
+        <button class="tab" onclick="closeNavMenu();doLogout()" style="color:#ef4444"><span class="material-symbols-outlined" style="font-size:16px">logout</span>Logout</button>
       </div>
+    </div>
+
+    <div class="wrap">
 
       <div id="sec-all">
         <div id="bk-list"></div>
@@ -1354,6 +1332,74 @@
           </div>
         </div>
       </div>
+
+      <!-- SETTINGS SECTION -->
+      <div id="sec-settings" style="display:none">
+        <div style="font-family:'Times New Roman',serif;font-size:1.15rem;font-weight:700;margin-bottom:1.25rem">Settings</div>
+
+        <!-- Admin Account -->
+        <div class="settings-card">
+          <div class="settings-card-title"><span class="material-symbols-outlined" style="font-size:18px">person</span>Admin Account</div>
+          <div class="settings-row">
+            <label class="settings-label">Admin Name</label>
+            <input type="text" id="set-admin-name" class="cd-input" placeholder="Your name" style="width:100%"/>
+          </div>
+          <div class="settings-row">
+            <label class="settings-label">Email</label>
+            <input type="email" id="set-admin-email" class="cd-input" placeholder="admin@seacoastrvip.com" style="width:100%"/>
+          </div>
+          <div class="settings-row">
+            <label class="settings-label">Phone</label>
+            <input type="tel" id="set-admin-phone" class="cd-input" placeholder="(978) 255-3140" style="width:100%"/>
+          </div>
+          <button onclick="saveAdminInfo()" class="btn bk" style="margin-top:0.75rem;font-size:0.72rem">Save Info</button>
+        </div>
+
+        <!-- Change Password -->
+        <div class="settings-card">
+          <div class="settings-card-title"><span class="material-symbols-outlined" style="font-size:18px">lock</span>Change Password</div>
+          <div class="settings-row">
+            <label class="settings-label">Current Password</label>
+            <input type="password" id="set-cur-pwd" class="cd-input" placeholder="Current password" style="width:100%"/>
+          </div>
+          <div class="settings-row">
+            <label class="settings-label">New Password</label>
+            <input type="password" id="set-new-pwd" class="cd-input" placeholder="New password" style="width:100%"/>
+          </div>
+          <div class="settings-row">
+            <label class="settings-label">Confirm New Password</label>
+            <input type="password" id="set-confirm-pwd" class="cd-input" placeholder="Confirm new password" style="width:100%"/>
+          </div>
+          <button onclick="changeAdminPwd()" class="btn bk" style="margin-top:0.75rem;font-size:0.72rem">Update Password</button>
+        </div>
+
+        <!-- Business Settings -->
+        <div class="settings-card">
+          <div class="settings-card-title"><span class="material-symbols-outlined" style="font-size:18px">tune</span>Business Settings</div>
+          <div class="settings-row">
+            <label class="settings-label">Company Name</label>
+            <input type="text" id="set-company-name" class="cd-input" value="Seacoast RVIP" style="width:100%"/>
+          </div>
+          <div class="settings-row">
+            <label class="settings-label">Business Phone</label>
+            <input type="tel" id="set-biz-phone" class="cd-input" placeholder="(978) 255-3140" style="width:100%"/>
+          </div>
+          <div class="settings-row">
+            <label class="settings-label">Business Email</label>
+            <input type="email" id="set-biz-email" class="cd-input" placeholder="info@seacoastrvip.com" style="width:100%"/>
+          </div>
+          <div class="settings-row">
+            <label class="settings-label">Default Billing Cycle</label>
+            <select id="set-billing-cycle" class="cd-input" style="width:100%">
+              <option>Monthly</option>
+              <option>Biweekly</option>
+              <option>Weekly</option>
+            </select>
+          </div>
+          <button onclick="saveBizSettings()" class="btn bk" style="margin-top:0.75rem;font-size:0.72rem">Save Settings</button>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -2277,9 +2323,9 @@
     }
 
     var _tabLabels = {
-      'all': 'All Rides', 'done': 'Completed', 'calendar': 'Calendar',
+      'all': 'Rides', 'done': 'Completed', 'calendar': 'Calendar',
       'clients': 'Clients', 'corporate': 'Corporate', 'estimates': 'Estimates',
-      'messages': 'Messages', 'compliance': 'Compliance'
+      'messages': 'Messages', 'compliance': 'Compliance', 'settings': 'Settings'
     };
 
     function goTab(tab, btn) {
@@ -2291,7 +2337,7 @@
       if (lbl) lbl.textContent = _tabLabels[tab] || tab;
       // Close the menu
       closeNavMenu();
-      ['sec-all', 'sec-clients', 'sec-messages', 'sec-compliance', 'sec-driver', 'sec-corporate', 'sec-calendar', 'sec-estimates'].forEach(function (id) {
+      ['sec-all', 'sec-clients', 'sec-messages', 'sec-compliance', 'sec-driver', 'sec-corporate', 'sec-calendar', 'sec-estimates', 'sec-settings'].forEach(function (id) {
         var el = document.getElementById(id);
         if (el) el.style.display = 'none';
       });
@@ -2302,6 +2348,7 @@
       else if (tab === 'corporate') { document.getElementById('sec-corporate').style.display = 'block'; loadCorporate(); }
       else if (tab === 'calendar') { document.getElementById('sec-calendar').style.display = 'block'; buildAdminCal(); }
       else if (tab === 'estimates') { document.getElementById('sec-estimates').style.display = 'block'; loadEstimates(); }
+      else if (tab === 'settings') { document.getElementById('sec-settings').style.display = 'block'; loadAdminSettings(); }
       else { document.getElementById('sec-all').style.display = 'block'; renderBks(); }
     }
 
@@ -5334,6 +5381,74 @@
         setTimeout(function () { document.getElementById('pwd').focus(); }, 100);
       }
     });
+
+    // ── Settings Functions ──
+    function loadAdminSettings() {
+      if (!db) return;
+      db.collection('admin_settings').doc('main').get().then(function(doc) {
+        if (!doc.exists) return;
+        var d = doc.data();
+        if (d.adminName) document.getElementById('set-admin-name').value = d.adminName;
+        if (d.adminEmail) document.getElementById('set-admin-email').value = d.adminEmail;
+        if (d.adminPhone) document.getElementById('set-admin-phone').value = d.adminPhone;
+        if (d.companyName) document.getElementById('set-company-name').value = d.companyName;
+        if (d.bizPhone) document.getElementById('set-biz-phone').value = d.bizPhone;
+        if (d.bizEmail) document.getElementById('set-biz-email').value = d.bizEmail;
+        if (d.defaultBillingCycle) document.getElementById('set-billing-cycle').value = d.defaultBillingCycle;
+      }).catch(function(e) { console.warn('Settings load:', e.message); });
+    }
+
+    function saveAdminInfo() {
+      if (!db) { toast('Not connected to database'); return; }
+      var data = {
+        adminName: document.getElementById('set-admin-name').value.trim(),
+        adminEmail: document.getElementById('set-admin-email').value.trim(),
+        adminPhone: document.getElementById('set-admin-phone').value.trim(),
+        updatedAt: new Date().toISOString()
+      };
+      db.collection('admin_settings').doc('main').set(data, { merge: true }).then(function() {
+        toast('✅ Admin info saved');
+      }).catch(function(e) { toast('Error: ' + e.message); });
+    }
+
+    function changeAdminPwd() {
+      var cur = document.getElementById('set-cur-pwd').value;
+      var nw = document.getElementById('set-new-pwd').value;
+      var confirm = document.getElementById('set-confirm-pwd').value;
+      if (!cur || !nw) { toast('Fill in all password fields'); return; }
+      if (nw !== confirm) { toast('New passwords do not match'); return; }
+      if (nw.length < 6) { toast('Password must be at least 6 characters'); return; }
+      if (!db) { toast('Not connected'); return; }
+      // Verify current password
+      db.collection('admin_settings').doc('main').get().then(function(doc) {
+        var stored = doc.exists ? doc.data().adminPassword : null;
+        if (stored && stored !== cur) { toast('Current password is wrong'); return; }
+        return db.collection('admin_settings').doc('main').set({
+          adminPassword: nw, updatedAt: new Date().toISOString()
+        }, { merge: true });
+      }).then(function() {
+        if (arguments[0] !== undefined) {
+          toast('✅ Password updated');
+          document.getElementById('set-cur-pwd').value = '';
+          document.getElementById('set-new-pwd').value = '';
+          document.getElementById('set-confirm-pwd').value = '';
+        }
+      }).catch(function(e) { toast('Error: ' + e.message); });
+    }
+
+    function saveBizSettings() {
+      if (!db) { toast('Not connected'); return; }
+      var data = {
+        companyName: document.getElementById('set-company-name').value.trim(),
+        bizPhone: document.getElementById('set-biz-phone').value.trim(),
+        bizEmail: document.getElementById('set-biz-email').value.trim(),
+        defaultBillingCycle: document.getElementById('set-billing-cycle').value,
+        updatedAt: new Date().toISOString()
+      };
+      db.collection('admin_settings').doc('main').set(data, { merge: true }).then(function() {
+        toast('✅ Business settings saved');
+      }).catch(function(e) { toast('Error: ' + e.message); });
+    }
   </script>
 
   <!-- MODAL ADD DRIVER REMOVED (Handled via driver-portal.html) -->
