@@ -1065,25 +1065,53 @@ function getDisplayBalance() {
   return Math.max(_accountBalance, tripBal);
 }
 
-// After a successful payment, mark all closed-period trips as Paid so the balance reads $0.
-async function markPastPeriodTripsAsPaid() {
+// After a successful payment, mark closed-period trips as Paid ONLY up to the paid amount.
+// Oldest trips first — if client owed 2 months but paid 1 month, only the oldest month's
+// trips are marked Paid; the newer unpaid month stays as outstanding.
+async function markPastPeriodTripsAsPaid(paidAmount) {
   if (!db || !sess || !sess.accountId) return;
   var cutoff = currentPeriodStart();
   try {
     var snap = await db.collection('bookings')
       .where('corporateAccountId', '==', sess.accountId)
       .get();
-    var batch = db.batch();
-    var count = 0;
+    // Collect eligible trips
+    var eligible = [];
     snap.forEach(function(d) {
       var t = d.data();
       if (t.status === 'Cancelled' || t.status === 'Paid') return;
       var tripDate = new Date((t.date || '') + 'T12:00:00');
       if (isNaN(tripDate.getTime()) || tripDate >= cutoff) return;
-      batch.update(d.ref, { status: 'Paid', balanceAdded: false, updatedAt: new Date().toISOString() });
-      count++;
+      var p = parseFloat((t.price + '').replace(/[^0-9.]/g, '')) || 0;
+      var tip = parseFloat(t.tip) || 0;
+      eligible.push({ ref: d.ref, date: tripDate, amount: p + tip });
     });
+    // Sort oldest first so we pay off the earliest debts first
+    eligible.sort(function(a, b) { return a.date - b.date; });
+    var batch = db.batch();
+    var count = 0;
+    var remaining = parseFloat(paidAmount) || Infinity; // if no amount passed, mark all
+    for (var i = 0; i < eligible.length; i++) {
+      if (remaining <= 0) break;
+      batch.update(eligible[i].ref, { status: 'Paid', balanceAdded: false, updatedAt: new Date().toISOString() });
+      remaining -= eligible[i].amount;
+      count++;
+    }
     if (count > 0) await batch.commit();
+
+    // Update balance to whatever remains unpaid
+    var newBalance = 0;
+    for (var j = count; j < eligible.length; j++) {
+      newBalance += eligible[j].amount;
+    }
+    if (db && sess.accountId) {
+      await db.collection('corporate_accounts').doc(sess.accountId).update({
+        balance: newBalance,
+        balanceUpdatedAt: new Date().toISOString(),
+        lastPaymentDate: new Date().toISOString(),
+        lastPaymentAmount: paidAmount || 0
+      }).catch(function(){});
+    }
   } catch(e) { console.warn('markPastPeriodTripsAsPaid:', e.message); }
 }
 
@@ -1388,10 +1416,11 @@ async function payWithCorpSavedCard() {
   try {
     var res = await funcs.httpsCallable('chargeSavedCard')({ accountId: sess.accountId, amount: _corpPayAmt });
     if (res.data && res.data.success) {
-      // Mark all past-period trips as Paid so calcPeriodBalance() returns $0
-      await markPastPeriodTripsAsPaid();
-      // Immediately zero balance in memory so stat card + banner update without waiting for onSnapshot
-      _accountBalance = 0;
+      // Mark trips as Paid only up to the amount actually paid (oldest first)
+      await markPastPeriodTripsAsPaid(_corpPayAmt);
+      // Update balance in memory — markPastPeriodTripsAsPaid already set the correct
+      // remaining balance in Firestore; onSnapshot will sync, but update now for instant UI
+      _accountBalance = Math.max(0, getDisplayBalance() - _corpPayAmt);
       renderDashBalance();
       if (typeof calcStats === 'function') calcStats();
       document.getElementById('corp-pay-success').style.display        = 'block';
@@ -1459,20 +1488,12 @@ async function corpSubmitPayment() {
       } catch(e) { console.warn('Could not save card:', e.message); }
     }
 
-    // Zero balance in Firestore
-    if (db && sess.accountId) {
-      await db.collection('corporate_accounts').doc(sess.accountId).update({
-        balance: 0,
-        lastPaymentDate: new Date().toISOString(),
-        lastPaymentAmount: _corpPayAmt
-      }).catch(function(){});
-    }
+    // Mark trips as Paid only up to the amount actually paid (oldest first)
+    // This also updates the balance in Firestore to whatever remains unpaid
+    await markPastPeriodTripsAsPaid(_corpPayAmt);
 
-    // Mark all past-period trips as Paid so calcPeriodBalance() returns $0
-    await markPastPeriodTripsAsPaid();
-
-    // Immediately zero balance in memory so stat card + banner update without waiting for onSnapshot
-    _accountBalance = 0;
+    // Update balance in memory for instant UI — onSnapshot will sync the exact number
+    _accountBalance = Math.max(0, getDisplayBalance() - _corpPayAmt);
     renderDashBalance();
     if (typeof calcStats === 'function') calcStats();
 

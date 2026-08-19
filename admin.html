@@ -4317,7 +4317,10 @@
         balanceNote: note,
         balanceUpdatedAt: new Date().toISOString()
       }).then(function(){
-        alert('Balance updated to $' + amt.toFixed(2));
+        // Update local state and stat card immediately
+        if (_cdAcc) _cdAcc.balance = amt;
+        document.getElementById('cd-stat-bal').textContent = '$' + amt.toFixed(2);
+        toast('✅ Balance updated to $' + amt.toFixed(2));
       }).catch(function(e){ alert('Error: ' + e.message); });
     }
 
