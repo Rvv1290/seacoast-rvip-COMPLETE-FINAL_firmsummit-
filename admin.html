@@ -1373,31 +1373,6 @@
           <button onclick="changeAdminPwd()" class="btn bk" style="margin-top:0.75rem;font-size:0.72rem">Update Password</button>
         </div>
 
-        <!-- Business Settings -->
-        <div class="settings-card">
-          <div class="settings-card-title"><span class="material-symbols-outlined" style="font-size:18px">tune</span>Business Settings</div>
-          <div class="settings-row">
-            <label class="settings-label">Company Name</label>
-            <input type="text" id="set-company-name" class="cd-input" value="Seacoast RVIP" style="width:100%"/>
-          </div>
-          <div class="settings-row">
-            <label class="settings-label">Business Phone</label>
-            <input type="tel" id="set-biz-phone" class="cd-input" placeholder="(978) 255-3140" style="width:100%"/>
-          </div>
-          <div class="settings-row">
-            <label class="settings-label">Business Email</label>
-            <input type="email" id="set-biz-email" class="cd-input" placeholder="info@seacoastrvip.com" style="width:100%"/>
-          </div>
-          <div class="settings-row">
-            <label class="settings-label">Default Billing Cycle</label>
-            <select id="set-billing-cycle" class="cd-input" style="width:100%">
-              <option>Monthly</option>
-              <option>Biweekly</option>
-              <option>Weekly</option>
-            </select>
-          </div>
-          <button onclick="saveBizSettings()" class="btn bk" style="margin-top:0.75rem;font-size:0.72rem">Save Settings</button>
-        </div>
       </div>
 
     </div>
@@ -5391,10 +5366,6 @@
         if (d.adminName) document.getElementById('set-admin-name').value = d.adminName;
         if (d.adminEmail) document.getElementById('set-admin-email').value = d.adminEmail;
         if (d.adminPhone) document.getElementById('set-admin-phone').value = d.adminPhone;
-        if (d.companyName) document.getElementById('set-company-name').value = d.companyName;
-        if (d.bizPhone) document.getElementById('set-biz-phone').value = d.bizPhone;
-        if (d.bizEmail) document.getElementById('set-biz-email').value = d.bizEmail;
-        if (d.defaultBillingCycle) document.getElementById('set-billing-cycle').value = d.defaultBillingCycle;
       }).catch(function(e) { console.warn('Settings load:', e.message); });
     }
 
@@ -5436,19 +5407,6 @@
       }).catch(function(e) { toast('Error: ' + e.message); });
     }
 
-    function saveBizSettings() {
-      if (!db) { toast('Not connected'); return; }
-      var data = {
-        companyName: document.getElementById('set-company-name').value.trim(),
-        bizPhone: document.getElementById('set-biz-phone').value.trim(),
-        bizEmail: document.getElementById('set-biz-email').value.trim(),
-        defaultBillingCycle: document.getElementById('set-billing-cycle').value,
-        updatedAt: new Date().toISOString()
-      };
-      db.collection('admin_settings').doc('main').set(data, { merge: true }).then(function() {
-        toast('✅ Business settings saved');
-      }).catch(function(e) { toast('Error: ' + e.message); });
-    }
   </script>
 
   <!-- MODAL ADD DRIVER REMOVED (Handled via driver-portal.html) -->

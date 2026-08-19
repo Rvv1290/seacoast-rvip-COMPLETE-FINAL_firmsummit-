@@ -96,6 +96,14 @@ service cloud.firestore {
       allow read, write: if true;
     }
 
+    match /admin_settings/{docId} {
+      allow read, write: if true;
+    }
+
+    match /estimates/{docId} {
+      allow read, write: if true;
+    }
+
     match /mail/{mailId} {
       allow read:   if false;
       allow create: if true;
