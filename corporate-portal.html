@@ -1057,12 +1057,12 @@ function calcPeriodBalance() {
   return total;
 }
 
-// Which balance to display: if admin updated it after the current period started, respect
-// the admin-set value; otherwise calculate from ALL unpaid closed-period trips.
+// Which balance to display: use the higher of the stored account balance (set by admin
+// or auto-synced) and the calculated trip balance. This ensures newly closed cycles
+// are always reflected even before admin opens the account.
 function getDisplayBalance() {
-  var curStart = currentPeriodStart();
-  var manuallySet = _balanceUpdatedAt && new Date(_balanceUpdatedAt) >= curStart;
-  return manuallySet ? _accountBalance : calcPeriodBalance();
+  var tripBal = calcPeriodBalance();
+  return Math.max(_accountBalance, tripBal);
 }
 
 // After a successful payment, mark all closed-period trips as Paid so the balance reads $0.

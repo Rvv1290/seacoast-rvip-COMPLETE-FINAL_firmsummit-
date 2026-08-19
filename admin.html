@@ -4066,6 +4066,10 @@
         var bonus = doc.exists ? (doc.data().bonusPoints||0) : 0;
         document.getElementById('cd-bonus-display').textContent = bonus;
         document.getElementById('cd-bonus-input').value = '';
+        // Pre-populate balance input and stat with THIS account's stored balance
+        var storedBal = doc.exists ? (doc.data().balance||0) : 0;
+        document.getElementById('cd-balance-input').value = storedBal > 0 ? storedBal.toFixed(2) : '';
+        document.getElementById('cd-stat-bal').textContent = '$' + storedBal.toFixed(2);
         loadCdTrips(_cdAcc, bonus);
       }).catch(function(){ loadCdTrips(a, 0); });
     }
@@ -4172,7 +4176,7 @@
         var p=(parseFloat((t.price+'').replace(/[^0-9.]/g,''))||0) + (parseFloat(t.tip)||0);
         if(t.status==='Completed'||t.status==='Paid'){ completed++; revenue+=p; }
         else if(t.status!=='Cancelled'){ pending++; }
-        // Outstanding = Completed (done, not yet paid) trips in CLOSED billing periods only
+        // Outstanding = Completed (done, not yet paid) trips in ALL CLOSED billing periods
         if(t.status==='Completed'){
           var td=new Date((t.date||'')+'T12:00:00');
           if(!isNaN(td.getTime())&&td<periodStart) outstandingBal+=p;
@@ -4182,7 +4186,24 @@
       document.getElementById('cd-stat-done').textContent  = completed;
       document.getElementById('cd-stat-pend').textContent  = pending;
       document.getElementById('cd-stat-rev').textContent   = '$'+revenue.toFixed(2);
-      document.getElementById('cd-stat-bal').textContent   = '$'+outstandingBal.toFixed(2);
+
+      // Auto-sync: if trip-calculated outstanding > stored balance, a new cycle closed
+      // with unpaid trips — auto-update the account's balance field to include them.
+      var storedBal = (_cdAcc && _cdAcc.balance) || 0;
+      var displayBal = Math.max(storedBal, outstandingBal);
+      document.getElementById('cd-stat-bal').textContent = '$'+displayBal.toFixed(2);
+      // Update balance input to show current effective balance
+      document.getElementById('cd-balance-input').value = displayBal > 0 ? displayBal.toFixed(2) : '';
+
+      // If calculated outstanding exceeds stored balance, auto-update Firestore
+      if (outstandingBal > storedBal && _cdCorpId && db) {
+        db.collection('corporate_accounts').doc(_cdCorpId).update({
+          balance: outstandingBal,
+          balanceUpdatedAt: new Date().toISOString()
+        }).then(function(){
+          if (_cdAcc) _cdAcc.balance = outstandingBal;
+        }).catch(function(err){ console.warn('Auto-sync balance:', err.message); });
+      }
 
       // Rewards
       var pts = completed + bonusPoints;
