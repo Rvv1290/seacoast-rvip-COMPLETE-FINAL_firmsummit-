@@ -474,27 +474,172 @@
         margin: 0 auto;
       }
 
-      /* ── Corporate detail modal: full-screen on mobile ── */
-      #corp-detail-modal > div {
-        width: 100% !important;
-        margin: 0 !important;
-        min-height: 100vh;
-        border-radius: 0;
-      }
-      #corp-detail-modal > div > div:nth-child(2) {
-        padding: 1rem !important;
-      }
-      #corp-detail-modal .corp-stats-grid {
-        grid-template-columns: repeat(3, 1fr) !important;
-        overflow-x: auto;
-      }
-
       /* ── Corp member modal: fit screen ── */
       #corp-member-modal > div {
         width: 96% !important;
         max-width: 96% !important;
         padding: 1.25rem !important;
       }
+    }
+
+    /* ── Corporate Section — Modern Minimal ── */
+    .corp-section-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem;
+    }
+    .corp-card {
+      background: #fff; border: 1px solid #ebebeb; padding: 1rem 1.25rem;
+      margin-bottom: 0.625rem; display: flex; align-items: center;
+      justify-content: space-between; gap: 1rem; cursor: pointer;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    .corp-card:hover { border-color: #C9A84C; box-shadow: 0 1px 6px rgba(0,0,0,.06); }
+    .corp-card-name {
+      font-family: 'Times New Roman', serif; font-size: 0.95rem;
+      font-weight: 700; color: #111; white-space: nowrap;
+      overflow: hidden; text-overflow: ellipsis;
+    }
+    .corp-card-meta {
+      display: flex; align-items: center; gap: 0.5rem;
+      flex-shrink: 0; font-size: 0.72rem;
+    }
+    .corp-card-badge {
+      padding: 2px 10px; border-radius: 20px; font-weight: 700;
+      font-family: 'Work Sans', sans-serif; text-transform: uppercase;
+      letter-spacing: 0.06em; font-size: 0.65rem;
+    }
+    .corp-card-billing {
+      color: #999; font-size: 0.7rem; margin-top: 2px;
+    }
+    .corp-card-members {
+      color: #888; font-size: 0.68rem; font-weight: 600;
+    }
+
+    /* ── Detail Modal — Clean ── */
+    .cd-modal-inner {
+      background: #fff; max-width: 840px; width: 94%; margin: 2.5rem auto;
+      position: relative; box-shadow: 0 8px 40px rgba(0,0,0,.15);
+    }
+    .cd-modal-header {
+      background: #111; color: #fff; padding: 1.5rem 1.75rem;
+      display: flex; align-items: flex-start; justify-content: space-between;
+      gap: 1rem; border-left: 4px solid #C9A84C;
+    }
+    .cd-close-btn {
+      background: rgba(255,255,255,.08); border: none; color: #fff;
+      width: 32px; height: 32px; cursor: pointer; font-size: 1.2rem;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+      transition: background .15s;
+    }
+    .cd-close-btn:hover { background: rgba(255,255,255,.2); }
+    .cd-badge {
+      padding: 3px 10px; border-radius: 20px; font-size: 0.68rem;
+      font-weight: 700; font-family: 'Work Sans', sans-serif;
+      text-transform: uppercase; letter-spacing: 0.06em;
+    }
+    .cd-modal-body { padding: 1.5rem 1.75rem; }
+
+    .cd-info-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 0.875rem; margin-bottom: 1.5rem; font-size: 0.82rem;
+    }
+    .cd-info-label {
+      font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.1em;
+      color: #aaa; margin-bottom: 2px; font-family: 'Work Sans', sans-serif; font-weight: 600;
+    }
+    .cd-info-link { color: #111; font-weight: 600; text-decoration: none; }
+
+    .cd-stats-row {
+      display: grid; grid-template-columns: repeat(5, 1fr);
+      gap: 0.5rem; margin-bottom: 1.5rem;
+    }
+    .cd-stat-card {
+      background: #fafafa; text-align: center; padding: 0.75rem 0.5rem;
+      border-bottom: 2px solid #e0e0e0;
+    }
+    .cd-stat-num { font-size: 1.2rem; font-weight: 700; }
+    .cd-stat-label { font-size: 0.6rem; color: #999; margin-top: 2px; text-transform: uppercase; letter-spacing: 0.06em; }
+
+    .cd-actions-section {
+      margin-bottom: 1.25rem; padding-bottom: 1.25rem;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .cd-section-label {
+      font-family: 'Work Sans', sans-serif; font-size: 0.58rem;
+      font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em;
+      color: #aaa; margin-bottom: 0.5rem;
+    }
+    .cd-section { margin-bottom: 1.5rem; padding-bottom: 1.25rem; border-bottom: 1px solid #f5f5f5; }
+    .cd-section-title { font-family: 'Times New Roman', serif; font-size: 0.95rem; font-weight: 700; margin-bottom: 0.75rem; }
+
+    .cd-rewards-row {
+      display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;
+    }
+    .cd-reward-box {
+      background: #fafafa; padding: 0.7rem 1rem; min-width: 80px;
+      border-bottom: 2px solid #e0e0e0; text-align: center;
+    }
+    .cd-reward-val { font-size: 1.1rem; font-weight: 700; }
+    .cd-reward-lbl { font-size: 0.6rem; color: #999; margin-top: 1px; }
+
+    .cd-input {
+      padding: 0.45rem 0.6rem; border: 1px solid #e0e0e0;
+      font-family: Inter, sans-serif; font-size: 0.82rem; outline: none;
+      transition: border-color .15s;
+    }
+    .cd-input:focus { border-color: #C9A84C; }
+
+    .cd-balance-row {
+      margin-top: 1rem; padding-top: 0.875rem; border-top: 1px solid #f0f0f0;
+    }
+    .cd-balance-controls {
+      display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem;
+    }
+    .cd-bal-btn {
+      border: none; padding: 0.45rem 0.875rem; font-family: 'Work Sans', sans-serif;
+      font-size: 0.65rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.06em; cursor: pointer; transition: opacity .15s;
+    }
+    .cd-bal-btn:hover { opacity: .8; }
+    .cd-bal-update { background: #111; color: #fff; border-bottom: 2px solid #C9A84C; }
+    .cd-bal-clear { background: transparent; color: #22c55e; border: 1px solid #22c55e; }
+    .cd-bal-auto { background: transparent; color: #999; border: 1px solid #ddd; }
+
+    .cd-trips-tbl { width: 100%; border-collapse: collapse; }
+    .cd-trips-tbl th {
+      padding: 0.5rem 0.75rem; text-align: left;
+      font-family: 'Work Sans', sans-serif; font-size: 0.58rem;
+      font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
+      color: #bbb; border-bottom: 1px solid #f0f0f0;
+    }
+
+    .cd-danger-zone {
+      text-align: right; padding-top: 1rem; margin-top: 0.5rem;
+    }
+    .cd-delete-btn {
+      background: none; border: none; color: #ccc; font-family: 'Work Sans', sans-serif;
+      font-size: 0.65rem; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.06em; cursor: pointer; display: inline-flex;
+      align-items: center; gap: 4px; padding: 0.4rem 0.75rem;
+      transition: color .15s;
+    }
+    .cd-delete-btn:hover { color: #ef4444; }
+
+    /* ── Corporate mobile overrides ── */
+    @media(max-width:640px) {
+      .cd-modal-inner { width: 100% !important; margin: 0 !important; min-height: 100vh; }
+      .cd-modal-header { padding: 1.25rem 1rem; }
+      .cd-modal-body { padding: 1rem; }
+      .cd-info-grid { grid-template-columns: 1fr 1fr; gap: 0.625rem; }
+      .cd-stats-row { grid-template-columns: repeat(3, 1fr) !important; }
+      .cd-stat-card { padding: 0.6rem 0.25rem; }
+      .cd-stat-num { font-size: 1rem; }
+      .cd-rewards-row { gap: 0.5rem; }
+      .cd-reward-box { min-width: 60px; padding: 0.5rem 0.75rem; }
+      .cd-balance-controls { gap: 0.375rem; }
+      .cd-bal-btn { padding: 0.4rem 0.6rem; font-size: 0.6rem; }
+      .corp-card { padding: 0.875rem 1rem; }
+      .corp-card-name { font-size: 0.88rem; }
     }
 
     /* --- NEW FEATURES CSS --- */
@@ -832,136 +977,131 @@
 
       <!-- CORPORATE ACCOUNTS -->
       <div id="sec-corporate" style="display:none">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;flex-wrap:wrap;gap:0.75rem">
+        <div class="corp-section-header">
           <div>
-            <div style="font-family:'Times New Roman',serif;font-size:1.1rem;font-weight:700">💼 Corporate Account Management</div>
-            <div style="font-size:0.75rem;color:#888;margin-top:3px">Approve accounts · Manage members · View corporate bookings</div>
+            <div style="font-family:'Times New Roman',serif;font-size:1.15rem;font-weight:700;letter-spacing:-0.01em">Corporate Accounts</div>
+            <div style="font-size:0.7rem;color:#999;margin-top:2px">Manage accounts & billing</div>
           </div>
-          <div style="display:flex;gap:0.5rem">
-            <button onclick="loadCorporate()" class="btn bo"><span class="material-symbols-outlined" style="font-size:14px">refresh</span>Refresh</button>
-            <a href="corporate.html" target="_blank" class="btn bg" style="text-decoration:none"><span class="material-symbols-outlined" style="font-size:14px">open_in_new</span>View Page</a>
+          <div style="display:flex;gap:0.5rem;align-items:center">
+            <select id="corp-filter-select" onchange="corpFilter(this.value)" style="padding:0.4rem 0.6rem;border:1px solid #e0e0e0;font-family:Inter,sans-serif;font-size:0.75rem;color:#555;background:#fff;cursor:pointer;outline:none;-webkit-appearance:auto">
+              <option value="all">All Accounts</option>
+              <option value="Pending">Pending</option>
+              <option value="Approved">Approved</option>
+              <option value="Active">Active</option>
+              <option value="Rejected">Rejected</option>
+            </select>
+            <button onclick="loadCorporate()" style="background:none;border:1px solid #e0e0e0;color:#888;width:32px;height:32px;cursor:pointer;display:flex;align-items:center;justify-content:center" title="Refresh"><span class="material-symbols-outlined" style="font-size:16px">refresh</span></button>
           </div>
         </div>
-        <!-- Stats Row -->
-        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:1.25rem">
-          <div class="sbox" style="border-bottom:3px solid #7c3aed;text-align:center;padding:1rem;cursor:pointer" onclick="corpFilter('all')"><div id="corp-cnt-tot" style="font-size:1.5rem;font-weight:700;color:#7c3aed">0</div><div style="font-size:.7rem">Total</div></div>
-          <div class="sbox" style="border-bottom:3px solid #f59e0b;text-align:center;padding:1rem;cursor:pointer" onclick="corpFilter('Pending')"><div id="corp-cnt-pen" style="font-size:1.5rem;font-weight:700;color:#f59e0b">0</div><div style="font-size:.7rem">Pending</div></div>
-          <div class="sbox" style="border-bottom:3px solid #10b981;text-align:center;padding:1rem;cursor:pointer" onclick="corpFilter('Approved')"><div id="corp-cnt-app" style="font-size:1.5rem;font-weight:700;color:#10b981">0</div><div style="font-size:.7rem">Approved</div></div>
-          <div class="sbox" style="border-bottom:3px solid #3b82f6;text-align:center;padding:1rem;cursor:pointer" onclick="corpFilter('Active')"><div id="corp-cnt-act" style="font-size:1.5rem;font-weight:700;color:#3b82f6">0</div><div style="font-size:.7rem">Active</div></div>
-          <div class="sbox" style="border-bottom:3px solid #ef4444;text-align:center;padding:1rem;cursor:pointer" onclick="corpFilter('Rejected')"><div id="corp-cnt-rej" style="font-size:1.5rem;font-weight:700;color:#ef4444">0</div><div style="font-size:.7rem">Rejected</div></div>
-        </div>
+        <!-- hidden counters for JS compatibility -->
+        <div style="display:none"><span id="corp-cnt-tot">0</span><span id="corp-cnt-pen">0</span><span id="corp-cnt-app">0</span><span id="corp-cnt-act">0</span><span id="corp-cnt-rej">0</span></div>
         <!-- Corp Account List -->
         <div id="corp-list">
           <div class="empty"><span class="material-symbols-outlined">business</span><div style="font-size:.8rem">Click Refresh to load corporate applications</div></div>
         </div>
         <!-- ── Corporate Account Detail Modal ── -->
-        <div id="corp-detail-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:1000;overflow-y:auto">
-          <div style="background:#fff;max-width:860px;width:95%;margin:2rem auto;position:relative;padding-bottom:2rem">
+        <div id="corp-detail-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:1000;overflow-y:auto;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)">
+          <div class="cd-modal-inner">
             <!-- Header -->
-            <div style="background:#000;color:#fff;padding:1.75rem 2rem;display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;border-left:5px solid #C9A84C">
-              <div>
-                <div style="font-family:'Work Sans',sans-serif;font-size:0.58rem;font-weight:700;text-transform:uppercase;letter-spacing:0.16em;color:#C9A84C;margin-bottom:4px">Corporate Account</div>
-                <div style="font-family:'Times New Roman',serif;font-size:1.5rem;font-weight:700" id="cd-company">—</div>
-                <div style="margin-top:0.5rem;display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap">
-                  <span id="cd-status-badge" style="padding:3px 12px;border-radius:20px;font-size:0.72rem;font-weight:700;font-family:'Work Sans',sans-serif;text-transform:uppercase;letter-spacing:0.06em"></span>
-                  <span id="cd-tier-badge" style="padding:3px 12px;border-radius:20px;font-size:0.72rem;font-weight:700;font-family:'Work Sans',sans-serif;text-transform:uppercase;letter-spacing:0.06em;background:#C9A84C;color:#000"></span>
+            <div class="cd-modal-header">
+              <div style="flex:1;min-width:0">
+                <div style="font-family:'Work Sans',sans-serif;font-size:0.55rem;font-weight:700;text-transform:uppercase;letter-spacing:0.18em;color:#C9A84C;margin-bottom:5px">Corporate Account</div>
+                <div style="font-family:'Times New Roman',serif;font-size:1.35rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="cd-company">—</div>
+                <div style="margin-top:0.5rem;display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap">
+                  <span id="cd-status-badge" class="cd-badge"></span>
+                  <span id="cd-tier-badge" class="cd-badge" style="background:#C9A84C;color:#000"></span>
                 </div>
               </div>
-              <button onclick="closeCorpDetail()" style="background:rgba(255,255,255,0.1);border:none;color:#fff;width:34px;height:34px;cursor:pointer;font-size:1.25rem;display:flex;align-items:center;justify-content:center;flex-shrink:0">&times;</button>
+              <button onclick="closeCorpDetail()" class="cd-close-btn">&times;</button>
             </div>
-            <div style="padding:1.75rem 2rem">
+
+            <div class="cd-modal-body">
 
               <!-- Contact Info -->
-              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:0.75rem;margin-bottom:1.5rem;font-size:0.82rem">
-                <div><div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:0.08em;color:#888;margin-bottom:2px">Contact</div><strong id="cd-contact">—</strong></div>
-                <div><div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:0.08em;color:#888;margin-bottom:2px">Phone</div><a id="cd-phone" href="#" style="color:#000;font-weight:600;text-decoration:none"></a></div>
-                <div><div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:0.08em;color:#888;margin-bottom:2px">Email</div><a id="cd-email" href="#" style="color:#775a19;font-weight:600;text-decoration:none;word-break:break-all"></a></div>
-                <div><div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:0.08em;color:#888;margin-bottom:2px">Billing</div><span id="cd-billing"></span></div>
-                <div><div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:0.08em;color:#888;margin-bottom:2px">Industry</div><span id="cd-industry"></span></div>
-                <div><div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:0.08em;color:#888;margin-bottom:2px">Address</div><span id="cd-address" style="font-size:0.78rem"></span></div>
+              <div class="cd-info-grid">
+                <div class="cd-info-item"><div class="cd-info-label">Contact</div><strong id="cd-contact">—</strong></div>
+                <div class="cd-info-item"><div class="cd-info-label">Phone</div><a id="cd-phone" href="#" class="cd-info-link">—</a></div>
+                <div class="cd-info-item"><div class="cd-info-label">Email</div><a id="cd-email" href="#" class="cd-info-link" style="color:#775a19;word-break:break-all">—</a></div>
+                <div class="cd-info-item"><div class="cd-info-label">Billing</div><span id="cd-billing">—</span></div>
+                <div class="cd-info-item"><div class="cd-info-label">Industry</div><span id="cd-industry">—</span></div>
+                <div class="cd-info-item"><div class="cd-info-label">Address</div><span id="cd-address" style="font-size:0.78rem">—</span></div>
               </div>
 
               <!-- Stats -->
-              <div class="corp-stats-grid" style="display:grid;grid-template-columns:repeat(5,1fr);gap:0.75rem;margin-bottom:1.75rem">
-                <div class="sbox" style="border-bottom:3px solid #000;text-align:center;padding:0.875rem"><div id="cd-stat-total" style="font-size:1.4rem;font-weight:700">0</div><div style="font-size:0.65rem;color:#888;margin-top:2px">Total Trips</div></div>
-                <div class="sbox" style="border-bottom:3px solid #10b981;text-align:center;padding:0.875rem"><div id="cd-stat-done" style="font-size:1.4rem;font-weight:700;color:#10b981">0</div><div style="font-size:0.65rem;color:#888;margin-top:2px">Completed</div></div>
-                <div class="sbox" style="border-bottom:3px solid #f59e0b;text-align:center;padding:0.875rem"><div id="cd-stat-pend" style="font-size:1.4rem;font-weight:700;color:#f59e0b">0</div><div style="font-size:0.65rem;color:#888;margin-top:2px">Pending</div></div>
-                <div class="sbox" style="border-bottom:3px solid #C9A84C;text-align:center;padding:0.875rem"><div id="cd-stat-rev" style="font-size:1.4rem;font-weight:700;color:#775a19">$0</div><div style="font-size:0.65rem;color:#888;margin-top:2px">Total Revenue</div></div>
-                <div class="sbox" style="border-bottom:3px solid #C9A84C;text-align:center;padding:0.875rem"><div id="cd-stat-bal" style="font-size:1.4rem;font-weight:700;color:#ef4444">$0</div><div style="font-size:0.65rem;color:#888;margin-top:2px">Pending Balance</div></div>
+              <div class="corp-stats-grid cd-stats-row">
+                <div class="cd-stat-card"><div id="cd-stat-total" class="cd-stat-num">0</div><div class="cd-stat-label">Total Trips</div></div>
+                <div class="cd-stat-card" style="border-bottom-color:#10b981"><div id="cd-stat-done" class="cd-stat-num" style="color:#10b981">0</div><div class="cd-stat-label">Completed</div></div>
+                <div class="cd-stat-card" style="border-bottom-color:#f59e0b"><div id="cd-stat-pend" class="cd-stat-num" style="color:#f59e0b">0</div><div class="cd-stat-label">Pending</div></div>
+                <div class="cd-stat-card" style="border-bottom-color:#775a19"><div id="cd-stat-rev" class="cd-stat-num" style="color:#775a19">$0</div><div class="cd-stat-label">Revenue</div></div>
+                <div class="cd-stat-card" style="border-bottom-color:#ef4444"><div id="cd-stat-bal" class="cd-stat-num" style="color:#ef4444">$0</div><div class="cd-stat-label">Balance Due</div></div>
               </div>
 
-              <!-- Status Actions -->
-              <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1.75rem;padding-bottom:1.5rem;border-bottom:1px solid #f0f0f0">
-                <div style="font-family:'Work Sans',sans-serif;font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#888;width:100%;margin-bottom:0.25rem">Account Actions</div>
-                <button id="cd-btn-approve" onclick="cdAction('Approved')" class="btn bg" style="background:#10b981;font-size:0.72rem"><span class="material-symbols-outlined" style="font-size:13px">check_circle</span>Approve</button>
-                <button id="cd-btn-activate" onclick="cdAction('Active')" class="btn bg" style="background:#3b82f6;font-size:0.72rem"><span class="material-symbols-outlined" style="font-size:13px">star</span>Activate</button>
-                <button id="cd-btn-reject" onclick="cdAction('Rejected')" class="btn brd" style="font-size:0.72rem"><span class="material-symbols-outlined" style="font-size:13px">cancel</span>Reject</button>
-                <button id="cd-btn-reopen" onclick="cdAction('Pending')" class="btn bo" style="font-size:0.72rem"><span class="material-symbols-outlined" style="font-size:13px">undo</span>Reopen</button>
-                <button onclick="setCorpTempPwd()" class="btn" style="background:#7c3aed;color:#fff;font-size:0.72rem"><span class="material-symbols-outlined" style="font-size:13px">lock_reset</span>Set Password</button>
-                <button onclick="deleteCorpAccount()" class="btn br" style="font-size:0.72rem;margin-left:auto"><span class="material-symbols-outlined" style="font-size:13px">delete_forever</span>Delete Account</button>
+              <!-- Account Actions — clean row -->
+              <div class="cd-actions-section">
+                <div class="cd-section-label">Account Actions</div>
+                <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center">
+                  <button id="cd-btn-approve" onclick="cdAction('Approved')" class="btn bg" style="background:#10b981;font-size:0.72rem"><span class="material-symbols-outlined" style="font-size:13px">check_circle</span>Approve</button>
+                  <button id="cd-btn-activate" onclick="cdAction('Active')" class="btn bg" style="background:#3b82f6;font-size:0.72rem"><span class="material-symbols-outlined" style="font-size:13px">star</span>Activate</button>
+                  <button id="cd-btn-reject" style="display:none"></button>
+                  <button id="cd-btn-reopen" onclick="cdAction('Pending')" class="btn bo" style="font-size:0.72rem"><span class="material-symbols-outlined" style="font-size:13px">undo</span>Reopen</button>
+                </div>
               </div>
 
-              <!-- Rewards Management -->
-              <div style="margin-bottom:1.75rem;padding-bottom:1.5rem;border-bottom:1px solid #f0f0f0">
-                <div style="font-family:'Times New Roman',serif;font-size:1rem;font-weight:700;margin-bottom:1rem">⭐ Rewards &amp; Loyalty</div>
-                <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
-                  <div class="sbox" style="padding:0.875rem 1.25rem;border-bottom:3px solid #C9A84C;min-width:120px">
-                    <div style="font-size:1.3rem;font-weight:700" id="cd-reward-pts">0</div>
-                    <div style="font-size:0.65rem;color:#888">Total Points</div>
+              <!-- Rewards & Balance -->
+              <div class="cd-section">
+                <div class="cd-section-title">Rewards & Loyalty</div>
+                <div class="cd-rewards-row">
+                  <div class="cd-reward-box" style="border-bottom-color:#C9A84C"><div class="cd-reward-val" id="cd-reward-pts">0</div><div class="cd-reward-lbl">Points</div></div>
+                  <div class="cd-reward-box"><div class="cd-reward-val" id="cd-reward-tier">—</div><div class="cd-reward-lbl">Tier</div></div>
+                  <div class="cd-reward-box"><div class="cd-reward-val" id="cd-bonus-display">0</div><div class="cd-reward-lbl">Bonus</div></div>
+                  <div style="display:flex;align-items:center;gap:0.5rem;flex:1;min-width:180px">
+                    <input id="cd-bonus-input" type="number" min="0" placeholder="Bonus pts" class="cd-input" style="flex:1"/>
+                    <button onclick="awardBonusPoints()" class="btn bg" style="font-size:0.7rem;white-space:nowrap">Award</button>
                   </div>
-                  <div class="sbox" style="padding:0.875rem 1.25rem;min-width:120px">
-                    <div style="font-size:1rem;font-weight:700" id="cd-reward-tier">—</div>
-                    <div style="font-size:0.65rem;color:#888">Current Tier</div>
-                  </div>
-                  <div class="sbox" style="padding:0.875rem 1.25rem;min-width:120px">
-                    <div style="font-size:1rem;font-weight:700" id="cd-bonus-display">0</div>
-                    <div style="font-size:0.65rem;color:#888">Bonus Points</div>
-                  </div>
-                  <div style="display:flex;align-items:center;gap:0.5rem;flex:1;min-width:200px">
-                    <input id="cd-bonus-input" type="number" min="0" placeholder="Add bonus points" style="padding:0.6rem 0.75rem;border:1.5px solid #e5e5e5;font-family:Inter,sans-serif;font-size:0.85rem;outline:none;flex:1"/>
-                    <button onclick="awardBonusPoints()" class="btn bg" style="font-size:0.72rem;white-space:nowrap"><span class="material-symbols-outlined" style="font-size:13px">add_circle</span>Award Points</button>
-                  </div>
-                  <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid #eee">
-                    <div style="font-family:'Work Sans',sans-serif;font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#555;min-width:100px">Set Balance Due</div>
-                    <span style="font-family:Inter,sans-serif;font-size:0.85rem;color:#888">$</span>
-                    <input type="number" id="cd-balance-input" min="0" step="0.01" placeholder="0.00" style="width:110px;padding:0.4rem 0.5rem;border:1px solid #ddd;font-family:Inter,sans-serif;font-size:0.85rem"/>
-                    <input type="text" id="cd-balance-note" placeholder="Invoice note (optional)" style="flex:1;min-width:150px;padding:0.4rem 0.5rem;border:1px solid #ddd;font-family:Inter,sans-serif;font-size:0.82rem"/>
-                    <button onclick="updateCorpBalance()" style="background:#000;color:#fff;border:none;padding:0.5rem 1.25rem;font-family:'Work Sans',sans-serif;font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;cursor:pointer;border-bottom:2px solid #775a19">Update</button>
-                    <button onclick="clearCorpBalance()" style="background:transparent;color:#22c55e;border:1.5px solid #22c55e;padding:0.5rem 1rem;font-family:'Work Sans',sans-serif;font-size:0.68rem;font-weight:700;text-transform:uppercase;cursor:pointer">Clear ($0)</button>
-                    <button onclick="resetToAutoBalance()" style="background:transparent;color:#888;border:1.5px solid #ddd;padding:0.5rem 1rem;font-family:'Work Sans',sans-serif;font-size:0.68rem;font-weight:700;text-transform:uppercase;cursor:pointer" title="Remove manual override — let the system calculate from completed trips">↺ Auto</button>
+                </div>
+
+                <div class="cd-balance-row">
+                  <div class="cd-section-label" style="margin-bottom:0">Balance Due</div>
+                  <div class="cd-balance-controls">
+                    <span style="color:#888;font-size:0.85rem">$</span>
+                    <input type="number" id="cd-balance-input" min="0" step="0.01" placeholder="0.00" class="cd-input" style="width:100px"/>
+                    <input type="text" id="cd-balance-note" placeholder="Note (optional)" class="cd-input" style="flex:1;min-width:120px"/>
+                    <button onclick="updateCorpBalance()" class="cd-bal-btn cd-bal-update">Update</button>
+                    <button onclick="clearCorpBalance()" class="cd-bal-btn cd-bal-clear">Clear ($0)</button>
+                    <button onclick="resetToAutoBalance()" class="cd-bal-btn cd-bal-auto" title="Remove manual override — let the system calculate from completed trips">↺ Auto</button>
                   </div>
                 </div>
               </div>
 
               <!-- Trip History -->
-              <div style="margin-bottom:1.75rem">
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.875rem;flex-wrap:wrap;gap:0.5rem">
-                  <div style="font-family:'Times New Roman',serif;font-size:1rem;font-weight:700">Trip History</div>
-                  <div id="cd-trips-loading" style="font-size:0.78rem;color:#888">Loading trips…</div>
+              <div class="cd-section">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;flex-wrap:wrap;gap:0.5rem">
+                  <div class="cd-section-title" style="margin-bottom:0">Trip History</div>
+                  <div id="cd-trips-loading" style="font-size:0.75rem;color:#999">Loading trips…</div>
                 </div>
                 <div style="overflow-x:auto">
-                  <table style="width:100%;border-collapse:collapse" id="cd-trips-table">
-                    <thead><tr style="background:#f3f3f3">
-                      <th style="padding:0.6rem 0.75rem;text-align:left;font-family:'Work Sans',sans-serif;font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#555;border-bottom:1px solid #eee">Date</th>
-                      <th style="padding:0.6rem 0.75rem;text-align:left;font-family:'Work Sans',sans-serif;font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#555;border-bottom:1px solid #eee">Passenger</th>
-                      <th style="padding:0.6rem 0.75rem;text-align:left;font-family:'Work Sans',sans-serif;font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#555;border-bottom:1px solid #eee">Service</th>
-                      <th style="padding:0.6rem 0.75rem;text-align:left;font-family:'Work Sans',sans-serif;font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#555;border-bottom:1px solid #eee">Route</th>
-                      <th style="padding:0.6rem 0.75rem;text-align:right;font-family:'Work Sans',sans-serif;font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#555;border-bottom:1px solid #eee">Amount</th>
-                      <th style="padding:0.6rem 0.75rem;text-align:left;font-family:'Work Sans',sans-serif;font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#555;border-bottom:1px solid #eee">Status</th>
+                  <table class="cd-trips-tbl" id="cd-trips-table">
+                    <thead><tr>
+                      <th>Date</th><th>Passenger</th><th>Service</th><th>Route</th><th style="text-align:right">Amount</th><th>Status</th>
                     </tr></thead>
                     <tbody id="cd-trips-body"></tbody>
                   </table>
                 </div>
-                <div id="cd-trips-empty" style="display:none;text-align:center;padding:2rem;color:#aaa;font-size:0.82rem">No trips found for this account.</div>
+                <div id="cd-trips-empty" style="display:none;text-align:center;padding:2rem;color:#bbb;font-size:0.82rem">No trips found for this account.</div>
               </div>
 
               <!-- Members -->
-              <div>
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.875rem;flex-wrap:wrap;gap:0.5rem">
-                  <div style="font-family:'Times New Roman',serif;font-size:1rem;font-weight:700">Team Members</div>
-                  <button onclick="openMemberModal(_cdCorpId)" class="btn bo" style="font-size:0.72rem;border-color:#7c3aed;color:#7c3aed"><span class="material-symbols-outlined" style="font-size:13px">group</span>Manage Members</button>
+              <div class="cd-section">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;flex-wrap:wrap;gap:0.5rem">
+                  <div class="cd-section-title" style="margin-bottom:0">Team Members</div>
+                  <button onclick="openMemberModal(_cdCorpId)" class="btn bo" style="font-size:0.7rem;border-color:#775a19;color:#775a19"><span class="material-symbols-outlined" style="font-size:13px">group</span>Manage</button>
                 </div>
                 <div id="cd-members-list" style="font-size:0.82rem;color:#555"></div>
+              </div>
+
+              <!-- Danger zone — delete at the bottom, subtle -->
+              <div class="cd-danger-zone">
+                <button onclick="deleteCorpAccount()" class="cd-delete-btn"><span class="material-symbols-outlined" style="font-size:14px">delete_outline</span>Delete Account</button>
               </div>
 
             </div>
@@ -3724,45 +3864,22 @@
       var filtered = _corpFilterStatus === 'all' ? accounts : accounts.filter(function(a){ return a.status === _corpFilterStatus; });
 
       if (!filtered.length) {
-        el.innerHTML = '<div class="empty"><span class="material-symbols-outlined">business</span><div style="font-size:.8rem">' + (_corpFilterStatus === 'all' ? 'No corporate applications yet.' : 'No ' + _corpFilterStatus + ' accounts.') + '</div></div>';
+        el.innerHTML = '<div class="empty"><span class="material-symbols-outlined">business</span><div style="font-size:.8rem">' + (_corpFilterStatus === 'all' ? 'No corporate accounts yet.' : 'No ' + _corpFilterStatus + ' accounts.') + '</div></div>';
         return;
       }
       var statusColor = { 'Pending': '#f59e0b', 'Approved': '#10b981', 'Active': '#3b82f6', 'Rejected': '#ef4444' };
       el.innerHTML = filtered.map(function(a) {
         var sc = statusColor[a.status] || '#888';
-        var dt = a.createdAt ? new Date(a.createdAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—';
         var members = a.members || [];
         var memberCount = members.length;
-        return '<div class="sbox" style="margin-bottom:1rem;border-left:4px solid ' + sc + '">' +
-          '<div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:0.5rem;margin-bottom:0.875rem">' +
-            '<div>' +
-              '<div style="font-family:\'Times New Roman\',serif;font-size:1.05rem;font-weight:700;cursor:pointer;text-decoration:underline;text-underline-offset:3px" onclick="openCorpDetail(\'' + e(a.id) + '\')">' + e(a.company) + '</div>' +
-              '<div style="font-size:0.75rem;color:#666;margin-top:3px">' + e(a.industry||'') + (a.ein ? ' &nbsp;·&nbsp; EIN: ' + e(a.ein) : '') + '</div>' +
-            '</div>' +
-            '<div style="display:flex;gap:0.5rem;align-items:center">' +
-              '<span style="background:' + sc + '20;color:' + sc + ';padding:3px 10px;border-radius:20px;font-size:0.72rem;font-weight:700;font-family:\'Work Sans\',sans-serif;text-transform:uppercase;letter-spacing:0.06em">' + e(a.status) + '</span>' +
-              (memberCount ? '<span style="background:#f3f4f6;padding:3px 8px;border-radius:12px;font-size:0.68rem;font-weight:600;color:#555">' + memberCount + ' member' + (memberCount>1?'s':'') + '</span>' : '') +
-            '</div>' +
+        return '<div class="corp-card" onclick="openCorpDetail(\'' + e(a.id) + '\')">' +
+          '<div style="min-width:0">' +
+            '<div class="corp-card-name">' + e(a.company) + '</div>' +
+            '<div class="corp-card-billing">' + e(a.billingCycle || '—') + (memberCount ? ' · ' + memberCount + ' member' + (memberCount > 1 ? 's' : '') : '') + '</div>' +
           '</div>' +
-          '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:0.75rem;margin-bottom:0.875rem;font-size:0.8rem">' +
-            '<div><span style="color:#888;font-size:0.68rem;text-transform:uppercase;letter-spacing:0.06em">Contact</span><br><strong>' + e(a.contactName||'—') + '</strong>' + (a.contactTitle ? ' · ' + e(a.contactTitle) : '') + '</div>' +
-            '<div><span style="color:#888;font-size:0.68rem;text-transform:uppercase;letter-spacing:0.06em">Phone</span><br><a href="tel:' + e((a.contactPhone||'').replace(/\D/g,'')) + '" style="color:#000;font-weight:600">' + e(a.contactPhone||'—') + '</a></div>' +
-            '<div><span style="color:#888;font-size:0.68rem;text-transform:uppercase;letter-spacing:0.06em">Email</span><br><a href="mailto:' + e(a.contactEmail||'') + '" style="color:#775a19;font-weight:600">' + e(a.contactEmail||'—') + '</a></div>' +
-            '<div><span style="color:#888;font-size:0.68rem;text-transform:uppercase;letter-spacing:0.06em">Billing</span><br>' + e(a.billingCycle||'—') + (a.poRequired === 'Yes' ? ' · PO Req' : '') + '</div>' +
-            '<div><span style="color:#888;font-size:0.68rem;text-transform:uppercase;letter-spacing:0.06em">Est. Rides</span><br><strong>' + e(a.monthlyRides||'—') + '</strong>/mo</div>' +
-            '<div><span style="color:#888;font-size:0.68rem;text-transform:uppercase;letter-spacing:0.06em">Applied</span><br>' + dt + '</div>' +
-          '</div>' +
-          (a.typicalRoutes ? '<div style="font-size:0.78rem;color:#444;margin-bottom:0.5rem"><strong>Routes:</strong> ' + e(a.typicalRoutes) + '</div>' : '') +
-          (a.billingAddress ? '<div style="font-size:0.78rem;color:#444;margin-bottom:0.5rem"><strong>Address:</strong> ' + e(a.billingAddress) + '</div>' : '') +
-          (a.notes ? '<div style="font-size:0.78rem;color:#888;margin-bottom:0.75rem;background:#f9f9f9;padding:0.5rem 0.75rem;border-left:2px solid #e2e2e2"><strong>Notes:</strong> ' + e(a.notes) + '</div>' : '') +
-          '<div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center">' +
-            (a.status !== 'Approved' && a.status !== 'Active' ? '<button onclick="corpAction(\'' + e(a.id) + '\',\'Approved\')" class="btn bg" style="background:#10b981;font-size:0.72rem"><span class="material-symbols-outlined" style="font-size:13px">check_circle</span>Approve</button>' : '') +
-            (a.status === 'Approved' ? '<button onclick="corpAction(\'' + e(a.id) + '\',\'Active\')" class="btn bg" style="background:#3b82f6;font-size:0.72rem"><span class="material-symbols-outlined" style="font-size:13px">star</span>Activate</button>' : '') +
-            (a.status !== 'Rejected' ? '<button onclick="corpAction(\'' + e(a.id) + '\',\'Rejected\')" class="btn brd" style="font-size:0.72rem"><span class="material-symbols-outlined" style="font-size:13px">cancel</span>Reject</button>' : '') +
-            (a.status === 'Rejected' ? '<button onclick="corpAction(\'' + e(a.id) + '\',\'Pending\')" class="btn bo" style="font-size:0.72rem"><span class="material-symbols-outlined" style="font-size:13px">undo</span>Reopen</button>' : '') +
-            '<button onclick="openMemberModal(\'' + e(a.id) + '\')" class="btn bo" style="font-size:0.72rem;border-color:#7c3aed;color:#7c3aed"><span class="material-symbols-outlined" style="font-size:13px">group</span>Members (' + memberCount + ')</button>' +
-            '<button onclick="openCorpDetail(\'' + e(a.id) + '\')" class="btn bg" style="font-size:0.72rem;background:#000"><span class="material-symbols-outlined" style="font-size:13px">open_in_full</span>View Full Account</button>' +
-            '<button onclick="openCorpDetail(\''+e(a.id)+'\');deleteCorpAccount()" class="btn br" style="padding:5px 8px;font-size:0.72rem"><span class="material-symbols-outlined" style="font-size:13px">delete</span></button>' +
+          '<div class="corp-card-meta">' +
+            '<span class="corp-card-badge" style="background:' + sc + '15;color:' + sc + '">' + e(a.status) + '</span>' +
+            '<span class="material-symbols-outlined" style="font-size:16px;color:#ccc">chevron_right</span>' +
           '</div>' +
         '</div>';
       }).join('');
@@ -3770,6 +3887,8 @@
 
     function corpFilter(status) {
       _corpFilterStatus = status;
+      var sel = document.getElementById('corp-filter-select');
+      if (sel) sel.value = status;
       renderCorporate(_corpAccounts);
     }
 
@@ -4018,7 +4137,7 @@
       // Status action buttons visibility
       document.getElementById('cd-btn-approve').style.display  = (a.status!=='Approved'&&a.status!=='Active') ? '' : 'none';
       document.getElementById('cd-btn-activate').style.display = (a.status==='Approved') ? '' : 'none';
-      document.getElementById('cd-btn-reject').style.display   = (a.status!=='Rejected') ? '' : 'none';
+      document.getElementById('cd-btn-reject').style.display   = 'none';
       document.getElementById('cd-btn-reopen').style.display   = (a.status==='Rejected') ? '' : 'none';
 
       // Members
@@ -4061,7 +4180,7 @@
           document.getElementById('cd-address').textContent  = fresh.billingAddress||'—';
           document.getElementById('cd-btn-approve').style.display  = (fresh.status!=='Approved'&&fresh.status!=='Active') ? '' : 'none';
           document.getElementById('cd-btn-activate').style.display = (fresh.status==='Approved') ? '' : 'none';
-          document.getElementById('cd-btn-reject').style.display   = (fresh.status!=='Rejected') ? '' : 'none';
+          document.getElementById('cd-btn-reject').style.display   = 'none';
           document.getElementById('cd-btn-reopen').style.display   = (fresh.status==='Rejected') ? '' : 'none';
         }
         var bonus = doc.exists ? (doc.data().bonusPoints||0) : 0;
@@ -4261,7 +4380,7 @@
       var bAct = document.getElementById('cd-btn-activate');
       if(bAct) bAct.style.display = (newStatus==='Approved')?'':'none';
       var bRej = document.getElementById('cd-btn-reject');
-      if(bRej) bRej.style.display = (newStatus!=='Rejected')?'':'none';
+      if(bRej) bRej.style.display = 'none'; // reject removed from UI
       var bReo = document.getElementById('cd-btn-reopen');
       if(bReo) bReo.style.display = (newStatus==='Rejected')?'':'none';
     }
@@ -4279,7 +4398,7 @@
 
     function deleteCorpAccount(){
       if(!_cdCorpId||!db) return;
-      var company = (_cdAcc && _cdAcc.companyName) || 'this account';
+      var company = (_cdAcc && (_cdAcc.company || _cdAcc.companyName)) || 'this account';
       if(!confirm('\u26a0\ufe0f DELETE CORPORATE ACCOUNT\n\nAre you sure you want to permanently delete "' + company + '" from the server?\n\nThis cannot be undone.')) return;
       if(!confirm('\ud83d\uded1 FINAL CONFIRMATION\n\nYou are about to permanently delete "' + company + '" and all associated data.\n\nClick OK to delete.')) return;
       db.collection('corporate_accounts').doc(_cdCorpId).delete().then(function(){
