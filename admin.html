@@ -928,6 +928,7 @@
                     <input type="text" id="cd-balance-note" placeholder="Invoice note (optional)" style="flex:1;min-width:150px;padding:0.4rem 0.5rem;border:1px solid #ddd;font-family:Inter,sans-serif;font-size:0.82rem"/>
                     <button onclick="updateCorpBalance()" style="background:#000;color:#fff;border:none;padding:0.5rem 1.25rem;font-family:'Work Sans',sans-serif;font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;cursor:pointer;border-bottom:2px solid #775a19">Update</button>
                     <button onclick="clearCorpBalance()" style="background:transparent;color:#22c55e;border:1.5px solid #22c55e;padding:0.5rem 1rem;font-family:'Work Sans',sans-serif;font-size:0.68rem;font-weight:700;text-transform:uppercase;cursor:pointer">Clear ($0)</button>
+                    <button onclick="resetToAutoBalance()" style="background:transparent;color:#888;border:1.5px solid #ddd;padding:0.5rem 1rem;font-family:'Work Sans',sans-serif;font-size:0.68rem;font-weight:700;text-transform:uppercase;cursor:pointer" title="Remove manual override — let the system calculate from completed trips">↺ Auto</button>
                   </div>
                 </div>
               </div>
@@ -4306,6 +4307,29 @@
         document.getElementById('cd-reward-tier').textContent=tier.icon+' '+tier.name;
         document.getElementById('cd-tier-badge').textContent=tier.icon+' '+tier.name;
       }).catch(function(err){ toast('Error: '+err.message); });
+    }
+
+    // Reset balance to automatic — clears the manual override so the system
+    // calculates outstanding from completed trips. Does NOT mark any trips as Paid.
+    function resetToAutoBalance(){
+      if(!_cdCorpId||!db) return;
+      db.collection('corporate_accounts').doc(_cdCorpId).update({
+        balance: 0,
+        balanceNote: '',
+        balanceUpdatedAt: ''  // clear so corporate portal falls back to trip calculation
+      }).then(function(){
+        if (_cdAcc) _cdAcc.balance = 0;
+        document.getElementById('cd-balance-input').value = '';
+        document.getElementById('cd-balance-note').value = '';
+        toast('✅ Balance reset to automatic — system will calculate from completed trips.');
+        // Refresh trips to recalculate and show the auto balance
+        if (_cdAcc) {
+          db.collection('corporate_accounts').doc(_cdCorpId).get().then(function(doc) {
+            var bonus = doc.exists ? (doc.data().bonusPoints || 0) : 0;
+            loadCdTrips(_cdAcc, bonus);
+          }).catch(function(){ loadCdTrips(_cdAcc, 0); });
+        }
+      }).catch(function(e){ alert('Error: ' + e.message); });
     }
 
     function updateCorpBalance(){
