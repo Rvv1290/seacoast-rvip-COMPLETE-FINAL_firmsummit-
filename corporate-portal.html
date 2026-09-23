@@ -735,19 +735,26 @@ var _sess = null;
         </div>
 
         <!-- ── RIGHT: Big Map ── -->
-        <div id="corp-map-wrap" style="position:sticky;top:65px;height:calc(100vh - 65px);display:flex;flex-direction:column;background:#111">
-          <div id="corp-map" style="flex:1;width:100%;background:#111"></div>
-          <!-- Route Info Bar (shown after route drawn) -->
-          <div id="corp-route-bar" style="display:none;background:#000;border-top:1px solid #222;padding:0.875rem 1.25rem;flex-direction:row;gap:1.25rem;flex-wrap:wrap;align-items:center">
-            <span style="font-family:'Work Sans',sans-serif;font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#C9A84C">Route</span>
-            <span id="corp-route-dist" style="font-family:Inter,sans-serif;font-size:0.8rem;color:#ddd"></span>
-            <span id="corp-route-dur" style="font-family:Inter,sans-serif;font-size:0.8rem;color:#888"></span>
-            <span id="corp-route-fare" style="font-family:'Work Sans',sans-serif;font-size:0.9rem;font-weight:700;color:#C9A84C;margin-left:auto"></span>
-            <div style="flex-basis:100%;font-family:Inter,sans-serif;font-size:0.62rem;color:#8a8a8a;margin-top:2px;line-height:1.4">Starting estimate — final fare is confirmed by dispatch after your ride is approved, then shown on your dashboard.</div>
+        <div id="corp-map-wrap" style="position:sticky;top:65px;height:calc(100vh - 65px);display:flex;flex-direction:column;background:#0d0d0d;overflow:hidden">
+          <div id="corp-map" style="flex:1;width:100%;background:#0d0d0d"></div>
+
+          <!-- Black top bar — frames the map and covers Google's top controls -->
+          <div id="corp-map-topbar" style="position:absolute;top:0;left:0;right:0;height:44px;background:#000;z-index:6;display:flex;align-items:center;padding:0 1.4rem;border-bottom:1px solid rgba(201,168,76,0.18)">
+            <span style="font-family:'Work Sans',sans-serif;font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.16em;color:#C9A84C">Your Route</span>
           </div>
-          <!-- Placeholder shown before addresses typed -->
-          <div id="corp-map-hint" style="position:absolute;bottom:2rem;left:0;right:0;text-align:center;pointer-events:none">
-            <span style="font-family:'Work Sans',sans-serif;font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:rgba(201,168,76,0.55)">Enter pickup &amp; destination to see route</span>
+
+          <!-- Black bottom ribbon (after route) — covers logo/zoom/3D, holds route + price -->
+          <div id="corp-route-bar" style="display:none;position:absolute;bottom:0;left:0;right:0;background:#000;z-index:6;border-top:1px solid rgba(201,168,76,0.25);padding:0.95rem 1.4rem;flex-direction:row;gap:1.3rem;flex-wrap:wrap;align-items:center">
+            <span style="font-family:'Work Sans',sans-serif;font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:#C9A84C">Route</span>
+            <span id="corp-route-dist" style="font-family:Inter,sans-serif;font-size:0.82rem;font-weight:600;color:#fff"></span>
+            <span id="corp-route-dur" style="font-family:Inter,sans-serif;font-size:0.82rem;color:#999"></span>
+            <span id="corp-route-fare" style="font-family:'Work Sans',sans-serif;font-size:0.95rem;font-weight:700;color:#C9A84C;margin-left:auto"></span>
+            <div style="flex-basis:100%;font-family:Inter,sans-serif;font-size:0.62rem;color:#8a8a8a;margin-top:1px;line-height:1.4">Starting estimate — final fare is confirmed by dispatch after your ride is approved, then shown on your dashboard.</div>
+          </div>
+
+          <!-- Black bottom bar (before route) — also covers Google logo -->
+          <div id="corp-map-hint" style="position:absolute;bottom:0;left:0;right:0;height:44px;background:#000;z-index:6;display:flex;align-items:center;justify-content:center;border-top:1px solid rgba(201,168,76,0.15)">
+            <span style="font-family:'Work Sans',sans-serif;font-size:0.66rem;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:rgba(201,168,76,0.6)">Enter pickup &amp; destination to see route</span>
           </div>
         </div>
 
@@ -2700,23 +2707,32 @@ function initCorpMap(){
   var center = {lat:43.0718,lng:-70.7626};
   _corpMap = new google.maps.Map(document.getElementById('corp-map'),{
     center:center,zoom:9,
+    // Clean, chrome-free map — the black top/bottom bars frame it
+    disableDefaultUI:true,
+    mapTypeControl:false, fullscreenControl:false, zoomControl:false,
+    streetViewControl:false, rotateControl:false, scaleControl:false,
+    clickableIcons:false, keyboardShortcuts:false,
     styles:[
-      {featureType:'all',elementType:'geometry',stylers:[{color:'#1a1a1a'}]},
-      {featureType:'water',elementType:'geometry',stylers:[{color:'#0a0a0a'}]},
-      {featureType:'road',elementType:'geometry',stylers:[{color:'#2a2a2a'}]},
-      {featureType:'road.arterial',elementType:'geometry',stylers:[{color:'#333'}]},
-      {featureType:'poi',elementType:'labels',stylers:[{visibility:'off'}]},
-      {featureType:'all',elementType:'labels.text.fill',stylers:[{color:'#ffffff'}]}, // WHITE LABELS
-      {featureType:'all',elementType:'labels.text.stroke',stylers:[{color:'#000000'}, {weight:2}]},
-      {featureType:'administrative.locality',elementType:'labels.text.fill',stylers:[{color:'#C9A84C'}]}, // GOLD CITIES
-      {featureType:'administrative.neighborhood',elementType:'labels',stylers:[{visibility:'off'}]}, // Fewer clutter cities
-      {featureType:'transit',stylers:[{visibility:'off'}]}
+      {featureType:'all',elementType:'geometry',stylers:[{color:'#161616'}]},
+      {featureType:'water',elementType:'geometry',stylers:[{color:'#080808'}]},
+      {featureType:'road',elementType:'geometry',stylers:[{color:'#242424'}]},
+      {featureType:'road.highway',elementType:'geometry',stylers:[{color:'#2e2e2e'}]},
+      {featureType:'road',elementType:'labels',stylers:[{visibility:'off'}]},        // hide road labels = cleaner
+      {featureType:'poi',stylers:[{visibility:'off'}]},
+      {featureType:'transit',stylers:[{visibility:'off'}]},
+      {featureType:'administrative',elementType:'labels',stylers:[{visibility:'off'}]}, // hide states/counties
+      {featureType:'administrative.locality',elementType:'labels',stylers:[{visibility:'on'}]}, // keep major cities
+      {featureType:'administrative.locality',elementType:'labels.text.fill',stylers:[{color:'#C9A84C'}]}, // gold cities
+      {featureType:'administrative.neighborhood',elementType:'labels',stylers:[{visibility:'off'}]},
+      {featureType:'all',elementType:'labels.text.stroke',stylers:[{color:'#000000'},{weight:2}]},
+      {featureType:'all',elementType:'labels.icon',stylers:[{visibility:'off'}]}
     ]
   });
   _corpDirSvc = new google.maps.DirectionsService();
   _corpDirRenderer = new google.maps.DirectionsRenderer({
     suppressMarkers:false,
-    polylineOptions:{strokeColor:'#C9A84C',strokeWeight:4,strokeOpacity:0.9}
+    preserveViewport:true, // we control the zoom via fitBounds with padding
+    polylineOptions:{strokeColor:'#C9A84C',strokeWeight:4,strokeOpacity:0.95}
   });
   _corpDirRenderer.setMap(_corpMap);
 
@@ -2762,6 +2778,11 @@ function _doCorpRoute(){
   }, function(result,status){
     if(status!=='OK'){ return; }
     _corpDirRenderer.setDirections(result);
+    // Proportionate zoom: fit the whole route with padding so it isn't hidden
+    // behind the black top/bottom bars and isn't zoomed too far out.
+    if(result.routes[0].bounds && _corpMap){
+      _corpMap.fitBounds(result.routes[0].bounds, {top:64, bottom:96, left:44, right:44});
+    }
     var legs = result.routes[0].legs;
     var totalMeters = legs.reduce(function(s,l){ return s + l.distance.value; }, 0);
     var totalSecs   = legs.reduce(function(s,l){ return s + l.duration.value; }, 0);
