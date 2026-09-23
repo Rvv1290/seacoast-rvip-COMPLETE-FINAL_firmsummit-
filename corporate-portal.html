@@ -2147,6 +2147,11 @@ function showCalDay(dateStr){
   if(!dayTrips.length){el.innerHTML='<div style="font-family:Inter,sans-serif;font-size:0.82rem;color:#aaa;text-align:center">No trips on this date.</div>';return;}
   var d=new Date(dateStr+'T12:00:00');
   el.innerHTML='<div style="font-family:\'Work Sans\',sans-serif;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#775a19;margin-bottom:1rem">'+d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})+'</div>'+dayTrips.map(function(t){return tripCard(t);}).join('');
+  // Render the route mini-maps for the day's trip cards directly (a day has few
+  // trips, so render now rather than waiting on the lazy scroll observer).
+  setTimeout(function(){
+    document.querySelectorAll('#cal-detail .trip-map-js:not([data-rendered])').forEach(function(f){ _renderCardMap(f); });
+  }, 80);
 }
 
 // ─── BOOKING FORM ───
