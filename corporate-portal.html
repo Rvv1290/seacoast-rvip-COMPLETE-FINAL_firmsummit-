@@ -1675,6 +1675,11 @@ window.addEventListener('DOMContentLoaded', function(){
 
 // ─── TAB SWITCHING ───
 function goTab(id, el){
+  // Leaving "Book a Ride" for another section → wipe the form so it starts fresh
+  if(id!=='book'){
+    var _bp=document.getElementById('tab-book');
+    if(_bp && _bp.classList.contains('on') && typeof resetBookingForm==='function'){ resetBookingForm(); }
+  }
   // Sidebar
   document.querySelectorAll('.sb-link').forEach(function(l){l.classList.remove('on');});
   // Mobile
@@ -2203,6 +2208,37 @@ function collectStopInputs(listId){
 // Legacy — kept in case referenced elsewhere
 function selVeh(el,val){}
 
+// Reset the Book a Ride form to a clean state (called on successful booking and
+// when the client navigates away from the book tab).
+function resetBookingForm(){
+  ['b-name','b-phone','b-email','b-pickup','b-dest','b-notes','b-po'].forEach(function(id){
+    var el=document.getElementById(id); if(el) el.value='';
+  });
+  var today=new Date();
+  var ymd=today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
+  var d=document.getElementById('b-date'); if(d) d.value=ymd;
+  var t=document.getElementById('b-time'); if(t) t.value='';
+  var sw=document.getElementById('b-stops-list'); if(sw) sw.innerHTML='';
+  if(typeof addBookingStop==='function') addBookingStop();
+  var sv=document.getElementById('b-service'); if(sv) sv.selectedIndex=0;
+  var bv2=document.getElementById('bv2'); if(bv2) bv2.checked=true;   // default Regular SUV
+  var pass=document.getElementById('b-pass'); if(pass) pass.value='1';
+  var lug=document.getElementById('b-luggage'); if(lug) lug.value='0';
+  document.querySelectorAll('#tab-book .p-btn').forEach(function(b){ b.classList.remove('sel'); });
+  var p1=document.querySelector("[onclick=\"bSelPass(this,'1')\"]"); if(p1) p1.classList.add('sel');
+  var l0=document.querySelector("[onclick=\"bSelLug(this,'0')\"]"); if(l0) l0.classList.add('sel');
+  var tos=document.getElementById('b-tos-check'); if(tos) tos.checked=false;
+  var tosBody=document.getElementById('b-tos-body'); if(tosBody) tosBody.style.display='none';
+  // Clear the map route + reset the ribbon/hint
+  _corpPickupPlace=null; _corpDestPlace=null;
+  if(_corpDirRenderer){ try{ _corpDirRenderer.set('directions', null); }catch(e){} }
+  var bar=document.getElementById('corp-route-bar'); if(bar) bar.style.display='none';
+  var hint=document.getElementById('corp-map-hint'); if(hint) hint.style.display='flex';
+  var ok=document.getElementById('book-success'); if(ok) ok.style.display='none';
+  var err=document.getElementById('book-err'); if(err) err.style.display='none';
+  if(typeof renderFavoriteChips==='function'){ renderFavoriteChips('b-pickup'); renderFavoriteChips('b-dest'); }
+}
+
 var _bookingInFlight = false;
 function submitBooking(){
   // Hard guard against double/triple submissions (rapid clicks, slow network re-taps)
@@ -2726,8 +2762,9 @@ function initCorpMap(){
       {featureType:'poi',stylers:[{visibility:'off'}]},
       {featureType:'transit',stylers:[{visibility:'off'}]},
       {featureType:'administrative',elementType:'labels',stylers:[{visibility:'off'}]}, // hide states/counties
-      {featureType:'administrative.locality',elementType:'labels.text.fill',stylers:[{color:'#C9A84C'}]}, // gold cities (Google manages density by zoom)
-      {featureType:'administrative.neighborhood',elementType:'labels',stylers:[{visibility:'off'}]},
+      {featureType:'administrative.locality',elementType:'labels',stylers:[{visibility:'on'}]}, // show cities/towns (Hampton, Salem, Boston…)
+      {featureType:'administrative.locality',elementType:'labels.text.fill',stylers:[{color:'#C9A84C'}]}, // gold city names
+      {featureType:'administrative.neighborhood',elementType:'labels',stylers:[{visibility:'off'}]}, // hide neighborhoods/small clutter
       {featureType:'all',elementType:'labels.text.stroke',stylers:[{color:'#000000'},{weight:2}]},
       {featureType:'all',elementType:'labels.icon',stylers:[{visibility:'off'}]}
     ]
