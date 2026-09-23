@@ -3113,8 +3113,8 @@ function renderFavoriteChips(inputId) {
 
 function setFav(addr, inputId) {
   document.getElementById(inputId).value = addr;
-  // Trigger autocomplete if available
-  if(typeof updateMapFromInputs === 'function') updateMapFromInputs();
+  // Draw the route now that this address is filled from a saved place
+  if(typeof tryCorpRoute === 'function') tryCorpRoute();
   renderFavoriteChips(inputId);
 }
 
