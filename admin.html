@@ -1168,6 +1168,23 @@
                 <div id="cd-members-list" style="font-size:0.82rem;color:#555"></div>
               </div>
 
+              <!-- Portal Access (corporate login user) -->
+              <div class="cd-section">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;flex-wrap:wrap;gap:0.5rem">
+                  <div class="cd-section-title" style="margin-bottom:0">Portal Access</div>
+                  <span id="cd-portal-status" class="cd-badge" style="font-size:0.6rem"></span>
+                </div>
+                <div style="background:#faf9f6;border:1px solid #ececec;border-radius:8px;padding:0.9rem 1rem">
+                  <div style="font-size:0.6rem;text-transform:uppercase;letter-spacing:0.08em;color:#999;margin-bottom:3px">Current Login Email</div>
+                  <div id="cd-portal-email" style="font-size:0.9rem;font-weight:600;color:#111;word-break:break-all;margin-bottom:0.9rem">—</div>
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem">
+                    <button onclick="openPortalAccess('replace')" class="btn bk" style="font-size:0.72rem"><span class="material-symbols-outlined" style="font-size:14px">manage_accounts</span>Replace User</button>
+                    <button onclick="openPortalAccess('reset')" class="btn bo" style="font-size:0.72rem"><span class="material-symbols-outlined" style="font-size:14px">key</span>Reset Password</button>
+                  </div>
+                  <div style="font-size:0.68rem;color:#999;margin-top:0.7rem;line-height:1.45">“Replace User” swaps in a new login email + a fresh temporary password (the old email loses access). “Reset Password” keeps the email and issues a new temporary password. Either way, the user sets their own private password on first login.</div>
+                </div>
+              </div>
+
               <!-- Danger zone — delete at the bottom, subtle -->
               <div class="cd-danger-zone">
                 <button onclick="deleteCorpAccount()" class="cd-delete-btn"><span class="material-symbols-outlined" style="font-size:14px">delete_outline</span>Delete Account</button>
@@ -1238,6 +1255,56 @@
                 <input id="mm-role" type="text" placeholder="Role / Title" style="padding:0.6rem;border:1.5px solid #e5e5e5;font-family:Inter,sans-serif;font-size:0.85rem;outline:none"/>
               </div>
               <button onclick="addCorpMember()" class="btn bg" style="width:100%"><span class="material-symbols-outlined" style="font-size:14px">person_add</span>Add Member</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Portal Access Modal (manage corporate login user) -->
+        <div id="portal-access-modal" class="ap-modal-ov">
+          <div class="ap-modal">
+            <div class="ap-header">
+              <div style="font-size:0.6rem;text-transform:uppercase;letter-spacing:0.15em;color:#C9A84C;margin-bottom:4px">Portal Access</div>
+              <h2 style="font-family:'Times New Roman',serif;font-size:1.35rem" id="pa-title">Replace Login User</h2>
+              <div id="pa-sub" style="font-size:0.75rem;opacity:0.7;margin-top:5px"></div>
+            </div>
+            <div class="ap-body">
+              <div id="pa-email-wrap" style="margin-bottom:1rem">
+                <label class="flbl" style="color:#000">New Login Email *</label>
+                <input type="email" id="pa-email" class="finp" placeholder="person@company.com" autocomplete="off" oninput="refreshPortalPreview()"/>
+              </div>
+              <div id="pa-name-wrap" style="margin-bottom:1rem">
+                <label class="flbl" style="color:#000">Contact Name (optional)</label>
+                <input type="text" id="pa-name" class="finp" placeholder="Full name"/>
+              </div>
+              <div style="margin-bottom:1rem">
+                <label class="flbl" style="color:#000">Temporary Password</label>
+                <div style="display:flex;gap:10px">
+                  <input type="text" id="pa-password" class="finp" style="font-weight:700;letter-spacing:1px" oninput="refreshPortalPreview()"/>
+                  <button onclick="genPortalPwd()" class="btn bo" style="flex-shrink:0">Regen</button>
+                </div>
+              </div>
+              <div style="margin-bottom:1.25rem">
+                <label class="flbl" style="color:#000">Message Preview</label>
+                <div id="pa-preview" class="ap-preview"></div>
+              </div>
+              <div id="pa-saved-banner" style="display:none;background:#ecfdf5;border:1px solid #10b981;color:#065f46;padding:0.7rem 0.9rem;border-radius:6px;font-size:0.78rem;margin-bottom:1rem">
+                <strong>&#9989; Saved.</strong> Now send these credentials to the new user:
+              </div>
+              <div style="border-top:1px solid #eee;padding-top:1.25rem">
+                <button id="pa-btn-save" onclick="savePortalAccess()" class="ap-action-btn bg" style="background:#111">
+                  <span class="material-symbols-outlined">save</span><span id="pa-btn-save-lbl">Save Login</span>
+                </button>
+                <div id="pa-send-row" style="display:none">
+                  <button onclick="sendPortalAuto()" class="ap-action-btn bg" style="background:#10b981">
+                    <span class="material-symbols-outlined">auto_awesome</span>Send Automatic Email
+                  </button>
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                    <button onclick="launchPortalSMS()" class="ap-action-btn bo" style="font-size:0.65rem"><span class="material-symbols-outlined" style="font-size:18px">sms</span>Open Text App</button>
+                    <button onclick="copyPortalMsg()" class="ap-action-btn bo" style="font-size:0.65rem"><span class="material-symbols-outlined" style="font-size:18px">content_copy</span>Copy Message</button>
+                  </div>
+                </div>
+                <button onclick="closePortalModal()" class="ap-action-btn bo" style="border:none;color:#888;font-size:0.65rem;margin-top:0.5rem">Close</button>
+              </div>
             </div>
           </div>
         </div>
@@ -4283,6 +4350,9 @@
           '<br><span style="font-size:0.75rem;color:#888">'+e(m.phone||'')+(m.email?' · '+e(m.email):'')+'</span></div></div>';
       }).join('') : '<div style="color:#aaa;font-size:0.82rem;padding:0.75rem 0">No members yet.</div>';
 
+      // Portal access (login user)
+      renderPortalAccess(a);
+
       // Show modal
       document.getElementById('corp-detail-modal').style.display = 'block';
       document.body.style.overflow = 'hidden';
@@ -4316,6 +4386,7 @@
           document.getElementById('cd-btn-activate').style.display = (fresh.status==='Approved') ? '' : 'none';
           document.getElementById('cd-btn-reject').style.display   = 'none';
           document.getElementById('cd-btn-reopen').style.display   = (fresh.status==='Rejected') ? '' : 'none';
+          renderPortalAccess(fresh);
         }
         var bonus = doc.exists ? (doc.data().bonusPoints||0) : 0;
         document.getElementById('cd-bonus-display').textContent = bonus;
@@ -4540,6 +4611,167 @@
         closeCorpDetail();
         loadCorporate();
       }).catch(function(err){ toast('Error: '+err.message); });
+    }
+
+    // ── Corporate Portal Access (login user management) ──
+    var _paMode = 'replace';
+
+    function genTempPassword(){
+      var chars = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; // no ambiguous chars (no O/0, I/1, L)
+      var s = '';
+      for (var i = 0; i < 6; i++) { s += chars.charAt(Math.floor(Math.random() * chars.length)); }
+      return 'Seacoast-' + s;
+    }
+
+    function renderPortalAccess(acc){
+      var emailEl = document.getElementById('cd-portal-email');
+      var stEl = document.getElementById('cd-portal-status');
+      if(!emailEl || !stEl) return;
+      emailEl.textContent = (acc && acc.contactEmail) ? acc.contactEmail : 'No login email set';
+      var st, bg, fg;
+      if(!acc || !acc.password){ st = 'No password set'; bg = '#f3f4f6'; fg = '#6b7280'; }
+      else if(acc.passwordResetRequired){ st = 'Temp password — reset pending'; bg = '#fef3c7'; fg = '#92400e'; }
+      else { st = 'Active password'; bg = '#dcfce7'; fg = '#166534'; }
+      stEl.textContent = st; stEl.style.background = bg; stEl.style.color = fg;
+    }
+
+    function openPortalAccess(mode){
+      if(!_cdCorpId){ toast('Open an account first.'); return; }
+      _paMode = mode;
+      var acc = _cdAcc || {};
+      document.getElementById('pa-title').textContent = (mode === 'replace') ? 'Replace Login User' : 'Reset Password';
+      document.getElementById('pa-sub').textContent = (mode === 'replace')
+        ? 'Current login: ' + (acc.contactEmail || 'none') + ' — this email will be replaced and lose access.'
+        : 'Login email: ' + (acc.contactEmail || 'none') + ' — a new temporary password will be issued.';
+      document.getElementById('pa-email-wrap').style.display = (mode === 'replace') ? '' : 'none';
+      document.getElementById('pa-name-wrap').style.display = (mode === 'replace') ? '' : 'none';
+      document.getElementById('pa-email').value = '';
+      document.getElementById('pa-name').value = '';
+      document.getElementById('pa-password').value = genTempPassword();
+      document.getElementById('pa-saved-banner').style.display = 'none';
+      document.getElementById('pa-send-row').style.display = 'none';
+      var sb = document.getElementById('pa-btn-save');
+      sb.style.display = ''; sb.disabled = false;
+      document.getElementById('pa-btn-save-lbl').textContent = (mode === 'replace') ? 'Save Login' : 'Reset Password';
+      refreshPortalPreview();
+      document.getElementById('portal-access-modal').style.display = 'block';
+      document.body.style.overflow = 'hidden';
+    }
+
+    function genPortalPwd(){
+      document.getElementById('pa-password').value = genTempPassword();
+      refreshPortalPreview();
+    }
+
+    function portalTargetEmail(){
+      if(_paMode === 'replace'){ return (document.getElementById('pa-email').value || '').trim(); }
+      return (_cdAcc && _cdAcc.contactEmail) || '';
+    }
+
+    function refreshPortalPreview(){
+      var acc = _cdAcc || {};
+      var comp = acc.company || acc.companyName || 'your company';
+      var email = portalTargetEmail() || '(new email)';
+      var pwd = document.getElementById('pa-password').value;
+      var msg = 'Welcome to Seacoast RVIP! A corporate portal login has been set up for ' + comp + '.\n\n'
+        + 'Login Email: ' + email + '\n'
+        + 'Temporary Password: ' + pwd + '\n\n'
+        + 'Sign in at seacoastrvip.com/corporate.html. You will be asked to set your own private password on first login.\n\n'
+        + '⚠️ Do not share this. Our staff will never ask for your password.';
+      document.getElementById('pa-preview').textContent = msg;
+    }
+
+    async function savePortalAccess(){
+      if(!_cdCorpId || !db){ toast('Not connected.'); return; }
+      var pwd = (document.getElementById('pa-password').value || '').trim();
+      if(pwd.length < 6){ toast('Password must be at least 6 characters.'); return; }
+
+      var upd = { password: pwd, passwordResetRequired: true, updatedAt: new Date().toISOString() };
+
+      if(_paMode === 'replace'){
+        var newEmail = (document.getElementById('pa-email').value || '').trim().toLowerCase();
+        if(!newEmail || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(newEmail)){ toast('Enter a valid new login email.'); return; }
+        var newName = (document.getElementById('pa-name').value || '').trim();
+        var oldEmail = ((_cdAcc && _cdAcc.contactEmail) || '').toLowerCase();
+        upd.contactEmail = newEmail;
+        if(newName) upd.contactName = newName;
+        // Strip the old owner email from members[] so it can no longer log in
+        if(oldEmail && _cdAcc && Array.isArray(_cdAcc.members)){
+          var filtered = _cdAcc.members.filter(function(m){ return ((m && m.email) || '').toLowerCase() !== oldEmail; });
+          if(filtered.length !== _cdAcc.members.length){ upd.members = filtered; }
+        }
+      }
+
+      var btn = document.getElementById('pa-btn-save');
+      var lbl = document.getElementById('pa-btn-save-lbl');
+      btn.disabled = true; lbl.textContent = 'Saving...';
+      try {
+        await db.collection('corporate_accounts').doc(_cdCorpId).update(upd);
+        Object.assign(_cdAcc, upd);
+        // Reflect new login email/name in the detail panel behind the modal
+        var emEl = document.getElementById('cd-email');
+        if(emEl){ emEl.textContent = _cdAcc.contactEmail || '—'; emEl.href = 'mailto:' + (_cdAcc.contactEmail || ''); }
+        if(upd.contactName){
+          var ctEl = document.getElementById('cd-contact');
+          if(ctEl) ctEl.textContent = (_cdAcc.contactName || '—') + (_cdAcc.contactTitle ? ' · ' + _cdAcc.contactTitle : '');
+        }
+        renderPortalAccess(_cdAcc);
+        refreshPortalPreview();
+        document.getElementById('pa-saved-banner').style.display = 'block';
+        document.getElementById('pa-send-row').style.display = 'block';
+        btn.style.display = 'none';
+        toast('✅ Portal access updated.');
+      } catch(err){
+        toast('Error: ' + err.message);
+        btn.disabled = false;
+        lbl.textContent = (_paMode === 'replace') ? 'Save Login' : 'Reset Password';
+      }
+    }
+
+    function sendPortalAuto(){
+      var email = portalTargetEmail();
+      var msg = document.getElementById('pa-preview').textContent;
+      if(!email){ toast('No email to send to.'); return; }
+      if(!db){ toast('Not connected.'); return; }
+      var comp = (_cdAcc && (_cdAcc.company || _cdAcc.companyName)) || '';
+      db.collection('mail').add({
+        to: email,
+        from: 'Seacoast RVIP <info@seacoastrvip.com>',
+        replyTo: 'info@seacoastrvip.com',
+        message: {
+          subject: 'Your Seacoast RVIP Corporate Portal Login',
+          text: msg,
+          html: msg.replace(/\n/g, '<br>')
+        }
+      }).then(function(){ toast('Email queued to ' + email); })
+        .catch(function(err){ toast('Email error: ' + err.message); });
+      // FormSubmit fallback (admin receipt)
+      var fd = new FormData();
+      fd.append('_subject', '[PORTAL ACCESS] ' + comp);
+      fd.append('_captcha', 'false');
+      fd.append('Email', email);
+      fd.append('Company', comp);
+      fd.append('Instructions', msg);
+      fetch('https://formsubmit.co/ajax/info@seacoastrvip.com', { method: 'POST', body: fd }).catch(function(){});
+    }
+
+    function launchPortalSMS(){
+      var msg = document.getElementById('pa-preview').textContent;
+      var phone = ((_cdAcc && (_cdAcc.contactPhone || _cdAcc.phone)) || '').replace(/\D/g, '');
+      try { navigator.clipboard.writeText(msg); } catch(e){}
+      window.open('sms:' + phone + '?&body=' + encodeURIComponent(msg));
+      toast('Copied + opening text app...');
+    }
+
+    function copyPortalMsg(){
+      var msg = document.getElementById('pa-preview').textContent;
+      try { navigator.clipboard.writeText(msg); toast('Message copied.'); }
+      catch(e){ toast('Copy failed — select and copy manually.'); }
+    }
+
+    function closePortalModal(){
+      document.getElementById('portal-access-modal').style.display = 'none';
+      document.body.style.overflow = 'hidden'; // corp detail modal is still open behind
     }
 
     function awardBonusPoints(){
