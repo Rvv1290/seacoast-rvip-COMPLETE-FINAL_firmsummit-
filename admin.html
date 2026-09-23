@@ -884,7 +884,7 @@
     <div class="topbar">
       <div class="topbar-in">
         <div>
-          <div class="admin-logo">Seacoast RVIP</div>
+          <div class="admin-logo" onclick="goTab('all')" style="cursor:pointer" title="Go to rides home">Seacoast RVIP</div>
           <div class="admin-sub">Admin · <span id="today-lbl"></span></div>
         </div>
         <div class="adm-search-input" style="flex:1;max-width:400px;margin:0 0.75rem">
@@ -4080,10 +4080,24 @@
           '</div>' +
           '<div class="corp-card-meta">' +
             '<span class="corp-card-badge" style="background:' + sc + '15;color:' + sc + '">' + e(a.status) + '</span>' +
+            '<button onclick="deleteCorpFromList(event, \'' + e(a.id) + '\', \'' + e((a.company || '').replace(/'/g, "\\'")) + '\')" title="Delete this company" style="background:none;border:none;cursor:pointer;color:#ef4444;display:flex;align-items:center;padding:4px;border-radius:4px" onmouseover="this.style.background=\'#fee2e2\'" onmouseout="this.style.background=\'none\'"><span class="material-symbols-outlined" style="font-size:18px">delete_outline</span></button>' +
             '<span class="material-symbols-outlined" style="font-size:16px;color:#ccc">chevron_right</span>' +
           '</div>' +
         '</div>';
       }).join('');
+    }
+
+    // Delete a company straight from the list — works for any status
+    function deleteCorpFromList(event, id, name) {
+      if (event) { event.stopPropagation(); event.preventDefault(); }
+      if (!id || !db) return;
+      var company = name || 'this account';
+      if (!confirm('⚠️ DELETE CORPORATE ACCOUNT\n\nPermanently delete "' + company + '"?\n\nThis removes the company and its portal access, regardless of status. This cannot be undone.')) return;
+      if (!confirm('🛑 FINAL CONFIRMATION\n\nDelete "' + company + '" for good?')) return;
+      db.collection('corporate_accounts').doc(id).delete().then(function () {
+        toast('Deleted "' + company + '".');
+        loadCorporate();
+      }).catch(function (err) { toast('Error: ' + err.message); });
     }
 
     function corpFilter(status) {
