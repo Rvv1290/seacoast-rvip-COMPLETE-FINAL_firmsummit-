@@ -1653,10 +1653,20 @@ function mergeTripCaches(){
   var seen = {}, all = _tripsByAccId.concat(_tripsByCompany);
   Object.keys(_tripsByIdentity).forEach(function(k){ all = all.concat(_tripsByIdentity[k]); });
 
+  var seenSig = {};
   _trips = all.filter(function(t){
     var key = t.id || t._docId || '';
-    if(!key || !seen[key]){ if(key) seen[key]=true; return true; }
-    return false;
+    // 1) same Firestore doc → skip
+    if(key && seen[key]) return false;
+    // 2) same content (person + date + time + route) but a different doc id →
+    //    a genuine duplicate record; keep only the first so it shows once.
+    var sig = (t.date && t.pickup && t.destination)
+      ? [t.date, (t.time||''), (''+t.pickup).toLowerCase().trim(), (''+t.destination).toLowerCase().trim(), (''+(t.name||'')).toLowerCase().trim()].join('|')
+      : null;
+    if(sig && seenSig[sig]) return false;
+    if(key) seen[key]=true;
+    if(sig) seenSig[sig]=true;
+    return true;
   });
   _trips.sort(function(a,b){ return new Date(b.date)-new Date(a.date); });
   renderDashUpcoming();
@@ -2640,33 +2650,59 @@ function initCorpMap(){
   _corpDirRenderer.setMap(_corpMap);
 
   installAddressAutocomplete(document.getElementById('b-pickup'), {
-    onSelect: function(p){ _corpPickupPlace = p; if(p.geometry) tryCorpRoute(); }
+    onSelect: function(p){ _corpPickupPlace = p; tryCorpRoute(); }
   });
   installAddressAutocomplete(document.getElementById('b-dest'), {
-    onSelect: function(p){ _corpDestPlace = p; if(p.geometry) tryCorpRoute(); }
+    onSelect: function(p){ _corpDestPlace = p; tryCorpRoute(); }
+  });
+
+  // Also redraw the route for typed / pasted / saved-favorite addresses
+  ['b-pickup','b-dest'].forEach(function(id){
+    var el = document.getElementById(id);
+    if(el){
+      el.addEventListener('change', tryCorpRoute);
+      el.addEventListener('blur', function(){ setTimeout(tryCorpRoute, 200); });
+    }
   });
 
   bindStopAutocompletes();
 }
 
+// Draw the route whenever both addresses have text — works for typed, pasted,
+// autocomplete-selected, or saved-favorite addresses (DirectionsService geocodes
+// strings itself). Debounced so rapid edits don't spam the API.
+var _corpRouteT = null;
 function tryCorpRoute(){
-  if(!_corpPickupPlace||!_corpPickupPlace.geometry||!_corpDestPlace||!_corpDestPlace.geometry) return;
+  clearTimeout(_corpRouteT);
+  _corpRouteT = setTimeout(_doCorpRoute, 350);
+}
+function _doCorpRoute(){
+  if(!_corpMap || !_corpDirSvc || !_corpDirRenderer) return;
+  var origin = (document.getElementById('b-pickup').value||'').trim();
+  var dest   = (document.getElementById('b-dest').value||'').trim();
+  if(!origin || !dest) return;
+  var waypoints = (typeof collectStopInputs==='function' ? collectStopInputs('b-stops-list') : [])
+    .filter(Boolean).map(function(s){ return { location:s, stopover:true }; });
   _corpDirSvc.route({
-    origin:_corpPickupPlace.geometry.location,
-    destination:_corpDestPlace.geometry.location,
-    travelMode:google.maps.TravelMode.DRIVING
-  },function(result,status){
-    if(status!=='OK') return;
+    origin: origin,
+    destination: dest,
+    waypoints: waypoints,
+    travelMode: google.maps.TravelMode.DRIVING
+  }, function(result,status){
+    if(status!=='OK'){ return; }
     _corpDirRenderer.setDirections(result);
-    var leg=result.routes[0].legs[0];
-    var miles=leg.distance.value/1609.34;
-    var fare=Math.max(45,15+miles*2.50);
-    var bar=document.getElementById('corp-route-bar');
-    var hint=document.getElementById('corp-map-hint');
-    document.getElementById('corp-route-dist').textContent=leg.distance.text;
-    document.getElementById('corp-route-dur').textContent=leg.duration.text;
-    document.getElementById('corp-route-fare').textContent='Est. $'+fare.toFixed(2);
-    bar.style.display='flex';
+    var legs = result.routes[0].legs;
+    var totalMeters = legs.reduce(function(s,l){ return s + l.distance.value; }, 0);
+    var totalSecs   = legs.reduce(function(s,l){ return s + l.duration.value; }, 0);
+    var miles = totalMeters/1609.34;
+    var fare  = Math.max(45, 15 + miles*2.50);
+    var mins  = Math.round(totalSecs/60);
+    var durText = mins>=60 ? (Math.floor(mins/60)+' hr '+(mins%60)+' min') : (mins+' min');
+    document.getElementById('corp-route-dist').textContent = miles.toFixed(1)+' mi';
+    document.getElementById('corp-route-dur').textContent  = durText;
+    document.getElementById('corp-route-fare').textContent = 'Est. $'+fare.toFixed(2);
+    document.getElementById('corp-route-bar').style.display = 'flex';
+    var hint = document.getElementById('corp-map-hint');
     if(hint) hint.style.display='none';
   });
 }
