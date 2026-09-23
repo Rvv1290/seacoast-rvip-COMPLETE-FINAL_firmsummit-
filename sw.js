@@ -1,5 +1,5 @@
 // Seacoast RVIP Service Worker
-var CACHE = 'rvip-v1';
+var CACHE = 'rvip-v2';
 var OFFLINE_URL = '/offline.html';
 
 var PRECACHE = [
@@ -40,31 +40,48 @@ self.addEventListener('activate', function(e) {
   );
 });
 
-// Fetch — serve from cache, fallback to network, fallback to offline
+// Fetch strategy:
+//  - HTML pages (navigations): NETWORK-FIRST so new deploys always show; fall
+//    back to cache, then the offline page. This prevents stale app pages like
+//    admin.html being served forever from cache.
+//  - Static assets (images, css, js, fonts): cache-first for speed.
 self.addEventListener('fetch', function(e) {
-  // Skip non-GET and external requests
+  // Skip non-GET and external requests (e.g. Firestore / Google APIs)
   if (e.request.method !== 'GET') return;
   if (!e.request.url.startsWith(self.location.origin)) return;
 
-  e.respondWith(
-    caches.match(e.request).then(function(cached) {
-      if (cached) return cached;
+  var req = e.request;
+  var accept = req.headers.get('accept') || '';
+  var isHTML = req.mode === 'navigate' || accept.indexOf('text/html') !== -1;
 
-      return fetch(e.request).then(function(response) {
-        // Cache successful responses
+  if (isHTML) {
+    e.respondWith(
+      fetch(req).then(function(response) {
         if (response && response.status === 200) {
           var clone = response.clone();
-          caches.open(CACHE).then(function(cache) {
-            cache.put(e.request, clone);
-          });
+          caches.open(CACHE).then(function(cache) { cache.put(req, clone); });
         }
         return response;
       }).catch(function() {
-        // Offline fallback for navigation
-        if (e.request.mode === 'navigate') {
-          return caches.match(OFFLINE_URL);
+        return caches.match(req).then(function(cached) {
+          return cached || caches.match(OFFLINE_URL);
+        });
+      })
+    );
+    return;
+  }
+
+  // Static assets — cache-first, then network (and cache the result)
+  e.respondWith(
+    caches.match(req).then(function(cached) {
+      if (cached) return cached;
+      return fetch(req).then(function(response) {
+        if (response && response.status === 200) {
+          var clone = response.clone();
+          caches.open(CACHE).then(function(cache) { cache.put(req, clone); });
         }
-      });
+        return response;
+      }).catch(function() { /* asset unavailable offline */ });
     })
   );
 });
