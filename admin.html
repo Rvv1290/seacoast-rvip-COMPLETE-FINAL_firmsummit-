@@ -1461,17 +1461,22 @@
           <div><label class="flbl">Service *</label>
             <select id="fsv" class="fsel">
               <option value="">Select...</option>
-              <option>Airport — Boston Logan (BOS)</option>
-              <option>Airport — Manchester MHT</option>
-              <option>New York Transfer (NY)</option>
-              <option>Night Out</option>
-              <option>Concert / Live Event</option>
-              <option>Casino Run</option>
-              <option>Special Event</option>
-              <option>Medical Appointment</option>
-              <option>Hotel Transfer</option>
-              <option>Multi-Stop</option>
-              <option>Other</option>
+              <option value="Airport Transfer — BOS Logan">✈ Airport Transfer — Boston Logan (BOS)</option>
+              <option value="Airport Transfer — MHT Manchester">✈ Airport Transfer — Manchester (MHT)</option>
+              <option value="New York Transfer (NY)">🗽 New York Transfer (NY)</option>
+              <option value="Hotel Transfer">🏨 Hotel Transfer</option>
+              <option value="Downtown Boston Transfer">🏙 Downtown Boston Transfer</option>
+              <option value="Business Meeting Transfer">💼 Business Meeting Transfer</option>
+              <option value="Round Trip — Wait &amp; Return">🔄 Round Trip — Wait &amp; Return</option>
+              <option value="Client Meet &amp; Greet — Airport">🤝 Client Meet &amp; Greet (Airport)</option>
+              <option value="Executive Night Out">🌆 Executive Night Out / Entertainment</option>
+              <option value="Concert / Live Event">🎵 Concert / Live Event</option>
+              <option value="Casino Run">🎰 Casino Run</option>
+              <option value="Special Event / Gala">🎭 Special Event / Gala</option>
+              <option value="Conference &amp; Event Shuttle">🚌 Conference &amp; Event Shuttle</option>
+              <option value="Medical Appointment">🏥 Medical Appointment</option>
+              <option value="Multi-Stop Executive">📍 Multi-Stop Executive</option>
+              <option value="Other / Custom">⚙ Other / Custom</option>
             </select>
           </div>
           <div><label class="flbl">Date *</label><input id="fd" class="finp" type="date" /></div>
@@ -2350,6 +2355,20 @@
 
     function e(s) { if (!s) return ''; return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
     function fT(t) { if (!t) return '—'; try { var p = t.split(':'), h = parseInt(p[0]), m = p[1], a = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12; return h + ':' + m + ' ' + a; } catch (x) { return t; } }
+    // Set a <select> to a value, injecting the value as an option if it isn't
+    // already listed — so a ride type chosen elsewhere (e.g. the corporate
+    // portal) is preserved and shown instead of being blanked out on edit.
+    function setServiceSelect(selId, val) {
+      var sel = document.getElementById(selId);
+      if (!sel) return;
+      val = val || '';
+      if (val && !Array.prototype.some.call(sel.options, function (o) { return o.value === val; })) {
+        var opt = document.createElement('option');
+        opt.value = val; opt.textContent = val;
+        sel.appendChild(opt);
+      }
+      sel.value = val;
+    }
 
     // ─────────────────────────────────────────────
     //  TABS
@@ -2483,7 +2502,7 @@
       document.getElementById('fn').value = b.name || '';
       document.getElementById('fp').value = b.phone || '';
       document.getElementById('fe').value = b.email || '';
-      document.getElementById('fsv').value = b.service || '';
+      setServiceSelect('fsv', b.service);
       document.getElementById('fd').value = b.date || '';
       document.getElementById('ft').value = b.time || '';
       document.getElementById('fpu').value = b.pickup || '';
@@ -3288,7 +3307,7 @@
       document.getElementById('fn').value  = t.name  || cli.name  || '';
       document.getElementById('fp').value  = t.phone || cli.phone || '';
       document.getElementById('fe').value  = t.email || cli.email || '';
-      document.getElementById('fsv').value = t.service || '';
+      setServiceSelect('fsv', t.service);
       document.getElementById('fd').value  = t.date  || '';
       document.getElementById('ft').value  = t.time  || '';
       document.getElementById('fpu').value = t.pickup || '';
@@ -3592,7 +3611,7 @@
       document.getElementById('add-title').textContent = 'New Booking (from Quote)';
       document.getElementById('eid').value = '';
       document.getElementById('fn').value = q.name || ''; document.getElementById('fp').value = q.phone || '';
-      document.getElementById('fe').value = q.email || ''; document.getElementById('fsv').value = q.service || '';
+      document.getElementById('fe').value = q.email || ''; setServiceSelect('fsv', q.service);
       document.getElementById('fd').value = q.date || ''; document.getElementById('ft').value = q.time || '';
       document.getElementById('fpu').value = q.pickup || ''; document.getElementById('fde').value = q.destination || '';
       document.getElementById('fno').value = q.notes || ''; document.getElementById('fpr').value = '';
