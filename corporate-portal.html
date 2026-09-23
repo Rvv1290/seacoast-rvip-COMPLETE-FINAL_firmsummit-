@@ -295,6 +295,71 @@ body{font-family:'Inter',sans-serif;background:#f7f7f7;color:#1a1c1c;min-height:
 .addr-chips { display:flex; gap:0.5rem; margin-top:6px; flex-wrap:wrap; }
 .a-chip { display:flex; align-items:center; gap:4px; font-size:0.7rem; color:#775a19; background:#775a1910; padding:3px 8px; border-radius:4px; cursor:pointer; font-weight:600; }
 .a-chip:hover { background:#775a1920; }
+
+/* ============================================================
+   BOOK A RIDE — refined minimalist redesign (visual only)
+   Later in the cascade so it refines the rules above.
+   ============================================================ */
+#tab-book .book-card{ padding:2.75rem 2.5rem; }
+#tab-book .book-card > div:first-child h2{ font-size:1.7rem; letter-spacing:-0.015em; }
+
+/* Section rhythm: quiet dividers group the form without clutter */
+.bk-sec{ padding-top:1.6rem; margin-top:1.6rem; border-top:1px solid #f1efea; }
+.bk-sec-title{ font-family:'Work Sans',sans-serif; font-size:0.62rem; font-weight:700; text-transform:uppercase; letter-spacing:0.16em; color:#9a8149; margin-bottom:1.2rem; }
+
+/* Inputs — airier, softer underline */
+#tab-book .f-label{ font-size:0.62rem; letter-spacing:0.13em; color:#9a9a95; margin-bottom:0.55rem; }
+#tab-book .f-input{ padding:0.72rem 0; border-bottom:1.5px solid #eae7e0; font-size:15px; }
+#tab-book .f-input:focus{ border-bottom-color:#775a19; }
+#tab-book .f-group{ margin-bottom:1.5rem; }
+#tab-book .book-grid{ gap:1.1rem 1.5rem; }
+#tab-book select.f-input{ cursor:pointer; }
+#tab-book textarea.f-input{ border:1.5px solid #eae7e0; border-radius:10px; padding:0.75rem 0.85rem; }
+#tab-book textarea.f-input:focus{ border-color:#775a19; }
+
+/* Quick-select traveler chips */
+#tab-book .q-chip{ border-radius:9px; padding:0.5rem 0.95rem; background:#f6f5f2; border:1px solid transparent; font-size:0.74rem; }
+#tab-book .q-chip:hover{ background:#fff; border-color:#e3e0d8; }
+#tab-book .q-chip.active{ background:#111; border-color:#111; }
+
+/* Vehicle cards — clean, premium, rounded */
+#tab-book .v-grid{ display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+#tab-book .v-card label{ background:#fff; border:1px solid #ebe8e1; border-radius:14px; padding:0; overflow:hidden; box-shadow:0 1px 2px rgba(0,0,0,0.03); transition:all .2s ease; }
+#tab-book .v-card label:hover{ border-color:#d8cfb8; box-shadow:0 8px 22px rgba(0,0,0,0.07); }
+#tab-book .v-card img{ width:100%; height:118px; object-fit:cover; display:block; margin:0; }
+#tab-book .v-info{ padding:0.8rem 0.95rem 0.95rem; }
+#tab-book .v-name{ font-family:'Times New Roman',serif; font-weight:700; font-size:0.98rem; color:#141414; margin:0 0 3px; }
+#tab-book .v-cap{ font-family:Inter,sans-serif; font-size:0.72rem; color:#9a9a95; margin:0; }
+#tab-book .v-card input[type="radio"]:checked+label{ border-color:#775a19; box-shadow:0 8px 26px rgba(119,90,25,0.16); }
+#tab-book .v-card input[type="radio"]:checked+label .v-name{ color:#775a19; }
+
+/* Party-size pills */
+#tab-book .p-btn{ width:2.7rem; height:2.7rem; border:1.5px solid #eae7e0; font-size:0.82rem; }
+#tab-book .p-btn.sel{ background:#111; border-color:#111; color:#fff; }
+#tab-book .p-btn:hover:not(.sel){ border-color:#775a19; color:#775a19; }
+
+/* Terms — softer container */
+#tab-book .tos-wrap{ border:1px solid #ece9e2; border-radius:12px; overflow:hidden; }
+#tab-book .tos-toggle{ background:#faf9f6; font-size:0.68rem; }
+#tab-book .tos-check-row{ border-radius:12px; }
+
+/* Submit bar */
+#tab-book .btn-blk{ border-radius:11px; padding:1rem 2.25rem; border-bottom:none; box-shadow:0 6px 18px rgba(0,0,0,0.14); }
+#tab-book .btn-blk:hover{ opacity:1; transform:translateY(-1px); box-shadow:0 10px 24px rgba(0,0,0,0.18); }
+
+/* Map side — refined route ribbon */
+#corp-map-wrap{ background:#0d0d0d; }
+#corp-route-bar{ background:rgba(0,0,0,0.92); border-top:1px solid rgba(201,168,76,0.25); padding:1rem 1.4rem; gap:1.4rem; }
+#corp-route-dist{ font-weight:600; color:#fff; }
+#corp-route-fare{ font-size:1rem; }
+
+@media(max-width:768px){
+  #tab-book .book-card{ padding:1.6rem 1.35rem !important; }
+  #tab-book .book-card > div:first-child h2{ font-size:1.45rem; }
+  #tab-book .v-card img{ height:104px; }
+  #corp-map-wrap{ height:340px !important; }
+  #corp-route-bar{ padding:0.85rem 1.1rem; gap:1rem; }
+}
 </style>
 </head>
 <body>
@@ -498,6 +563,7 @@ var _sess = null;
           </div>
 
           <!-- Passenger Info -->
+          <div class="bk-sec"><div class="bk-sec-title">Trip Details</div></div>
           <div class="book-grid" style="margin-bottom:1.5rem">
             <div class="f-group book-full">
               <label class="f-label">Passenger / Rider Name *</label>
@@ -560,25 +626,28 @@ var _sess = null;
           </div>
 
           <!-- Vehicle Class -->
+          <div class="bk-sec"><div class="bk-sec-title">Vehicle &amp; Party</div></div>
           <div style="margin-bottom:1.75rem">
-            <label class="f-label" style="font-size:0.65rem;margin-bottom:0.875rem;display:block">Select Vehicle</label>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.875rem">
-              <div class="v-card">
-                <input type="radio" name="b-vehicle" id="bv1" value="Black SUV Luxury" checked/>
-                <label for="bv1">
-                  <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuCVUPBh5oQxrX7I9qlzu6QDGpuuiaZdhBH0UBkLAVKxzR4in41bPEhhffL8dvdYhbmeIRRjn5BVfDNw971kuJzVCN5SglGulLfrFmLfzx6mgQx59omvwObM4z9798Z4qkSkzBxZ401j19rXBjIpqO10fBqx8D1lfWXrPcRDGkI7uYsItkG4YE4f2uVrtSoiZlQbpT3ksAza03T_Lwps90Og60b2UQa1oQepmTFJf_SXIWnooRTQcNyXYgPQupPAxCvraJgH-Sxg-35C"
-                    style="width:100%;height:120px;object-fit:cover;display:block;margin-bottom:0.75rem" alt="Black SUV Luxury"/>
-                  <p style="font-family:'Times New Roman',serif;font-weight:700;font-size:0.95rem;color:#000;margin-bottom:4px">Black SUV Luxury</p>
-                  <p style="font-family:Inter,sans-serif;font-size:0.75rem;color:#666">👤 Up to 7 &nbsp;|&nbsp; 🧳 Up to 5 bags</p>
-                </label>
-              </div>
+            <label class="f-label" style="margin-bottom:0.875rem;display:block">Select Vehicle</label>
+            <div class="v-grid">
               <div class="v-card">
                 <input type="radio" name="b-vehicle" id="bv2" value="Regular SUV"/>
                 <label for="bv2">
-                  <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuBU2xk2TUq20eeEwO5dmeetrkexgALL6bqqA1QFc3aZipQUqCbPJRO1MnOLkEKbsRTg_d4dwwbr1F5MEg3kwHfqyaAHqOi5HWC7tTxMZ4g2Qg0dgqPA7qg_EYkLuFNFhYWSAABexk262XX2xjAcv74w7OOFl21ayeMP6zbznNiaeIIxltrNr7B7quxmSl2HHvoAXrUXcpTVpFigrTtW0EE6yp6s798MWGyG6lYhJaKsDbOQffha2q1h9LawQfsi93MNrKvGfMM0J400"
-                    style="width:100%;height:120px;object-fit:cover;display:block;margin-bottom:0.75rem" alt="Regular SUV"/>
-                  <p style="font-family:'Times New Roman',serif;font-weight:700;font-size:0.95rem;color:#000;margin-bottom:4px">Regular SUV</p>
-                  <p style="font-family:Inter,sans-serif;font-size:0.75rem;color:#666">👤 Up to 6 &nbsp;|&nbsp; 🧳 Up to 4 bags</p>
+                  <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuBU2xk2TUq20eeEwO5dmeetrkexgALL6bqqA1QFc3aZipQUqCbPJRO1MnOLkEKbsRTg_d4dwwbr1F5MEg3kwHfqyaAHqOi5HWC7tTxMZ4g2Qg0dgqPA7qg_EYkLuFNFhYWSAABexk262XX2xjAcv74w7OOFl21ayeMP6zbznNiaeIIxltrNr7B7quxmSl2HHvoAXrUXcpTVpFigrTtW0EE6yp6s798MWGyG6lYhJaKsDbOQffha2q1h9LawQfsi93MNrKvGfMM0J400" alt="Regular SUV"/>
+                  <div class="v-info">
+                    <p class="v-name">Regular SUV</p>
+                    <p class="v-cap">Up to 6 guests · 4 bags</p>
+                  </div>
+                </label>
+              </div>
+              <div class="v-card">
+                <input type="radio" name="b-vehicle" id="bv1" value="Black SUV Luxury" checked/>
+                <label for="bv1">
+                  <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuCVUPBh5oQxrX7I9qlzu6QDGpuuiaZdhBH0UBkLAVKxzR4in41bPEhhffL8dvdYhbmeIRRjn5BVfDNw971kuJzVCN5SglGulLfrFmLfzx6mgQx59omvwObM4z9798Z4qkSkzBxZ401j19rXBjIpqO10fBqx8D1lfWXrPcRDGkI7uYsItkG4YE4f2uVrtSoiZlQbpT3ksAza03T_Lwps90Og60b2UQa1oQepmTFJf_SXIWnooRTQcNyXYgPQupPAxCvraJgH-Sxg-35C" alt="Black SUV Luxury"/>
+                  <div class="v-info">
+                    <p class="v-name">Black SUV Luxury</p>
+                    <p class="v-cap">Up to 7 guests · 5 bags</p>
+                  </div>
                 </label>
               </div>
             </div>
@@ -612,6 +681,7 @@ var _sess = null;
           </div>
 
           <!-- PO + Notes -->
+          <div class="bk-sec"><div class="bk-sec-title">Additional Details</div></div>
           <div class="book-grid" style="margin-bottom:1.75rem">
             <div class="f-group">
               <label class="f-label">PO / Reference #</label>
@@ -673,6 +743,7 @@ var _sess = null;
             <span id="corp-route-dist" style="font-family:Inter,sans-serif;font-size:0.8rem;color:#ddd"></span>
             <span id="corp-route-dur" style="font-family:Inter,sans-serif;font-size:0.8rem;color:#888"></span>
             <span id="corp-route-fare" style="font-family:'Work Sans',sans-serif;font-size:0.9rem;font-weight:700;color:#C9A84C;margin-left:auto"></span>
+            <div style="flex-basis:100%;font-family:Inter,sans-serif;font-size:0.62rem;color:#8a8a8a;margin-top:2px;line-height:1.4">Starting estimate — final fare is confirmed by dispatch after your ride is approved, then shown on your dashboard.</div>
           </div>
           <!-- Placeholder shown before addresses typed -->
           <div id="corp-map-hint" style="position:absolute;bottom:2rem;left:0;right:0;text-align:center;pointer-events:none">
@@ -2700,7 +2771,7 @@ function _doCorpRoute(){
     var durText = mins>=60 ? (Math.floor(mins/60)+' hr '+(mins%60)+' min') : (mins+' min');
     document.getElementById('corp-route-dist').textContent = miles.toFixed(1)+' mi';
     document.getElementById('corp-route-dur').textContent  = durText;
-    document.getElementById('corp-route-fare').textContent = 'Est. $'+fare.toFixed(2);
+    document.getElementById('corp-route-fare').textContent = 'From $'+fare.toFixed(2);
     document.getElementById('corp-route-bar').style.display = 'flex';
     var hint = document.getElementById('corp-map-hint');
     if(hint) hint.style.display='none';
