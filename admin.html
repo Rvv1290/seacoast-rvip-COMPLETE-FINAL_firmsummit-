@@ -1507,8 +1507,8 @@
           </div>
           <div><label class="flbl">Vehicle</label>
             <select id="fve" class="fsel">
+              <option>Regular SUV</option>
               <option>Black SUV Luxury</option>
-              <option>Regular Black SUV</option>
             </select>
           </div>
           <div>
@@ -2511,7 +2511,7 @@
       document.getElementById('fti').value = b.tip || '';
       document.getElementById('fst').value = b.status || 'Confirmed';
       document.getElementById('fco').value = b.code || '';
-      document.getElementById('fve').value = b.vehicle || '';
+      setServiceSelect('fve', b.vehicle || 'Regular SUV');
       document.getElementById('fno').value = b.notes || '';
       updateDriverSelects();
       updateCorpSelect();
@@ -3317,7 +3317,7 @@
       document.getElementById('fst').value = t.status || 'Confirmed';
       document.getElementById('fco').value = t.code  || '';
       document.getElementById('fno').value = t.notes || '';
-      document.getElementById('fve').value = t.vehicle || 'Black SUV Luxury';
+      setServiceSelect('fve', t.vehicle || 'Regular SUV');
       document.getElementById('fcorp').value = t.corporateAccountId || '';
       // Show client assignment
       var cname = cli.name || document.getElementById('cpr-name').value.trim();

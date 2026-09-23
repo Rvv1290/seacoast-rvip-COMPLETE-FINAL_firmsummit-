@@ -631,7 +631,7 @@ var _sess = null;
             <label class="f-label" style="margin-bottom:0.875rem;display:block">Select Vehicle</label>
             <div class="v-grid">
               <div class="v-card">
-                <input type="radio" name="b-vehicle" id="bv2" value="Regular SUV"/>
+                <input type="radio" name="b-vehicle" id="bv2" value="Regular SUV" checked/>
                 <label for="bv2">
                   <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuBU2xk2TUq20eeEwO5dmeetrkexgALL6bqqA1QFc3aZipQUqCbPJRO1MnOLkEKbsRTg_d4dwwbr1F5MEg3kwHfqyaAHqOi5HWC7tTxMZ4g2Qg0dgqPA7qg_EYkLuFNFhYWSAABexk262XX2xjAcv74w7OOFl21ayeMP6zbznNiaeIIxltrNr7B7quxmSl2HHvoAXrUXcpTVpFigrTtW0EE6yp6s798MWGyG6lYhJaKsDbOQffha2q1h9LawQfsi93MNrKvGfMM0J400" alt="Regular SUV"/>
                   <div class="v-info">
@@ -641,7 +641,7 @@ var _sess = null;
                 </label>
               </div>
               <div class="v-card">
-                <input type="radio" name="b-vehicle" id="bv1" value="Black SUV Luxury" checked/>
+                <input type="radio" name="b-vehicle" id="bv1" value="Black SUV Luxury"/>
                 <label for="bv1">
                   <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuCVUPBh5oQxrX7I9qlzu6QDGpuuiaZdhBH0UBkLAVKxzR4in41bPEhhffL8dvdYhbmeIRRjn5BVfDNw971kuJzVCN5SglGulLfrFmLfzx6mgQx59omvwObM4z9798Z4qkSkzBxZ401j19rXBjIpqO10fBqx8D1lfWXrPcRDGkI7uYsItkG4YE4f2uVrtSoiZlQbpT3ksAza03T_Lwps90Og60b2UQa1oQepmTFJf_SXIWnooRTQcNyXYgPQupPAxCvraJgH-Sxg-35C" alt="Black SUV Luxury"/>
                   <div class="v-info">
@@ -2726,8 +2726,7 @@ function initCorpMap(){
       {featureType:'poi',stylers:[{visibility:'off'}]},
       {featureType:'transit',stylers:[{visibility:'off'}]},
       {featureType:'administrative',elementType:'labels',stylers:[{visibility:'off'}]}, // hide states/counties
-      {featureType:'administrative.locality',elementType:'labels',stylers:[{visibility:'on'}]}, // keep major cities
-      {featureType:'administrative.locality',elementType:'labels.text.fill',stylers:[{color:'#C9A84C'}]}, // gold cities
+      {featureType:'administrative.locality',elementType:'labels.text.fill',stylers:[{color:'#C9A84C'}]}, // gold cities (Google manages density by zoom)
       {featureType:'administrative.neighborhood',elementType:'labels',stylers:[{visibility:'off'}]},
       {featureType:'all',elementType:'labels.text.stroke',stylers:[{color:'#000000'},{weight:2}]},
       {featureType:'all',elementType:'labels.icon',stylers:[{visibility:'off'}]}
@@ -2786,7 +2785,7 @@ function _doCorpRoute(){
     // Proportionate zoom: fit the whole route with padding so it isn't hidden
     // behind the black top/bottom bars and isn't zoomed too far out.
     if(result.routes[0].bounds && _corpMap){
-      _corpMap.fitBounds(result.routes[0].bounds, {top:64, bottom:96, left:44, right:44});
+      _corpMap.fitBounds(result.routes[0].bounds, {top:46, bottom:88, left:24, right:24});
     }
     var legs = result.routes[0].legs;
     var totalMeters = legs.reduce(function(s,l){ return s + l.distance.value; }, 0);
