@@ -1578,10 +1578,11 @@ window.addEventListener('DOMContentLoaded', function(){
   document.getElementById('a-phone').textContent = sess.contactPhone || '—';
   document.getElementById('a-email').textContent = sess.contactEmail || '—';
   document.getElementById('a-routes').textContent = sess.typicalRoutes || '—';
-  // Set default date for booking
+  // Set default date for booking — use LOCAL date so it doesn't jump a day in the evening
   var today = new Date();
-  document.getElementById('b-date').min = today.toISOString().split('T')[0];
-  document.getElementById('b-date').value = today.toISOString().split('T')[0];
+  var _todayLocal = today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0');
+  document.getElementById('b-date').min = _todayLocal;
+  document.getElementById('b-date').value = _todayLocal;
   // Load bonus points first (one-time), then start real-time trip listeners
   loadBonusPoints(function(){
     loadTrips();
@@ -1830,13 +1831,24 @@ function renderRewards(completedCount, totalSpend, bonusPoints){
   document.getElementById('rw-bonus').textContent = bonusPoints;
 }
 
+// Parse a ride date ('YYYY-MM-DD') in LOCAL time so it never shifts a day
+// backward due to UTC midnight parsing. Falls back to native Date otherwise.
+function _rideDate(s){
+  if(!s) return new Date(NaN);
+  if(typeof s==='string'){
+    var m=s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if(m) return new Date(+m[1], +m[2]-1, +m[3]);
+  }
+  return new Date(s);
+}
+
 function calcStats(){
   var now=new Date();
   var thisMonth=now.getMonth(),thisYear=now.getFullYear();
   var monthCount=0,totalBal=0,completedCount=0,totalSpend=0;
   var upcoming=_trips.filter(function(t){return new Date(t.date+' '+(t.time||'00:00'))>=now;}).sort(function(a,b){return new Date(a.date)-new Date(b.date);});
   _trips.forEach(function(t){
-    var d=new Date(t.date);
+    var d=_rideDate(t.date);
     if(d.getMonth()===thisMonth&&d.getFullYear()===thisYear)monthCount++;
     var p=parseFloat((t.price+'').replace(/[^0-9.]/g,''));
     if(t.status==='Completed'){completedCount++;if(!isNaN(p))totalSpend+=p;}
@@ -1849,7 +1861,7 @@ function calcStats(){
   document.getElementById('pay-balance').textContent='$'+periodBal.toFixed(2);
   if(upcoming.length){
     var nxt=upcoming[0];
-    var nd=new Date(nxt.date);
+    var nd=_rideDate(nxt.date);
     document.getElementById('stat-next').textContent=nd.toLocaleDateString('en-US',{month:'short',day:'numeric'});
   }else{
     document.getElementById('stat-next').textContent='None';
@@ -1868,7 +1880,7 @@ function renderDashUpcoming(){
 }
 
 function tripCard(t){
-  var d=new Date(t.date);
+  var d=_rideDate(t.date);
   var dateStr=d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'});
   var bdg=t.status==='Confirmed'?'<span class="bdg bdg-con">Confirmed</span>':t.status==='Completed'?'<span class="bdg bdg-com">Completed</span>':t.status==='Paid'?'<span class="bdg bdg-pay">Paid</span>':t.status==='Cancelled'?'<span class="bdg" style="background:#fee2e2;color:#991b1b">Cancelled</span>':'<span class="bdg bdg-pen">Pending</span>';
   var cls=t.status==='Confirmed'?'confirmed':t.status==='Completed'?'completed':t.status==='Paid'?'completed':'pending';
@@ -1995,7 +2007,7 @@ function renderPayments(){
   if(!_trips.length){tbody.innerHTML='';empty.style.display='block';return;}
   empty.style.display='none';
   tbody.innerHTML=_trips.map(function(t){
-    var d=new Date(t.date);
+    var d=_rideDate(t.date);
     var dateStr=d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
     var bdg=t.status==='Paid'?'<span class="bdg bdg-com">Paid</span>':'<span class="bdg bdg-pen">Due</span>';
     return '<tr><td>'+dateStr+'</td><td style="font-weight:600;color:#775a19">'+(t.code||'—')+'</td><td>'+escH(t.service||'—')+'</td><td>'+escH((t.pickup||'—').substring(0,20))+'→'+escH((t.destination||'—').substring(0,20))+'</td><td><strong>'+(t.price||'—')+'</strong></td><td>'+bdg+'</td></tr>';
@@ -2098,7 +2110,10 @@ function collectStopInputs(listId){
 // Legacy — kept in case referenced elsewhere
 function selVeh(el,val){}
 
+var _bookingInFlight = false;
 function submitBooking(){
+  // Hard guard against double/triple submissions (rapid clicks, slow network re-taps)
+  if(_bookingInFlight) return;
   var btn=document.getElementById('book-btn');
   var err=document.getElementById('book-err');
   var ok=document.getElementById('book-success');
@@ -2117,6 +2132,7 @@ function submitBooking(){
   if(!document.getElementById('b-tos-check').checked){
     err.textContent='Please read and accept the Terms of Service before booking.';err.style.display='block';return;
   }
+  _bookingInFlight=true;
   btn.textContent='Booking…';btn.disabled=true;
   var veh=(document.querySelector('input[name="b-vehicle"]:checked')||{}).value||'Black SUV Luxury';
   var code='CORP'+Math.floor(10000+Math.random()*90000);
@@ -2145,6 +2161,7 @@ function submitBooking(){
     createdAt:new Date().toISOString()
   };
   function finish(success){
+    _bookingInFlight=false;
     btn.textContent='Request Ride →';btn.disabled=false;
     if(success){
       ok.style.display='block';
@@ -2392,7 +2409,7 @@ function _renderLuxuryStatement(opts){
 function printNet30(){
   var now=new Date();
   var thirtyAgo=new Date(now.getTime()-30*24*60*60*1000);
-  var recent=_trips.filter(function(t){return new Date(t.date)>=thirtyAgo;});
+  var recent=_trips.filter(function(t){return _rideDate(t.date)>=thirtyAgo;});
   _renderLuxuryStatement({
     title:'Net-30 Statement',
     invNum:'RVIP-'+now.getFullYear()+'-'+String(Date.now()).slice(-6),
