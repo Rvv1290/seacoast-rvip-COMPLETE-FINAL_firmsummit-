@@ -3567,7 +3567,7 @@
       w.document.write('<div style="display:flex;justify-content:space-between;margin-bottom:1rem"><div><strong>Bill To:</strong><br>'+_escH(cname||'—')+(cem?'<br>'+_escH(cem):'')+(cph?'<br>'+_escH(cph):'')+'</div><div><strong>Date:</strong> '+new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})+'</div></div>');
       w.document.write('<table><thead><tr><th>Date</th><th>Conf#</th><th>Service</th><th>Route</th><th style="text-align:right">Fare</th><th style="text-align:right">Tip</th><th style="text-align:right">Total</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table>');
       w.document.write('<div class="total">Total Due: $'+total.toFixed(2)+'</div>');
-      w.document.write('<p class="muted" style="margin-top:2rem">Remit payment within 30 days. Questions: billing@seacoastrvip.com · (978) 255-3140 · seacoastrvip.com</p>');
+      w.document.write('<p class="muted" style="margin-top:2rem">Questions: info@seacoastrvip.com · (978) 255-3140 · seacoastrvip.com</p>');
       w.document.write('</body></html>');
       w.document.close();
       setTimeout(function(){ try { w.print(); } catch(e){} }, 300);
@@ -3610,7 +3610,7 @@
       w.document.write('<div class="summary"><div><div class="lbl">Total Trips</div><div class="val">'+trips.length+'</div></div><div><div class="lbl">Period Total</div><div class="val">$'+total.toFixed(2)+'</div></div><div><div class="lbl">Outstanding</div><div class="val" style="color:#b91c1c">$'+outstanding.toFixed(2)+'</div></div></div>');
       w.document.write('<table><thead><tr><th>Date</th><th>Conf#</th><th>Service</th><th>Route</th><th style="text-align:right">Fare</th><th style="text-align:right">Tip</th><th style="text-align:right">Total</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table>');
       w.document.write('<p class="muted" style="margin-top:2rem">Paid this period: $'+paid.toFixed(2)+' · Outstanding: $'+outstanding.toFixed(2)+'</p>');
-      w.document.write('<p class="muted">Questions: billing@seacoastrvip.com · (978) 255-3140 · seacoastrvip.com</p>');
+      w.document.write('<p class="muted">Questions: info@seacoastrvip.com · (978) 255-3140 · seacoastrvip.com</p>');
       w.document.write('</body></html>');
       w.document.close();
       setTimeout(function(){ try { w.print(); } catch(e){} }, 300);
