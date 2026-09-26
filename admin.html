@@ -3563,7 +3563,7 @@
       w.document.write('<html><head><title>Invoice '+invNo+' — '+_escH(cname)+'</title>');
       w.document.write('<style>body{font-family:Arial,sans-serif;padding:2.5rem;max-width:800px;margin:0 auto;color:#111}table{width:100%;border-collapse:collapse;margin-top:1rem}th,td{border:1px solid #ddd;padding:8px;text-align:left;font-size:0.85rem}th{background:#111;color:#fff}h1{font-size:1.6rem;margin:0}.head{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #111;padding-bottom:1rem;margin-bottom:1.5rem}.muted{color:#666;font-size:0.85rem}.total{font-size:1.3rem;font-weight:700;margin-top:1rem;text-align:right}.gold{color:#775a19}@media print{body{padding:1rem}}</style>');
       w.document.write('</head><body>');
-      w.document.write('<div class="head"><div><h1>SEACOAST <span class="gold">RVIP</span> LLC</h1><div class="muted">Premium Ground Transportation</div></div><div style="text-align:right"><div style="font-weight:700;letter-spacing:.1em">INVOICE</div><div class="muted">'+invNo+'</div><div class="muted">Due: '+due+'</div></div></div>');
+      w.document.write('<div class="head"><div><h1>SEACOAST <span class="gold">RVIP</span></h1><div class="muted">Premium Ground Transportation</div></div><div style="text-align:right"><div style="font-weight:700;letter-spacing:.1em">INVOICE</div><div class="muted">'+invNo+'</div><div class="muted">Due: '+due+'</div></div></div>');
       w.document.write('<div style="display:flex;justify-content:space-between;margin-bottom:1rem"><div><strong>Bill To:</strong><br>'+_escH(cname||'—')+(cem?'<br>'+_escH(cem):'')+(cph?'<br>'+_escH(cph):'')+'</div><div><strong>Date:</strong> '+new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})+'</div></div>');
       w.document.write('<table><thead><tr><th>Date</th><th>Conf#</th><th>Service</th><th>Route</th><th style="text-align:right">Fare</th><th style="text-align:right">Tip</th><th style="text-align:right">Total</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table>');
       w.document.write('<div class="total">Total Due: $'+total.toFixed(2)+'</div>');
@@ -3605,7 +3605,7 @@
       w.document.write('<html><head><title>Statement — '+_escH(cname)+'</title>');
       w.document.write('<style>body{font-family:Arial,sans-serif;padding:2.5rem;max-width:850px;margin:0 auto;color:#111}table{width:100%;border-collapse:collapse;margin-top:1rem}th,td{border:1px solid #ddd;padding:8px;text-align:left;font-size:0.85rem}th{background:#111;color:#fff}h1{font-size:1.6rem;margin:0}.head{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #111;padding-bottom:1rem;margin-bottom:1.5rem}.muted{color:#666;font-size:0.85rem}.summary{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin:1.5rem 0;padding:1rem;background:#f9f6ef;border-left:4px solid #775a19}.summary div{text-align:center}.summary .lbl{font-size:0.7rem;text-transform:uppercase;letter-spacing:0.08em;color:#666}.summary .val{font-size:1.1rem;font-weight:700;margin-top:4px}.gold{color:#775a19}@media print{body{padding:1rem}}</style>');
       w.document.write('</head><body>');
-      w.document.write('<div class="head"><div><h1>SEACOAST <span class="gold">RVIP</span> LLC</h1><div class="muted">Premium Ground Transportation</div></div><div style="text-align:right"><div style="font-weight:700;letter-spacing:.1em">TRIP STATEMENT</div><div class="muted">'+_escH(period)+'</div><div class="muted">'+new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})+'</div></div></div>');
+      w.document.write('<div class="head"><div><h1>SEACOAST <span class="gold">RVIP</span></h1><div class="muted">Premium Ground Transportation</div></div><div style="text-align:right"><div style="font-weight:700;letter-spacing:.1em">TRIP STATEMENT</div><div class="muted">'+_escH(period)+'</div><div class="muted">'+new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})+'</div></div></div>');
       w.document.write('<div><strong>Account:</strong> '+_escH(cname||'—')+(cem?' · '+_escH(cem):'')+(cph?' · '+_escH(cph):'')+'</div>');
       w.document.write('<div class="summary"><div><div class="lbl">Total Trips</div><div class="val">'+trips.length+'</div></div><div><div class="lbl">Period Total</div><div class="val">$'+total.toFixed(2)+'</div></div><div><div class="lbl">Outstanding</div><div class="val" style="color:#b91c1c">$'+outstanding.toFixed(2)+'</div></div></div>');
       w.document.write('<table><thead><tr><th>Date</th><th>Conf#</th><th>Service</th><th>Route</th><th style="text-align:right">Fare</th><th style="text-align:right">Tip</th><th style="text-align:right">Total</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table>');
@@ -4040,7 +4040,7 @@
         '.total-row{display:flex;justify-content:space-between;padding:.75rem 0;border-top:2px solid #111;margin-top:.5rem}' +
         '.total-label{font-weight:700;font-size:.9rem}.total-val{font-weight:700;font-size:1.25rem;color:#16a34a}' +
         '</style></head><body>' +
-        '<h1>Seacoast RVIP LLC</h1>' +
+        '<h1>Seacoast RVIP</h1>' +
         '<div class="sub">Driver Invoice &nbsp;·&nbsp; Generated: ' + today + '&nbsp;·&nbsp; Commission Rate: ' + getDrRate() + '%</div>' +
         '<table><thead><tr>' +
         '<th>Date</th><th>Client</th><th>Service</th><th style="text-align:right">Fare</th><th style="text-align:right">Driver Pay</th>' +
@@ -4048,7 +4048,7 @@
         '<div class="total-row"><span class="total-label">Gross Revenue</span><span style="font-weight:700;font-size:1rem">$' + gross.toFixed(2) + '</span></div>' +
         '<div class="total-row"><span class="total-label">Total Driver Payout</span><span class="total-val">$' + total.toFixed(2) + '</span></div>' +
         '<div class="total-row"><span class="total-label">Company Retained</span><span style="font-weight:700;font-size:1rem;color:#775a19">$' + (gross - total).toFixed(2) + '</span></div>' +
-        '<p style="margin-top:2rem;font-size:.75rem;color:#aaa">Seacoast RVIP LLC · info@seacoastrvip.com · (978) 255-3140 · seacoastrvip.com</p>' +
+        '<p style="margin-top:2rem;font-size:.75rem;color:#aaa">Seacoast RVIP · info@seacoastrvip.com · (978) 255-3140 · seacoastrvip.com</p>' +
         '';
 
       var w = window.open('', '_blank');
@@ -5637,7 +5637,7 @@
         '@media print{body{padding:1rem}}'+
         '</style></head><body>'+
         '<div style="display:flex;justify-content:space-between;align-items:flex-start">'+
-          '<div><h1>Seacoast <span class="gold">RVIP</span> LLC</h1><div class="sub" style="margin-top:4px">Premium Luxury Transportation</div></div>'+
+          '<div><h1>Seacoast <span class="gold">RVIP</span></h1><div class="sub" style="margin-top:4px">Premium Luxury Transportation</div></div>'+
           '<div style="text-align:right">'+
             '<div style="font-size:1.1rem;font-weight:700">ESTIMATE</div>'+
             '<div style="font-size:.85rem;color:#555"># '+estNum+'</div>'+
@@ -5676,7 +5676,7 @@
         '</div>'+
         (validUntil?'<div class="sub" style="margin-top:.75rem">This estimate is valid until <strong>'+validUntil+'</strong>. Prices subject to change after expiration.</div>':'')+
         (est.message?'<hr class="thin"><div style="font-size:.6rem;text-transform:uppercase;letter-spacing:.08em;color:#aaa;margin-bottom:.5rem">Message</div><div style="font-size:.82rem;color:#444;line-height:1.6;white-space:pre-wrap">'+e(est.message)+'</div>':'')+
-        '<footer>Seacoast RVIP LLC &nbsp;·&nbsp; (978) 255-3140 &nbsp;·&nbsp; info@seacoastrvip.com &nbsp;·&nbsp; seacoastrvip.com</footer>'+
+        '<footer>Seacoast RVIP &nbsp;·&nbsp; (978) 255-3140 &nbsp;·&nbsp; info@seacoastrvip.com &nbsp;·&nbsp; seacoastrvip.com</footer>'+
         '</body></html>';
 
       var w = window.open('','_blank');

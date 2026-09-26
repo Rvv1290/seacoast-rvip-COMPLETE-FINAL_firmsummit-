@@ -701,7 +701,7 @@ var _sess = null;
               <span id="b-tos-arrow" style="font-size:0.72rem;color:#775a19;white-space:nowrap">▼ Read &amp; Accept</span>
             </button>
             <div id="b-tos-body" class="tos-body">
-              <p style="font-family:'Times New Roman',serif;font-size:1rem;font-weight:700;color:#1a1c1c;margin-bottom:0.25rem">Seacoast RVIP LLC — Terms of Service</p>
+              <p style="font-family:'Times New Roman',serif;font-size:1rem;font-weight:700;color:#1a1c1c;margin-bottom:0.25rem">Seacoast RVIP — Terms of Service</p>
               <p style="font-size:0.7rem;color:#888;margin-bottom:1rem">Last updated: April 2, 2025</p>
               <p style="font-weight:700;color:#1a1c1c;margin-bottom:0.3rem">1. Acceptance of Terms</p>
               <p style="margin-bottom:0.875rem">By submitting a booking request you agree to be bound by these Terms of Service.</p>
@@ -717,13 +717,13 @@ var _sess = null;
               <p style="font-weight:700;color:#1a1c1c;margin-bottom:0.3rem">4. Passenger Conduct</p>
               <p style="margin-bottom:0.875rem">No smoking, vaping, open containers, or illegal substances. Passenger count may not exceed vehicle capacity. Damage to the vehicle will be billed to the account.</p>
               <p style="font-weight:700;color:#1a1c1c;margin-bottom:0.3rem">5. Liability</p>
-              <p style="margin-bottom:0">Seacoast RVIP LLC's total liability shall not exceed the fare paid for that ride. We are not liable for delays caused by traffic, weather, or road conditions. <a href="terms.html" target="_blank" style="color:#775a19;text-decoration:underline">View full Terms →</a></p>
+              <p style="margin-bottom:0">Seacoast RVIP's total liability shall not exceed the fare paid for that ride. We are not liable for delays caused by traffic, weather, or road conditions. <a href="terms.html" target="_blank" style="color:#775a19;text-decoration:underline">View full Terms →</a></p>
             </div>
           </div>
           <div class="tos-check-row">
             <input type="checkbox" id="b-tos-check" style="margin-top:3px;width:18px;height:18px;accent-color:#775a19;flex-shrink:0;cursor:pointer">
             <span style="font-family:Inter,sans-serif;font-size:0.875rem;color:#1a1c1c;line-height:1.55;cursor:pointer" onclick="document.getElementById('b-tos-check').click()">
-              I have read and agree to <a href="terms.html" target="_blank" style="color:#775a19;font-weight:600;text-decoration:underline">Seacoast RVIP LLC's Terms of Service</a> and <strong>Cancellation Policy</strong>.
+              I have read and agree to <a href="terms.html" target="_blank" style="color:#775a19;font-weight:600;text-decoration:underline">Seacoast RVIP's Terms of Service</a> and <strong>Cancellation Policy</strong>.
             </span>
           </div>
 
@@ -2358,7 +2358,7 @@ function printInvoice(){
   w.document.write('<section class="totals">'+
     '<div class="tot-row grand"><span class="tot-lbl">Total</span><span class="tot-val">$'+total.toFixed(2)+'</span></div>'+
   '</section>');
-  w.document.write('<footer class="stmt-ft"><div class="ft-line">Payable to Seacoast RVIP LLC.</div><div class="ft-line">(978) 255-3140 &nbsp;·&nbsp; info@seacoastrvip.com &nbsp;·&nbsp; seacoastrvip.com</div></footer>');
+  w.document.write('<footer class="stmt-ft"><div class="ft-line">Payable to Seacoast RVIP.</div><div class="ft-line">(978) 255-3140 &nbsp;·&nbsp; info@seacoastrvip.com &nbsp;·&nbsp; seacoastrvip.com</div></footer>');
   w.document.write('</div></body></html>');
   w.document.close();
   setTimeout(function(){w.print();},250);
@@ -2529,7 +2529,7 @@ function _renderLuxuryStatement(opts){
   w.document.write('<section class="totals">'+
     '<div class="tot-row grand"><span class="tot-lbl">Total Due</span><span class="tot-val">$'+total.toFixed(2)+'</span></div>'+
   '</section>');
-  w.document.write('<footer class="stmt-ft"><div class="ft-line">Payment Terms — Net 30 from statement date. Payable to Seacoast RVIP LLC.</div><div class="ft-line">(978) 255-3140 &nbsp;·&nbsp; info@seacoastrvip.com &nbsp;·&nbsp; seacoastrvip.com</div></footer>');
+  w.document.write('<footer class="stmt-ft"><div class="ft-line">Payment Terms — Net 30 from statement date. Payable to Seacoast RVIP.</div><div class="ft-line">(978) 255-3140 &nbsp;·&nbsp; info@seacoastrvip.com &nbsp;·&nbsp; seacoastrvip.com</div></footer>');
   w.document.write('</div></body></html>');
   w.document.close();
   setTimeout(function(){w.print();},250);
@@ -2959,7 +2959,7 @@ function printStmtPDF(){
     '<div class="tot-row grand"><span class="tot-lbl">Total Due</span><span class="tot-val">$'+grandTotal.toFixed(2)+'</span></div>'+
   '</section>');
   // Footer
-  w.document.write('<footer class="stmt-ft"><div class="ft-line">Payable to Seacoast RVIP LLC — Net 30 from statement date.</div><div class="ft-line">(978) 255-3140 &nbsp;·&nbsp; info@seacoastrvip.com &nbsp;·&nbsp; seacoastrvip.com</div></footer>');
+  w.document.write('<footer class="stmt-ft"><div class="ft-line">Payable to Seacoast RVIP — Net 30 from statement date.</div><div class="ft-line">(978) 255-3140 &nbsp;·&nbsp; info@seacoastrvip.com &nbsp;·&nbsp; seacoastrvip.com</div></footer>');
   w.document.write('</div></body></html>');w.document.close();
   setTimeout(function(){w.print();},250);
 }
