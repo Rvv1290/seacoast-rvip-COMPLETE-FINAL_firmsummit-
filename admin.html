@@ -1630,6 +1630,28 @@
     </div>
   </div>
 
+  <!-- CLIENT INVOICE — TRIP PICKER MODAL -->
+  <div class="ov" id="m-cli-invoice">
+    <div class="modal" style="max-width:640px">
+      <div class="mhd">
+        <h3>Select Trips to Invoice</h3><button class="mx" onclick="closeM('m-cli-invoice')">✕</button>
+      </div>
+      <div class="mbdy">
+        <div style="font-size:.78rem;color:#888;margin-bottom:.9rem">Check the trips to include on this invoice — any status (including Paid).</div>
+        <div style="display:flex;gap:.5rem;align-items:center;margin-bottom:.9rem">
+          <button onclick="cliInvoiceSelectAll(true)" class="btn bo" style="padding:.3rem .7rem;font-size:.68rem">Select All</button>
+          <button onclick="cliInvoiceSelectAll(false)" class="btn bo" style="padding:.3rem .7rem;font-size:.68rem">Clear</button>
+          <span id="inv-count" style="margin-left:auto;font-size:.8rem;font-weight:700;color:#111"></span>
+        </div>
+        <div id="inv-trip-list" style="max-height:52vh;overflow-y:auto;border:1px solid #eee;border-radius:8px"></div>
+        <div style="display:flex;justify-content:flex-end;gap:.6rem;margin-top:1.1rem">
+          <button onclick="closeM('m-cli-invoice')" class="btn bo">Cancel</button>
+          <button onclick="confirmClientInvoice()" class="btn bk"><span class="material-symbols-outlined" style="font-size:15px;vertical-align:middle">receipt</span> Generate Invoice</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- MESSAGE MODAL -->
   <div class="ov" id="m-msg">
     <div class="modal" style="max-width:520px">
@@ -3456,17 +3478,77 @@
 
     function _escH(s) { return (s+'').replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
 
+    // Open the trip picker so the admin can choose exactly which trips to invoice
+    // (any status, including Paid).
     function generateClientInvoice() {
-      var cid   = document.getElementById('cli-detail-id').value;
+      var cid = document.getElementById('cli-detail-id').value;
+      if (!cid) return toast('Open a client profile first');
+      var trips = _collectClientTrips();
+      if (!trips.length) return toast('This client has no trips to invoice');
+      // newest first in the picker for convenience
+      window._invTrips = trips.slice().sort(function(a,b){ return new Date(b.date||0) - new Date(a.date||0); });
+      renderInvoiceTripPicker();
+      openM('m-cli-invoice');
+    }
+
+    function renderInvoiceTripPicker() {
+      var trips = window._invTrips || [];
+      var el = document.getElementById('inv-trip-list');
+      if (!el) return;
+      el.innerHTML = trips.map(function(t, i){
+        var d = new Date((t.date||'')+'T12:00:00');
+        var ds = isNaN(d.getTime()) ? (t.date||'—') : d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+        var fare=(parseFloat(t.price)||0), tip=(parseFloat(t.tip)||0), tot=fare+tip;
+        var st = (t.status||'').toLowerCase();
+        var checked = (st==='confirmed'||st==='completed') ? 'checked' : ''; // pre-check unpaid; paid selectable
+        var stColor = st==='paid' ? '#166534' : (st==='completed' ? '#775a19' : (st==='cancelled' ? '#b91c1c' : '#b45309'));
+        return '<label style="display:flex;gap:.7rem;align-items:center;padding:.7rem .9rem;border-bottom:1px solid #f3f3f3;cursor:pointer">'+
+          '<input type="checkbox" class="inv-trip-cb" data-idx="'+i+'" '+checked+' onchange="updateInvCount()" style="width:17px;height:17px;accent-color:#775a19;flex-shrink:0">'+
+          '<div style="flex:1;min-width:0">'+
+            '<div style="font-size:.82rem;font-weight:600">'+ds+' &middot; '+_escH(t.service||'—')+'</div>'+
+            '<div style="font-size:.72rem;color:#888;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+_escH(t.pickup||'')+' → '+_escH(t.destination||'')+'</div>'+
+          '</div>'+
+          '<div style="text-align:right;flex-shrink:0">'+
+            '<div style="font-weight:700;font-size:.85rem">$'+tot.toFixed(2)+'</div>'+
+            '<div style="font-size:.6rem;text-transform:uppercase;letter-spacing:.06em;font-weight:700;color:'+stColor+'">'+_escH(t.status||'—')+'</div>'+
+          '</div>'+
+        '</label>';
+      }).join('') || '<div style="padding:1.5rem;text-align:center;color:#aaa;font-size:.82rem">No trips found for this client.</div>';
+      updateInvCount();
+    }
+
+    function cliInvoiceSelectAll(v) {
+      document.querySelectorAll('#inv-trip-list .inv-trip-cb').forEach(function(cb){ cb.checked = v; });
+      updateInvCount();
+    }
+
+    function updateInvCount() {
+      var trips = window._invTrips || [];
+      var n = 0, total = 0;
+      document.querySelectorAll('#inv-trip-list .inv-trip-cb').forEach(function(cb){
+        if (cb.checked) { n++; var t = trips[+cb.dataset.idx]; if(t) total += (parseFloat(t.price)||0) + (parseFloat(t.tip)||0); }
+      });
+      var lbl = document.getElementById('inv-count');
+      if (lbl) lbl.textContent = n + ' trip' + (n!==1?'s':'') + ' · $' + total.toFixed(2);
+    }
+
+    function confirmClientInvoice() {
+      var trips = window._invTrips || [];
+      var selected = [];
+      document.querySelectorAll('#inv-trip-list .inv-trip-cb').forEach(function(cb){
+        if (cb.checked) { var t = trips[+cb.dataset.idx]; if(t) selected.push(t); }
+      });
+      if (!selected.length) return toast('Select at least one trip to invoice');
+      closeM('m-cli-invoice');
+      _printClientInvoice(selected);
+    }
+
+    function _printClientInvoice(trips) {
       var cname = document.getElementById('cpr-name').value.trim();
       var cph   = document.getElementById('cpr-fn').value.trim();
       var cem   = document.getElementById('cpr-em').value.trim();
-      if (!cid) return toast('Open a client profile first');
-      var trips = _collectClientTrips().filter(function(t){
-        var s = (t.status||'').toLowerCase();
-        return s === 'confirmed' || s === 'completed';
-      });
-      if (!trips.length) return toast('No outstanding trips to invoice');
+      // print in chronological order
+      trips = trips.slice().sort(function(a,b){ return new Date(a.date||0) - new Date(b.date||0); });
       var rows = trips.map(function(t){
         var d = new Date((t.date||'')+'T12:00:00');
         var ds = isNaN(d.getTime()) ? '—' : d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
