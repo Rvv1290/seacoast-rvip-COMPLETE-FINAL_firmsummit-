@@ -1193,7 +1193,10 @@ async function markPastPeriodTripsAsPaid(paidAmount) {
     var eligible = [];
     snap.forEach(function(d) {
       var t = d.data();
-      if (t.status === 'Cancelled' || t.status === 'Paid') return;
+      // Only Completed trips count toward the outstanding balance, so only they
+      // get marked Paid. (Confirmed/Pending trips haven't happened yet and must
+      // not be marked Paid or they'd consume the payment and leave a real debt.)
+      if (t.status !== 'Completed') return;
       var tripDate = new Date((t.date || '') + 'T12:00:00');
       if (isNaN(tripDate.getTime()) || tripDate >= cutoff) return;
       var p = parseFloat((t.price + '').replace(/[^0-9.]/g, '')) || 0;
@@ -1206,18 +1209,20 @@ async function markPastPeriodTripsAsPaid(paidAmount) {
     var count = 0;
     var remaining = parseFloat(paidAmount) || Infinity; // if no amount passed, mark all
     for (var i = 0; i < eligible.length; i++) {
-      if (remaining <= 0) break;
+      if (remaining <= 0.009) break; // sub-cent leftover = fully paid (float tolerance)
       batch.update(eligible[i].ref, { status: 'Paid', balanceAdded: false, updatedAt: new Date().toISOString() });
       remaining -= eligible[i].amount;
       count++;
     }
     if (count > 0) await batch.commit();
 
-    // Update balance to whatever remains unpaid
+    // Update balance to whatever remains unpaid (rounded; sub-cent treated as $0)
     var newBalance = 0;
     for (var j = count; j < eligible.length; j++) {
       newBalance += eligible[j].amount;
     }
+    newBalance = Math.round(newBalance * 100) / 100;
+    if (newBalance < 0.01) newBalance = 0;
     if (db && sess.accountId) {
       await db.collection('corporate_accounts').doc(sess.accountId).update({
         balance: newBalance,

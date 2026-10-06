@@ -4999,7 +4999,9 @@
             snap.forEach(function(d){
               if(seen[d.id]) return; seen[d.id]=true;
               var t = d.data();
-              if (t.status === 'Cancelled' || t.status === 'Paid') return;
+              // Only Completed trips make up the outstanding balance, so only mark
+              // those Paid — never Confirmed/Pending (future) trips.
+              if (t.status !== 'Completed') return;
               var td = new Date((t.date || '') + 'T12:00:00');
               if (isNaN(td.getTime()) || td >= periodStart) return;
               batch.update(d.ref, { status: 'Paid', balanceAdded: false, updatedAt: now });
