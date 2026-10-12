@@ -5004,7 +5004,7 @@
               if (t.status !== 'Completed') return;
               var td = new Date((t.date || '') + 'T12:00:00');
               if (isNaN(td.getTime()) || td >= periodStart) return;
-              batch.update(d.ref, { status: 'Paid', balanceAdded: false, updatedAt: now });
+              batch.update(d.ref, { status: 'Paid', balanceAdded: false, updatedAt: now, paidAt: now });
               count++;
             });
           });

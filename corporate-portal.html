@@ -1182,9 +1182,10 @@ function getDisplayBalance() {
 // After a successful payment, mark closed-period trips as Paid ONLY up to the paid amount.
 // Oldest trips first — if client owed 2 months but paid 1 month, only the oldest month's
 // trips are marked Paid; the newer unpaid month stays as outstanding.
-async function markPastPeriodTripsAsPaid(paidAmount) {
+async function markPastPeriodTripsAsPaid(paidAmount, tipAmount) {
   if (!db || !sess || !sess.accountId) return;
   var cutoff = currentPeriodStart();
+  var nowIso = new Date().toISOString();
   try {
     var snap = await db.collection('bookings')
       .where('corporateAccountId', '==', sess.accountId)
@@ -1200,20 +1201,39 @@ async function markPastPeriodTripsAsPaid(paidAmount) {
       var tripDate = new Date((t.date || '') + 'T12:00:00');
       if (isNaN(tripDate.getTime()) || tripDate >= cutoff) return;
       var p = parseFloat((t.price + '').replace(/[^0-9.]/g, '')) || 0;
-      var tip = parseFloat(t.tip) || 0;
-      eligible.push({ ref: d.ref, date: tripDate, amount: p + tip });
+      var existingTip = parseFloat(t.tip) || 0;
+      eligible.push({ ref: d.ref, date: tripDate, fare: p, amount: p + existingTip });
     });
     // Sort oldest first so we pay off the earliest debts first
     eligible.sort(function(a, b) { return a.date - b.date; });
-    var batch = db.batch();
-    var count = 0;
+
+    // Which trips does this payment cover?
+    var toMark = [];
     var remaining = parseFloat(paidAmount) || Infinity; // if no amount passed, mark all
     for (var i = 0; i < eligible.length; i++) {
       if (remaining <= 0.009) break; // sub-cent leftover = fully paid (float tolerance)
-      batch.update(eligible[i].ref, { status: 'Paid', balanceAdded: false, updatedAt: new Date().toISOString() });
+      toMark.push(eligible[i]);
       remaining -= eligible[i].amount;
-      count++;
     }
+
+    // Distribute the tip the client added across the covered trips (by fare), and
+    // stamp a paid date so statements can show the tip paid and when it was paid.
+    var tipPool = parseFloat(tipAmount) || 0;
+    var fareSum = toMark.reduce(function(s, e){ return s + e.fare; }, 0);
+    var batch = db.batch();
+    var tipAssigned = 0;
+    for (var k = 0; k < toMark.length; k++) {
+      var upd = { status: 'Paid', balanceAdded: false, updatedAt: nowIso, paidAt: nowIso };
+      if (tipPool > 0) {
+        var share = (k === toMark.length - 1)
+          ? Math.round((tipPool - tipAssigned) * 100) / 100           // last trip gets the remainder
+          : Math.round((toMark[k].fare / (fareSum || 1)) * tipPool * 100) / 100;
+        tipAssigned += share;
+        upd.tip = share;
+      }
+      batch.update(toMark[k].ref, upd);
+    }
+    var count = toMark.length;
     if (count > 0) await batch.commit();
 
     // Update balance to whatever remains unpaid (rounded; sub-cent treated as $0)
@@ -1226,9 +1246,10 @@ async function markPastPeriodTripsAsPaid(paidAmount) {
     if (db && sess.accountId) {
       await db.collection('corporate_accounts').doc(sess.accountId).update({
         balance: newBalance,
-        balanceUpdatedAt: new Date().toISOString(),
-        lastPaymentDate: new Date().toISOString(),
-        lastPaymentAmount: paidAmount || 0
+        balanceUpdatedAt: nowIso,
+        lastPaymentDate: nowIso,
+        lastPaymentAmount: paidAmount || 0,
+        lastPaymentTip: tipPool
       }).catch(function(){});
     }
   } catch(e) { console.warn('markPastPeriodTripsAsPaid:', e.message); }
@@ -1536,7 +1557,7 @@ async function payWithCorpSavedCard() {
     var res = await funcs.httpsCallable('chargeSavedCard')({ accountId: sess.accountId, amount: _corpPayAmt });
     if (res.data && res.data.success) {
       // Mark trips as Paid only up to the amount actually paid (oldest first)
-      await markPastPeriodTripsAsPaid(_corpPayAmt);
+      await markPastPeriodTripsAsPaid(_corpPayAmt, _corpTipAmt);
       // Update balance in memory — markPastPeriodTripsAsPaid already set the correct
       // remaining balance in Firestore; onSnapshot will sync, but update now for instant UI
       _accountBalance = Math.max(0, getDisplayBalance() - _corpPayAmt);
@@ -1609,7 +1630,7 @@ async function corpSubmitPayment() {
 
     // Mark trips as Paid only up to the amount actually paid (oldest first)
     // This also updates the balance in Firestore to whatever remains unpaid
-    await markPastPeriodTripsAsPaid(_corpPayAmt);
+    await markPastPeriodTripsAsPaid(_corpPayAmt, _corpTipAmt);
 
     // Update balance in memory for instant UI — onSnapshot will sync the exact number
     _accountBalance = Math.max(0, getDisplayBalance() - _corpPayAmt);
@@ -2330,6 +2351,51 @@ function submitBooking(){
   } else { finish(true); }
 }
 
+// ─── Shared billing breakdown for statements / invoices / receipts ───
+// Fares subtotal, tips (sum of per-trip tips), and the 2.9% card processing fee
+// charged on fares only (matching the payment flow). Returns rounded figures.
+function _stmtBreakdown(trips){
+  var fares = 0, tips = 0, paidFares = 0, paidTips = 0, paidDate = null;
+  (trips || []).forEach(function(t){
+    var p   = parseFloat((t.price + '').replace(/[^0-9.]/g, '')) || 0;
+    var tip = parseFloat(t.tip) || 0;
+    fares += p; tips += tip;
+    if ((t.status || '').toLowerCase() === 'paid') {
+      paidFares += p; paidTips += tip;
+      var dt = t.paidAt || t.updatedAt;
+      if (dt) { var d = new Date(dt); if (!isNaN(d.getTime()) && (!paidDate || d > paidDate)) paidDate = d; }
+    }
+  });
+  fares = Math.round(fares * 100) / 100;
+  tips  = Math.round(tips  * 100) / 100;
+  var fee   = Math.round(fares * 0.029 * 100) / 100;      // 2.9% on fares only
+  var total = Math.round((fares + tips + fee) * 100) / 100;
+  var paidFee = Math.round(paidFares * 0.029 * 100) / 100;
+  var paid  = Math.round((paidFares + paidTips + paidFee) * 100) / 100;
+  var balance = Math.round((total - paid) * 100) / 100; if (balance < 0.01) balance = 0;
+  return { fares: fares, tips: tips, fee: fee, total: total, paid: paid, paidDate: paidDate, balance: balance };
+}
+// Totals rows HTML (uses the .tot-row / .grand classes from stmtLuxuryCSS).
+// When some trips are already Paid, shows Amount Paid (+ date) and Balance Due.
+function _stmtTotalsHTML(b, grandLabel){
+  var h = '<div class="tot-row"><span class="tot-lbl">Subtotal (Fares)</span><span class="tot-val">$' + b.fares.toFixed(2) + '</span></div>';
+  h += '<div class="tot-row"><span class="tot-lbl">Tips</span><span class="tot-val">$' + b.tips.toFixed(2) + '</span></div>';
+  h += '<div class="tot-row"><span class="tot-lbl">Card Processing Fee (2.9%)</span><span class="tot-val">$' + b.fee.toFixed(2) + '</span></div>';
+  var dstr = b.paidDate ? b.paidDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+  if (b.paid > 0 && b.balance === 0) {
+    // Fully paid — show Total Paid and when it was paid
+    h += '<div class="tot-row grand paid"><span class="tot-lbl">Total Paid' + (dstr ? ' &middot; ' + dstr : '') + '</span><span class="tot-val">$' + b.paid.toFixed(2) + '</span></div>';
+  } else if (b.paid > 0) {
+    // Partially paid — show amount paid (with date) and the remaining balance
+    h += '<div class="tot-row"><span class="tot-lbl">Amount Paid' + (dstr ? ' &middot; ' + dstr : '') + '</span><span class="tot-val">&minus;$' + b.paid.toFixed(2) + '</span></div>';
+    h += '<div class="tot-row grand"><span class="tot-lbl">Balance Due</span><span class="tot-val">$' + b.balance.toFixed(2) + '</span></div>';
+  } else {
+    // Unpaid
+    h += '<div class="tot-row grand"><span class="tot-lbl">' + (grandLabel || 'Total Due') + '</span><span class="tot-val">$' + b.total.toFixed(2) + '</span></div>';
+  }
+  return h;
+}
+
 // ─── PRINT INVOICE ───
 function printInvoice(){
   var total = _trips.reduce(function(s,t){var p=parseFloat((t.price+'').replace(/[^0-9.]/g,''));return s+(isNaN(p)?0:p);},0);
@@ -2360,9 +2426,7 @@ function printInvoice(){
       '<div class="meta-sub">Billing '+escH(sess.billingCycle||'Monthly')+'</div>'+
     '</div></section>');
   w.document.write('<section class="items"><div class="items-hdr"><span>Date</span><span>Conf.</span><span>Service</span><span class="ta-r">Amount</span></div><table class="items-tbl"><tbody>'+rows+'</tbody></table></section>');
-  w.document.write('<section class="totals">'+
-    '<div class="tot-row grand"><span class="tot-lbl">Total</span><span class="tot-val">$'+total.toFixed(2)+'</span></div>'+
-  '</section>');
+  w.document.write('<section class="totals">'+ _stmtTotalsHTML(_stmtBreakdown(_trips), 'Total') +'</section>');
   w.document.write('<footer class="stmt-ft"><div class="ft-line">Payable to Seacoast RVIP.</div><div class="ft-line">(978) 255-3140 &nbsp;·&nbsp; info@seacoastrvip.com &nbsp;·&nbsp; seacoastrvip.com</div></footer>');
   w.document.write('</div></body></html>');
   w.document.close();
@@ -2531,9 +2595,7 @@ function _renderLuxuryStatement(opts){
       '<div class="meta-sub">Due '+escH(opts.dueLbl)+'</div>'+
     '</div></section>');
   w.document.write('<section class="items"><div class="items-hdr"><span>Date</span><span>Conf.</span><span>Service</span><span class="ta-r">Amount</span></div><table class="items-tbl"><tbody>'+rows+'</tbody></table></section>');
-  w.document.write('<section class="totals">'+
-    '<div class="tot-row grand"><span class="tot-lbl">Total Due</span><span class="tot-val">$'+total.toFixed(2)+'</span></div>'+
-  '</section>');
+  w.document.write('<section class="totals">'+ _stmtTotalsHTML(_stmtBreakdown(opts.trips), 'Total Due') +'</section>');
   w.document.write('<footer class="stmt-ft"><div class="ft-line">Payment Terms — Net 30 from statement date. Payable to Seacoast RVIP.</div><div class="ft-line">(978) 255-3140 &nbsp;·&nbsp; info@seacoastrvip.com &nbsp;·&nbsp; seacoastrvip.com</div></footer>');
   w.document.write('</div></body></html>');
   w.document.close();
@@ -2958,11 +3020,7 @@ function printStmtPDF(){
   // Line items
   w.document.write('<section class="items"><div class="items-hdr"><span>Date</span><span>Conf.</span><span>Service</span><span class="ta-r">Amount</span></div><table class="items-tbl"><tbody>'+rows+'</tbody></table></section>');
   // Totals
-  w.document.write('<section class="totals">'+
-    '<div class="tot-row"><span class="tot-lbl">Subtotal</span><span class="tot-val">$'+total.toFixed(2)+'</span></div>'+
-    '<div class="tot-row"><span class="tot-lbl">Processing Fee (2.9%)</span><span class="tot-val">$'+feeTotal.toFixed(2)+'</span></div>'+
-    '<div class="tot-row grand"><span class="tot-lbl">Total Due</span><span class="tot-val">$'+grandTotal.toFixed(2)+'</span></div>'+
-  '</section>');
+  w.document.write('<section class="totals">'+ _stmtTotalsHTML(_stmtBreakdown(_stmtFiltered), 'Total Due') +'</section>');
   // Footer
   w.document.write('<footer class="stmt-ft"><div class="ft-line">Payable to Seacoast RVIP — Net 30 from statement date.</div><div class="ft-line">(978) 255-3140 &nbsp;·&nbsp; info@seacoastrvip.com &nbsp;·&nbsp; seacoastrvip.com</div></footer>');
   w.document.write('</div></body></html>');w.document.close();
@@ -3010,6 +3068,7 @@ function stmtLuxuryCSS(){
     '.tot-row.grand{border-top:1px solid #e8dfc4;margin-top:6px;padding-top:10px}'+
     '.tot-row.grand .tot-lbl{font-family:"Times New Roman",Georgia,serif;font-size:1rem;font-weight:700;color:#000;text-transform:uppercase;letter-spacing:0.12em}'+
     '.tot-row.grand .tot-val{font-family:"Times New Roman",Georgia,serif;font-size:1.3rem;font-weight:700;color:#775a19}'+
+    '.tot-row.grand.paid .tot-lbl,.tot-row.grand.paid .tot-val{color:#166534}'+
     // Footer
     '.stmt-ft{margin-top:2rem;padding-top:1rem;text-align:center;font-size:0.65rem;color:#999;letter-spacing:0.04em;line-height:1.7}'+
     '.stmt-ft .ft-line+.ft-line{margin-top:2px}'+
@@ -3062,9 +3121,11 @@ function printAnnualSummary(){
   var year = parseInt(document.getElementById('stmt-annual-year').value) || new Date().getFullYear();
   var monthNames=['January','February','March','April','May','June','July','August','September','October','November','December'];
   var months=monthNames.map(function(_,i){return {name:monthNames[i],count:0,total:0};});
+  var yearTrips=[];
   _trips.forEach(function(t){
     var d=new Date(t.date+'T12:00:00');
     if(d.getFullYear()!==year) return;
+    yearTrips.push(t);
     var m=d.getMonth(); months[m].count++;
     var p=parseFloat((t.price+'').replace(/[^0-9.]/g,'')); if(!isNaN(p)) months[m].total+=p;
   });
@@ -3097,9 +3158,13 @@ function printAnnualSummary(){
       '<div class="meta-sub">Fiscal Year '+year+'</div>'+
     '</div></section>');
   w.document.write('<section class="items"><div class="items-hdr"><span>Month</span><span>Trips</span><span>Detail</span><span class="ta-r">Amount</span></div><table class="items-tbl"><tbody>'+rows+'</tbody></table></section>');
+  var _yb = _stmtBreakdown(yearTrips);
   w.document.write('<section class="totals">'+
     '<div class="tot-row"><span class="tot-lbl">Total Trips</span><span class="tot-val">'+grandCount+'</span></div>'+
-    '<div class="tot-row grand"><span class="tot-lbl">Total '+year+'</span><span class="tot-val">$'+grandTotal.toFixed(2)+'</span></div>'+
+    '<div class="tot-row"><span class="tot-lbl">Subtotal (Fares)</span><span class="tot-val">$'+_yb.fares.toFixed(2)+'</span></div>'+
+    '<div class="tot-row"><span class="tot-lbl">Tips</span><span class="tot-val">$'+_yb.tips.toFixed(2)+'</span></div>'+
+    '<div class="tot-row"><span class="tot-lbl">Card Processing Fee (2.9%)</span><span class="tot-val">$'+_yb.fee.toFixed(2)+'</span></div>'+
+    '<div class="tot-row grand"><span class="tot-lbl">Total '+year+'</span><span class="tot-val">$'+_yb.total.toFixed(2)+'</span></div>'+
   '</section>');
   w.document.write('<footer class="stmt-ft"><div class="ft-line">Prepared for tax &amp; accounting use.</div><div class="ft-line">(978) 255-3140 &nbsp;·&nbsp; info@seacoastrvip.com &nbsp;·&nbsp; seacoastrvip.com</div></footer>');
   w.document.write('</div></body></html>');w.document.close();
