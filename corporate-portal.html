@@ -1187,22 +1187,33 @@ async function markPastPeriodTripsAsPaid(paidAmount, tipAmount) {
   var cutoff = currentPeriodStart();
   var nowIso = new Date().toISOString();
   try {
-    var snap = await db.collection('bookings')
-      .where('corporateAccountId', '==', sess.accountId)
-      .get();
-    // Collect eligible trips
-    var eligible = [];
-    snap.forEach(function(d) {
-      var t = d.data();
-      // Only Completed trips count toward the outstanding balance, so only they
-      // get marked Paid. (Confirmed/Pending trips haven't happened yet and must
-      // not be marked Paid or they'd consume the payment and leave a real debt.)
-      if (t.status !== 'Completed') return;
-      var tripDate = new Date((t.date || '') + 'T12:00:00');
-      if (isNaN(tripDate.getTime()) || tripDate >= cutoff) return;
-      var p = parseFloat((t.price + '').replace(/[^0-9.]/g, '')) || 0;
-      var existingTip = parseFloat(t.tip) || 0;
-      eligible.push({ ref: d.ref, date: tripDate, fare: p, amount: p + existingTip });
+    // Gather trips by EVERY way they can link to this account (id, company,
+    // contact email/phone, members) — not just corporateAccountId — so tips land
+    // on the right trips even when bookings are linked inconsistently.
+    var queries = [];
+    if (sess.accountId)    queries.push(db.collection('bookings').where('corporateAccountId', '==', sess.accountId).get());
+    if (sess.company)      queries.push(db.collection('bookings').where('corporateCompany', '==', sess.company).get());
+    if (sess.contactEmail) queries.push(db.collection('bookings').where('email', '==', sess.contactEmail).get());
+    if (sess.contactPhone) { var rp = sess.contactPhone.replace(/\D/g,''); if (rp.length>=10){ queries.push(db.collection('bookings').where('phone','==',sess.contactPhone).get()); queries.push(db.collection('bookings').where('phone','==','+1'+rp.slice(-10)).get()); queries.push(db.collection('bookings').where('phone','==',rp.slice(-10)).get()); } }
+    (sess.members || []).forEach(function(m){ if (m.email) queries.push(db.collection('bookings').where('email','==',m.email).get()); });
+    var snaps = await Promise.all(queries.map(function(q){ return q.catch(function(){ return null; }); }));
+    // Collect eligible trips (deduped by doc id)
+    var eligible = [], seenDoc = {};
+    snaps.forEach(function(snap){
+      if (!snap) return;
+      snap.forEach(function(d) {
+        if (seenDoc[d.id]) return; seenDoc[d.id] = true;
+        var t = d.data();
+        // Only Completed trips count toward the outstanding balance, so only they
+        // get marked Paid. (Confirmed/Pending trips haven't happened yet and must
+        // not be marked Paid or they'd consume the payment and leave a real debt.)
+        if (t.status !== 'Completed') return;
+        var tripDate = new Date((t.date || '') + 'T12:00:00');
+        if (isNaN(tripDate.getTime()) || tripDate >= cutoff) return;
+        var p = parseFloat((t.price + '').replace(/[^0-9.]/g, '')) || 0;
+        var existingTip = parseFloat(t.tip) || 0;
+        eligible.push({ ref: d.ref, date: tripDate, fare: p, amount: p + existingTip });
+      });
     });
     // Sort oldest first so we pay off the earliest debts first
     eligible.sort(function(a, b) { return a.date - b.date; });
@@ -2128,7 +2139,12 @@ function renderPayments(){
   tbody.innerHTML=_trips.map(function(t){
     var d=_rideDate(t.date);
     var dateStr=d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
-    var bdg=t.status==='Paid'?'<span class="bdg bdg-com">Paid</span>':'<span class="bdg bdg-pen">Due</span>';
+    var paidInfo='';
+    if(t.status==='Paid'){
+      var pd=t.paidAt||t.updatedAt;
+      if(pd){ var pdd=new Date(pd); if(!isNaN(pdd.getTime())) paidInfo='<div style="font-size:0.62rem;color:#888;margin-top:3px">Paid '+pdd.toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'})+'</div>'; }
+    }
+    var bdg=(t.status==='Paid'?'<span class="bdg bdg-com">Paid</span>':'<span class="bdg bdg-pen">Due</span>')+paidInfo;
     return '<tr><td>'+dateStr+'</td><td style="font-weight:600;color:#775a19">'+(t.code||'—')+'</td><td>'+escH(t.service||'—')+'</td><td>'+escH((t.pickup||'—').substring(0,20))+'→'+escH((t.destination||'—').substring(0,20))+'</td><td><strong>'+(t.price||'—')+'</strong></td><td>'+bdg+'</td></tr>';
   }).join('');
   document.getElementById('pay-cycle').textContent=(sess.billingCycle||'Monthly (NET-30)')+' billing';
@@ -2381,7 +2397,7 @@ function _stmtTotalsHTML(b, grandLabel){
   var h = '<div class="tot-row"><span class="tot-lbl">Subtotal (Fares)</span><span class="tot-val">$' + b.fares.toFixed(2) + '</span></div>';
   h += '<div class="tot-row"><span class="tot-lbl">Tips</span><span class="tot-val">$' + b.tips.toFixed(2) + '</span></div>';
   h += '<div class="tot-row"><span class="tot-lbl">Card Processing Fee (2.9%)</span><span class="tot-val">$' + b.fee.toFixed(2) + '</span></div>';
-  var dstr = b.paidDate ? b.paidDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+  var dstr = b.paidDate ? b.paidDate.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }) : '';
   if (b.paid > 0 && b.balance === 0) {
     // Fully paid — show Total Paid and when it was paid
     h += '<div class="tot-row grand paid"><span class="tot-lbl">Total Paid' + (dstr ? ' &middot; ' + dstr : '') + '</span><span class="tot-val">$' + b.paid.toFixed(2) + '</span></div>';

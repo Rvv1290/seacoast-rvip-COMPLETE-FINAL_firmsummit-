@@ -1181,7 +1181,8 @@
                     <button onclick="openPortalAccess('replace')" class="btn bk" style="font-size:0.72rem"><span class="material-symbols-outlined" style="font-size:14px">manage_accounts</span>Replace User</button>
                     <button onclick="openPortalAccess('reset')" class="btn bo" style="font-size:0.72rem"><span class="material-symbols-outlined" style="font-size:14px">key</span>Reset Password</button>
                   </div>
-                  <div style="font-size:0.68rem;color:#999;margin-top:0.7rem;line-height:1.45">“Replace User” swaps in a new login email + a fresh temporary password (the old email loses access). “Reset Password” keeps the email and issues a new temporary password. Either way, the user sets their own private password on first login.</div>
+                  <button onclick="reconcileCorpTrips()" class="btn bo" style="font-size:0.72rem;width:100%;margin-top:0.5rem;border-color:#0369a1;color:#0369a1"><span class="material-symbols-outlined" style="font-size:14px">link</span>Reconcile Trips to This Account</button>
+                  <div style="font-size:0.68rem;color:#999;margin-top:0.7rem;line-height:1.45">“Replace User” swaps in a new login email + a fresh temporary password (the old email loses access). “Reset Password” keeps the email and issues a new temporary password. “Reconcile Trips” links every trip for this company to this account and replaces an old manager’s email with the current contact — so nothing is left under a previous person.</div>
                 </div>
               </div>
 
@@ -4748,6 +4749,52 @@
       else if(acc.passwordResetRequired){ st = 'Temp password — reset pending'; bg = '#fef3c7'; fg = '#92400e'; }
       else { st = 'Active password'; bg = '#dcfce7'; fg = '#166534'; }
       stEl.textContent = st; stEl.style.background = bg; stEl.style.color = fg;
+    }
+
+    // Link every trip for this company to this account and replace an old
+    // manager's email with the current contact — so nothing is left under a
+    // previous person and tips/statements always match.
+    async function reconcileCorpTrips(){
+      if(!_cdCorpId || !db){ toast('Open an account first.'); return; }
+      var acc = _cdAcc || {};
+      var company = acc.company || acc.companyName || '';
+      var contactEmail = (acc.contactEmail || '').toLowerCase().trim();
+      var oldInput = prompt('Reconcile all trips to "' + (company || 'this account') + '".\n\nEnter any OLD / previous manager email(s) to replace with the current contact (' + (contactEmail || 'none set') + '), comma-separated.\nLeave blank to just link the trips.', '');
+      if(oldInput === null) return;
+      var oldEmails = oldInput.split(',').map(function(s){ return s.toLowerCase().trim(); }).filter(Boolean);
+
+      var qs = [];
+      if(acc.id)       qs.push(db.collection('bookings').where('corporateAccountId','==',acc.id).get());
+      if(company)      qs.push(db.collection('bookings').where('corporateCompany','==',company).get());
+      if(contactEmail) qs.push(db.collection('bookings').where('email','==',contactEmail).get());
+      oldEmails.forEach(function(em){ qs.push(db.collection('bookings').where('email','==',em).get()); });
+      (acc.members||[]).forEach(function(m){ if(m.email) qs.push(db.collection('bookings').where('email','==',m.email).get()); });
+      if(acc.contactPhone){ var rp=acc.contactPhone.replace(/\D/g,''); if(rp.length>=10){ qs.push(db.collection('bookings').where('phone','==',acc.contactPhone).get()); qs.push(db.collection('bookings').where('phone','==','+1'+rp.slice(-10)).get()); qs.push(db.collection('bookings').where('phone','==',rp.slice(-10)).get()); } }
+      if(!qs.length){ toast('No identifiers on this account to match.'); return; }
+
+      toast('Reconciling trips…');
+      try {
+        var snaps = await Promise.all(qs.map(function(q){ return q.catch(function(){ return null; }); }));
+        var seen = {}, docs = [];
+        snaps.forEach(function(snap){ if(!snap) return; snap.forEach(function(d){ if(seen[d.id]) return; seen[d.id]=true; docs.push(d); }); });
+
+        var batch = db.batch(), count = 0, linked = 0, emailFixed = 0, opsInBatch = 0, nowIso = new Date().toISOString();
+        for(var i=0;i<docs.length;i++){
+          var d = docs[i], t = d.data(), upd = {};
+          if(t.corporateAccountId !== acc.id){ upd.corporateAccountId = acc.id; linked++; }
+          if(company && t.corporateCompany !== company){ upd.corporateCompany = company; }
+          var tEmail = (t.email||'').toLowerCase().trim();
+          if(contactEmail && (oldEmails.indexOf(tEmail) !== -1 || tEmail === '') && tEmail !== contactEmail){ upd.email = acc.contactEmail; emailFixed++; }
+          if(Object.keys(upd).length){
+            upd.updatedAt = nowIso;
+            batch.update(d.ref, upd); count++; opsInBatch++;
+            if(opsInBatch >= 450){ await batch.commit(); batch = db.batch(); opsInBatch = 0; }
+          }
+        }
+        if(opsInBatch > 0) await batch.commit();
+        toast('✅ Reconciled ' + count + ' trip' + (count!==1?'s':'') + ' (' + linked + ' linked, ' + emailFixed + ' email' + (emailFixed!==1?'s':'') + ' updated).');
+        if(_cdAcc){ db.collection('corporate_accounts').doc(_cdCorpId).get().then(function(doc){ var bonus = doc.exists ? (doc.data().bonusPoints||0) : 0; loadCdTrips(_cdAcc, bonus); }).catch(function(){ loadCdTrips(_cdAcc, 0); }); }
+      } catch(e){ alert('Reconcile error: ' + e.message); }
     }
 
     function openPortalAccess(mode){
