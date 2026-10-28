@@ -4,6 +4,9 @@ const admin = require("firebase-admin");
 admin.initializeApp();
 
 const stripeSecret = defineSecret("STRIPE_SECRET");
+// One-time migration secret — only someone who knows this value can run the
+// password-migration function. Set it with: firebase functions:secrets:set ADMIN_MIGRATE_SECRET
+const adminMigrateSecret = defineSecret("ADMIN_MIGRATE_SECRET");
 
 // Resolves the Firestore ref+doc for an account. Supports both
 // corporate_accounts (default) and clients collections so the same
@@ -226,4 +229,147 @@ exports.ensureCorpAuthAccount = onCall(async (request) => {
   }
 
   return { success: true };
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  SECURE CORPORATE AUTH (Phase 1)
+//  Passwords are verified/stored server-side as bcrypt hashes in the locked
+//  `corporate_auth/{accountId}` collection (clients can never read it). The
+//  login function falls back to the old plaintext password and upgrades it to a
+//  hash on the fly, so no one is locked out during the migration.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Find an Approved/Active corporate account by email/phone (contact or member).
+async function _findCorpAccount(db, identifier) {
+  const idRaw = String(identifier || "").trim();
+  const idLower = idRaw.toLowerCase();
+  const isEmail = idRaw.includes("@");
+  const digits = idRaw.replace(/\D/g, "");
+  const snap = await db.collection("corporate_accounts")
+    .where("status", "in", ["Approved", "Active"]).get();
+  let match = null;
+  snap.forEach((d) => {
+    if (match) return;
+    const a = d.data();
+    if (isEmail) {
+      if ((a.contactEmail || "").toLowerCase().trim() === idLower) { match = { id: d.id, data: a }; return; }
+      for (const m of (a.members || [])) {
+        if ((m.email || "").toLowerCase().trim() === idLower) { match = { id: d.id, data: a }; return; }
+      }
+    } else if (digits.length >= 10) {
+      const p = (a.contactPhone || "").replace(/\D/g, "");
+      if (p && (p === digits || p.slice(-10) === digits.slice(-10))) { match = { id: d.id, data: a }; return; }
+      for (const m of (a.members || [])) {
+        const mp = (m.phone || "").replace(/\D/g, "");
+        if (mp && (mp === digits || mp.slice(-10) === digits.slice(-10))) { match = { id: d.id, data: a }; return; }
+      }
+    }
+  });
+  return match;
+}
+
+/**
+ * Corporate portal login. Verifies the password server-side (bcrypt hash, with a
+ * one-time plaintext fallback that upgrades to a hash). Returns the sanitized
+ * account (no password) and whether a reset is required.
+ */
+exports.corporateLogin = onCall(async (request) => {
+  const bcrypt = require("bcryptjs");
+  const { identifier, password } = request.data || {};
+  if (!identifier || !password) throw new HttpsError("invalid-argument", "Missing email/phone or password.");
+  const db = admin.firestore();
+
+  const match = await _findCorpAccount(db, identifier);
+  if (!match) throw new HttpsError("unauthenticated", "Incorrect email/phone or password.");
+
+  const authRef = db.collection("corporate_auth").doc(match.id);
+  const authDoc = await authRef.get();
+  let ok = false;
+
+  if (authDoc.exists && authDoc.data().hash) {
+    ok = await bcrypt.compare(String(password), authDoc.data().hash);
+  } else if (match.data.password) {
+    // Legacy plaintext — verify once, then upgrade to a hash (keep plaintext until
+    // the migration step removes it, so older clients keep working mid-rollout).
+    if (String(match.data.password) === String(password)) {
+      ok = true;
+      const hash = await bcrypt.hash(String(password), 10);
+      await authRef.set({ hash, migratedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
+    }
+  } else {
+    throw new HttpsError("failed-precondition", "No password is set for this account.");
+  }
+
+  if (!ok) throw new HttpsError("unauthenticated", "Incorrect email/phone or password.");
+
+  const acc = Object.assign({ id: match.id }, match.data);
+  delete acc.password;
+  return { success: true, account: acc, passwordResetRequired: !!match.data.passwordResetRequired };
+});
+
+/**
+ * Sets a NEW corporate password (hashed). Requires the current password unless
+ * none is set yet. Clears the legacy plaintext field and the reset flag.
+ */
+exports.corporateSetCorporatePassword = onCall(async (request) => {
+  const bcrypt = require("bcryptjs");
+  const { accountId, currentPassword, newPassword } = request.data || {};
+  if (!accountId || !newPassword) throw new HttpsError("invalid-argument", "Missing data.");
+  if (String(newPassword).length < 6) throw new HttpsError("invalid-argument", "Password must be at least 6 characters.");
+  const db = admin.firestore();
+  const ref = db.collection("corporate_accounts").doc(accountId);
+  const doc = await ref.get();
+  if (!doc.exists) throw new HttpsError("not-found", "Account not found.");
+  const data = doc.data();
+
+  const authRef = db.collection("corporate_auth").doc(accountId);
+  const authDoc = await authRef.get();
+  const hasHash = authDoc.exists && !!authDoc.data().hash;
+  const hasPlain = !!data.password;
+
+  // If a password already exists, require the correct current one.
+  if (hasHash || hasPlain) {
+    let ok = false;
+    if (hasHash) ok = await bcrypt.compare(String(currentPassword || ""), authDoc.data().hash);
+    else ok = String(currentPassword || "") === String(data.password);
+    if (!ok) throw new HttpsError("permission-denied", "Current password is incorrect.");
+  }
+
+  const hash = await bcrypt.hash(String(newPassword), 10);
+  await authRef.set({ hash, updatedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
+  await ref.update({
+    password: admin.firestore.FieldValue.delete(),
+    passwordResetRequired: false,
+    updatedAt: new Date().toISOString(),
+  });
+  return { success: true };
+});
+
+/**
+ * One-time migration: hash every existing plaintext corporate password into
+ * corporate_auth and remove the plaintext field. Secret-gated — run it from a
+ * trusted context (Firebase shell / your own script), never the website.
+ */
+exports.migrateCorporatePasswords = onCall({ secrets: [adminMigrateSecret] }, async (request) => {
+  const bcrypt = require("bcryptjs");
+  if (!request.data || request.data.secret !== adminMigrateSecret.value()) {
+    throw new HttpsError("permission-denied", "Not authorized.");
+  }
+  const db = admin.firestore();
+  const snap = await db.collection("corporate_accounts").get();
+  let hashed = 0, cleared = 0;
+  for (const d of snap.docs) {
+    const a = d.data();
+    if (!a.password) continue;
+    const authRef = db.collection("corporate_auth").doc(d.id);
+    const authDoc = await authRef.get();
+    if (!authDoc.exists || !authDoc.data().hash) {
+      const hash = await bcrypt.hash(String(a.password), 10);
+      await authRef.set({ hash, migratedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
+      hashed++;
+    }
+    await d.ref.update({ password: admin.firestore.FieldValue.delete() });
+    cleared++;
+  }
+  return { success: true, hashed, cleared };
 });

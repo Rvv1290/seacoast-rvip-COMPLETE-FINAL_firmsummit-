@@ -72,6 +72,12 @@ service cloud.firestore {
       allow read, write: if true;
     }
 
+    // Hashed corporate passwords — clients can NEVER read or write this.
+    // Only Cloud Functions (Admin SDK) touch it.
+    match /corporate_auth/{docId} {
+      allow read, write: if false;
+    }
+
     match /clients/{clientId} {
       allow read, write: if true;
 
