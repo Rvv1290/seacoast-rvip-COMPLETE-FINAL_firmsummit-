@@ -4,9 +4,6 @@ const admin = require("firebase-admin");
 admin.initializeApp();
 
 const stripeSecret = defineSecret("STRIPE_SECRET");
-// One-time migration secret — only someone who knows this value can run the
-// password-migration function. Set it with: firebase functions:secrets:set ADMIN_MIGRATE_SECRET
-const adminMigrateSecret = defineSecret("ADMIN_MIGRATE_SECRET");
 
 // Resolves the Firestore ref+doc for an account. Supports both
 // corporate_accounts (default) and clients collections so the same
@@ -343,33 +340,4 @@ exports.corporateSetCorporatePassword = onCall(async (request) => {
     updatedAt: new Date().toISOString(),
   });
   return { success: true };
-});
-
-/**
- * One-time migration: hash every existing plaintext corporate password into
- * corporate_auth and remove the plaintext field. Secret-gated — run it from a
- * trusted context (Firebase shell / your own script), never the website.
- */
-exports.migrateCorporatePasswords = onCall({ secrets: [adminMigrateSecret] }, async (request) => {
-  const bcrypt = require("bcryptjs");
-  if (!request.data || request.data.secret !== adminMigrateSecret.value()) {
-    throw new HttpsError("permission-denied", "Not authorized.");
-  }
-  const db = admin.firestore();
-  const snap = await db.collection("corporate_accounts").get();
-  let hashed = 0, cleared = 0;
-  for (const d of snap.docs) {
-    const a = d.data();
-    if (!a.password) continue;
-    const authRef = db.collection("corporate_auth").doc(d.id);
-    const authDoc = await authRef.get();
-    if (!authDoc.exists || !authDoc.data().hash) {
-      const hash = await bcrypt.hash(String(a.password), 10);
-      await authRef.set({ hash, migratedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
-      hashed++;
-    }
-    await d.ref.update({ password: admin.firestore.FieldValue.delete() });
-    cleared++;
-  }
-  return { success: true, hashed, cleared };
 });
