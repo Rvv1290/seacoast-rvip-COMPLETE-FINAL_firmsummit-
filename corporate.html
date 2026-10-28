@@ -285,7 +285,7 @@ function goS(id){
 
 var _confirmationResult = null;
 
-function sendCode(){
+async function sendCode(){
   var btn=document.getElementById('send-btn'),err=document.getElementById('err1'),mig=document.getElementById('migration-prompt');
   err.style.display='none'; mig.style.display='none';
   var iden = document.getElementById('ph').value.trim();
@@ -300,6 +300,31 @@ function sendCode(){
   _ph=raw;
   btn.textContent='Signing In...';btn.disabled=true;
   if(!_db){err.textContent='Service error. Please call (978) 255-3140.';err.style.display='block';btn.textContent='Sign In →';btn.disabled=false;return;}
+
+  // ── Secure server-side login (passwords are verified as hashes server-side).
+  // Falls back to the legacy Firestore login below only on a system error, so
+  // sign-in can never break. ──
+  try {
+    var _res = await firebase.functions().httpsCallable('corporateLogin')({ identifier: iden, password: pwd });
+    if (_res && _res.data && _res.data.success && _res.data.account) {
+      _acc = _res.data.account;
+      grantAccess(_acc);
+      return;
+    }
+  } catch(_e) {
+    var _code = (_e && _e.code) ? String(_e.code) : '';
+    if (_code.indexOf('unauthenticated') !== -1) {
+      err.textContent='Incorrect email/phone or password.'; err.style.display='block';
+      btn.textContent='Sign In →'; btn.disabled=false; return;
+    }
+    if (_code.indexOf('failed-precondition') !== -1) {
+      err.innerHTML='Account found, but <strong>no password is set</strong>. If you used our old system, use the setup link below.';
+      err.style.display='block'; mig.style.display='block';
+      btn.textContent='Sign In →'; btn.disabled=false; return;
+    }
+    console.warn('corporateLogin function error — using legacy login:', _e && _e.message);
+    // any other (system) error → fall through to the legacy login below
+  }
 
   // Sign out any existing Firebase Auth session before querying Firestore.
   // The corporate portal uses its own localStorage session; a lingering Firebase Auth
