@@ -312,18 +312,12 @@ async function sendCode(){
       return;
     }
   } catch(_e) {
-    var _code = (_e && _e.code) ? String(_e.code) : '';
-    if (_code.indexOf('unauthenticated') !== -1) {
-      err.textContent='Incorrect email/phone or password.'; err.style.display='block';
-      btn.textContent='Sign In →'; btn.disabled=false; return;
-    }
-    if (_code.indexOf('failed-precondition') !== -1) {
-      err.innerHTML='Account found, but <strong>no password is set</strong>. If you used our old system, use the setup link below.';
-      err.style.display='block'; mig.style.display='block';
-      btn.textContent='Sign In →'; btn.disabled=false; return;
-    }
-    console.warn('corporateLogin function error — using legacy login:', _e && _e.message);
-    // any other (system) error → fall through to the legacy login below
+    // The secure function couldn't authenticate (wrong hash/plaintext, no stored
+    // password, or a system error). Fall through to the legacy login below, which
+    // ALSO tries the plaintext password AND Firebase Auth — the latter is how the
+    // "Forgot Password" email-reset link sets the password. The legacy path shows
+    // the correct "incorrect" / "no password set" message if everything fails.
+    console.warn('corporateLogin did not authenticate — trying legacy login:', (_e && _e.code) || '', (_e && _e.message) || '');
   }
 
   // Sign out any existing Firebase Auth session before querying Firestore.
