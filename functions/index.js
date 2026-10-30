@@ -30,7 +30,18 @@ exports.getStripeCustomer = onCall({ secrets: [stripeSecret] }, async (request) 
   const { ref, doc } = await resolveAccountDoc(accountId, collection);
   const data = doc.data();
 
-  if (data.stripeCustomerId) return { customerId: data.stripeCustomerId };
+  // If we already have a customer ID, make sure it actually exists in THIS Stripe
+  // account. After switching Stripe accounts the old ID is invalid, which breaks
+  // PaymentIntent creation — so verify it, and fall through to create a fresh one
+  // (clearing the now-dead saved-card data) if it's missing.
+  if (data.stripeCustomerId) {
+    try {
+      const existing = await stripe.customers.retrieve(data.stripeCustomerId);
+      if (existing && !existing.deleted) return { customerId: data.stripeCustomerId };
+    } catch (e) {
+      // not found in this account — create a new one below
+    }
+  }
 
   const customer = await stripe.customers.create({
     email: email || data.contactEmail || data.email || "",
@@ -38,7 +49,12 @@ exports.getStripeCustomer = onCall({ secrets: [stripeSecret] }, async (request) 
     metadata: { accountId },
   });
 
-  await ref.update({ stripeCustomerId: customer.id });
+  await ref.update({
+    stripeCustomerId: customer.id,
+    stripePaymentMethodId: admin.firestore.FieldValue.delete(),
+    cardBrand: admin.firestore.FieldValue.delete(),
+    cardLast4: admin.firestore.FieldValue.delete(),
+  });
   return { customerId: customer.id };
 });
 
@@ -69,7 +85,20 @@ exports.createPaymentIntent = onCall({ secrets: [stripeSecret] }, async (request
     piParams.setup_future_usage = "off_session";
   }
 
-  const paymentIntent = await stripe.paymentIntents.create(piParams);
+  let paymentIntent;
+  try {
+    paymentIntent = await stripe.paymentIntents.create(piParams);
+  } catch (e) {
+    // If the customer is invalid (e.g. a stale ID from a previous Stripe account),
+    // retry without it so the payment form still loads.
+    if (piParams.customer) {
+      delete piParams.customer;
+      delete piParams.setup_future_usage;
+      paymentIntent = await stripe.paymentIntents.create(piParams);
+    } else {
+      throw e;
+    }
+  }
   return { clientSecret: paymentIntent.client_secret };
 });
 
