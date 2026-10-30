@@ -175,6 +175,8 @@ exports.resetCorpPassword = onCall(async (request) => {
   if (!found) throw new HttpsError("not-found", "No active corporate account found with that email");
 
   await found.ref.update({ password: newPassword, passwordResetRequired: false });
+  // Remove any stale hash so the next login re-syncs it from this new password.
+  await db.collection("corporate_auth").doc(found.id).delete().catch(() => {});
   return { success: true };
 });
 
@@ -281,19 +283,25 @@ exports.corporateLogin = onCall(async (request) => {
 
   const authRef = db.collection("corporate_auth").doc(match.id);
   const authDoc = await authRef.get();
+  const storedHash = (authDoc.exists && authDoc.data().hash) ? authDoc.data().hash : null;
   let ok = false;
 
-  if (authDoc.exists && authDoc.data().hash) {
-    ok = await bcrypt.compare(String(password), authDoc.data().hash);
-  } else if (match.data.password) {
-    // Legacy plaintext — verify once, then upgrade to a hash (keep plaintext until
-    // the migration step removes it, so older clients keep working mid-rollout).
-    if (String(match.data.password) === String(password)) {
-      ok = true;
-      const hash = await bcrypt.hash(String(password), 10);
-      await authRef.set({ hash, migratedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
-    }
-  } else {
+  // 1) Try the stored hash.
+  if (storedHash) {
+    ok = await bcrypt.compare(String(password), storedHash);
+  }
+  // 2) If there's no hash yet, OR the hash didn't match, fall back to the plaintext
+  //    password on the account. This covers the first login before migration AND a
+  //    password reset that wrote a new plaintext value after a hash already existed
+  //    (admin Portal Access / resetCorpPassword). On a match, (re)write the hash so
+  //    it stays in sync with the current password.
+  if (!ok && match.data.password && String(match.data.password) === String(password)) {
+    ok = true;
+    const hash = await bcrypt.hash(String(password), 10);
+    await authRef.set({ hash, migratedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
+  }
+  // 3) Nothing to check against at all.
+  if (!ok && !storedHash && !match.data.password) {
     throw new HttpsError("failed-precondition", "No password is set for this account.");
   }
 
