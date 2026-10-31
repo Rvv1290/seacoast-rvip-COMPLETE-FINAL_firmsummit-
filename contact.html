@@ -11,7 +11,7 @@ function shareRVIP() {
   if (navigator.share) {
     navigator.share({
       title: 'Seacoast RVIP — The Ride You Can Count On',
-      text: 'Premium private car service in the NH Seacoast area.',
+      text: 'Luxury pre-arranged private transportation across the Northeastern Seacoast.',
       url: 'https://www.seacoastrvip.com'
     }).catch(function(){});
   } else {
@@ -229,7 +229,7 @@ checkWidth();
 <div class="z-10">
 <span class="font-label text-secondary tracking-widest uppercase text-xs mb-4 block" style="">Concierge Support</span>
 <h1 class="font-headline text-5xl md:text-6xl font-bold mb-6 leading-tight" style="">Always at Your <br>Service.</h1>
-<p class="text-on-primary-container text-lg max-w-md leading-relaxed font-light" style="">Whether you require a bespoke itinerary or have questions about our fleet, our distinguished team is ready to assist you 24/7.</p>
+<p class="text-on-primary-container text-lg max-w-md leading-relaxed font-light" style="">Quotes, weddings, custom private itineraries, corporate accounts or a simple question about the fleet &mdash; this is the place. Our distinguished team is ready to assist you 24/7.</p>
 </div>
 <div class="hidden md:block relative h-64">
 <div class="absolute inset-0 bg-secondary/10 rounded-full blur-3xl"></div>
@@ -299,11 +299,13 @@ CONFIDENTIALITY NOTICE: This communication is intended solely for the named reci
 <label class="font-label text-xs uppercase text-on-surface-variant mb-2 block">Service Interest</label>
 <select name="Service Interest" class="w-full bg-surface-container-low border-b-2 border-outline-variant focus:border-primary focus:ring-0 transition-colors py-2 outline-none appearance-none cursor-pointer">
 <option>Airport Transfer</option>
-<option>Night Out</option>
-<option>Casino Run</option>
+<option>Wedding</option>
+<option>Custom / Private Charter</option>
+<option>Corporate Account</option>
 <option>Special Event</option>
+<option>Night Out or Casino Run</option>
 <option>Medical Appointment</option>
-<option>Quote Request</option>
+<option>Request a Quote</option>
 <option>Other</option>
 </select>
 </div>
@@ -401,7 +403,7 @@ async function contactSubmit(e) {
 <span class="material-symbols-outlined text-secondary transition-transform group-hover:rotate-45" data-icon="add" style="">add</span>
 </button>
 <div class="mt-4 text-on-surface-variant leading-relaxed max-w-2xl text-sm" style="">
-                            Our fleet includes SUVs (6 passengers), Black SUVs (up to 7 passengers). All vehicles are late-model and impeccably maintained.
+                            Two classes: the <strong>Regular Black SUV</strong>, seating up to 6 passengers, and the <strong>Black Lux XL SUV</strong>, a full-size luxury SUV seating 7 with luggage. Every RVIP vehicle is black, late-model and commercially insured.
                         </div>
 </div>
 <!-- FAQ Item 6 -->
@@ -411,7 +413,7 @@ async function contactSubmit(e) {
 <span class="material-symbols-outlined text-secondary transition-transform group-hover:rotate-45" data-icon="add" style="">add</span>
 </button>
 <div class="mt-4 text-on-surface-variant leading-relaxed max-w-2xl text-sm" style="">
-                            While we primarily serve the Seacoast and major metropolitan hubs, we offer long-distance interstate transfers upon request.
+                            We are based in New Hampshire and cover the Northeastern Seacoast in both directions &mdash; from the Massachusetts line up through southern Maine &mdash; plus the major airports at Boston Logan, Manchester, Portland and Portsmouth. Long-distance interstate transfers are available on request.
                         </div>
 </div>
 </div>
