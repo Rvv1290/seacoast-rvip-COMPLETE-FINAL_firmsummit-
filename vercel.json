@@ -1,4 +1,8 @@
 {
   "cleanUrls": true,
-  "trailingSlash": false
+  "trailingSlash": false,
+  "redirects": [
+    { "source": "/quote", "destination": "/contact", "permanent": true },
+    { "source": "/quote.html", "destination": "/contact", "permanent": true }
+  ]
 }
