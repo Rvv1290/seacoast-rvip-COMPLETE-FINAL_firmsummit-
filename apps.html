@@ -25,7 +25,7 @@
 
   .app-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-top:2rem}
   .app-card{background:#fff;border:1px solid #ebe8e1;border-radius:16px;padding:2rem;display:flex;flex-direction:column}
-  .app-icon{width:58px;height:58px;border-radius:14px;display:flex;align-items:center;justify-content:center;margin-bottom:1.1rem;color:#fff}
+  .app-icon{width:58px;height:58px;border-radius:14px;display:block;object-fit:cover;margin-bottom:1.1rem}
   .app-icon .material-symbols-outlined{font-size:30px}
   .app-name{font-family:'Times New Roman',serif;font-size:1.35rem;font-weight:700;color:#000;margin-bottom:0.3rem}
   .app-for{font-family:'Work Sans',sans-serif;font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.14em;color:#775a19;margin-bottom:0.9rem}
@@ -87,7 +87,7 @@
 
     <!-- RIDER -->
     <div class="app-card">
-      <div class="app-icon" style="background:linear-gradient(135deg,#775a19,#c9a84c)"><span class="material-symbols-outlined">directions_car</span></div>
+      <img class="app-icon" src="assets/rvip-app-icon.png" alt="RVIP Rider app icon" style="border:1px solid rgba(0,0,0,.12)"/>
       <div class="app-name">RVIP Rider</div>
       <div class="app-for">For Passengers</div>
       <p class="app-desc">Book premium black-car service in seconds, see your driver on the way, and keep every receipt in one place.</p>
@@ -103,7 +103,7 @@
 
     <!-- DRIVER -->
     <div class="app-card">
-      <div class="app-icon" style="background:linear-gradient(135deg,#1a1c1c,#4a4a4a)"><span class="material-symbols-outlined">badge</span></div>
+      <img class="app-icon" src="assets/rvip-driver-icon.png" alt="RVIP Driver app icon" style="border:1px solid rgba(0,0,0,.12)"/>
       <div class="app-name">RVIP Driver</div>
       <div class="app-for">For Professional Drivers</div>
       <p class="app-desc">Everything our drivers need on the road — assigned trips, turn-by-turn navigation, and clear earnings.</p>
@@ -132,7 +132,7 @@
 <!-- FOOTER -->
 <footer>
   <div class="foot-in">
-    <p style="font-family:Inter,sans-serif;font-size:0.7rem;color:rgba(255,255,255,0.25)">© 2025 Seacoast RVIP. All rights reserved.</p>
+    <p style="font-family:Inter,sans-serif;font-size:0.7rem;color:rgba(255,255,255,0.25)">© 2026 Seacoast RVIP LLC. All rights reserved.</p>
     <div style="display:flex;gap:1.5rem;flex-wrap:wrap">
       <a href="privacy.html" style="font-family:Inter,sans-serif;font-size:0.7rem;color:rgba(255,255,255,0.3);text-decoration:none">Privacy Policy</a>
       <a href="terms.html" style="font-family:Inter,sans-serif;font-size:0.7rem;color:rgba(255,255,255,0.3);text-decoration:none">Terms of Service</a>
