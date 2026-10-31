@@ -126,13 +126,6 @@ function shareRVIP() {
 /* hero: wider than Tailwind's 80rem, but still short of full bleed */
 .max-w-7xl{max-width:1560px!important}
 
-.footer-grid { grid-template-columns: 1.2fr auto 1.2fr !important; }
-.footer-grid > div:nth-child(2) { justify-self: center; }
-.footer-grid > div:nth-child(3) { justify-self: end; }
-@media(max-width:850px) {
-  .footer-grid { grid-template-columns: 1fr !important; gap: 3rem !important; }
-  .footer-grid > div { justify-self: start !important; }
-}
 </style>
 </head>
 <body class="text-on-background antialiased overflow-x-hidden">
@@ -421,7 +414,7 @@ window.addEventListener('DOMContentLoaded', checkWidth);
 </section>
 </main>
 <footer style="background:#0a0a0a;color:white;padding:4rem 0 2rem">
-  <div style="max-width:1440px;margin:0 auto;padding:0 5%">
+  <div style="max-width:100%;margin:0;padding:0 5%">
     <div style="display:grid;grid-template-columns:1fr;gap:2.5rem;padding-bottom:2.5rem;border-bottom:1px solid rgba(255,255,255,0.08)" class="footer-grid">
       <div>
         <div style="display:flex;align-items:center;gap:0.55rem;margin-bottom:0.75rem">
@@ -482,6 +475,21 @@ window.addEventListener('DOMContentLoaded', checkWidth);
     .footer-grid{grid-template-columns:1.5fr 1fr 1fr!important}
   }
   </style>
+  <script>
+  if (typeof shareRVIP !== 'function') {
+    function shareRVIP(){
+      var url='https://www.seacoastrvip.com';
+      var data={title:'Seacoast RVIP — The Ride You Can Count On',
+                text:'Luxury pre-arranged rides across the Northeastern Seacoast. Flat rates, no surge pricing.',
+                url:url};
+      if(navigator.share){navigator.share(data).catch(function(){});}
+      else if(navigator.clipboard){navigator.clipboard.writeText(url)
+        .then(function(){alert('Link copied! Share it with your friends.');})
+        .catch(function(){prompt('Copy this link:',url);});}
+      else {prompt('Copy this link:',url);}
+    }
+  }
+  </script>
 </footer>
 </body>
 </html>
