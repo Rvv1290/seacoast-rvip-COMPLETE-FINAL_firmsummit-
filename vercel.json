@@ -3,6 +3,23 @@
   "trailingSlash": false,
   "redirects": [
     { "source": "/quote", "destination": "/contact", "permanent": true },
-    { "source": "/quote.html", "destination": "/contact", "permanent": true }
+    { "source": "/quote.html", "destination": "/contact", "permanent": true },
+    { "source": "/account", "destination": "/secure-access", "permanent": false },
+    { "source": "/account.html", "destination": "/secure-access", "permanent": false },
+    { "source": "/corporate-portal", "destination": "/secure-access", "permanent": false },
+    { "source": "/corporate-portal.html", "destination": "/secure-access", "permanent": false },
+    { "source": "/driver-portal", "destination": "/secure-access", "permanent": false },
+    { "source": "/driver-portal.html", "destination": "/secure-access", "permanent": false },
+    { "source": "/admin", "destination": "/secure-access", "permanent": false },
+    { "source": "/admin.html", "destination": "/secure-access", "permanent": false },
+    { "source": "/schedule", "destination": "/secure-access", "permanent": false },
+    { "source": "/schedule.html", "destination": "/secure-access", "permanent": false },
+    { "source": "/corporate", "destination": "/secure-access", "permanent": false },
+    { "source": "/corporate.html", "destination": "/secure-access", "permanent": false },
+    { "source": "/payment", "destination": "/secure-access", "permanent": false },
+    { "source": "/payment.html", "destination": "/secure-access", "permanent": false }
+  ],
+  "headers": [
+    { "source": "/secure-access", "headers": [ { "key": "Cache-Control", "value": "no-store" } ] }
   ]
 }
