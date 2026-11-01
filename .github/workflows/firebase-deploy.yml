@@ -1,27 +1,14 @@
-name: Deploy to Firebase
+name: Legacy Firebase deployment disabled
 
+# This repository's old push job deployed all Functions and an obsolete public
+# rules file. The apps share that Firebase project. Production releases now use
+# reviewed, scoped commands from FINAL APP/release; no broad automatic redeploy.
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
 
 jobs:
-  deploy:
+  release-information:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Node.js 22
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: 'npm'
-          cache-dependency-path: functions/package-lock.json
-
-      - name: Install function dependencies
-        run: npm ci
-        working-directory: functions
-
-      - name: Deploy Hosting + Functions + Firestore Rules
-        run: npx firebase-tools@13 deploy --only hosting,functions,firestore --project seacoast-rip --token "${{ secrets.FIREBASE_TOKEN }}" --force --non-interactive
+      - name: Require a reviewed scoped release
+        run: echo "No production deployment performed. Use the reviewed scoped release checklist."
