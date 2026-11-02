@@ -693,6 +693,41 @@ exports.clientLogin = onCall(async (request) => {
   };
 });
 
+/**
+ * Links a freshly created booking to a corporate account when the booker's
+ * phone matches the account's contact or one of its members.
+ *
+ * schedule.html used to do this by downloading every Approved/Active corporate
+ * account — company names, contacts and whole member lists — into an anonymous
+ * browser to compare phone numbers. Here the comparison happens server-side and
+ * the caller learns only whether a link was made.
+ */
+exports.linkBookingToCorporate = onCall(async (request) => {
+  const { bookingId, phone } = request.data || {};
+  if (!bookingId || !phone) throw new HttpsError("invalid-argument", "Missing booking or phone.");
+  const digits = String(phone).replace(/\D/g, "").slice(-10);
+  if (digits.length !== 10) return { linked: false };
+
+  const db = admin.firestore();
+  const snap = await db.collection("corporate_accounts")
+    .where("status", "in", ["Approved", "Active"]).get();
+
+  const last10 = (v) => String(v || "").replace(/\D/g, "").slice(-10);
+  for (const doc of snap.docs) {
+    const acc = doc.data() || {};
+    let hit = last10(acc.contactPhone) === digits;
+    if (!hit) hit = (acc.members || []).some((m) => last10(m && m.phone) === digits);
+    if (hit) {
+      await db.collection("bookings").doc(String(bookingId)).update({
+        corporateAccountId: acc.id || doc.id,
+        corporateCompany: acc.company || "",
+      });
+      return { linked: true };
+    }
+  }
+  return { linked: false };
+});
+
 // The only client fields the website is allowed to learn about an account.
 // Everything else on the document — address, balance, payment history, admin
 // notes — stays server-side.

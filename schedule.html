@@ -118,6 +118,7 @@ body{font-family:'Inter',sans-serif;background-color:#f9f9f9}
 </head>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script>
 <script>
 (function(){
   var cfg={
@@ -180,37 +181,20 @@ function saveBookingToFirebase(data) {
     localStorage.setItem('rv-bks', JSON.stringify(bks));
   } catch(le) {}
 
-  // Auto-detect corporate member — link booking to corporate account
+  // Auto-detect corporate member — link booking to corporate account.
+  // This used to pull every Approved/Active corporate account into the browser
+  // to compare phone numbers, which handed the whole client list — companies,
+  // contacts and member names — to anyone who loaded this page. The match now
+  // happens inside the linkBookingToCorporate function.
   var rawPhone = (data.phone || '').replace(/\D/g, '').slice(-10);
-  if (rawPhone.length === 10 && window._db) {
-    window._db.collection('corporate_accounts').where('status', 'in', ['Approved', 'Active']).get().then(function(snap) {
-      snap.forEach(function(d) {
-        var acc = d.data();
-        // Check contact phone
-        var contactPh = (acc.contactPhone || '').replace(/\D/g, '').slice(-10);
-        if (contactPh === rawPhone) {
-          window._db.collection('bookings').doc(id).update({
-            corporateAccountId: acc.id,
-            corporateCompany: acc.company
-          });
-          console.log('Booking auto-linked to corporate:', acc.company);
-          return;
-        }
-        // Check members array
-        var members = acc.members || [];
-        for (var i = 0; i < members.length; i++) {
-          var mPh = (members[i].phone || '').replace(/\D/g, '').slice(-10);
-          if (mPh === rawPhone) {
-            window._db.collection('bookings').doc(id).update({
-              corporateAccountId: acc.id,
-              corporateCompany: acc.company
-            });
-            console.log('Booking auto-linked to corporate member:', members[i].name, 'at', acc.company);
-            return;
-          }
-        }
-      });
-    }).catch(function(e) { console.warn('Corp member check error:', e.message); });
+  if (rawPhone.length === 10) {
+    try {
+      firebase.functions().httpsCallable('linkBookingToCorporate')({ bookingId: id, phone: rawPhone })
+        .then(function(res) {
+          if (res && res.data && res.data.linked) console.log('Booking auto-linked to a corporate account');
+        })
+        .catch(function(e) { console.warn('Corp link check failed:', (e && e.code) || e); });
+    } catch (e) { console.warn('Corp link check unavailable:', e); }
   }
 }
 </script>
