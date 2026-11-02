@@ -3256,17 +3256,15 @@
       if(!name || !phone) return toast('Name and Phone are required');
       
       var data = { name: name, phone: phone, email: email, address: addr, updatedAt: new Date().toISOString() };
-      if(pwd) {
-        if(pwd.length < 6) return toast('Password must be at least 6 characters');
-        data.password = pwd;
-      }
-      
+      if(pwd && pwd.length < 6) return toast('Password must be at least 6 characters');
+
       try {
         await db.collection('clients').doc(id).update(data);
         toast('Profile updated successfully');
         if(pwd) {
-          // If admin set a password, assume we want it to be a temporary one forcing a reset
-          await db.collection('clients').doc(id).update({ passwordResetRequired: true });
+          // Hashed server-side and flagged as temporary, forcing a reset on
+          // first use. Never written onto the client document.
+          await firebase.functions().httpsCallable('clientSetTempPassword')({ clientId: id, password: pwd });
           alert('\u2705 Password updated!\n\nNew Temporary Password: ' + pwd + '\n\nPlease inform the client (they will be prompted to change it).');
         }
         closeM('m-cli-detail');
@@ -3626,11 +3624,8 @@
        if(pwd.length < 6) return alert('Password must be at least 6 characters');
 
        try {
-         await db.collection('clients').doc(id).update({ 
-           status: 'Approved',
-           password: pwd,
-           passwordResetRequired: true,
-           updatedAt: new Date().toISOString()
+         await firebase.functions().httpsCallable('clientSetTempPassword')({
+           clientId: id, password: pwd, status: 'Approved'
          });
          toast('Client Approved!');
          
@@ -4749,7 +4744,7 @@
       if(!emailEl || !stEl) return;
       emailEl.textContent = (acc && acc.contactEmail) ? acc.contactEmail : 'No login email set';
       var st, bg, fg;
-      if(!acc || !acc.password){ st = 'No password set'; bg = '#f3f4f6'; fg = '#6b7280'; }
+      if(!acc || !(acc.hasPassword || acc.password)){ st = 'No password set'; bg = '#f3f4f6'; fg = '#6b7280'; }
       else if(acc.passwordResetRequired){ st = 'Temp password — reset pending'; bg = '#fef3c7'; fg = '#92400e'; }
       else { st = 'Active password'; bg = '#dcfce7'; fg = '#166534'; }
       stEl.textContent = st; stEl.style.background = bg; stEl.style.color = fg;
@@ -4852,7 +4847,7 @@
       var pwd = (document.getElementById('pa-password').value || '').trim();
       if(pwd.length < 6){ toast('Password must be at least 6 characters.'); return; }
 
-      var upd = { password: pwd, passwordResetRequired: true, updatedAt: new Date().toISOString() };
+      var upd = { updatedAt: new Date().toISOString() };
 
       if(_paMode === 'replace'){
         var newEmail = (document.getElementById('pa-email').value || '').trim().toLowerCase();
@@ -4873,6 +4868,10 @@
       btn.disabled = true; lbl.textContent = 'Saving...';
       try {
         await db.collection('corporate_accounts').doc(_cdCorpId).update(upd);
+        // Hashed server-side and flagged as temporary; never written onto the
+        // account document.
+        await firebase.functions().httpsCallable('corporateSetTempPassword')({ accountId: _cdCorpId, password: pwd });
+        upd.hasPassword = true; upd.passwordResetRequired = true;
         Object.assign(_cdAcc, upd);
         // Reflect new login email/name in the detail panel behind the modal
         var emEl = document.getElementById('cd-email');

@@ -856,6 +856,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
       <h4 style="font-family:'Times New Roman',serif;font-size:1rem;margin-bottom:1rem">🔒 Change Password</h4>
       <div id="cpwd-err" style="display:none;color:#d32f2f;font-size:0.8rem;margin-bottom:1rem"></div>
       <div id="cpwd-succ" style="display:none;color:#10b981;font-size:0.8rem;margin-bottom:1rem">Password updated successfully.</div>
+      <div class="f-group"><label class="f-label">Current Password</label><input id="cpwd-cur" type="password" class="f-input" placeholder="Your current password" autocomplete="current-password"/></div>
       <div class="f-group"><label class="f-label">New Password</label><input id="cpwd-new" type="password" class="f-input" placeholder="Min 6 characters"/></div>
       <div class="f-group"><label class="f-label">Confirm New Password</label><input id="cpwd-conf" type="password" class="f-input"/></div>
       <button onclick="changeClientPwd()" class="btn-k" style="width:100%;margin-top:0.5rem;background:#333">Update Password</button>
@@ -1215,6 +1216,40 @@ let _acctPickupPlace = null, _acctDestPlace = null;
 // OTP flow state
 let _pendingPhone = null;
 let _pendingClient = null;
+let _lastPwd = '';
+
+// Calls the clientLogin Cloud Function. Returns {ok, client} or sets `err` and
+// returns {ok:false, noPassword}. The browser never reads or compares a password.
+async function clientLoginCall(identifier, pwd, err){
+  try {
+    const res = await firebase.functions().httpsCallable('clientLogin')({ identifier: identifier, password: pwd });
+    if (res && res.data && res.data.success && res.data.client) {
+      if (res.data.client.id) _pendingClient = res.data.client;
+      return { ok: true, client: res.data.client };
+    }
+    throw new Error('unexpected-response');
+  } catch(e) {
+    const code = String((e && e.code) || '').replace(/^functions\//, '');
+    const det  = (e && e.details) || {};
+    if (code === 'not-found') {
+      err.textContent = 'No account found with that email or phone number.';
+    } else if (det.pending) {
+      err.innerHTML = '<strong>Account Pending Approval</strong><br>Your profile is currently being reviewed. We will notify you by text once it is active.';
+    } else if (det.noPassword) {
+      _pendingClient = { id: det.clientId };
+      err.innerHTML = 'Account found, but <strong>no password is set</strong>.<br>Tap below to set one up via email.';
+      err.style.display = 'block';
+      return { ok: false, noPassword: true };
+    } else if (code === 'unauthenticated' || code === 'invalid-argument') {
+      err.textContent = 'Incorrect email/phone or password.';
+    } else {
+      console.error('clientLogin error:', code, (e && e.message) || '');
+      err.textContent = 'Sign-in error. Please try again or call (978) 255-3140.';
+    }
+    err.style.display = 'block';
+    return { ok: false };
+  }
+}
 let _pendingIsNewUser = false;
 let _confirmationResult = null;
 
@@ -1537,65 +1572,25 @@ async function doPhoneLogin(){
         }
       }
 
-      // 2. Fallback: legacy account — look up Firestore doc and check plain-text password
-      let foundDoc = null;
-      for(const e of [raw, emailLower]){
-        const snap = await db.collection('clients').where('email','==',e).limit(1).get();
-        if(!snap.empty){ snap.forEach(d => foundDoc = {id:d.id, ...d.data()}); break; }
-      }
-      if(!foundDoc){
-        err.textContent='No account found with that email.';
-        err.style.display='block';
-      } else if(!foundDoc.password){
-        err.innerHTML='Account found, but <strong>no password is set</strong>.<br>Tap below to set one up via email.';
-        err.style.display='block';
+      // 2. Fallback: legacy account — verified server-side by clientLogin, which
+      //    compares a bcrypt hash in the locked client_auth collection.
+      const r = await clientLoginCall(emailLower, pwd, err);
+      if(r.ok){ _lastPwd = pwd; loginUser(r.client); return; }
+      if(r.noPassword){
         mig.style.display='block';
-        _pendingClient = foundDoc;
         var migEmailWrap = document.getElementById('migration-email-wrap');
         if(migEmailWrap) migEmailWrap.style.display = 'none';
-      } else if(foundDoc.password !== pwd){
-        err.textContent='Incorrect password.';
-        err.style.display='block';
-      } else {
-        loginUser(foundDoc);
-        return;
       }
 
     // ── PHONE PATH ────────────────────────────────────────────────────────────
     // Phone accounts always use a plain-text password stored in Firestore by admin.
     } else {
-      const pFmt1 = `(${digits.substring(0,3)}) ${digits.substring(3,6)}-${digits.substring(6,10)}`;
-      const pFmt2 = `${digits.substring(0,3)}-${digits.substring(3,6)}-${digits.substring(6,10)}`;
-      const formats = ['+1'+digits, digits, pFmt1, pFmt2];
-      let foundDoc = null;
-      for(const p of formats){
-        const snap = await db.collection('clients').where('phone','==',p).limit(1).get();
-        if(!snap.empty){ snap.forEach(d => foundDoc = {id:d.id, ...d.data()}); break; }
-      }
-
-      if(!foundDoc){
-        err.textContent='No account found with that phone number.';
-        err.style.display='block';
-      } else {
-        const status = foundDoc.status || 'Approved';
-        if(status !== 'Approved'){
-          err.innerHTML='<strong>Account Pending Approval</strong><br>Your profile is currently being reviewed. We will notify you by text once it is active.';
-          err.style.display='block';
-        } else if(!foundDoc.password){
-          err.innerHTML='Account found, but <strong>no password is set</strong>.<br>Tap below to set one up via email.';
-          err.style.display='block';
-          mig.style.display='block';
-          _pendingClient = foundDoc;
-          var migEmailWrap = document.getElementById('migration-email-wrap');
-          if(!foundDoc.email && migEmailWrap) migEmailWrap.style.display = 'block';
-          else if(migEmailWrap) migEmailWrap.style.display = 'none';
-        } else if(foundDoc.password !== pwd){
-          err.textContent='Incorrect password.';
-          err.style.display='block';
-        } else {
-          loginUser(foundDoc);
-          return;
-        }
+      const r = await clientLoginCall(digits, pwd, err);
+      if(r.ok){ _lastPwd = pwd; loginUser(r.client); return; }
+      if(r.noPassword){
+        mig.style.display='block';
+        var migEmailWrap2 = document.getElementById('migration-email-wrap');
+        if(migEmailWrap2) migEmailWrap2.style.display = 'block';
       }
     }
   } catch(e){
@@ -1740,12 +1735,18 @@ async function saveInitialPassword(){
   btn.disabled = true; btn.textContent = 'Saving...';
   
   try {
-    await db.collection('clients').doc(_pendingClient.id).update({ password: p1 });
-    _pendingClient.password = p1;
-    loginUser(_pendingClient);
+    // Hashed server-side; never written onto the client document.
+    await firebase.functions().httpsCallable('clientSetPassword')({
+      clientId: _pendingClient.id, currentPassword: '', newPassword: p1
+    });
+    const res = await firebase.functions().httpsCallable('clientLogin')({
+      identifier: (_pendingClient.email || _pendingClient.phone || ''), password: p1
+    });
+    _lastPwd = p1;
+    loginUser((res && res.data && res.data.client) ? res.data.client : _pendingClient);
     alert('Password set successfully! You can now use this for future logins.');
   } catch(e){
-    alert('Error saving password: ' + e.message);
+    alert('Error saving password: ' + (e && e.message ? e.message : e));
     btn.disabled = false; btn.textContent = 'Save & Sign In →';
   }
 }
@@ -3370,16 +3371,11 @@ async function doEmailLogin(){
       await auth.signInWithEmailAndPassword(email, pwd);
     } catch(firebaseErr) {
       if(firebaseErr.code === 'auth/user-not-found' || firebaseErr.code === 'auth/invalid-credential') {
-        // Legacy account — check Firestore plain-text password
-        const snap = await db.collection('clients').where('email','==',email).limit(1).get();
-        if(snap.empty){ err.textContent='No account found with that email. Please create an account.'; err.style.display='block'; btn.disabled=false; btn.textContent='Sign In →'; return; }
-        let client; snap.forEach(d=>client={id:d.id, ...d.data()});
-        if(!client.password){
-          err.innerHTML='This account uses Google or Apple sign-in. Please use one of those buttons above.';
-          err.style.display='block'; btn.disabled=false; btn.textContent='Sign In →'; return;
-        }
-        if(client.password !== pwd){ err.textContent='Incorrect email or password.'; err.style.display='block'; btn.disabled=false; btn.textContent='Sign In →'; return; }
-        loginUser(client);
+        // Legacy account — verified server-side by clientLogin.
+        const r = await clientLoginCall(email, pwd, err);
+        btn.disabled=false; btn.textContent='Sign In →';
+        if(r.ok){ _lastPwd = pwd; loginUser(r.client); }
+        else if(r.noPassword){ err.innerHTML='This account uses Google or Apple sign-in, or has no password yet. Use one of the buttons above, or Forgot Password.'; }
         return;
       } else {
         throw firebaseErr;
@@ -3411,17 +3407,25 @@ async function changeClientPwd(){
   if(!np||!cp){ err.textContent='Please fill both fields.'; err.style.display='block'; return; }
   if(np!==cp){ err.textContent='Passwords do not match.'; err.style.display='block'; return; }
   if(np.length<6){ err.textContent='Password must be at least 6 characters.'; err.style.display='block'; return; }
+  const curEl = document.getElementById('cpwd-cur');
+  const cur = (curEl && curEl.value.trim()) || _lastPwd;
+  if(!cur){ err.textContent='Please enter your current password.'; err.style.display='block'; return; }
   try{
-    await db.collection('clients').doc(currentUser.id).update({ 
-      password: np,
-      passwordResetRequired: false 
+    // Hashed server-side; the new password never touches the client document.
+    await firebase.functions().httpsCallable('clientSetPassword')({
+      clientId: currentUser.id, currentPassword: cur, newPassword: np
     });
     succ.style.display='block';
+    if(curEl) curEl.value='';
     document.getElementById('cpwd-new').value='';
     document.getElementById('cpwd-conf').value='';
-    currentUser.password = np; // Update in memory!
+    _lastPwd = np;
+    currentUser.passwordResetRequired = false;
   }catch(e){
-    err.textContent=e.message||'Failed to update password.';
+    const code = String((e && e.code) || '').replace(/^functions\//, '');
+    err.textContent = (code === 'permission-denied')
+      ? 'Current password is incorrect.'
+      : ((e && e.message) || 'Failed to update password.');
     err.style.display='block';
   }
 }
@@ -3440,13 +3444,12 @@ async function forceChangeClientPwd(){
   
   try{
     const userId = localStorage.getItem('rvip_pwd_reset_required') || currentUser.id;
-    await db.collection('clients').doc(userId).update({ 
-      password: np,
-      passwordResetRequired: false 
+    await firebase.functions().httpsCallable('clientSetPassword')({
+      clientId: userId, currentPassword: _lastPwd, newPassword: np
     });
     localStorage.removeItem('rvip_pwd_reset_required');
+    _lastPwd = np;
     if(currentUser) {
-      currentUser.password = np;
       currentUser.passwordResetRequired = false;
     }
     closeM('m-cpwd');

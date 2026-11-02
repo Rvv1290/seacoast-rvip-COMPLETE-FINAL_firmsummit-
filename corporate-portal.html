@@ -405,6 +405,10 @@ var _sess = null;
       <div id="forced-err" style="display:none;background:#fef2f2;border-left:3px solid #ef4444;padding:0.75rem 1rem;font-family:Inter,sans-serif;font-size:0.82rem;color:#b91c1c;margin-bottom:1.25rem"></div>
       
       <div class="f-group">
+        <label class="f-label">Temporary Password *</label>
+        <input class="f-input" id="fr-cur" type="password" placeholder="The password you just signed in with" autocomplete="current-password"/>
+      </div>
+      <div class="f-group">
         <label class="f-label">New Password *</label>
         <input class="f-input" id="fr-new" type="password" placeholder="At least 6 characters"/>
       </div>
@@ -1086,6 +1090,7 @@ var _sess = null;
         <div id="pwd-err" style="display:none;color:#d32f2f;font-size:0.8rem;margin-bottom:1rem"></div>
         <div id="pwd-succ" style="display:none;color:#10b981;font-size:0.8rem;margin-bottom:1rem">Password updated successfully.</div>
         <div class="book-grid">
+          <div class="f-group"><label class="f-label">Current Password</label><input class="f-input" id="cp-cur" type="password" autocomplete="current-password"/></div>
           <div class="f-group"><label class="f-label">New Password</label><input class="f-input" id="cp-new" type="password"/></div>
           <div class="f-group"><label class="f-label">Confirm Password</label><input class="f-input" id="cp-conf" type="password"/></div>
         </div>
@@ -3223,16 +3228,23 @@ async function changeCorpPwd(){
   if(np !== cp){ err.textContent='Passwords do not match.'; err.style.display='block'; return; }
   if(np.length < 6){ err.textContent='Password must be at least 6 characters.'; err.style.display='block'; return; }
   
+  var curEl = document.getElementById('cp-cur');
+  var cur = curEl ? curEl.value.trim() : '';
+  if(!cur){ err.textContent='Please enter your current password.'; err.style.display='block'; return; }
   try {
-    await db.collection('corporate_accounts').doc(sess.accountId).update({ 
-      password: np,
-      passwordResetRequired: false 
+    // Hashed server-side; never written onto the account document.
+    await firebase.functions().httpsCallable('corporateSetCorporatePassword')({
+      accountId: sess.accountId, currentPassword: cur, newPassword: np
     });
     succ.style.display='block';
+    if(curEl) curEl.value='';
     document.getElementById('cp-new').value='';
     document.getElementById('cp-conf').value='';
   } catch(e) {
-    err.textContent=e.message || 'Failed to update password.';
+    var code = String((e && e.code) || '').replace(/^functions\//, '');
+    err.textContent = (code === 'permission-denied')
+      ? 'Current password is incorrect.'
+      : ((e && e.message) || 'Failed to update password.');
     err.style.display='block';
   }
 }
@@ -3265,9 +3277,11 @@ async function submitForcedReset() {
     
     if(!userId) { throw new Error('Account ID not found. Please log out and sign in again.'); }
 
-    await _db.collection('corporate_accounts').doc(userId).update({
-      password: np,
-      passwordResetRequired: false
+    var frCur = document.getElementById('fr-cur');
+    var cur = frCur ? frCur.value.trim() : '';
+    if(!cur){ throw new Error('Please enter the temporary password you signed in with.'); }
+    await firebase.functions().httpsCallable('corporateSetCorporatePassword')({
+      accountId: userId, currentPassword: cur, newPassword: np
     });
     
     // Clear flag and close modal

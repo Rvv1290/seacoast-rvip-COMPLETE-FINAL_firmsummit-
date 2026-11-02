@@ -212,6 +212,7 @@ exports.resetCorpPassword = onCall(async (request) => {
     .set({ hash, updatedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
   await found.ref.update({
     password: admin.firestore.FieldValue.delete(),
+    hasPassword: true,
     passwordResetRequired: false,
   });
   return { success: true };
@@ -336,6 +337,8 @@ exports.corporateLogin = onCall(async (request) => {
     ok = true;
     const hash = await bcrypt.hash(String(password), 10);
     await authRef.set({ hash, migratedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
+    await db.collection("corporate_accounts").doc(match.id)
+      .update({ password: admin.firestore.FieldValue.delete(), hasPassword: true });
   }
   // 3) Nothing to check against at all. Hand back the account id so the sign-in
   //    page can run the "set your password" flow without reading Firestore itself.
@@ -370,18 +373,25 @@ exports.corporateSetCorporatePassword = onCall(async (request) => {
   const hasHash = authDoc.exists && !!authDoc.data().hash;
   const hasPlain = !!data.password;
 
-  // If a password already exists, require the correct current one.
-  if (hasHash || hasPlain) {
+  // Authorised by the current password, or by a verified Firebase Auth session
+  // (the SMS setup flow signs the user in before reaching here).
+  const verifiedSession = !!request.auth;
+  if ((hasHash || hasPlain) && !verifiedSession) {
     let ok = false;
     if (hasHash) ok = await bcrypt.compare(String(currentPassword || ""), authDoc.data().hash);
     else ok = String(currentPassword || "") === String(data.password);
     if (!ok) throw new HttpsError("permission-denied", "Current password is incorrect.");
+  }
+  if (!hasHash && !hasPlain && !verifiedSession) {
+    // Claiming a passwordless account requires a verified email or phone first.
+    throw new HttpsError("permission-denied", "Verify your email or phone before setting a password.");
   }
 
   const hash = await bcrypt.hash(String(newPassword), 10);
   await authRef.set({ hash, updatedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
   await ref.update({
     password: admin.firestore.FieldValue.delete(),
+    hasPassword: true,
     passwordResetRequired: false,
     updatedAt: new Date().toISOString(),
   });
@@ -421,7 +431,7 @@ exports.migrateCorporatePasswords = onCall(async (request) => {
     } else {
       alreadyHashed++;
     }
-    await doc.ref.update({ password: admin.firestore.FieldValue.delete() });
+    await doc.ref.update({ password: admin.firestore.FieldValue.delete(), hasPassword: true });
   }
 
   // Re-read to prove no plaintext password survives.
@@ -437,6 +447,7 @@ exports.migrateCorporatePasswords = onCall(async (request) => {
  * client, and nothing is stored in plaintext.
  */
 exports.corporateSetTempPassword = onCall(async (request) => {
+  requireAdmin(request);
   const bcrypt = require("bcryptjs");
   const { accountId, password } = request.data || {};
   if (!accountId) throw new HttpsError("invalid-argument", "Missing accountId.");
@@ -454,7 +465,203 @@ exports.corporateSetTempPassword = onCall(async (request) => {
     .set({ hash, updatedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
   await ref.update({
     password: admin.firestore.FieldValue.delete(),
+    hasPassword: true,
     passwordResetRequired: true,
   });
   return { success: true, tempPassword: tempPwd };
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  SECURE CLIENT AUTH
+//  Mirrors the corporate flow. Personal-client passwords live only as bcrypt
+//  hashes in the locked `client_auth/{clientId}` collection. The `clients`
+//  collection is readable by the portal pages, so it must never hold one.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Caller must hold an admin custom claim. admin.html has no sign-in today, so
+// these stay closed until one is added — see REOPEN-PORTALS.md.
+function requireAdmin(request) {
+  if (!request.auth || !request.auth.token || request.auth.token.admin !== true) {
+    throw new HttpsError("permission-denied", "Administrator sign-in required.");
+  }
+}
+
+// Every phone shape the website has ever stored.
+function _phoneFormats(digits) {
+  const d = String(digits || "").replace(/\D/g, "").slice(-10);
+  if (d.length < 10) return [];
+  return [
+    "+1" + d, d,
+    `(${d.slice(0, 3)}) ${d.slice(3, 6)}-${d.slice(6)}`,
+    `${d.slice(0, 3)}-${d.slice(3, 6)}-${d.slice(6)}`,
+  ];
+}
+
+async function _findClient(db, identifier) {
+  const idRaw = String(identifier || "").trim();
+  if (!idRaw) return null;
+  if (idRaw.includes("@")) {
+    for (const e of [idRaw, idRaw.toLowerCase()]) {
+      const snap = await db.collection("clients").where("email", "==", e).limit(1).get();
+      if (!snap.empty) return { id: snap.docs[0].id, data: snap.docs[0].data() };
+    }
+    return null;
+  }
+  for (const p of _phoneFormats(idRaw)) {
+    const snap = await db.collection("clients").where("phone", "==", p).limit(1).get();
+    if (!snap.empty) return { id: snap.docs[0].id, data: snap.docs[0].data() };
+  }
+  return null;
+}
+
+/**
+ * Personal client sign-in. Verifies a bcrypt hash in client_auth, with a
+ * one-time plaintext fallback that upgrades the stored password to a hash so
+ * nobody is locked out mid-migration.
+ */
+exports.clientLogin = onCall(async (request) => {
+  const bcrypt = require("bcryptjs");
+  const { identifier, password } = request.data || {};
+  if (!identifier || !password) throw new HttpsError("invalid-argument", "Missing email/phone or password.");
+  const db = admin.firestore();
+
+  const match = await _findClient(db, identifier);
+  if (!match) throw new HttpsError("not-found", "No account found with that email or phone number.");
+
+  const status = match.data.status || "Approved";
+  if (status !== "Approved") {
+    throw new HttpsError("failed-precondition", "Account pending approval.", { pending: true });
+  }
+
+  const authRef = db.collection("client_auth").doc(match.id);
+  const authDoc = await authRef.get();
+  const storedHash = (authDoc.exists && authDoc.data().hash) ? authDoc.data().hash : null;
+  let ok = false;
+
+  if (storedHash) ok = await bcrypt.compare(String(password), storedHash);
+
+  if (!ok && match.data.password && String(match.data.password) === String(password)) {
+    ok = true;
+    const hash = await bcrypt.hash(String(password), 10);
+    await authRef.set({ hash, migratedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
+    await db.collection("clients").doc(match.id)
+      .update({ password: admin.firestore.FieldValue.delete(), hasPassword: true });
+  }
+
+  if (!ok && !storedHash && !match.data.password) {
+    throw new HttpsError("failed-precondition", "No password is set for this account.", { clientId: match.id, noPassword: true });
+  }
+  if (!ok) throw new HttpsError("unauthenticated", "Incorrect email/phone or password.");
+
+  const c = Object.assign({ id: match.id }, match.data);
+  delete c.password;
+  return { success: true, client: c, passwordResetRequired: !!match.data.passwordResetRequired };
+});
+
+/**
+ * Sets a personal client's password, stored only as a bcrypt hash.
+ * Authorised by the current password, or by a verified Firebase Auth session
+ * (the email-link and SMS setup flows sign the user in before reaching here).
+ */
+exports.clientSetPassword = onCall(async (request) => {
+  const bcrypt = require("bcryptjs");
+  const { clientId, currentPassword, newPassword } = request.data || {};
+  if (!clientId || !newPassword) throw new HttpsError("invalid-argument", "Missing data.");
+  if (String(newPassword).length < 6) throw new HttpsError("invalid-argument", "Password must be at least 6 characters.");
+
+  const db = admin.firestore();
+  const ref = db.collection("clients").doc(clientId);
+  const doc = await ref.get();
+  if (!doc.exists) throw new HttpsError("not-found", "Account not found.");
+  const data = doc.data();
+
+  const authRef = db.collection("client_auth").doc(clientId);
+  const authDoc = await authRef.get();
+  const hasHash = authDoc.exists && !!authDoc.data().hash;
+  const hasPlain = !!data.password;
+  const verifiedSession = !!request.auth;
+
+  if ((hasHash || hasPlain) && !verifiedSession) {
+    let ok = false;
+    if (hasHash) ok = await bcrypt.compare(String(currentPassword || ""), authDoc.data().hash);
+    else ok = String(currentPassword || "") === String(data.password);
+    if (!ok) throw new HttpsError("permission-denied", "Current password is incorrect.");
+  }
+  if (!hasHash && !hasPlain && !verifiedSession) {
+    // Claiming a passwordless account requires a verified email or phone first.
+    throw new HttpsError("permission-denied", "Verify your email or phone before setting a password.");
+  }
+
+  const hash = await bcrypt.hash(String(newPassword), 10);
+  await authRef.set({ hash, updatedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
+  await ref.update({
+    password: admin.firestore.FieldValue.delete(),
+    hasPassword: true,
+    passwordResetRequired: false,
+    updatedAt: new Date().toISOString(),
+  });
+  return { success: true };
+});
+
+/** Admin-set temporary password for a personal client. Hash only. */
+exports.clientSetTempPassword = onCall(async (request) => {
+  requireAdmin(request);
+  const bcrypt = require("bcryptjs");
+  const { clientId, password, status } = request.data || {};
+  if (!clientId) throw new HttpsError("invalid-argument", "Missing clientId.");
+  if (password && String(password).length < 6) {
+    throw new HttpsError("invalid-argument", "Password must be at least 6 characters.");
+  }
+  const db = admin.firestore();
+  const ref = db.collection("clients").doc(clientId);
+  if (!(await ref.get()).exists) throw new HttpsError("not-found", "Account not found.");
+
+  const tempPwd = password ? String(password) : "RVIP" + Math.random().toString(36).slice(-6).toUpperCase();
+  const hash = await bcrypt.hash(tempPwd, 10);
+  await db.collection("client_auth").doc(clientId)
+    .set({ hash, updatedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
+
+  const upd = {
+    password: admin.firestore.FieldValue.delete(),
+    hasPassword: true,
+    passwordResetRequired: true,
+    updatedAt: new Date().toISOString(),
+  };
+  if (status) upd.status = status;
+  await ref.update(upd);
+  return { success: true, tempPassword: tempPwd };
+});
+
+/**
+ * One-time migration for the clients collection. Same contract as
+ * migrateCorporatePasswords: hashes every plaintext password into client_auth
+ * and deletes the field. Confirm `remaining` comes back 0.
+ */
+exports.migrateClientPasswords = onCall(async (request) => {
+  const bcrypt = require("bcryptjs");
+  if (!request.data || request.data.confirm !== "MIGRATE") {
+    throw new HttpsError("invalid-argument", "Pass { confirm: 'MIGRATE' } to run this migration.");
+  }
+  const db = admin.firestore();
+  const snap = await db.collection("clients").get();
+
+  let hashed = 0, alreadyHashed = 0, noPassword = 0;
+  for (const doc of snap.docs) {
+    const plain = doc.data().password;
+    if (!plain) { noPassword++; continue; }
+    const authRef = db.collection("client_auth").doc(doc.id);
+    const authDoc = await authRef.get();
+    if (!(authDoc.exists && authDoc.data().hash)) {
+      const hash = await bcrypt.hash(String(plain), 10);
+      await authRef.set({ hash, migratedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
+      hashed++;
+    } else {
+      alreadyHashed++;
+    }
+    await doc.ref.update({ password: admin.firestore.FieldValue.delete(), hasPassword: true });
+  }
+
+  const after = await db.collection("clients").get();
+  const remaining = after.docs.filter((d) => !!d.data().password).length;
+  return { success: true, total: snap.size, hashed, alreadyHashed, noPassword, remaining };
 });

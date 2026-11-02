@@ -87,12 +87,25 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // Personal clients. Same rule as corporate_accounts: these documents are
+    // client-readable, so a password must never be written onto one. Sign-in
+    // goes through the clientLogin Cloud Function against client_auth below.
     match /clients/{clientId} {
-      allow read, write: if true;
+      allow read:   if true;
+      allow create: if !('password' in request.resource.data);
+      allow update: if !request.resource.data.diff(resource.data).affectedKeys().hasAny(['password'])
+                    || !('password' in request.resource.data);
+      allow delete: if true;
 
       match /trips/{tripId} {
         allow read, write: if true;
       }
+    }
+
+    // Hashed client passwords — clients can NEVER read or write this.
+    // Only Cloud Functions (Admin SDK) touch it.
+    match /client_auth/{docId} {
+      allow read, write: if false;
     }
 
     match /trips/{docId} {
