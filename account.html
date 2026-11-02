@@ -1342,6 +1342,24 @@ function showSocialError(msg) {
   el.style.display = 'block';
 }
 
+// Email-link, SMS and social sign-ins produce a Firebase user with no portal
+// claims, so trips (which live under clients/{clientId}/trips) would be denied.
+// This swaps that session for one carrying the client's claims. Resolution
+// happens server-side from the verified token, so it cannot reach another
+// account. A failure is not fatal — the dashboard still opens.
+async function upgradeToPortalSession(){
+  try {
+    const res = await firebase.functions().httpsCallable('clientPortalSession')({});
+    if (res && res.data && res.data.authToken) {
+      await firebase.auth().signInWithCustomToken(res.data.authToken);
+      return true;
+    }
+  } catch(e) {
+    console.warn('portal session upgrade failed:', (e && e.code) || e);
+  }
+  return false;
+}
+
 async function handleSocialResult(result, providerName) {
   const user = result.user;
   const email = user.email || '';
@@ -1364,6 +1382,7 @@ async function handleSocialResult(result, providerName) {
     }
     // Tag any unlinked personal bookings so admin can see them in the client profile
     _linkPersonalBookings(client.id, email, user.phoneNumber || '');
+    await upgradeToPortalSession();
     loginUser(client);
   } else {
     // New user — create Firestore profile
@@ -1678,19 +1697,21 @@ async function startMigration(){
 
     btn.textContent = 'Sending link…';
 
-    // If the user typed a new email (not on file), save it before sending
-    if (!client.email && targetEmail) {
-      try { await db.collection('clients').doc(client.id).update({ email: targetEmail }); } catch(e) {}
-      client.email = targetEmail;
-    }
+    // Record the email (only if none is on file) and flag the password setup.
+    // Both used to be direct Firestore writes from this page while nobody was
+    // signed in; clientRequestEmailSetup does them server-side so the clients
+    // collection can refuse anonymous writes.
+    await firebase.functions().httpsCallable('clientRequestEmailSetup')({
+      identifier: client.email || client.phone || targetEmail,
+      email: targetEmail
+    });
+    if (!client.email && targetEmail) client.email = targetEmail;
 
     // Send Firebase sign-in email link (works without Phone Auth)
     const returnUrl = window.location.origin + '/account.html';
     const actionCodeSettings = { url: returnUrl, handleCodeInApp: true };
     await auth.sendSignInLinkToEmail(targetEmail, actionCodeSettings);
     localStorage.setItem('rvip-email-signin', targetEmail);
-    // Tag the client so the next sign-in forces the password setup modal
-    try { await db.collection('clients').doc(client.id).update({ passwordResetRequired: true }); } catch(e) {}
 
     // Success — replace the prompt with a clear success message
     succBox.innerHTML =
@@ -3674,26 +3695,25 @@ async function saveProfile(){
   auth.onAuthStateChanged(function(user){
     const claimed = localStorage.getItem('rvip-client-id');
     if(!user){
-      // LEGACY PATH. Restoring from localStorage alone is not secure — see the
-      // note above. It stays until clientLogin is actually issuing portal
-      // tokens, which needs iam.serviceAccounts.signBlob on the functions'
-      // service account (see REOPEN-PORTALS.md). Without this fallback a
-      // returning customer would be locked out instead.
-      if(claimed) restore(claimed); else showLogin();
+      // No Firebase session, no restore. A localStorage id proves nothing —
+      // it is attacker-writable, and trusting it meant anyone could open any
+      // customer's dashboard by setting one key.
+      if(claimed) localStorage.removeItem('rvip-client-id');
+      showLogin();
       return;
     }
     user.getIdTokenResult().then(function(t){
       const cid = t && t.claims ? t.claims.clientId : null;
       if(!cid){
         // Signed in by email link or SMS, which carries no client id — those
-        // flows resolve the client themselves.
-        if(!currentUser){ if(claimed) restore(claimed); else showLogin(); }
+        // flows resolve the client themselves and call loginUser().
+        if(!currentUser) showLogin();
         return;
       }
-      // A portal token is authoritative: it may only open its own client.
+      // The token is authoritative: it may only open its own client.
       if(claimed && claimed !== cid) localStorage.removeItem('rvip-client-id');
       restore(cid);
-    }).catch(function(){ if(claimed) restore(claimed); else showLogin(); });
+    }).catch(showLogin);
   });
 })();
 

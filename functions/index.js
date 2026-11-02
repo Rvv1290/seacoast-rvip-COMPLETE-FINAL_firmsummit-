@@ -620,6 +620,70 @@ exports.clientLogin = onCall(async (request) => {
 });
 
 /**
+ * Issues a portal session for someone already signed in by email link, SMS or
+ * a social provider. Those flows produce a Firebase Auth user with no portal
+ * claims, so without this their dashboard would load but their trips — which
+ * live under clients/{clientId}/trips — would come back empty.
+ *
+ * The client is resolved only from properties of the *verified* token (its
+ * email, its phone number, or a firebaseUid already recorded on the record),
+ * so this cannot be used to obtain a session for somebody else's account.
+ */
+exports.clientPortalSession = onCall(async (request) => {
+  if (!request.auth) throw new HttpsError("unauthenticated", "Sign in first.");
+  const db = admin.firestore();
+  const token = request.auth.token || {};
+  const email = String(token.email || "").trim().toLowerCase();
+  const phone = String(token.phone_number || "").replace(/\D/g, "").slice(-10);
+
+  let match = null;
+  if (email) match = await _findClient(db, email);
+  if (!match && phone.length === 10) match = await _findClient(db, phone);
+  if (!match) {
+    const snap = await db.collection("clients")
+      .where("firebaseUid", "==", request.auth.uid).limit(1).get();
+    if (!snap.empty) match = { id: snap.docs[0].id, data: snap.docs[0].data() };
+  }
+  if (!match) throw new HttpsError("not-found", "No account matches this sign-in.");
+
+  const authToken = await mintPortalToken("client", match.id, match.data);
+  if (!authToken) throw new HttpsError("internal", "Could not issue a portal session.");
+  return { success: true, clientId: match.id, authToken };
+});
+
+/**
+ * Prepares a client for the email-link setup flow: records an email address if
+ * the account has none on file, and flags that the next sign-in must set a
+ * password.
+ *
+ * account.html used to do both of these as direct, unauthenticated Firestore
+ * writes, which meant anyone could set the email on any passwordless client
+ * record and then have a sign-in link sent to it. Doing it here lets the
+ * `clients` collection refuse anonymous writes.
+ */
+exports.clientRequestEmailSetup = onCall(async (request) => {
+  const { identifier, email } = request.data || {};
+  if (!identifier) throw new HttpsError("invalid-argument", "Missing email or phone.");
+  const db = admin.firestore();
+
+  const match = await _findClient(db, identifier);
+  if (!match) throw new HttpsError("not-found", "No account found with that email or phone number.");
+
+  const update = { passwordResetRequired: true };
+  // Only ever fill in a missing address — never overwrite one, or this would
+  // be the account-takeover path it replaces.
+  const wanted = String(email || "").trim().toLowerCase();
+  if (!match.data.email && wanted) {
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(wanted)) {
+      throw new HttpsError("invalid-argument", "That email address is not valid.");
+    }
+    update.email = wanted;
+  }
+  await db.collection("clients").doc(match.id).update(update);
+  return { success: true, clientId: match.id, email: update.email || match.data.email || null };
+});
+
+/**
  * Sets a personal client's password, stored only as a bcrypt hash.
  * Authorised by the current password, or by a verified Firebase Auth session
  * (the email-link and SMS setup flows sign the user in before reaching here).

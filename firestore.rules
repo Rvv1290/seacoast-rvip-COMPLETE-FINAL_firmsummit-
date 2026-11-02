@@ -85,8 +85,24 @@ service cloud.firestore {
     // WEBSITE RULES (open — website pages don't sign in with Auth)
     // ─────────────────────────────────────────────────────────────
 
+    // Bookings were readable by anyone on the internet. They are now limited
+    // to signed-in callers, which since the portals took up Firebase Auth
+    // means customers, drivers, the apps and admin.
+    //
+    // This is deliberately "any signed-in caller" rather than owner-only. The
+    // portals fan out several queries per load — by corporateAccountId, by
+    // company, by contact email and by three phone formats, plus one per
+    // corporate member — and a query that the rules cannot prove is denied
+    // outright, which would take the whole page's Promise.all down with it.
+    // Owner-only needs clientId/corporateAccountId backfilled onto the older
+    // documents and those loaders made fault-tolerant first.
+    //
+    // `create` stays open for the public booking form on schedule.html.
     match /bookings/{docId} {
-      allow read, write: if true;
+      allow read:   if request.auth != null;
+      allow create: if true;
+      allow update: if request.auth != null;
+      allow delete: if isAdmin();
     }
 
     // Corporate accounts. A password must NEVER be written onto these documents
@@ -94,12 +110,20 @@ service cloud.firestore {
     // goes through the corporateLogin Cloud Function, which compares a bcrypt
     // hash in corporate_auth below. These rules reject any write that would
     // (re)introduce a password field, so an old build cannot repopulate it.
+    // `create` stays open because corporate.html's public application form
+    // writes the new account document itself. Reads and updates are now the
+    // account's own portal session or an admin.
+    //
+    // NOTE: schedule.html lists every Approved/Active corporate account to
+    // fill a dropdown, with nobody signed in. That query is denied by this
+    // rule, so it has to be reworked before /schedule is reopened.
     match /corporate_accounts/{docId} {
-      allow read:   if true;
+      allow read:   if isAdmin() || (request.auth != null && request.auth.token.accountId == docId);
       allow create: if !('password' in request.resource.data);
-      allow update: if !request.resource.data.diff(resource.data).affectedKeys().hasAny(['password'])
-                    || !('password' in request.resource.data);
-      allow delete: if true;
+      allow update: if (isAdmin() || (request.auth != null && request.auth.token.accountId == docId))
+                    && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['password'])
+                        || !('password' in request.resource.data));
+      allow delete: if isAdmin();
     }
 
     // Hashed corporate passwords — clients can NEVER read or write this.
@@ -108,18 +132,39 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
-    // Personal clients. Same rule as corporate_accounts: these documents are
-    // client-readable, so a password must never be written onto one. Sign-in
+    // A portal customer acting on their own client record.
+    function isThisClient(clientId) {
+      return request.auth != null && request.auth.token.clientId == clientId;
+    }
+
+    // Personal clients. A password must never be written onto one of these —
+    // they are readable, so a plaintext field here would be public. Sign-in
     // goes through the clientLogin Cloud Function against client_auth below.
+    //
+    // `read` is still open, and that is a known gap: account.html looks a
+    // client up by email or phone *before* anyone is signed in, for signup and
+    // for the email-link flow, so closing it needs those lookups moved into a
+    // Cloud Function first. Writes are closed, which at least stops one
+    // customer altering another's record.
     match /clients/{clientId} {
       allow read:   if true;
       allow create: if !('password' in request.resource.data);
-      allow update: if !request.resource.data.diff(resource.data).affectedKeys().hasAny(['password'])
-                    || !('password' in request.resource.data);
-      allow delete: if true;
+      // The email-link flow links a Firebase uid to the client record while
+      // signed in but before a portal token exists, so that one field is
+      // allowed on its own.
+      allow update: if (isAdmin()
+                        || isThisClient(clientId)
+                        || (request.auth != null
+                            && request.resource.data.diff(resource.data)
+                                 .affectedKeys().hasOnly(['firebaseUid'])))
+                    && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['password'])
+                        || !('password' in request.resource.data));
+      allow delete: if isAdmin();
 
+      // Every trip lives here, under its own client — the top-level `trips`
+      // collection is unused.
       match /trips/{tripId} {
-        allow read, write: if true;
+        allow read, write: if isAdmin() || isThisClient(clientId);
       }
     }
 
@@ -129,8 +174,10 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // Unused — no page in the repo reads or writes a top-level trip; they all
+    // live under clients/{clientId}/trips.
     match /trips/{docId} {
-      allow read, write: if true;
+      allow read, write: if isAdmin();
     }
 
     // No page in this repo reads or writes client_trips or invoices — the

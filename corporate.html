@@ -262,16 +262,14 @@ var _ph = '', _acc = null;
 (function(){
   var s = JSON.parse(localStorage.getItem('corp_session')||'null');
   if(!s || s.expiresAt <= Date.now()) return;
-  var go = function(){ window.location.href='corporate-portal.html'; };
+  var drop = function(){ localStorage.removeItem('corp_session'); };
   firebase.auth().onAuthStateChanged(function(u){
-    // Legacy path while portal tokens are not being issued — see the portal's
-    // gate and REOPEN-PORTALS.md.
-    if(!u) return go();
+    if(!u) return drop();
     u.getIdTokenResult().then(function(t){
       var aid = t && t.claims ? t.claims.accountId : null;
-      if(!aid || aid === s.accountId) go();
-      else localStorage.removeItem('corp_session');
-    }).catch(go);
+      if(aid && aid === s.accountId) window.location.href='corporate-portal.html';
+      else drop();
+    }).catch(drop);
   });
 })();
 

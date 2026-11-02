@@ -384,16 +384,13 @@ var _sess = null;
     window.location.href='corporate.html';
   };
   firebase.auth().onAuthStateChanged(function(u){
-    // No Firebase session means corporateLogin is not issuing portal tokens
-    // yet (it needs iam.serviceAccounts.signBlob — see REOPEN-PORTALS.md).
-    // Bouncing here would lock every corporate customer out, so the legacy
-    // localStorage session still gets through until that is granted.
-    if(!u) return;
+    if(!u) return _bounce();
     u.getIdTokenResult().then(function(t){
       var aid = t && t.claims ? t.claims.accountId : null;
-      // A portal token is authoritative: it may only open its own account.
-      if(aid && aid !== s.accountId) _bounce();
-    }).catch(function(){});
+      // The token is authoritative: it may only open its own account. A
+      // corp_session on its own proves nothing, so a forged one gets bounced.
+      if(!aid || aid !== s.accountId) _bounce();
+    }).catch(_bounce);
   });
 })();
 </script>
