@@ -120,7 +120,9 @@ Users → Add user, with `ramon@seacoastrvip.com`. Email/Password is already
 enabled on the project (verified). After that, "Forgot password?" on the admin
 login works for future resets.
 
-**Delete the leftover `adminPassword` field and change that password.** The old
+**Delete the leftover `adminPassword` field and change that password.** Still
+present as of the last check — I tried twice and the permission guard blocked
+the write both times. The old
 "Change Password" card stored the admin password as **plain text** in
 `admin_settings/main`, and that collection was world-readable, so a
 12-character password was public to anyone with the API key from the page
@@ -142,24 +144,48 @@ machine lacks (`~/.config/gcloud` is empty).
 
 ## Still open
 
-- **Reads of `clients` are still open.** Anyone with the API key from the page
-  source can list every customer's name, email and phone. It cannot simply be
-  closed: `account.html` looks a client up by email or phone *before* anyone is
-  signed in, for signup and for the email-link flow (lines ~1352, 1449, 1481,
-  1545, 1632, 1642). Those lookups need to move into a Cloud Function that
-  returns only what the page needs — whether an account exists, and its id —
-  and then the rule can become own-document-or-admin. This is now the largest
-  remaining data exposure.
+**13. The customer list is closed.** `clients` reads are own-record-or-admin.
+Lookups by email or phone go through `clientLookup`, which answers only for the
+identifier supplied and returns only `publicClientView` fields — never address,
+balance or payment history. Verified: a list query and a single document both
+deny anonymous reads.
+
+**14. Sign-in is rate limited.** Eight failures against one identifier within
+fifteen minutes locks it for fifteen minutes; counters live in `auth_throttle`,
+which no client can read or write. Verified against the live endpoint — the
+ninth attempt returns `resource-exhausted`. **Trade-off:** the lock is keyed on
+the identifier, so someone can deliberately lock out a customer whose email
+they know. Per-IP (or identifier+IP) is the follow-up.
+
+**15. The booking form no longer publishes the corporate client list.**
+`schedule.html` used to download every Approved/Active corporate account —
+companies, contacts, whole member lists — to match one phone number.
+`linkBookingToCorporate` does it server-side and returns only whether a link
+was made.
+
+**16. The browser API key is restricted** to `www.seacoastrvip.com`,
+`seacoastrvip.com` and the local preview. Verified the Maps JavaScript API and
+Places still load on the live site, and that no page calls a Maps REST web
+service (those reject referrer-restricted keys outright).
+
+**Be clear about what that last one does:** a `Referer` header is trivially
+forged, and Firestore and Identity Toolkit do not enforce referrer restrictions
+at all. It protects *Maps billing* against someone copying the key into their
+own site. It is not a data-security control — the Firestore rules are.
+
+## Still open
+
 - **`bookings` read is any-signed-in, not owner-only.** A customer can still
   read another customer's bookings. See item 11 for what that depends on.
-- **`schedule.html` lists every Approved/Active corporate account anonymously**
-  (line ~186, to fill a dropdown). That query is now denied, so it must be
-  reworked before `/schedule` is reopened — and it was leaking your client
-  list.
+- **No App Check.** Every callable can be invoked directly from anywhere —
+  authorisation holds, but nothing rate-limits or attests the caller beyond the
+  login throttle. Needs a reCAPTCHA v3 site key registered in the Firebase
+  console, then `enforceAppCheck` on the callables.
+- **`driver-portal.html` has had none of this work** and is still paused.
 - **One real sign-in of each kind still wants testing by hand**: a personal
   account by phone and by email, a corporate account, and the email-link flow.
-  I could verify the attack paths and the error paths, but not a successful
-  login, because that needs a real password.
+  The attack paths and error paths are verified, but not a successful login —
+  that needs a real password.
 - **The Google Maps API key** in `schedule.html` and `account.html` needs an
   HTTP-referrer restriction in Google Cloud Console, or anyone who copies it
   can bill usage to you.
