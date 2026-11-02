@@ -301,9 +301,9 @@ async function sendCode(){
   btn.textContent='Signing In...';btn.disabled=true;
   if(!_db){err.textContent='Service error. Please call (978) 255-3140.';err.style.display='block';btn.textContent='Sign In →';btn.disabled=false;return;}
 
-  // ── Secure server-side login (passwords are verified as hashes server-side).
-  // Falls back to the legacy Firestore login below only on a system error, so
-  // sign-in can never break. ──
+  // ── Sign-in is verified entirely server-side. corporateLogin compares a bcrypt
+  // hash held in the locked `corporate_auth` collection; this page never reads
+  // corporate_accounts and never sees or compares a password. ──
   try {
     var _res = await firebase.functions().httpsCallable('corporateLogin')({ identifier: iden, password: pwd });
     if (_res && _res.data && _res.data.success && _res.data.account) {
@@ -311,85 +311,28 @@ async function sendCode(){
       grantAccess(_acc);
       return;
     }
+    throw new Error('unexpected-response');
   } catch(_e) {
-    // The secure function couldn't authenticate (wrong hash/plaintext, no stored
-    // password, or a system error). Fall through to the legacy login below, which
-    // ALSO tries the plaintext password AND Firebase Auth — the latter is how the
-    // "Forgot Password" email-reset link sets the password. The legacy path shows
-    // the correct "incorrect" / "no password set" message if everything fails.
-    console.warn('corporateLogin did not authenticate — trying legacy login:', (_e && _e.code) || '', (_e && _e.message) || '');
-  }
-
-  // Sign out any existing Firebase Auth session before querying Firestore.
-  // The corporate portal uses its own localStorage session; a lingering Firebase Auth
-  // state from the password-reset flow can interfere with Firestore security rules.
-  (_auth ? _auth.signOut().catch(function(){}) : Promise.resolve()).then(function(){
-    return _db.collection('corporate_accounts').where('status','in',['Approved','Active']).get();
-  }).then(async function(snap){
-    try {
-      var found=null;
-      var idenLower = iden.toLowerCase();
-      snap.forEach(function(d){
-        var a=d.data(); a.id=a.id||d.id;
-        var p=(a.contactPhone||'').replace(/\D/g,'');
-        var e=(a.contactEmail||'').toLowerCase().trim();
-
-        if(isEmail){
-          if(e === idenLower) { found=a; return; }
-        } else {
-          if(p===raw||p.slice(-10)===raw){found=a;return;}
-        }
-
-        var members=a.members||[];
-        for(var i=0;i<members.length;i++){
-          var mp=(members[i].phone||'').replace(/\D/g,'');
-          var me=(members[i].email||'').toLowerCase().trim();
-          if(isEmail){
-             if(me === idenLower) { found=a; return; }
-          } else {
-             if(mp===raw||mp.slice(-10)===raw){found=a;return;}
-          }
-        }
-      });
-
-      if(!found){
-        err.textContent='Incorrect email/phone or password.';
-        err.style.display='block';btn.textContent='Sign In →';btn.disabled=false;return;
-      }
-
-      if(!found.password || found.password !== pwd){
-        // Fallback: try Firebase Auth (handles accounts that reset via emailed link)
-        if (isEmail) {
-          try {
-            await firebase.auth().signInWithEmailAndPassword(iden.toLowerCase(), pwd);
-            _acc = found;
-            grantAccess(_acc);
-            return;
-          } catch(authErr) { /* Firebase Auth also failed — fall through */ }
-        }
-        if (!found.password) {
-          err.innerHTML='Account found, but <strong>no password is set</strong>. If you used our old system, use the setup link below.';
-          err.style.display='block';
-          mig.style.display='block';
-        } else {
-          err.textContent='Incorrect email/phone or password.';
-          err.style.display='block';
-        }
-        btn.textContent='Sign In →';btn.disabled=false;return;
-      }
-
-      _acc=found;
-      grantAccess(_acc);
-    } catch(innerErr) {
-      console.error('sendCode inner error:', innerErr);
-      err.textContent='Sign-in error. Please try again or call (978) 255-3140.';
-      err.style.display='block';btn.textContent='Sign In →';btn.disabled=false;
+    var code = String((_e && _e.code) || '').replace(/^functions\//, '');
+    if (code === 'failed-precondition') {
+      // No password set yet. corporateLogin hands back the account id so the
+      // setup flow can run without this page querying Firestore.
+      var det = (_e && _e.details) || {};
+      if (det.accountId) _acc = { id: det.accountId };
+      err.innerHTML = 'Account found, but <strong>no password is set</strong>. Use the setup link below, or reset it with Forgot Password.';
+      err.style.display = 'block';
+      mig.style.display = 'block';
+    } else if (code === 'unauthenticated' || code === 'invalid-argument') {
+      err.textContent = 'Incorrect email/phone or password.';
+      err.style.display = 'block';
+    } else {
+      console.error('corporateLogin error:', code, (_e && _e.message) || '');
+      err.textContent = 'Sign-in error. Please try again or call (978) 255-3140.';
+      err.style.display = 'block';
     }
-  }).catch(function(e){
-    console.error('sendCode query error:', e);
-    err.textContent='Connection error. Please check your connection and try again.';
-    err.style.display='block';btn.textContent='Sign In →';btn.disabled=false;
-  });
+    btn.textContent = 'Sign In \u2192'; btn.disabled = false;
+    return;
+  }
 }
 
 async function startCorpMigration(){
@@ -419,12 +362,26 @@ async function saveCorpInitialPwd(){
   if(p1!==p2){err.textContent='Passwords do not match.';err.style.display='block';return;}
   
   btn.disabled=true; btn.textContent='Saving…';
+  if(!_acc || !_acc.id){
+    err.textContent='Session expired. Please go back and sign in again.'; err.style.display='block';
+    btn.disabled=false; btn.textContent='Save & Sign In →'; return;
+  }
   try {
-    await _db.collection('corporate_accounts').doc(_acc.id).update({ password: p1 });
-    _acc.password=p1;
-    grantAccess(_acc);
+    // Stored as a bcrypt hash by the Cloud Function — never written in plaintext.
+    await firebase.functions().httpsCallable('corporateSetCorporatePassword')({
+      accountId: _acc.id, currentPassword: '', newPassword: p1
+    });
+    // Sign in with the new password to load the account for the session.
+    var iden = document.getElementById('ph').value.trim();
+    var res = await firebase.functions().httpsCallable('corporateLogin')({ identifier: iden, password: p1 });
+    if (res && res.data && res.data.success && res.data.account) {
+      _acc = res.data.account;
+      grantAccess(_acc);
+      return;
+    }
+    throw new Error('Could not sign in with the new password.');
   } catch(e){
-    err.textContent='Error saving password: '+e.message; err.style.display='block';
+    err.textContent='Error saving password: '+(e && e.message ? e.message : e); err.style.display='block';
     btn.disabled=false; btn.textContent='Save & Sign In →';
   }
 }

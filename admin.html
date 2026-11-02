@@ -11,6 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
     rel="stylesheet" />
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <style>
     * {
@@ -4273,13 +4274,14 @@
       // 1. Update Firestore Account
       const updateData = {
         status: _apStatus,
-        password: pwd,
-        passwordResetRequired: true,
         updatedAt: new Date().toISOString()
       };
 
       try {
         await db.collection('corporate_accounts').doc(_apId).update(updateData);
+        // The password goes in as a bcrypt hash via the Cloud Function, never
+        // onto the publicly readable account document.
+        await firebase.functions().httpsCallable('corporateSetTempPassword')({accountId:_apId, password:pwd});
         
         // 2. Double-Layer Email (Firebase + FormSubmit)
         // Firebase Extension trigger - EXPLICITLY SETTING SENDER
@@ -4711,7 +4713,9 @@
       var tempPwd = prompt('Enter a new temporary password for this account:','Seacoast' + Math.floor(1000+Math.random()*9000) + '!');
       if(tempPwd===null) return;
       if(tempPwd.length < 6){ toast('Password must be at least 6 characters.'); return; }
-      db.collection('corporate_accounts').doc(_cdCorpId).update({password: tempPwd}).then(function(){
+      // Hashed server-side; corporate_accounts is readable by the portal, so a
+      // password is never written onto the account document.
+      firebase.functions().httpsCallable('corporateSetTempPassword')({accountId:_cdCorpId, password:tempPwd}).then(function(){
         toast('Password updated.');
         alert('\u2705 Password set!\n\nSend this to the client:\n\n' + tempPwd);
       }).catch(function(err){ toast('Error: '+err.message); });

@@ -68,8 +68,17 @@ service cloud.firestore {
       allow read, write: if true;
     }
 
+    // Corporate accounts. A password must NEVER be written onto these documents
+    // — they are client-readable, so a plaintext field here is public. Sign-in
+    // goes through the corporateLogin Cloud Function, which compares a bcrypt
+    // hash in corporate_auth below. These rules reject any write that would
+    // (re)introduce a password field, so an old build cannot repopulate it.
     match /corporate_accounts/{docId} {
-      allow read, write: if true;
+      allow read:   if true;
+      allow create: if !('password' in request.resource.data);
+      allow update: if !request.resource.data.diff(resource.data).affectedKeys().hasAny(['password'])
+                    || !('password' in request.resource.data);
+      allow delete: if true;
     }
 
     // Hashed corporate passwords — clients can NEVER read or write this.

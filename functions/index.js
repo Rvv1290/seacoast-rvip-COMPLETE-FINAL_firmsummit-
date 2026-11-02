@@ -187,6 +187,7 @@ exports.savePaymentMethod = onCall({ secrets: [stripeSecret] }, async (request) 
  * Runs with admin privileges so Firestore rules don't block the update.
  */
 exports.resetCorpPassword = onCall(async (request) => {
+  const bcrypt = require("bcryptjs");
   const { email, newPassword } = request.data;
   if (!email || !newPassword) throw new HttpsError("invalid-argument", "Missing email or password");
   if (newPassword.length < 6)  throw new HttpsError("invalid-argument", "Password must be at least 6 characters");
@@ -203,9 +204,16 @@ exports.resetCorpPassword = onCall(async (request) => {
 
   if (!found) throw new HttpsError("not-found", "No active corporate account found with that email");
 
-  await found.ref.update({ password: newPassword, passwordResetRequired: false });
-  // Remove any stale hash so the next login re-syncs it from this new password.
-  await db.collection("corporate_auth").doc(found.id).delete().catch(() => {});
+  // Store the new password ONLY as a bcrypt hash in the locked corporate_auth
+  // collection, and clear any legacy plaintext field. corporate_accounts is
+  // readable by the portal pages, so a password must never be written there.
+  const hash = await bcrypt.hash(String(newPassword), 10);
+  await db.collection("corporate_auth").doc(found.id)
+    .set({ hash, updatedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
+  await found.ref.update({
+    password: admin.firestore.FieldValue.delete(),
+    passwordResetRequired: false,
+  });
   return { success: true };
 });
 
@@ -329,9 +337,10 @@ exports.corporateLogin = onCall(async (request) => {
     const hash = await bcrypt.hash(String(password), 10);
     await authRef.set({ hash, migratedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
   }
-  // 3) Nothing to check against at all.
+  // 3) Nothing to check against at all. Hand back the account id so the sign-in
+  //    page can run the "set your password" flow without reading Firestore itself.
   if (!ok && !storedHash && !match.data.password) {
-    throw new HttpsError("failed-precondition", "No password is set for this account.");
+    throw new HttpsError("failed-precondition", "No password is set for this account.", { accountId: match.id });
   }
 
   if (!ok) throw new HttpsError("unauthenticated", "Incorrect email/phone or password.");
@@ -377,4 +386,75 @@ exports.corporateSetCorporatePassword = onCall(async (request) => {
     updatedAt: new Date().toISOString(),
   });
   return { success: true };
+});
+
+/**
+ * One-time migration. Hashes every remaining plaintext `password` on a
+ * corporate_accounts document into the locked corporate_auth collection and
+ * deletes the plaintext field.
+ *
+ * corporate_accounts is readable by the portal pages, so any password stored on
+ * those documents is readable by anyone holding the public Firebase config.
+ * Run this once, then confirm `remaining` is 0.
+ *
+ * Call it signed in as an admin:
+ *   firebase functions:shell  →  migrateCorporatePasswords({confirm:'MIGRATE'})
+ */
+exports.migrateCorporatePasswords = onCall(async (request) => {
+  const bcrypt = require("bcryptjs");
+  if (!request.data || request.data.confirm !== "MIGRATE") {
+    throw new HttpsError("invalid-argument", "Pass { confirm: 'MIGRATE' } to run this migration.");
+  }
+  const db = admin.firestore();
+  const snap = await db.collection("corporate_accounts").get();
+
+  let hashed = 0, alreadyHashed = 0, noPassword = 0;
+  for (const doc of snap.docs) {
+    const plain = doc.data().password;
+    if (!plain) { noPassword++; continue; }
+    const authRef = db.collection("corporate_auth").doc(doc.id);
+    const authDoc = await authRef.get();
+    if (!(authDoc.exists && authDoc.data().hash)) {
+      const hash = await bcrypt.hash(String(plain), 10);
+      await authRef.set({ hash, migratedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
+      hashed++;
+    } else {
+      alreadyHashed++;
+    }
+    await doc.ref.update({ password: admin.firestore.FieldValue.delete() });
+  }
+
+  // Re-read to prove no plaintext password survives.
+  const after = await db.collection("corporate_accounts").get();
+  const remaining = after.docs.filter((d) => !!d.data().password).length;
+
+  return { success: true, total: snap.size, hashed, alreadyHashed, noPassword, remaining };
+});
+
+/**
+ * Admin "Portal Access" temporary password. Writes a bcrypt hash only; the
+ * caller receives the generated password once so it can be read out to the
+ * client, and nothing is stored in plaintext.
+ */
+exports.corporateSetTempPassword = onCall(async (request) => {
+  const bcrypt = require("bcryptjs");
+  const { accountId, password } = request.data || {};
+  if (!accountId) throw new HttpsError("invalid-argument", "Missing accountId.");
+  if (password && String(password).length < 6) {
+    throw new HttpsError("invalid-argument", "Password must be at least 6 characters.");
+  }
+
+  const db = admin.firestore();
+  const ref = db.collection("corporate_accounts").doc(accountId);
+  if (!(await ref.get()).exists) throw new HttpsError("not-found", "Account not found.");
+
+  const tempPwd = password ? String(password) : "RVIP" + Math.random().toString(36).slice(-6).toUpperCase();
+  const hash = await bcrypt.hash(tempPwd, 10);
+  await db.collection("corporate_auth").doc(accountId)
+    .set({ hash, updatedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
+  await ref.update({
+    password: admin.firestore.FieldValue.delete(),
+    passwordResetRequired: true,
+  });
+  return { success: true, tempPassword: tempPwd };
 });
