@@ -6,8 +6,6 @@
     { "source": "/quote.html", "destination": "/contact", "permanent": true },
     { "source": "/driver-portal", "destination": "/secure-access", "permanent": false },
     { "source": "/driver-portal.html", "destination": "/secure-access", "permanent": false },
-    { "source": "/admin", "destination": "/secure-access", "permanent": false },
-    { "source": "/admin.html", "destination": "/secure-access", "permanent": false },
     { "source": "/schedule", "destination": "/secure-access", "permanent": false },
     { "source": "/schedule.html", "destination": "/secure-access", "permanent": false },
     { "source": "/payment", "destination": "/secure-access", "permanent": false },
