@@ -3712,6 +3712,10 @@ async function saveProfile(){
       }
       // The token is authoritative: it may only open its own client.
       if(claimed && claimed !== cid) localStorage.removeItem('rvip-client-id');
+      // Signing in mints a token, which fires this listener again. Without
+      // this guard the dashboard would initialise twice and attach a second
+      // set of Firestore listeners.
+      if(currentUser && currentUser.id === cid) return;
       restore(cid);
     }).catch(showLogin);
   });

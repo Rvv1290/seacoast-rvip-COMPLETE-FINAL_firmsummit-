@@ -76,33 +76,41 @@ test from a device.
 `estimates` are now `isAdmin()`. Verified denied to an anonymous caller, while
 `clients` and `corporate_accounts` stay readable because the portals need them.
 
-## Blocked on one IAM grant
+**9. The IAM grant was made, so token minting works.** Confirmed with a
+throwaway `diagnoseTokenMinting` callable that returned `{ok:true,signed:true}`
+and was then deleted. `684535453116-compute@developer.gserviceaccount.com` now
+holds `roles/iam.serviceAccountTokenCreator` on itself; `roles/editor` alone
+does not include `iam.serviceAccounts.signBlob`.
 
-**Token minting does not work yet.** `createCustomToken` needs
-`iam.serviceAccounts.signBlob` on the functions' own service account.
-`clientLogin` runs as `684535453116-compute@developer.gserviceaccount.com`,
-which has `roles/editor` — and `roles/editor` does **not** include that
-permission (checked, not assumed). Run this once:
+**10. The impersonation holes are closed.** Session restore now requires a
+Firebase Auth token whose claim matches the account being opened. Verified
+against the live site: planting `rvip-client-id` leaves the login screen up and
+the key is deleted, and a forged `corp_session` bounces back to
+`/corporate.html`. Both of those opened the account before this change.
 
-```bash
-gcloud iam service-accounts add-iam-policy-binding 684535453116-compute@developer.gserviceaccount.com --member="serviceAccount:684535453116-compute@developer.gserviceaccount.com" --role="roles/iam.serviceAccountTokenCreator" --project seacoast-rip
-```
+The login paths stay lenient on purpose — they have just verified the password
+server-side, so a minting hiccup costs session persistence, not access.
 
-Until then `mintPortalToken` catches the failure and returns `null`, so sign-in
-still works — grep the function logs for `mintPortalToken failed` to confirm.
-Because no token is issued, the portal gates **must** still accept a plain
-localStorage session, which means this hole is still open:
+**11. The booking data is closed.** `bookings`, `trips`, `corporate_accounts`
+and `clients/{id}/trips` all deny anonymous reads now (verified from outside
+with the public API key). Every booking the business has taken was readable by
+anyone before this.
 
-> Setting `localStorage['rvip-client-id']` to any client id opens that
-> customer's dashboard, and a forged `corp_session` opens any company's portal.
-> Demonstrated locally — it works today.
+`bookings` read is **any signed-in caller**, not owner-only. The portals fan
+out several queries per load — by `corporateAccountId`, by company, by contact
+email, by three phone formats and one per corporate member — and Firestore
+denies a query it cannot prove against the rules, which would take the whole
+page's `Promise.all` down. Owner-only needs `clientId` /
+`corporateAccountId` backfilled onto the older booking documents and those
+loaders made fault-tolerant first. That is the next piece of work.
 
-After the grant, the remaining work is: make both gates require a matching
-claim (remove the legacy fallbacks marked `LEGACY PATH` in account.html and the
-gate comments in corporate.html / corporate-portal.html), then restrict
-`bookings`, `trips`, `clients` and `corporate_accounts` to owner-or-admin using
-the claims. `bookings` create must stay open for the public booking form on
-`schedule.html`.
+**12. Two unauthenticated writes to `clients` removed.**
+`clientRequestEmailSetup` replaces two direct browser writes that let anyone
+set the email address on a passwordless client record and then have a sign-in
+link sent to it — an account-takeover path. `clientPortalSession` issues portal
+claims to someone already signed in by email link, SMS or social, resolving the
+client only from their *verified* token, so their trips keep loading under the
+new subcollection rule.
 
 ## Needs you
 
@@ -134,11 +142,24 @@ machine lacks (`~/.config/gcloud` is empty).
 
 ## Still open
 
-- **`bookings` and `trips` are still `allow read, write: if true`**, as are
-  reads of `clients` and `corporate_accounts`. Anyone with the API key from the
-  page source can read every booking and every customer's name, email and
-  phone. Closing this is the single biggest remaining item and it depends on
-  the IAM grant above.
+- **Reads of `clients` are still open.** Anyone with the API key from the page
+  source can list every customer's name, email and phone. It cannot simply be
+  closed: `account.html` looks a client up by email or phone *before* anyone is
+  signed in, for signup and for the email-link flow (lines ~1352, 1449, 1481,
+  1545, 1632, 1642). Those lookups need to move into a Cloud Function that
+  returns only what the page needs — whether an account exists, and its id —
+  and then the rule can become own-document-or-admin. This is now the largest
+  remaining data exposure.
+- **`bookings` read is any-signed-in, not owner-only.** A customer can still
+  read another customer's bookings. See item 11 for what that depends on.
+- **`schedule.html` lists every Approved/Active corporate account anonymously**
+  (line ~186, to fill a dropdown). That query is now denied, so it must be
+  reworked before `/schedule` is reopened — and it was leaking your client
+  list.
+- **One real sign-in of each kind still wants testing by hand**: a personal
+  account by phone and by email, a corporate account, and the email-link flow.
+  I could verify the attack paths and the error paths, but not a successful
+  login, because that needs a real password.
 - **The Google Maps API key** in `schedule.html` and `account.html` needs an
   HTTP-referrer restriction in Google Cloud Console, or anyone who copies it
   can bill usage to you.
