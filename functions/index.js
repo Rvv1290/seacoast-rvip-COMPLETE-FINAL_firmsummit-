@@ -5,6 +5,44 @@ admin.initializeApp();
 
 const stripeSecret = defineSecret("STRIPE_SECRET");
 
+/**
+ * Mints a Firebase Auth session for a portal customer after their password has
+ * already been verified.
+ *
+ * The portals used to run on a localStorage flag alone. Firestore therefore had
+ * no identity to authorise against, which is why every booking collection had
+ * to stay world-readable. These claims are what firestore.rules matches a
+ * document's owner against.
+ *
+ * Claim names are prefixed (portalEmail, not email) to stay clear of the names
+ * Firebase reserves on a custom token, and `portal` marks the token as a
+ * customer session so the iOS app's own collections can exclude it.
+ */
+async function mintPortalToken(kind, docId, data) {
+  const d = data || {};
+  const claims = { portal: kind };
+  if (kind === "client") {
+    claims.clientId = String(docId);
+    if (d.corporateAccountId) claims.accountId = String(d.corporateAccountId);
+  } else {
+    claims.accountId = String(docId);
+  }
+  const email = String(d.email || "").trim().toLowerCase();
+  if (email) claims.portalEmail = email;
+  const phone = String(d.phone || "").replace(/\D/g, "").slice(-10);
+  if (phone.length === 10) claims.portalPhone = phone;
+  try {
+    return await admin.auth().createCustomToken(`${kind}_${docId}`, claims);
+  } catch (e) {
+    // Minting needs iam.serviceAccounts.signBlob on the function's own service
+    // account, which is not granted by default on 2nd-gen functions. Never let
+    // that break sign-in: the caller falls back to the pre-token behaviour and
+    // this line is the thing to grep for in the logs.
+    console.error("mintPortalToken failed — portal session not issued:", e.message);
+    return null;
+  }
+}
+
 // Resolves the Firestore ref+doc for an account. Supports both
 // corporate_accounts (default) and clients collections so the same
 // functions work for the corporate portal and the personal client portal.
@@ -350,7 +388,13 @@ exports.corporateLogin = onCall(async (request) => {
 
   const acc = Object.assign({ id: match.id }, match.data);
   delete acc.password;
-  return { success: true, account: acc, passwordResetRequired: !!match.data.passwordResetRequired };
+  const authToken = await mintPortalToken("corporate", match.id, match.data);
+  return {
+    success: true,
+    account: acc,
+    authToken,
+    passwordResetRequired: !!match.data.passwordResetRequired,
+  };
 });
 
 /**
@@ -566,7 +610,13 @@ exports.clientLogin = onCall(async (request) => {
 
   const c = Object.assign({ id: match.id }, match.data);
   delete c.password;
-  return { success: true, client: c, passwordResetRequired: !!match.data.passwordResetRequired };
+  const authToken = await mintPortalToken("client", match.id, match.data);
+  return {
+    success: true,
+    client: c,
+    authToken,
+    passwordResetRequired: !!match.data.passwordResetRequired,
+  };
 });
 
 /**

@@ -58,6 +58,52 @@ driver is signed straight back out.
 **6. `admin_settings` is locked** to `isAdmin()` — it is the only collection
 admin.html alone uses, so it could be closed without breaking anything.
 
+**7. The portals now have a Firebase Auth identity.** `clientLogin` and
+`corporateLogin` mint a custom token after verifying the password, and the
+portals sign in with it. The claims are `portal` ('client'/'corporate'),
+`clientId`, `accountId`, `portalEmail`, `portalPhone` — prefixed to stay clear
+of the names Firebase reserves on a custom token. This is what finally gives
+Firestore an identity to authorise a booking against.
+
+The iOS app rules were changed in the same deploy, from `request.auth != null`
+to `isAppUser()` (= signed in **and** not a portal token). Without that, every
+portal customer would have gained read access to every app user, driver and
+ride the moment the portals started authenticating. App and admin tokens carry
+no `portal` claim, so their access is unchanged — but this is worth a smoke
+test from a device.
+
+**8. Four more collections closed** — `client_trips`, `invoices`, `quotes` and
+`estimates` are now `isAdmin()`. Verified denied to an anonymous caller, while
+`clients` and `corporate_accounts` stay readable because the portals need them.
+
+## Blocked on one IAM grant
+
+**Token minting does not work yet.** `createCustomToken` needs
+`iam.serviceAccounts.signBlob` on the functions' own service account.
+`clientLogin` runs as `684535453116-compute@developer.gserviceaccount.com`,
+which has `roles/editor` — and `roles/editor` does **not** include that
+permission (checked, not assumed). Run this once:
+
+```bash
+gcloud iam service-accounts add-iam-policy-binding 684535453116-compute@developer.gserviceaccount.com --member="serviceAccount:684535453116-compute@developer.gserviceaccount.com" --role="roles/iam.serviceAccountTokenCreator" --project seacoast-rip
+```
+
+Until then `mintPortalToken` catches the failure and returns `null`, so sign-in
+still works — grep the function logs for `mintPortalToken failed` to confirm.
+Because no token is issued, the portal gates **must** still accept a plain
+localStorage session, which means this hole is still open:
+
+> Setting `localStorage['rvip-client-id']` to any client id opens that
+> customer's dashboard, and a forged `corp_session` opens any company's portal.
+> Demonstrated locally — it works today.
+
+After the grant, the remaining work is: make both gates require a matching
+claim (remove the legacy fallbacks marked `LEGACY PATH` in account.html and the
+gate comments in corporate.html / corporate-portal.html), then restrict
+`bookings`, `trips`, `clients` and `corporate_accounts` to owner-or-admin using
+the claims. `bookings` create must stay open for the public booking form on
+`schedule.html`.
+
 ## Needs you
 
 **Create the admin Firebase Auth account.** I did not create it: that means
@@ -88,11 +134,11 @@ machine lacks (`~/.config/gcloud` is empty).
 
 ## Still open
 
-- **Most Firestore rules are still `allow read, write: if true`** — `bookings`,
-  `trips`, `client_trips`, `quotes`, `invoices` and `estimates`. Locking them
-  down requires the *portals* to authenticate as real Firebase Auth users;
-  today they use localStorage sessions, so there is no identity to write a rule
-  against. admin.html is no longer the blocker — the portals are.
+- **`bookings` and `trips` are still `allow read, write: if true`**, as are
+  reads of `clients` and `corporate_accounts`. Anyone with the API key from the
+  page source can read every booking and every customer's name, email and
+  phone. Closing this is the single biggest remaining item and it depends on
+  the IAM grant above.
 - **The Google Maps API key** in `schedule.html` and `account.html` needs an
   HTTP-referrer restriction in Google Cloud Console, or anyone who copies it
   can bill usage to you.

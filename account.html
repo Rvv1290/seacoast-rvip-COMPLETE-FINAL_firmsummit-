@@ -1225,6 +1225,12 @@ async function clientLoginCall(identifier, pwd, err){
     const res = await firebase.functions().httpsCallable('clientLogin')({ identifier: identifier, password: pwd });
     if (res && res.data && res.data.success && res.data.client) {
       if (res.data.client.id) _pendingClient = res.data.client;
+      // Take up the Firebase Auth session the function minted. This is what
+      // gives Firestore an identity to authorise against — without it the
+      // booking collections would have to stay readable by anyone.
+      if (res.data.authToken) {
+        await firebase.auth().signInWithCustomToken(res.data.authToken);
+      }
       return { ok: true, client: res.data.client };
     }
     throw new Error('unexpected-response');
@@ -1804,7 +1810,11 @@ function loginUser(client){
 
 function doLogout(){
   localStorage.removeItem('rvip-client-id');
-  location.reload();
+  localStorage.removeItem('rvip_pwd_reset_required');
+  // End the Firebase Auth session too, or the next visitor to this browser is
+  // restored straight back into the account.
+  const done = () => location.reload();
+  try { firebase.auth().signOut().then(done, done); } catch(e) { done(); }
 }
 
 // ─── UI & DATA ───
@@ -3646,19 +3656,45 @@ async function saveProfile(){
     checkEmailLink();
     return;
   }
-  const saved = localStorage.getItem('rvip-client-id');
-  if(saved && db){
-    db.collection('clients').doc(saved).get().then(d=>{
-      if(d.exists) {
-        const data = {id:d.id,...d.data()};
-        if(data.passwordResetRequired) localStorage.setItem('rvip_pwd_reset_required', data.id);
-        loginUser(data);
+  // A returning visitor is restored from their Firebase Auth session, not from
+  // localStorage. This used to trust localStorage['rvip-client-id'] and fetch
+  // that client document directly, so setting that one key to somebody else's
+  // client id opened their dashboard.
+  const showLogin = () => { document.getElementById('pg-login').style.display='flex'; };
+  if(!db){ showLogin(); return; }
+
+  const restore = (id) => db.collection('clients').doc(id).get().then(d=>{
+    if(d.exists){
+      const data = {id:d.id,...d.data()};
+      if(data.passwordResetRequired) localStorage.setItem('rvip_pwd_reset_required', data.id);
+      loginUser(data);
+    } else showLogin();
+  }).catch(showLogin);
+
+  auth.onAuthStateChanged(function(user){
+    const claimed = localStorage.getItem('rvip-client-id');
+    if(!user){
+      // LEGACY PATH. Restoring from localStorage alone is not secure — see the
+      // note above. It stays until clientLogin is actually issuing portal
+      // tokens, which needs iam.serviceAccounts.signBlob on the functions'
+      // service account (see REOPEN-PORTALS.md). Without this fallback a
+      // returning customer would be locked out instead.
+      if(claimed) restore(claimed); else showLogin();
+      return;
+    }
+    user.getIdTokenResult().then(function(t){
+      const cid = t && t.claims ? t.claims.clientId : null;
+      if(!cid){
+        // Signed in by email link or SMS, which carries no client id — those
+        // flows resolve the client themselves.
+        if(!currentUser){ if(claimed) restore(claimed); else showLogin(); }
+        return;
       }
-      else document.getElementById('pg-login').style.display='flex';
-    }).catch(()=>{ document.getElementById('pg-login').style.display='flex'; });
-  } else {
-    document.getElementById('pg-login').style.display='flex';
-  }
+      // A portal token is authoritative: it may only open its own client.
+      if(claimed && claimed !== cid) localStorage.removeItem('rvip-client-id');
+      restore(cid);
+    }).catch(function(){ if(claimed) restore(claimed); else showLogin(); });
+  });
 })();
 
 window.addEventListener('load', function(){

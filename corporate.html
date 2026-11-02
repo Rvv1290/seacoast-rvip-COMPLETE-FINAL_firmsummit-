@@ -256,9 +256,23 @@ var auth = window._auth;
 var _ph = '', _acc = null;
 
 // ─── AUTO LOGIN ───
+// Only a live Firebase Auth session sends someone through. A corp_session in
+// localStorage is no longer sufficient on its own — it is attacker-writable,
+// so anyone could previously forge one for another company's accountId.
 (function(){
   var s = JSON.parse(localStorage.getItem('corp_session')||'null');
-  if(s && s.expiresAt > Date.now()) window.location.href='corporate-portal.html';
+  if(!s || s.expiresAt <= Date.now()) return;
+  var go = function(){ window.location.href='corporate-portal.html'; };
+  firebase.auth().onAuthStateChanged(function(u){
+    // Legacy path while portal tokens are not being issued — see the portal's
+    // gate and REOPEN-PORTALS.md.
+    if(!u) return go();
+    u.getIdTokenResult().then(function(t){
+      var aid = t && t.claims ? t.claims.accountId : null;
+      if(!aid || aid === s.accountId) go();
+      else localStorage.removeItem('corp_session');
+    }).catch(go);
+  });
 })();
 
 // Phone/Email formatting
@@ -307,6 +321,9 @@ async function sendCode(){
   try {
     var _res = await firebase.functions().httpsCallable('corporateLogin')({ identifier: iden, password: pwd });
     if (_res && _res.data && _res.data.success && _res.data.account) {
+      // Take up the Firebase Auth session the function minted, before granting
+      // access. If this throws, the catch below runs and no session is stored.
+      if (_res.data.authToken) await firebase.auth().signInWithCustomToken(_res.data.authToken);
       _acc = _res.data.account;
       grantAccess(_acc);
       return;
@@ -375,6 +392,7 @@ async function saveCorpInitialPwd(){
     var iden = document.getElementById('ph').value.trim();
     var res = await firebase.functions().httpsCallable('corporateLogin')({ identifier: iden, password: p1 });
     if (res && res.data && res.data.success && res.data.account) {
+      if (res.data.authToken) await firebase.auth().signInWithCustomToken(res.data.authToken);
       _acc = res.data.account;
       grantAccess(_acc);
       return;

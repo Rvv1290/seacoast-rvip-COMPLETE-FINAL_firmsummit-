@@ -2,6 +2,17 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // An iOS app or admin session — any signed-in caller that is NOT a portal
+    // customer. The app rules below used to say `request.auth != null`, which
+    // was equivalent while the portals had no Firebase Auth identity at all.
+    // Now that they do, the app's collections have to exclude them explicitly,
+    // or every portal customer could read every app user, driver and ride.
+    // App and admin tokens carry no `portal` claim, so their access is
+    // unchanged.
+    function isAppUser() {
+      return request.auth != null && request.auth.token.portal == null;
+    }
+
     // Administrators, by the email on their Firebase Auth token. Keep this in
     // step with ADMIN_EMAILS in functions/index.js and admin.html.
     function isAdmin() {
@@ -18,46 +29,46 @@ service cloud.firestore {
     // ─────────────────────────────────────────────────────────────
 
     match /users/{userId} {
-      allow read:   if request.auth != null;
-      allow write:  if request.auth != null && request.auth.uid == userId;
+      allow read:   if isAppUser();
+      allow write:  if isAppUser() && request.auth.uid == userId;
     }
 
     match /drivers/{driverId} {
-      allow read:   if request.auth != null;
-      allow write:  if request.auth != null && request.auth.uid == driverId;
+      allow read:   if isAppUser();
+      allow write:  if isAppUser() && request.auth.uid == driverId;
 
       match /complianceDocuments/{docType} {
-        allow read:  if request.auth != null;
-        allow write: if request.auth != null && request.auth.uid == driverId;
+        allow read:  if isAppUser();
+        allow write: if isAppUser() && request.auth.uid == driverId;
       }
       match /payouts/{weekKey} {
-        allow read:  if request.auth != null && request.auth.uid == driverId;
+        allow read:  if isAppUser() && request.auth.uid == driverId;
         allow write: if false;
       }
     }
 
     match /rides/{rideId} {
-      allow read:   if request.auth != null && (
+      allow read:   if isAppUser() && (
                        resource == null ||
                        request.auth.uid == resource.data.riderId ||
                        request.auth.uid == resource.data.driverId ||
                        resource.data.status == 'pending'
                     );
-      allow create: if request.auth != null && request.auth.uid == request.resource.data.riderId;
-      allow update: if request.auth != null && (
+      allow create: if isAppUser() && request.auth.uid == request.resource.data.riderId;
+      allow update: if isAppUser() && (
                        request.auth.uid == resource.data.riderId ||
                        request.auth.uid == resource.data.driverId ||
                        resource.data.driverId == 'none'
                     );
       match /messages/{msgId} {
-        allow read:   if request.auth != null;
-        allow create: if request.auth != null && request.auth.uid == request.resource.data.senderId;
+        allow read:   if isAppUser();
+        allow create: if isAppUser() && request.auth.uid == request.resource.data.senderId;
       }
     }
 
     match /pings/{userId} {
-      allow read:  if request.auth != null && request.auth.uid == userId;
-      allow write: if request.auth != null;
+      allow read:  if isAppUser() && request.auth.uid == userId;
+      allow write: if isAppUser();
     }
 
     match /_meta/{any} {
@@ -66,7 +77,7 @@ service cloud.firestore {
     }
 
     match /__warmup/{any} {
-      allow read: if request.auth != null;
+      allow read: if isAppUser();
       allow write: if false;
     }
 
@@ -122,16 +133,21 @@ service cloud.firestore {
       allow read, write: if true;
     }
 
+    // No page in this repo reads or writes client_trips or invoices — the
+    // portals' "invoices" views are built from bookings. Closed to admin only
+    // rather than deleted, in case a future tool needs them.
     match /client_trips/{docId} {
-      allow read, write: if true;
-    }
-
-    match /quotes/{docId} {
-      allow read, write: if true;
+      allow read, write: if isAdmin();
     }
 
     match /invoices/{docId} {
-      allow read, write: if true;
+      allow read, write: if isAdmin();
+    }
+
+    // Only admin.html touches these two, and they hold prospect contact
+    // details and pricing, so they were worth closing.
+    match /quotes/{docId} {
+      allow read, write: if isAdmin();
     }
 
     // Only admin.html touches these, and it now signs in with Firebase Auth,
@@ -141,7 +157,7 @@ service cloud.firestore {
     }
 
     match /estimates/{docId} {
-      allow read, write: if true;
+      allow read, write: if isAdmin();
     }
 
     match /mail/{mailId} {

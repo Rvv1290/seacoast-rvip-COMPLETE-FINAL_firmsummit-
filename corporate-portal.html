@@ -372,7 +372,29 @@ var _sess = null;
   if(!s || s.expiresAt < Date.now()){
     localStorage.removeItem('corp_session');
     window.location.href='corporate.html';
-  } else { _sess = s; }
+    return;
+  }
+  _sess = s;
+  // The localStorage session carries the display data, but it does not grant
+  // entry on its own — it is attacker-writable. The accountId has to match the
+  // claim on a real Firebase Auth token, which only corporateLogin mints.
+  // Firestore enforces the same claim, so a forged session reads nothing.
+  var _bounce = function(){
+    localStorage.removeItem('corp_session');
+    window.location.href='corporate.html';
+  };
+  firebase.auth().onAuthStateChanged(function(u){
+    // No Firebase session means corporateLogin is not issuing portal tokens
+    // yet (it needs iam.serviceAccounts.signBlob — see REOPEN-PORTALS.md).
+    // Bouncing here would lock every corporate customer out, so the legacy
+    // localStorage session still gets through until that is granted.
+    if(!u) return;
+    u.getIdTokenResult().then(function(t){
+      var aid = t && t.claims ? t.claims.accountId : null;
+      // A portal token is authoritative: it may only open its own account.
+      if(aid && aid !== s.accountId) _bounce();
+    }).catch(function(){});
+  });
 })();
 </script>
 
