@@ -478,12 +478,23 @@ exports.corporateSetTempPassword = onCall(async (request) => {
 //  collection is readable by the portal pages, so it must never hold one.
 // ─────────────────────────────────────────────────────────────────────────────
 
-// Caller must hold an admin custom claim. admin.html has no sign-in today, so
-// these stay closed until one is added — see REOPEN-PORTALS.md.
+// Accounts allowed to act as administrators, by the email on their verified
+// Firebase Auth token. This is the authoritative list — the copy in admin.html
+// only decides what the UI shows, and editing that copy grants nothing.
+// An `admin: true` custom claim also works, for service accounts or if you
+// would rather manage this through claims later.
+const ADMIN_EMAILS = ["ramon@seacoastrvip.com"];
+
+// Caller must be signed in with Firebase Auth as an administrator.
 function requireAdmin(request) {
-  if (!request.auth || !request.auth.token || request.auth.token.admin !== true) {
-    throw new HttpsError("permission-denied", "Administrator sign-in required.");
+  const token = request.auth && request.auth.token;
+  if (!token) {
+    throw new HttpsError("unauthenticated", "Administrator sign-in required.");
   }
+  if (token.admin === true) return;
+  const email = String(token.email || "").toLowerCase();
+  if (email && ADMIN_EMAILS.includes(email)) return;
+  throw new HttpsError("permission-denied", "Administrator sign-in required.");
 }
 
 // Every phone shape the website has ever stored.

@@ -35,41 +35,84 @@ redirects removed from `vercel.json`.
 
 Still paused: `/driver-portal`, `/admin`, `/schedule`, `/payment`.
 
-## Not done, on purpose
+**5. admin.html now has a real sign-in** — Firebase Auth email/password.
+Authorisation is the email allowlist `ADMIN_EMAILS`, which exists in three
+places that must stay in step: `functions/index.js` (authoritative, for the
+callables), `firestore.rules` (`isAdmin()`), and `admin.html` (UI only).
+Currently `ramon@seacoastrvip.com`.
 
-**3. The `admin: true` custom claim is not set.** It would have no effect today:
-`admin.html` performs no sign-in, so no Firebase Auth token ever reaches the
-admin-only callables, claim or not. Setting it also needs Application Default
-Credentials, which this machine does not have (`~/.config/gcloud` is empty).
-Do it as part of building the admin sign-in, not before. Command for then:
+What it replaced: `var PWD = 'seacoast2025'` written in the page source, a
+second comparison against driver passwords held in localStorage, a `debug-info`
+box that printed the typed password back on screen, and a gate that unlocked on
+`localStorage['rv-auth'] === '1'`. The Firestore listeners also ran at page
+load, so the whole dashboard was fetched before the gate.
 
-```bash
-cd "/Volumes/RAMON VV/seacoast-rvip-LIVE/functions" && node -e "const a=require('firebase-admin');a.initializeApp();a.auth().getUserByEmail(process.argv[1]).then(u=>a.auth().setCustomUserClaims(u.uid,{admin:true})).then(()=>console.log('admin claim set')).catch(e=>{console.error(e.message);process.exit(1)})" YOUR_ADMIN_EMAIL
-```
+Verified locally: with `rv-auth` forced to `'1'` the dashboard stays hidden,
+`_syncStarted` is false and **zero** Firestore requests are issued before
+sign-in. Signing out now also clears the `rv-bks` and `rv-estimates` caches.
 
-Consequence until then: **Approve Client** and **Portal Access** in admin.html
-return "Administrator sign-in required." Everything else in admin works.
+Drivers sign in with their own Firebase Auth account; the driver view appears
+when a `drivers/{uid}` document exists. An account that is neither admin nor
+driver is signed straight back out.
+
+**6. `admin_settings` is locked** to `isAdmin()` — it is the only collection
+admin.html alone uses, so it could be closed without breaking anything.
+
+## Needs you
+
+**Create the admin Firebase Auth account.** I did not create it: that means
+choosing a password, which is yours to set. Firebase Console → Authentication →
+Users → Add user, with `ramon@seacoastrvip.com`. Email/Password is already
+enabled on the project (verified). After that, "Forgot password?" on the admin
+login works for future resets.
+
+**Delete the leftover `adminPassword` field and change that password.** The old
+"Change Password" card stored the admin password as **plain text** in
+`admin_settings/main`, and that collection was world-readable, so a
+12-character password was public to anyone with the API key from the page
+source. The rules deploy closed the exposure, but the field is still in the
+document and should be assumed compromised. My attempt to delete it was blocked
+by a permission guard, so: Firebase Console → Firestore → `admin_settings` →
+`main` → delete `adminPassword`. Do not reuse that password for the new Auth
+account.
+
+**Reopen `/admin` when you are ready** — remove its two lines from
+`vercel.json`. It is still paused; you cannot sign in until the account above
+exists, so create it first and test.
+
+**3. The `admin: true` custom claim is still not set, and is not needed.**
+`requireAdmin()` accepts either the claim or an allowlisted email, and the
+email path is what admin.html uses. The claim remains available for service
+accounts. Setting it would need Application Default Credentials, which this
+machine lacks (`~/.config/gcloud` is empty).
 
 ## Still open
 
-- **admin.html has no authentication.** Anyone who reaches the URL gets full
-  control of bookings, clients, drivers and corporate accounts. The
-  `/secure-access` redirect is obscurity, not protection — the Firebase config
-  is in the page source, so the data is reachable without the page. This is the
-  largest remaining hole and it blocks the rules lockdown below. Keep `/admin`
-  paused until it has a real sign-in (Firebase Auth email/password plus the
-  claim above).
 - **Most Firestore rules are still `allow read, write: if true`** — `bookings`,
-  `trips`, `client_trips`, `quotes`, `invoices`, `estimates` and
-  `admin_settings`. Locking them down requires the portals to authenticate as
-  real Firebase Auth users first; today they use localStorage sessions, so
-  there is no identity to write a rule against.
+  `trips`, `client_trips`, `quotes`, `invoices` and `estimates`. Locking them
+  down requires the *portals* to authenticate as real Firebase Auth users;
+  today they use localStorage sessions, so there is no identity to write a rule
+  against. admin.html is no longer the blocker — the portals are.
 - **The Google Maps API key** in `schedule.html` and `account.html` needs an
   HTTP-referrer restriction in Google Cloud Console, or anyone who copies it
   can bill usage to you.
 - **`functions/package.json` pins an outdated `firebase-functions`.** The
   deploy warned about it. Upgrading has breaking changes, so it needs its own
   pass.
+
+## Deploy note
+
+Function deploys from this volume fail the trigger-discovery step with
+"User code failed to load … Timeout after 10000" — the default 10s is not
+enough here, though the module itself loads in 0.3s. Prefix the command:
+
+```bash
+FUNCTIONS_DISCOVERY_TIMEOUT=180 firebase deploy --only functions
+```
+
+`firestore:rules` is unaffected. Note that when the functions step fails, the
+rules are compiled but **not** released, so deploy rules separately if you need
+them out.
 
 ## Checks to run against the live site
 

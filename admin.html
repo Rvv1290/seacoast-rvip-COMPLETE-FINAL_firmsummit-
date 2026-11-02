@@ -11,6 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
     rel="stylesheet" />
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <style>
@@ -858,22 +859,29 @@
       <div class="llogo">Seacoast RVIP</div>
       <div class="lsub">Admin Dashboard</div>
       <div style="margin-bottom:1rem">
+        <label class="flbl">Email</label>
+        <input id="adm-email" type="email" class="finp" placeholder="you@seacoastrvip.com"
+          autocomplete="username" onkeydown="if(event.key==='Enter')doLogin()" />
+      </div>
+      <div style="margin-bottom:1rem">
         <label class="flbl">Password</label>
         <div style="position: relative;">
           <input id="pwd" type="password" class="finp" placeholder="Enter password"
-            onkeydown="if(event.key==='Enter')doLogin()" />
+            autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()" />
           <span onclick="togglePwd()" class="material-symbols-outlined" id="pwd-icon">visibility</span>
         </div>
-        <div id="debug-info" class="debug-info"></div>
       </div>
       <div id="lerr"
         style="display:none;background:#fef2f2;border-left:3px solid #dc2626;padding:.625rem;font-size:.78rem;color:#dc2626;margin-bottom:1rem">
-        Wrong password. Try again.
+        Incorrect email or password.
       </div>
-      <button onclick="doLogin()"
+      <button id="adm-login-btn" onclick="doLogin()"
         style="width:100%;background:#000;color:#fff;padding:.875rem;font-family:'Work Sans',sans-serif;font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;border:none;border-bottom:3px solid #775a19;cursor:pointer">
         Enter Dashboard →
       </button>
+      <p style="text-align:center;margin-top:.875rem">
+        <button onclick="admForgotPwd()" style="background:none;border:none;color:#775a19;font-family:'Work Sans',sans-serif;font-size:.7rem;text-decoration:underline;cursor:pointer;padding:0">Forgot password?</button>
+      </p>
       <p style="font-size:.62rem;color:#ccc;text-align:center;margin-top:1rem">seacoastrvip.com/admin.html</p>
     </div>
   </div>
@@ -1819,7 +1827,13 @@
     // ─────────────────────────────────────────────
     //  CONFIG
     // ─────────────────────────────────────────────
-    var PWD = 'seacoast2025';
+    // Who may run the dashboard. This list is a convenience for the UI only —
+    // the real checks are server-side: requireAdmin() in functions/index.js and
+    // the admin_settings rule in firestore.rules both test the signed-in
+    // account's email. Editing this list in the browser grants nothing.
+    // Sign-in is Firebase Auth email/password. There is deliberately no
+    // password in this file; one used to be here in plain text.
+    var ADMIN_EMAILS = ['ramon@seacoastrvip.com'];
     var SITE = 'https://www.seacoastrvip.com';
     var GREVIEW = 'https://g.page/r/YOUR_GOOGLE_REVIEW_LINK';
 
@@ -1840,7 +1854,16 @@
       }
       db = firebase.firestore();
       console.log('Firebase ready');
-      
+    } catch (e) { console.warn('Firebase:', e.message); }
+
+    // Firestore listeners start only once someone has actually signed in.
+    // They used to run at page load, which meant the whole dashboard — every
+    // booking, client and driver — was pulled down before the gate was passed.
+    var _syncStarted = false;
+    function startSync() {
+      if (_syncStarted || !db) return;
+      _syncStarted = true;
+      try {
       // Auto-sync Central Drivers Database
       window.allDriversCache = [];
       db.collection('drivers').onSnapshot(function(snap) {
@@ -1905,7 +1928,8 @@
           });
           if(changed > 0){ setBks(local); refreshAdminAfterBkChange(); }
         }).catch(function(e){ console.warn('Bookings date-fallback:', e.message); });
-    } catch (e) { console.warn('Firebase:', e.message); }
+      } catch (e) { console.warn('Firestore sync:', e.message); }
+    }
 
     // ─────────────────────────────────────────────
     //  STATE — plain variables, no JSON-in-onclick
@@ -2019,34 +2043,92 @@
       else { x.type = 'password'; icon.textContent = 'visibility'; }
     }
 
-    function doLogin() {
-      var input = document.getElementById('pwd');
-      var cleanValue = input.value.trim();
-      var debug = document.getElementById('debug-info');
-      debug.textContent = "Input: '" + cleanValue + "' (Length: " + cleanValue.length + ")";
-
-      if (cleanValue === PWD) {
-        curUser = { name: 'Admin', role: 'admin' };
-        saveSession(curUser);
-        showDash();
-      } else {
-        var drs = getDrivers();
-        var dr = drs.find(function (d) { return d.pwd && d.pwd.trim() === cleanValue; });
-        if (dr) {
-          curUser = { name: dr.name, role: 'driver', id: dr.id };
-          saveSession(curUser);
-          showDash();
-        } else {
-          document.getElementById('lerr').style.display = 'block';
-          input.value = ''; input.focus();
-          debug.style.display = 'block';
-        }
-      }
+    // Sign-in is Firebase Auth. The old gate compared a password that was
+    // written in this file, and a driver password held in localStorage, so
+    // anyone who opened the page source could get in. Nothing is compared in
+    // the browser now; Firebase verifies the credential and the resulting token
+    // is what the Cloud Functions and the Firestore rules check.
+    function admLoginErr(msg) {
+      var el = document.getElementById('lerr');
+      el.textContent = msg;
+      el.style.display = 'block';
     }
 
-    function saveSession(user) {
-      localStorage.setItem('rv-auth', '1');
-      localStorage.setItem('rv-user', JSON.stringify(user));
+    function doLogin() {
+      var emailEl = document.getElementById('adm-email');
+      var input = document.getElementById('pwd');
+      var btn = document.getElementById('adm-login-btn');
+      var email = emailEl.value.trim();
+      var pwd = input.value;
+      document.getElementById('lerr').style.display = 'none';
+
+      if (!email || !pwd) { return admLoginErr('Enter your email and password.'); }
+
+      btn.disabled = true; btn.textContent = 'Signing in…';
+      firebase.auth().signInWithEmailAndPassword(email, pwd)
+        .then(function () {
+          // onAuthStateChanged takes it from here.
+          input.value = '';
+        })
+        .catch(function (e) {
+          input.value = '';
+          var code = String((e && e.code) || '');
+          if (code === 'auth/too-many-requests') {
+            admLoginErr('Too many attempts. Wait a few minutes and try again.');
+          } else if (code === 'auth/network-request-failed') {
+            admLoginErr('Network error. Check your connection and try again.');
+          } else {
+            // Don't distinguish a wrong password from an unknown account.
+            admLoginErr('Incorrect email or password.');
+          }
+          input.focus();
+        })
+        .then(function () {
+          btn.disabled = false; btn.textContent = 'Enter Dashboard →';
+        });
+    }
+
+    function admForgotPwd() {
+      var email = document.getElementById('adm-email').value.trim();
+      if (!email) {
+        document.getElementById('adm-email').focus();
+        return admLoginErr('Enter your email first, then tap Forgot password.');
+      }
+      firebase.auth().sendPasswordResetEmail(email)
+        .then(function () {
+          var el = document.getElementById('lerr');
+          el.textContent = 'If that account exists, a reset link is on its way to ' + email + '.';
+          el.style.background = '#f0fdf4';
+          el.style.borderLeftColor = '#16a34a';
+          el.style.color = '#15803d';
+          el.style.display = 'block';
+        })
+        .catch(function () {
+          // Same message either way — don't reveal whether the account exists.
+          var el = document.getElementById('lerr');
+          el.textContent = 'If that account exists, a reset link is on its way to ' + email + '.';
+          el.style.background = '#f0fdf4';
+          el.style.borderLeftColor = '#16a34a';
+          el.style.color = '#15803d';
+          el.style.display = 'block';
+        });
+    }
+
+    // Decide what a signed-in account may do. Admin is the email allowlist;
+    // anyone with a drivers/{uid} document gets the driver view. An account
+    // that is neither is signed straight back out.
+    function admResolveRole(user) {
+      var email = (user.email || '').toLowerCase();
+      if (ADMIN_EMAILS.indexOf(email) !== -1) {
+        return Promise.resolve({ name: 'Admin', role: 'admin', email: email, uid: user.uid });
+      }
+      if (!db) return Promise.resolve(null);
+      return db.collection('drivers').doc(user.uid).get().then(function (doc) {
+        if (!doc.exists) return null;
+        var d = doc.data() || {};
+        var nm = (d.profile && d.profile.name) ? d.profile.name : (user.email || 'Driver');
+        return { name: nm, role: 'driver', id: user.email || user.uid, email: email, uid: user.uid };
+      }).catch(function () { return null; });
     }
 
     function showDash() {
@@ -2066,10 +2148,19 @@
       }
       var bBtn = document.getElementById('admin-broadcast-banner');
       if (bBtn) bBtn.style.display = (curUser && curUser.role === 'admin') ? 'flex' : 'none';
+      startSync();
       initDash();
     }
 
-    function doLogout() { localStorage.removeItem('rv-auth'); localStorage.removeItem('rv-user'); location.reload(); }
+    function doLogout() {
+      // Clear the cached dashboard data too — it is a copy of client and
+      // booking records sitting in localStorage after sign-out otherwise.
+      ['rv-user', 'rv-auth', 'rv-bks', 'rv-estimates'].forEach(function (k) {
+        try { localStorage.removeItem(k); } catch (e) {}
+      });
+      var done = function () { location.reload(); };
+      try { firebase.auth().signOut().then(done, done); } catch (e) { done(); }
+    }
 
     // ─────────────────────────────────────────────
     //  INIT
@@ -5744,16 +5835,30 @@
       document.querySelectorAll('.ov').forEach(function (el) {
         el.addEventListener('click', function (ev) { if (ev.target === this) closeM(this.id); });
       });
-      if (localStorage.getItem('rv-auth') === '1') {
-        try {
-          curUser = JSON.parse(localStorage.getItem('rv-user'));
-        } catch (e) {
-          curUser = { name: 'Admin', role: 'admin' };
+      // The session is whatever Firebase Auth says it is. Setting a flag in
+      // localStorage no longer opens the dashboard — the previous version
+      // unlocked on rv-auth === '1', which anyone could type into a console.
+      firebase.auth().onAuthStateChanged(function (user) {
+        if (!user) {
+          curUser = null;
+          document.getElementById('pg-dash').style.display = 'none';
+          document.getElementById('pg-login').style.display = '';
+          setTimeout(function () {
+            var f = document.getElementById('adm-email');
+            if (f) f.focus();
+          }, 100);
+          return;
         }
-        showDash();
-      } else {
-        setTimeout(function () { document.getElementById('pwd').focus(); }, 100);
-      }
+        admResolveRole(user).then(function (u) {
+          if (!u) {
+            admLoginErr('That account is not authorised for this dashboard.');
+            firebase.auth().signOut();
+            return;
+          }
+          curUser = u;
+          showDash();
+        });
+      });
     });
 
     // ── Settings Functions ──
@@ -5781,29 +5886,44 @@
       }).catch(function(e) { toast('Error: ' + e.message); });
     }
 
+    // Changes the Firebase Auth password for the signed-in administrator.
+    // This used to keep `adminPassword` as plain text in admin_settings/main
+    // and compare it in the browser — and that collection was world-readable,
+    // so the password was public. Firebase holds the credential now; nothing
+    // about it is stored in Firestore.
     function changeAdminPwd() {
-      var cur = document.getElementById('set-cur-pwd').value;
-      var nw = document.getElementById('set-new-pwd').value;
-      var confirm = document.getElementById('set-confirm-pwd').value;
+      var curEl = document.getElementById('set-cur-pwd');
+      var nwEl = document.getElementById('set-new-pwd');
+      var cfEl = document.getElementById('set-confirm-pwd');
+      var cur = curEl.value;
+      var nw = nwEl.value;
+      var cf = cfEl.value;
       if (!cur || !nw) { toast('Fill in all password fields'); return; }
-      if (nw !== confirm) { toast('New passwords do not match'); return; }
+      if (nw !== cf) { toast('New passwords do not match'); return; }
       if (nw.length < 6) { toast('Password must be at least 6 characters'); return; }
-      if (!db) { toast('Not connected'); return; }
-      // Verify current password
-      db.collection('admin_settings').doc('main').get().then(function(doc) {
-        var stored = doc.exists ? doc.data().adminPassword : null;
-        if (stored && stored !== cur) { toast('Current password is wrong'); return; }
-        return db.collection('admin_settings').doc('main').set({
-          adminPassword: nw, updatedAt: new Date().toISOString()
-        }, { merge: true });
-      }).then(function() {
-        if (arguments[0] !== undefined) {
+
+      var user = firebase.auth().currentUser;
+      if (!user || !user.email) { toast('Sign in again, then change your password'); return; }
+
+      var cred = firebase.auth.EmailAuthProvider.credential(user.email, cur);
+      user.reauthenticateWithCredential(cred)
+        .then(function () { return user.updatePassword(nw); })
+        .then(function () {
           toast('✅ Password updated');
-          document.getElementById('set-cur-pwd').value = '';
-          document.getElementById('set-new-pwd').value = '';
-          document.getElementById('set-confirm-pwd').value = '';
-        }
-      }).catch(function(e) { toast('Error: ' + e.message); });
+          curEl.value = ''; nwEl.value = ''; cfEl.value = '';
+        })
+        .catch(function (e) {
+          var code = String((e && e.code) || '');
+          if (code === 'auth/wrong-password' || code === 'auth/invalid-login-credentials') {
+            toast('Current password is wrong');
+          } else if (code === 'auth/weak-password') {
+            toast('Pick a stronger password');
+          } else if (code === 'auth/requires-recent-login') {
+            toast('Sign out and back in, then change your password');
+          } else {
+            toast('Error: ' + (e && e.message ? e.message : 'could not update password'));
+          }
+        });
     }
 
   </script>

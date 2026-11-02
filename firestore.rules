@@ -2,6 +2,16 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // Administrators, by the email on their Firebase Auth token. Keep this in
+    // step with ADMIN_EMAILS in functions/index.js and admin.html.
+    function isAdmin() {
+      return request.auth != null && (
+               request.auth.token.admin == true ||
+               (request.auth.token.email != null &&
+                request.auth.token.email.lower() in ['ramon@seacoastrvip.com'])
+             );
+    }
+
     // ─────────────────────────────────────────────────────────────
     // iOS APP RULES (unchanged — do not edit)
     // These collections use real Firebase Auth (UID-based).
@@ -124,8 +134,10 @@ service cloud.firestore {
       allow read, write: if true;
     }
 
+    // Only admin.html touches these, and it now signs in with Firebase Auth,
+    // so this one can be closed properly.
     match /admin_settings/{docId} {
-      allow read, write: if true;
+      allow read, write: if isAdmin();
     }
 
     match /estimates/{docId} {
