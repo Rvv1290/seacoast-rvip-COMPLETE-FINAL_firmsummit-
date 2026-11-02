@@ -5,6 +5,63 @@ admin.initializeApp();
 
 const stripeSecret = defineSecret("STRIPE_SECRET");
 
+// ── Sign-in throttling ───────────────────────────────────────────────────────
+// clientLogin and corporateLogin verify passwords server-side, so without this
+// an attacker could guess at whatever rate the network allows. Counters live in
+// auth_throttle, which no client can read or write.
+const THROTTLE_MAX = 8;                       // failures before a lock
+const THROTTLE_WINDOW_MS = 15 * 60 * 1000;    // ...within this window
+const THROTTLE_LOCK_MS = 15 * 60 * 1000;      // ...locks for this long
+
+function throttleRef(db, identifier) {
+  const key = require("crypto").createHash("sha256")
+    .update(String(identifier || "").trim().toLowerCase())
+    .digest("hex").slice(0, 40);
+  return db.collection("auth_throttle").doc(key);
+}
+
+// Throws if the identifier is currently locked out.
+async function throttleGuard(ref) {
+  const doc = await ref.get();
+  if (!doc.exists) return;
+  const d = doc.data() || {};
+  const now = Date.now();
+  if (d.lockedUntil && d.lockedUntil > now) {
+    const mins = Math.ceil((d.lockedUntil - now) / 60000);
+    throw new HttpsError(
+      "resource-exhausted",
+      `Too many sign-in attempts. Try again in ${mins} minute${mins === 1 ? "" : "s"}.`
+    );
+  }
+}
+
+async function throttleFailure(ref) {
+  const now = Date.now();
+  try {
+    await admin.firestore().runTransaction(async (tx) => {
+      const doc = await tx.get(ref);
+      const d = doc.exists ? (doc.data() || {}) : {};
+      const inWindow = d.windowStart && (now - d.windowStart) < THROTTLE_WINDOW_MS;
+      const windowStart = inWindow ? d.windowStart : now;
+      const count = (inWindow ? (d.count || 0) : 0) + 1;
+      const upd = { windowStart, count, updatedAt: now };
+      if (count >= THROTTLE_MAX) {
+        upd.lockedUntil = now + THROTTLE_LOCK_MS;
+        upd.count = 0;
+        upd.windowStart = now;
+      }
+      tx.set(ref, upd, { merge: true });
+    });
+  } catch (e) {
+    // Never let bookkeeping turn a wrong password into a server error.
+    console.error("throttleFailure:", e.message);
+  }
+}
+
+async function throttleClear(ref) {
+  try { await ref.delete(); } catch (e) { /* nothing recorded */ }
+}
+
 /**
  * Mints a Firebase Auth session for a portal customer after their password has
  * already been verified.
@@ -354,8 +411,14 @@ exports.corporateLogin = onCall(async (request) => {
   if (!identifier || !password) throw new HttpsError("invalid-argument", "Missing email/phone or password.");
   const db = admin.firestore();
 
+  const tRef = throttleRef(db, "corp:" + identifier);
+  await throttleGuard(tRef);
+
   const match = await _findCorpAccount(db, identifier);
-  if (!match) throw new HttpsError("unauthenticated", "Incorrect email/phone or password.");
+  if (!match) {
+    await throttleFailure(tRef);
+    throw new HttpsError("unauthenticated", "Incorrect email/phone or password.");
+  }
 
   const authRef = db.collection("corporate_auth").doc(match.id);
   const authDoc = await authRef.get();
@@ -384,7 +447,11 @@ exports.corporateLogin = onCall(async (request) => {
     throw new HttpsError("failed-precondition", "No password is set for this account.", { accountId: match.id });
   }
 
-  if (!ok) throw new HttpsError("unauthenticated", "Incorrect email/phone or password.");
+  if (!ok) {
+    await throttleFailure(tRef);
+    throw new HttpsError("unauthenticated", "Incorrect email/phone or password.");
+  }
+  await throttleClear(tRef);
 
   const acc = Object.assign({ id: match.id }, match.data);
   delete acc.password;
@@ -580,6 +647,9 @@ exports.clientLogin = onCall(async (request) => {
   if (!identifier || !password) throw new HttpsError("invalid-argument", "Missing email/phone or password.");
   const db = admin.firestore();
 
+  const tRef = throttleRef(db, identifier);
+  await throttleGuard(tRef);
+
   const match = await _findClient(db, identifier);
   if (!match) throw new HttpsError("not-found", "No account found with that email or phone number.");
 
@@ -606,7 +676,11 @@ exports.clientLogin = onCall(async (request) => {
   if (!ok && !storedHash && !match.data.password) {
     throw new HttpsError("failed-precondition", "No password is set for this account.", { clientId: match.id, noPassword: true });
   }
-  if (!ok) throw new HttpsError("unauthenticated", "Incorrect email/phone or password.");
+  if (!ok) {
+    await throttleFailure(tRef);
+    throw new HttpsError("unauthenticated", "Incorrect email/phone or password.");
+  }
+  await throttleClear(tRef);
 
   const c = Object.assign({ id: match.id }, match.data);
   delete c.password;
@@ -617,6 +691,52 @@ exports.clientLogin = onCall(async (request) => {
     authToken,
     passwordResetRequired: !!match.data.passwordResetRequired,
   };
+});
+
+// The only client fields the website is allowed to learn about an account.
+// Everything else on the document — address, balance, payment history, admin
+// notes — stays server-side.
+function publicClientView(id, d) {
+  const data = d || {};
+  return {
+    id,
+    name: data.name || "",
+    email: data.email || "",
+    phone: data.phone || "",
+    status: data.status || "Approved",
+    hasPassword: !!(data.hasPassword || data.password),
+    passwordResetRequired: !!data.passwordResetRequired,
+    corporateAccountId: data.corporateAccountId || null,
+    firebaseUid: data.firebaseUid || null,
+  };
+}
+
+/**
+ * Looks a client up by email or phone, or by the caller's own Firebase uid.
+ *
+ * account.html used to run these queries straight against Firestore, which is
+ * why `clients` had to be readable by anyone — and that made the whole customer
+ * list (names, emails, phones, addresses, balances) public to anyone holding
+ * the API key from the page source. Going through here means the caller learns
+ * only about the identifier they already supplied, and only the fields in
+ * publicClientView.
+ */
+exports.clientLookup = onCall(async (request) => {
+  const db = admin.firestore();
+  const { identifier, byUid } = request.data || {};
+
+  if (byUid) {
+    if (!request.auth) throw new HttpsError("unauthenticated", "Sign in first.");
+    const snap = await db.collection("clients")
+      .where("firebaseUid", "==", request.auth.uid).limit(1).get();
+    if (snap.empty) return { found: false, client: null };
+    return { found: true, client: publicClientView(snap.docs[0].id, snap.docs[0].data()) };
+  }
+
+  if (!identifier) throw new HttpsError("invalid-argument", "Missing email or phone.");
+  const match = await _findClient(db, identifier);
+  if (!match) return { found: false, client: null };
+  return { found: true, client: publicClientView(match.id, match.data) };
 });
 
 /**

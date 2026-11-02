@@ -1342,6 +1342,32 @@ function showSocialError(msg) {
   el.style.display = 'block';
 }
 
+// Looks a client up through the clientLookup Cloud Function. This page used to
+// query the clients collection directly, which is why it had to be readable by
+// anyone — and that exposed every customer's name, email, phone, address and
+// balance to anyone with the API key from this page's source. The function
+// answers only for the identifier supplied, and only with safe fields.
+async function lookupClient(identifier){
+  try {
+    const res = await firebase.functions().httpsCallable('clientLookup')({ identifier });
+    return (res && res.data && res.data.found) ? res.data.client : null;
+  } catch(e) {
+    console.warn('clientLookup failed:', (e && e.code) || e);
+    return null;
+  }
+}
+
+// Same, for the signed-in caller's own record by Firebase uid.
+async function lookupClientByUid(){
+  try {
+    const res = await firebase.functions().httpsCallable('clientLookup')({ byUid: true });
+    return (res && res.data && res.data.found) ? res.data.client : null;
+  } catch(e) {
+    console.warn('clientLookup(byUid) failed:', (e && e.code) || e);
+    return null;
+  }
+}
+
 // Email-link, SMS and social sign-ins produce a Firebase user with no portal
 // claims, so trips (which live under clients/{clientId}/trips) would be denied.
 // This swaps that session for one carrying the client's claims. Resolution
@@ -1366,14 +1392,8 @@ async function handleSocialResult(result, providerName) {
 
   // Look up existing Firestore doc by email (if we have one) or by Firebase UID
   let client = null;
-  if (email) {
-    const snap = await db.collection('clients').where('email', '==', email).limit(1).get();
-    if (!snap.empty) snap.forEach(d => client = {id: d.id, ...d.data()});
-  }
-  if (!client) {
-    const uidSnap = await db.collection('clients').where('firebaseUid', '==', user.uid).limit(1).get();
-    if (!uidSnap.empty) uidSnap.forEach(d => client = {id: d.id, ...d.data()});
-  }
+  if (email) client = await lookupClient(email);
+  if (!client) client = await lookupClientByUid();
 
   if (client) {
     // Update firebaseUid if missing (links legacy record to Firebase Auth)
@@ -1465,8 +1485,8 @@ async function doSignup() {
 
   try {
     // Check if phone already exists in Firestore
-    const phoneSnap = await db.collection('clients').where('phone', '==', phone).limit(1).get();
-    if (!phoneSnap.empty) {
+    const existingByPhone = await lookupClient(phone);
+    if (existingByPhone) {
       err.textContent = 'An account with this phone number already exists. Please sign in instead.';
       err.style.display = 'block';
       btn.disabled = false; btn.textContent = 'Create My Account →';
@@ -1497,11 +1517,11 @@ async function doSignup() {
     }
 
     // Check Firestore for existing email doc
-    const emailSnap = await db.collection('clients').where('email', '==', email).limit(1).get();
-    if (!emailSnap.empty) {
-      let client; emailSnap.forEach(d => client = {id: d.id, ...d.data()});
-      loginUser(client);
-      toast('Welcome back, ' + client.name + '!');
+    const existingByEmail = await lookupClient(email);
+    if (existingByEmail) {
+      await upgradeToPortalSession();
+      loginUser(existingByEmail);
+      toast('Welcome back, ' + existingByEmail.name + '!');
       return;
     }
 
@@ -1560,11 +1580,11 @@ async function doPhoneLogin(){
       // 1. Try Firebase Auth (covers all accounts created via the sign-up form)
       try {
         await auth.signInWithEmailAndPassword(emailLower, pwd);
-        // Succeeded — find or create the Firestore client doc
-        let snap = await db.collection('clients').where('email','==',emailLower).limit(1).get();
-        if(snap.empty) snap = await db.collection('clients').where('email','==',raw).limit(1).get();
-        if(!snap.empty){
-          let client; snap.forEach(d => client = {id:d.id, ...d.data()});
+        // Succeeded — find or create the Firestore client doc.
+        // clientLookup tries the lowercase and as-typed forms server-side.
+        const client = await lookupClient(emailLower) || await lookupClient(raw);
+        if(client){
+          await upgradeToPortalSession();
           loginUser(client);
           return;
         }
@@ -1643,25 +1663,10 @@ async function startMigration(){
 
   try {
     // Locate the client (use cached lookup from doPhoneLogin if available)
+    // clientLookup already tries every stored phone format server-side.
     let client = _pendingClient || null;
-    if (!client) {
-      if (isEmail) {
-        const variants = [inputVal, inputVal.toLowerCase()];
-        for (const v of variants) {
-          const snap = await db.collection('clients').where('email','==',v).limit(1).get();
-          if (!snap.empty) { snap.forEach(d => client = {id:d.id, ...d.data()}); break; }
-        }
-      } else if (digits.length >= 10) {
-        const d10 = digits.slice(-10);
-        const phoneFull = '+1' + d10;
-        const pFmt1 = `(${d10.substring(0,3)}) ${d10.substring(3,6)}-${d10.substring(6,10)}`;
-        const pFmt2 = `${d10.substring(0,3)}-${d10.substring(3,6)}-${d10.substring(6,10)}`;
-        const formats = [phoneFull, digits, d10, pFmt1, pFmt2];
-        for (const p of formats) {
-          const snap = await db.collection('clients').where('phone','==',p).limit(1).get();
-          if (!snap.empty) { snap.forEach(d => client = {id:d.id, ...d.data()}); break; }
-        }
-      }
+    if (!client && (isEmail || digits.length >= 10)) {
+      client = await lookupClient(inputVal);
     }
 
     if (!client) {
@@ -3413,9 +3418,9 @@ async function doEmailLogin(){
       }
     }
     // Firebase Auth succeeded — find or create Firestore doc
-    const snap = await db.collection('clients').where('email','==',email).limit(1).get();
-    if(!snap.empty){
-      let client; snap.forEach(d=>client={id:d.id, ...d.data()});
+    const client = await lookupClient(email);
+    if(client){
+      await upgradeToPortalSession();
       loginUser(client);
     } else {
       err.textContent='Account not found. Please create an account first.';
@@ -3536,9 +3541,12 @@ async function submitForgotPwd() {
         const actionCodeSettings = { url: returnUrl, handleCodeInApp: true };
         await auth.sendSignInLinkToEmail(email, actionCodeSettings);
         localStorage.setItem('rvip-email-signin', email);
-        // Tag for forced password change on next login
-        const snaps = await db.collection('clients').where('email','==',email).get();
-        snaps.forEach(d => db.collection('clients').doc(d.id).update({ passwordResetRequired: true }));
+        // Tag for forced password change on next login. Done server-side —
+        // this page is not signed in here, and clients refuses anonymous
+        // writes now.
+        try {
+          await firebase.functions().httpsCallable('clientRequestEmailSetup')({ identifier: email });
+        } catch(e) { console.warn('setup flag failed:', (e && e.code) || e); }
         succ.innerHTML = `
           <strong>Sign-in link sent!</strong><br>
           Check your inbox at <strong>${email}</strong> and click the link to sign in and reset your password.<br>
@@ -3571,10 +3579,10 @@ async function checkEmailLink(){
     localStorage.removeItem('rvip-email-signin');
     window.history.replaceState({}, document.title, '/account.html');
     // Look up client by email
-    const snap = await db.collection('clients').where('email','==',email).limit(1).get();
-    if(!snap.empty){
-      let c; snap.forEach(d => c = {id:d.id,...d.data()});
+    const c = await lookupClient(email);
+    if(c){
       if(c.passwordResetRequired) localStorage.setItem('rvip_pwd_reset_required', c.id);
+      await upgradeToPortalSession();
       loginUser(c);
     } else {
       // New user — show create profile, pre-fill email

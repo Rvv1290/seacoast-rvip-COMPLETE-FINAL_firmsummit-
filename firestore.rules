@@ -141,13 +141,15 @@ service cloud.firestore {
     // they are readable, so a plaintext field here would be public. Sign-in
     // goes through the clientLogin Cloud Function against client_auth below.
     //
-    // `read` is still open, and that is a known gap: account.html looks a
-    // client up by email or phone *before* anyone is signed in, for signup and
-    // for the email-link flow, so closing it needs those lookups moved into a
-    // Cloud Function first. Writes are closed, which at least stops one
-    // customer altering another's record.
+    // Reads are the account's own record or an admin. Looking a client up by
+    // email or phone before sign-in now goes through the clientLookup Cloud
+    // Function, which answers only for the identifier supplied — reading this
+    // collection used to be open, which exposed every customer's name, email,
+    // phone, address and balance to anyone holding the API key.
     match /clients/{clientId} {
-      allow read:   if true;
+      allow read:   if isAdmin()
+                    || isThisClient(clientId)
+                    || (request.auth != null && resource.data.firebaseUid == request.auth.uid);
       allow create: if !('password' in request.resource.data);
       // The email-link flow links a Firebase uid to the client record while
       // signed in but before a portal token exists, so that one field is
@@ -171,6 +173,12 @@ service cloud.firestore {
     // Hashed client passwords — clients can NEVER read or write this.
     // Only Cloud Functions (Admin SDK) touch it.
     match /client_auth/{docId} {
+      allow read, write: if false;
+    }
+
+    // Failed sign-in counters behind the login throttle. If this were
+    // writable, the throttle could be cleared by the thing it limits.
+    match /auth_throttle/{docId} {
       allow read, write: if false;
     }
 
