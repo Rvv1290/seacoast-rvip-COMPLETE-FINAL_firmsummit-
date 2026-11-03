@@ -385,7 +385,7 @@ exports.corporateRequestPasswordReset = onCall({ secrets: [smtpUrl] }, async (re
     "If you did not request this, call (978) 255-3140 — the previous password no " +
     "longer works.\n\nSeacoast RVIP, LLC";
 
-  const url = smtpUrl.value();
+  const url = readSmtpUrl();
   if (!url || url === "unset") {
     console.error("corporateRequestPasswordReset: SMTP_URL not configured; temp password not delivered.");
     throw new HttpsError("failed-precondition", "Email is not configured. Call (978) 255-3140.");
@@ -715,6 +715,37 @@ exports.clientLogin = onCall(async (request) => {
 });
 
 /**
+ * Reads SMTP_URL defensively.
+ *
+ * Google shows an app password as "abcd efgh ijkl mnop". Pasted with those
+ * spaces — or with surrounding quotes, or a trailing newline — the URL parses
+ * into a different credential and Gmail answers 535 BadCredentials, which
+ * looks identical to a wrong password. A valid smtps:// URL contains no
+ * whitespace, so stripping it is always safe.
+ *
+ * Logs the host and username it ended up with (never the password) so a
+ * rejection can be told apart from a malformed secret.
+ */
+function readSmtpUrl() {
+  let raw = String(smtpUrl.value() || "").trim();
+  if (!raw || raw === "unset") return null;
+  if ((raw.startsWith('"') && raw.endsWith('"')) || (raw.startsWith("'") && raw.endsWith("'"))) {
+    raw = raw.slice(1, -1);
+  }
+  const cleaned = raw.replace(/\s+/g, "");
+  try {
+    const u = new URL(cleaned);
+    console.log("SMTP config: protocol=%s host=%s port=%s user=%s passLen=%d",
+      u.protocol, u.hostname, u.port || "(default)",
+      decodeURIComponent(u.username || "(none)"), (u.password || "").length);
+  } catch (e) {
+    console.error("SMTP_URL is not a valid URL after cleaning:", e.message);
+    return null;
+  }
+  return cleaned;
+}
+
+/**
  * Sends a transactional email on behalf of the business.
  *
  * admin.html used to add a document to a `mail` collection, which is the
@@ -735,7 +766,7 @@ exports.sendAdminEmail = onCall({ secrets: [smtpUrl] }, async (request) => {
     throw new HttpsError("invalid-argument", "That recipient address is not valid.");
   }
 
-  const url = smtpUrl.value();
+  const url = readSmtpUrl();
   if (!url || url === "unset") {
     throw new HttpsError(
       "failed-precondition",
