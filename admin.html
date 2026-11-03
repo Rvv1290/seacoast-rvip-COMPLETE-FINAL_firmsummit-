@@ -4381,19 +4381,21 @@
         await firebase.functions().httpsCallable('corporateSetTempPassword')({accountId:_apId, password:pwd});
         
         // 2. Double-Layer Email (Firebase + FormSubmit)
-        // Firebase Extension trigger - EXPLICITLY SETTING SENDER
-        db.collection('mail').add({
-          to: targetEmail, 
-          from: 'Seacoast RVIP <info@seacoastrvip.com>',
-          replyTo: 'info@seacoastrvip.com',
-          message: {
-            subject: 'Action Required: Your Seacoast RVIP Corporate Account is Approved',
-            text: msg,
-            html: msg.replace(/\n/g, '<br>')
-          }
-        }).catch(err => {
-          console.error("Firestore Mail write failed:", err);
-          toast("Cloud email trigger error: " + err.message);
+        // Sent by the sendAdminEmail function. This used to add a document to
+        // a `mail` collection, the Trigger Email extension's interface — but no
+        // extension is installed, so the customer never got this message.
+        firebase.functions().httpsCallable('sendAdminEmail')({
+          to: targetEmail,
+          subject: 'Action Required: Your Seacoast RVIP Corporate Account is Approved',
+          text: msg,
+          html: msg.replace(/\n/g, '<br>')
+        }).then(function(){
+          toast('Approval email sent to ' + targetEmail);
+        }).catch(function(err){
+          var c = String((err && err.code) || '').replace(/^functions\//, '');
+          toast(c === 'failed-precondition'
+            ? 'Approved, but email is not configured yet — send the details by hand.'
+            : 'Approved, but the email failed: ' + ((err && err.message) || c));
         });
 
         // FormSubmit Fallback (Reliable Receipt to Admin)
@@ -5001,17 +5003,19 @@
       if(!email){ toast('No email to send to.'); return; }
       if(!db){ toast('Not connected.'); return; }
       var comp = (_cdAcc && (_cdAcc.company || _cdAcc.companyName)) || '';
-      db.collection('mail').add({
+      // Sent by sendAdminEmail — see the note on the approval email above.
+      firebase.functions().httpsCallable('sendAdminEmail')({
         to: email,
-        from: 'Seacoast RVIP <info@seacoastrvip.com>',
-        replyTo: 'info@seacoastrvip.com',
-        message: {
-          subject: 'Your Seacoast RVIP Corporate Portal Login',
-          text: msg,
-          html: msg.replace(/\n/g, '<br>')
-        }
-      }).then(function(){ toast('Email queued to ' + email); })
-        .catch(function(err){ toast('Email error: ' + err.message); });
+        subject: 'Your Seacoast RVIP Corporate Portal Login',
+        text: msg,
+        html: msg.replace(/\n/g, '<br>')
+      }).then(function(){ toast('Email sent to ' + email); })
+        .catch(function(err){
+          var c = String((err && err.code) || '').replace(/^functions\//, '');
+          toast(c === 'failed-precondition'
+            ? 'Email is not configured yet — send the details by hand.'
+            : 'Email error: ' + ((err && err.message) || c));
+        });
       // FormSubmit fallback (admin receipt)
       var fd = new FormData();
       fd.append('_subject', '[PORTAL ACCESS] ' + comp);

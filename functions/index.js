@@ -5,6 +5,11 @@ admin.initializeApp();
 
 const stripeSecret = defineSecret("STRIPE_SECRET");
 
+// SMTP connection string for outgoing mail, e.g.
+//   smtps://info%40seacoastrvip.com:APP_PASSWORD@smtp.gmail.com:465
+// Set it with:  firebase functions:secrets:set SMTP_URL
+const smtpUrl = defineSecret("SMTP_URL");
+
 // ── Sign-in throttling ───────────────────────────────────────────────────────
 // clientLogin and corporateLogin verify passwords server-side, so without this
 // an attacker could guess at whatever rate the network allows. Counters live in
@@ -716,6 +721,53 @@ exports.clientLogin = onCall(async (request) => {
     authToken,
     passwordResetRequired: !!match.data.passwordResetRequired,
   };
+});
+
+/**
+ * Sends a transactional email on behalf of the business.
+ *
+ * admin.html used to add a document to a `mail` collection, which is the
+ * Firebase "Trigger Email" extension's interface — but no extension is
+ * installed on this project, so those writes did nothing and corporate
+ * customers never received their portal login. The FormSubmit call beside it
+ * only ever notified info@seacoastrvip.com, not the customer.
+ *
+ * Admin-only: this can send mail as the business, so it must never be open.
+ */
+exports.sendAdminEmail = onCall({ secrets: [smtpUrl] }, async (request) => {
+  requireAdmin(request);
+  const { to, subject, text, html } = request.data || {};
+  if (!to || !subject || !(text || html)) {
+    throw new HttpsError("invalid-argument", "Need a recipient, a subject and a body.");
+  }
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(to).trim())) {
+    throw new HttpsError("invalid-argument", "That recipient address is not valid.");
+  }
+
+  const url = smtpUrl.value();
+  if (!url || url === "unset") {
+    throw new HttpsError(
+      "failed-precondition",
+      "Email is not configured yet. Set the SMTP_URL secret and redeploy."
+    );
+  }
+
+  const nodemailer = require("nodemailer");
+  try {
+    const transport = nodemailer.createTransport(url);
+    const info = await transport.sendMail({
+      from: "Seacoast RVIP <info@seacoastrvip.com>",
+      replyTo: "info@seacoastrvip.com",
+      to: String(to).trim(),
+      subject: String(subject),
+      text: text ? String(text) : undefined,
+      html: html ? String(html) : undefined,
+    });
+    return { success: true, messageId: info.messageId || null };
+  } catch (e) {
+    console.error("sendAdminEmail failed:", e.message);
+    throw new HttpsError("internal", "The message could not be sent: " + e.message);
+  }
 });
 
 /**

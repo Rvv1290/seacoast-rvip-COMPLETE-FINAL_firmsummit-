@@ -234,11 +234,13 @@ service cloud.firestore {
       allow read, write: if isAdmin();
     }
 
+    // Closed. This was the Trigger Email extension's drop box, open to
+    // anonymous creates — but no extension is installed on this project, so
+    // the documents just accumulated and nothing was ever sent. Outgoing mail
+    // goes through the sendAdminEmail function instead. If the extension is
+    // ever installed, reopen create deliberately and narrow it to isAdmin().
     match /mail/{mailId} {
-      allow read:   if false;
-      allow create: if true;
-      allow update: if false;
-      allow delete: if false;
+      allow read, write: if false;
     }
   }
 }
