@@ -89,13 +89,15 @@ service cloud.firestore {
     // to signed-in callers, which since the portals took up Firebase Auth
     // means customers, drivers, the apps and admin.
     //
-    // This is deliberately "any signed-in caller" rather than owner-only. The
-    // portals fan out several queries per load — by corporateAccountId, by
-    // company, by contact email and by three phone formats, plus one per
-    // corporate member — and a query that the rules cannot prove is denied
-    // outright, which would take the whole page's Promise.all down with it.
-    // Owner-only needs clientId/corporateAccountId backfilled onto the older
-    // documents and those loaders made fault-tolerant first.
+    // STILL "any signed-in caller", not owner-only: one customer can read
+    // another's bookings. Narrowing it to ownsBooking() below is ready to go,
+    // but it must not be switched on until backfillBookingOwners has run —
+    // older documents carry no clientId or corporateAccountId, so the portals
+    // would silently stop finding those trips. See REOPEN-PORTALS.md.
+    //
+    // The driver allowance is required either way: driver-portal.html lists
+    // available rides with an unfiltered query, so it cannot be expressed as
+    // ownership.
     //
     // `create` stays open for the public booking form on schedule.html.
     match /bookings/{docId} {
@@ -103,6 +105,23 @@ service cloud.firestore {
       allow create: if true;
       allow update: if request.auth != null;
       allow delete: if isAdmin();
+    }
+
+    // Ready for the switch above once the backfill has run.
+    function ownsBooking() {
+      return request.auth != null && (
+               (request.auth.token.clientId != null
+                && resource.data.get('clientId', '') == request.auth.token.clientId) ||
+               (request.auth.token.accountId != null
+                && resource.data.get('corporateAccountId', '') == request.auth.token.accountId)
+             );
+    }
+
+    // A driver signed in through driver-portal.html. Costs one document read
+    // per rule evaluation, which is why it is only used where it is needed.
+    function isDriver() {
+      return request.auth != null
+             && exists(/databases/$(database)/documents/drivers/$(request.auth.uid));
     }
 
     // Corporate accounts. A password must NEVER be written onto these documents

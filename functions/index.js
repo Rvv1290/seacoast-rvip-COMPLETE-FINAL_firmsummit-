@@ -10,6 +10,9 @@ const stripeSecret = defineSecret("STRIPE_SECRET");
 // an attacker could guess at whatever rate the network allows. Counters live in
 // auth_throttle, which no client can read or write.
 const THROTTLE_MAX = 8;                       // failures before a lock
+const THROTTLE_IP_MAX = 30;                   // ...and per caller IP, which is
+                                              // shared by households and
+                                              // offices, so it runs looser
 const THROTTLE_WINDOW_MS = 15 * 60 * 1000;    // ...within this window
 const THROTTLE_LOCK_MS = 15 * 60 * 1000;      // ...locks for this long
 
@@ -18,6 +21,27 @@ function throttleRef(db, identifier) {
     .update(String(identifier || "").trim().toLowerCase())
     .digest("hex").slice(0, 40);
   return db.collection("auth_throttle").doc(key);
+}
+
+// Caller IP, for the second throttle dimension.
+function callerIp(request) {
+  const r = request.rawRequest || {};
+  const fwd = (r.headers && (r.headers["x-forwarded-for"] || r.headers["X-Forwarded-For"])) || "";
+  const first = String(fwd).split(",")[0].trim();
+  return first || r.ip || "";
+}
+
+/**
+ * Guards a sign-in attempt on two keys at once: the identifier and the caller's
+ * IP. The identifier key alone means anyone who knows a customer's email can
+ * lock them out for the window, so the IP key carries a larger budget and is
+ * what actually stops distributed guessing against one account.
+ */
+async function throttleRefs(db, scope, identifier, request) {
+  const refs = [throttleRef(db, scope + ":" + identifier)];
+  const ip = callerIp(request);
+  if (ip) refs.push(throttleRef(db, "ip:" + scope + ":" + ip));
+  return refs;
 }
 
 // Throws if the identifier is currently locked out.
@@ -35,8 +59,9 @@ async function throttleGuard(ref) {
   }
 }
 
-async function throttleFailure(ref) {
+async function throttleFailure(ref, max) {
   const now = Date.now();
+  const limit = max || THROTTLE_MAX;
   try {
     await admin.firestore().runTransaction(async (tx) => {
       const doc = await tx.get(ref);
@@ -45,7 +70,7 @@ async function throttleFailure(ref) {
       const windowStart = inWindow ? d.windowStart : now;
       const count = (inWindow ? (d.count || 0) : 0) + 1;
       const upd = { windowStart, count, updatedAt: now };
-      if (count >= THROTTLE_MAX) {
+      if (count >= limit) {
         upd.lockedUntil = now + THROTTLE_LOCK_MS;
         upd.count = 0;
         upd.windowStart = now;
@@ -411,12 +436,12 @@ exports.corporateLogin = onCall(async (request) => {
   if (!identifier || !password) throw new HttpsError("invalid-argument", "Missing email/phone or password.");
   const db = admin.firestore();
 
-  const tRef = throttleRef(db, "corp:" + identifier);
-  await throttleGuard(tRef);
+  const tRefs = await throttleRefs(db, "corp", identifier, request);
+  for (const r of tRefs) await throttleGuard(r);
 
   const match = await _findCorpAccount(db, identifier);
   if (!match) {
-    await throttleFailure(tRef);
+    await Promise.all(tRefs.map((r, i) => throttleFailure(r, i === 0 ? THROTTLE_MAX : THROTTLE_IP_MAX)));
     throw new HttpsError("unauthenticated", "Incorrect email/phone or password.");
   }
 
@@ -448,10 +473,10 @@ exports.corporateLogin = onCall(async (request) => {
   }
 
   if (!ok) {
-    await throttleFailure(tRef);
+    await Promise.all(tRefs.map((r, i) => throttleFailure(r, i === 0 ? THROTTLE_MAX : THROTTLE_IP_MAX)));
     throw new HttpsError("unauthenticated", "Incorrect email/phone or password.");
   }
-  await throttleClear(tRef);
+  await Promise.all(tRefs.map(throttleClear));
 
   const acc = Object.assign({ id: match.id }, match.data);
   delete acc.password;
@@ -647,8 +672,8 @@ exports.clientLogin = onCall(async (request) => {
   if (!identifier || !password) throw new HttpsError("invalid-argument", "Missing email/phone or password.");
   const db = admin.firestore();
 
-  const tRef = throttleRef(db, identifier);
-  await throttleGuard(tRef);
+  const tRefs = await throttleRefs(db, "client", identifier, request);
+  for (const r of tRefs) await throttleGuard(r);
 
   const match = await _findClient(db, identifier);
   if (!match) throw new HttpsError("not-found", "No account found with that email or phone number.");
@@ -677,10 +702,10 @@ exports.clientLogin = onCall(async (request) => {
     throw new HttpsError("failed-precondition", "No password is set for this account.", { clientId: match.id, noPassword: true });
   }
   if (!ok) {
-    await throttleFailure(tRef);
+    await Promise.all(tRefs.map((r, i) => throttleFailure(r, i === 0 ? THROTTLE_MAX : THROTTLE_IP_MAX)));
     throw new HttpsError("unauthenticated", "Incorrect email/phone or password.");
   }
-  await throttleClear(tRef);
+  await Promise.all(tRefs.map(throttleClear));
 
   const c = Object.assign({ id: match.id }, match.data);
   delete c.password;
@@ -691,6 +716,95 @@ exports.clientLogin = onCall(async (request) => {
     authToken,
     passwordResetRequired: !!match.data.passwordResetRequired,
   };
+});
+
+/**
+ * One-time: stamps clientId / corporateAccountId onto bookings that predate
+ * those fields, by matching the booking's email or phone against the clients
+ * and corporate_accounts collections.
+ *
+ * Until every booking carries an owner, the bookings rule cannot be narrowed
+ * past "any signed-in caller" — the portals would simply stop finding the
+ * older trips. Call with { confirm: 'BACKFILL' }; it is safe to re-run and
+ * reports how many documents still have no owner.
+ */
+exports.backfillBookingOwners = onCall({ timeoutSeconds: 540 }, async (request) => {
+  if (!request.data || request.data.confirm !== "BACKFILL") {
+    throw new HttpsError("invalid-argument", "Pass { confirm: 'BACKFILL' } to run this.");
+  }
+  const db = admin.firestore();
+  const last10 = (v) => String(v || "").replace(/\D/g, "").slice(-10);
+  const norm = (v) => String(v || "").trim().toLowerCase();
+
+  // Both collections are small enough to hold in memory.
+  const byEmail = new Map();
+  const byPhone = new Map();
+  const clientsSnap = await db.collection("clients").get();
+  clientsSnap.forEach((d) => {
+    const c = d.data() || {};
+    if (c.email) byEmail.set(norm(c.email), d.id);
+    const p = last10(c.phone);
+    if (p.length === 10) byPhone.set(p, d.id);
+  });
+
+  const corps = [];
+  const corpSnap = await db.collection("corporate_accounts").get();
+  corpSnap.forEach((d) => {
+    const a = d.data() || {};
+    const emails = new Set();
+    const phones = new Set();
+    if (a.contactEmail) emails.add(norm(a.contactEmail));
+    if (last10(a.contactPhone).length === 10) phones.add(last10(a.contactPhone));
+    (a.members || []).forEach((m) => {
+      if (m && m.email) emails.add(norm(m.email));
+      if (m && last10(m.phone).length === 10) phones.add(last10(m.phone));
+    });
+    corps.push({ id: a.id || d.id, company: a.company || "", emails, phones });
+  });
+
+  let scanned = 0, stampedClient = 0, stampedCorp = 0, stillUnowned = 0;
+  let cursor = null;
+  const PAGE = 400;
+
+  for (;;) {
+    let q = db.collection("bookings").orderBy(admin.firestore.FieldPath.documentId()).limit(PAGE);
+    if (cursor) q = q.startAfter(cursor);
+    const page = await q.get();
+    if (page.empty) break;
+    cursor = page.docs[page.docs.length - 1];
+
+    let batch = db.batch();
+    let writes = 0;
+
+    for (const doc of page.docs) {
+      scanned++;
+      const b = doc.data() || {};
+      const upd = {};
+      const email = norm(b.email);
+      const phone = last10(b.phone);
+
+      if (!b.clientId) {
+        const hit = (email && byEmail.get(email)) || (phone.length === 10 && byPhone.get(phone));
+        if (hit) { upd.clientId = hit; stampedClient++; }
+      }
+      if (!b.corporateAccountId) {
+        const acc = corps.find((c) => (email && c.emails.has(email)) || (phone.length === 10 && c.phones.has(phone)));
+        if (acc) {
+          upd.corporateAccountId = acc.id;
+          if (!b.corporateCompany && acc.company) upd.corporateCompany = acc.company;
+          stampedCorp++;
+        }
+      }
+      if (Object.keys(upd).length) { batch.update(doc.ref, upd); writes++; }
+      if (!b.clientId && !b.corporateAccountId && !upd.clientId && !upd.corporateAccountId) stillUnowned++;
+
+      if (writes >= 400) { await batch.commit(); batch = db.batch(); writes = 0; }
+    }
+    if (writes) await batch.commit();
+    if (page.size < PAGE) break;
+  }
+
+  return { success: true, scanned, stampedClient, stampedCorp, stillUnowned };
 });
 
 /**

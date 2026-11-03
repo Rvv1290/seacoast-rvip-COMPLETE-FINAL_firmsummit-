@@ -189,15 +189,53 @@ absent referrer was still allowed in testing.
 Only the Maps **JavaScript** API is used. Maps REST web services reject
 referrer-restricted keys outright, so don't introduce a call to one.
 
+## Run this to finish the bookings lockdown
+
+`backfillBookingOwners` is deployed but **has not been run** — the permission
+guard in this session refuses to invoke anything that rewrites production data.
+It stamps `clientId` / `corporateAccountId` onto older bookings by matching
+their email or phone against `clients` and `corporate_accounts`. It is safe to
+re-run.
+
+```bash
+curl -s -X POST "https://us-central1-seacoast-rip.cloudfunctions.net/backfillBookingOwners" -H "Content-Type: application/json" -d '{"data":{"confirm":"BACKFILL"}}'
+```
+
+It returns `scanned`, `stampedClient`, `stampedCorp` and `stillUnowned`. Send
+me that output. If `stillUnowned` is small — those are bookings from people
+with no account, which only admin needs — the bookings rule can be narrowed
+from "any signed-in caller" to:
+
+```
+allow read: if isAdmin() || isDriver() || ownsBooking();
+```
+
+`ownsBooking()` and `isDriver()` are already written in `firestore.rules`,
+immediately below the bookings block, and unused until then. The portals'
+loaders also need their per-query fan-out replaced with a single query on the
+owner field (or at least `Promise.allSettled`, so one denied query cannot take
+a page down).
+
+**Do not switch the rule on before the backfill.** Older bookings carry no
+owner field, so customers would silently lose their trip history.
+
 ## Still open
 
 - **`bookings` read is any-signed-in, not owner-only.** A customer can still
-  read another customer's bookings. See item 11 for what that depends on.
+  read another customer's bookings. Blocked on the backfill above.
 - **No App Check.** Every callable can be invoked directly from anywhere —
-  authorisation holds, but nothing rate-limits or attests the caller beyond the
-  login throttle. Needs a reCAPTCHA v3 site key registered in the Firebase
-  console, then `enforceAppCheck` on the callables.
-- **`driver-portal.html` has had none of this work** and is still paused.
+  authorisation holds, but nothing attests the caller beyond the login
+  throttle. Setting it up needs the Firebase console: App Check → register the
+  web app with reCAPTCHA v3 (or Enterprise), put the site key in the pages'
+  Firebase init, then turn enforcement on **in monitoring mode first**. Switch
+  to enforced only once the console shows verified requests arriving;
+  enforcing early takes every callable offline at once — sign-in included.
+- **`driver-portal.html` audited, November 2, 2026 — it is in better shape
+  than the other portals.** It uses real Firebase Auth (`signInWithPhoneNumber`
+  plus `onAuthStateChanged`), reads and writes only `drivers/{uid}`, and holds
+  no password or localStorage session. Nothing needed fixing. It does read
+  `bookings` with an unfiltered query to list available rides, which is why
+  `isDriver()` exists in the rules. Still paused.
 - **One real sign-in of each kind still wants testing by hand**: a personal
   account by phone and by email, a corporate account, and the email-link flow.
   The attack paths and error paths are verified, but not a successful login —
