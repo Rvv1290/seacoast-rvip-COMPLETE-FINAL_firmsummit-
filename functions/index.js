@@ -10,6 +10,12 @@ const stripeSecret = defineSecret("STRIPE_SECRET");
 // Set it with:  firebase functions:secrets:set SMTP_URL
 const smtpUrl = defineSecret("SMTP_URL");
 
+// Resend API key, the preferred transport. Google rejects the app password for
+// info@seacoastrvip.com (535 BadCredentials) no matter how it is formatted, so
+// SMTP is kept only as a fallback.
+//   firebase functions:secrets:set RESEND_API_KEY
+const resendKey = defineSecret("RESEND_API_KEY");
+
 // ── Sign-in throttling ───────────────────────────────────────────────────────
 // clientLogin and corporateLogin verify passwords server-side, so without this
 // an attacker could guess at whatever rate the network allows. Counters live in
@@ -772,6 +778,65 @@ function readSmtpUrl() {
 }
 
 /**
+ * Sends one email, preferring Resend and falling back to SMTP.
+ *
+ * Resend is an HTTPS API with a key rather than a mailbox password, so it is
+ * not subject to the Workspace policy that is refusing app passwords, and it
+ * reports a real reason when a message is rejected. Node 22 has fetch built
+ * in, so this needs no dependency.
+ *
+ * Returns { ok, via, id } or throws with something worth reading.
+ */
+async function deliverEmail({ to, subject, text, html }) {
+  const recipient = String(to || "").trim();
+  const FROM = "Seacoast RVIP <info@seacoastrvip.com>";
+
+  let key = "";
+  try { key = String(resendKey.value() || "").trim(); } catch (e) { key = ""; }
+
+  if (key && key !== "unset") {
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: "Bearer " + key, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        from: FROM,
+        reply_to: "info@seacoastrvip.com",
+        to: [recipient],
+        subject: String(subject),
+        text: text ? String(text) : undefined,
+        html: html ? String(html) : undefined,
+      }),
+    });
+    const bodyText = await res.text();
+    if (res.ok) {
+      let id = null;
+      try { id = JSON.parse(bodyText).id || null; } catch (e) { /* id is optional */ }
+      return { ok: true, via: "resend", id };
+    }
+    // Fall through to SMTP rather than fail outright — but say why.
+    console.error("Resend rejected the message (%d): %s", res.status, bodyText.slice(0, 300));
+  }
+
+  const url = readSmtpUrl();
+  if (!url) {
+    throw new HttpsError(
+      "failed-precondition",
+      "Email is not configured. Set the RESEND_API_KEY secret (or a working SMTP_URL)."
+    );
+  }
+  const nodemailer = require("nodemailer");
+  const info = await nodemailer.createTransport(url).sendMail({
+    from: FROM,
+    replyTo: "info@seacoastrvip.com",
+    to: recipient,
+    subject: String(subject),
+    text: text ? String(text) : undefined,
+    html: html ? String(html) : undefined,
+  });
+  return { ok: true, via: "smtp", id: info.messageId || null };
+}
+
+/**
  * Sends a transactional email on behalf of the business.
  *
  * admin.html used to add a document to a `mail` collection, which is the
@@ -782,7 +847,7 @@ function readSmtpUrl() {
  *
  * Admin-only: this can send mail as the business, so it must never be open.
  */
-exports.sendAdminEmail = onCall({ secrets: [smtpUrl] }, async (request) => {
+exports.sendAdminEmail = onCall({ secrets: [smtpUrl, resendKey] }, async (request) => {
   requireAdmin(request);
   const { to, subject, text, html } = request.data || {};
   if (!to || !subject || !(text || html)) {
@@ -791,28 +856,11 @@ exports.sendAdminEmail = onCall({ secrets: [smtpUrl] }, async (request) => {
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(to).trim())) {
     throw new HttpsError("invalid-argument", "That recipient address is not valid.");
   }
-
-  const url = readSmtpUrl();
-  if (!url || url === "unset") {
-    throw new HttpsError(
-      "failed-precondition",
-      "Email is not configured yet. Set the SMTP_URL secret and redeploy."
-    );
-  }
-
-  const nodemailer = require("nodemailer");
   try {
-    const transport = nodemailer.createTransport(url);
-    const info = await transport.sendMail({
-      from: "Seacoast RVIP <info@seacoastrvip.com>",
-      replyTo: "info@seacoastrvip.com",
-      to: String(to).trim(),
-      subject: String(subject),
-      text: text ? String(text) : undefined,
-      html: html ? String(html) : undefined,
-    });
-    return { success: true, messageId: info.messageId || null };
+    const sent = await deliverEmail({ to, subject, text, html });
+    return { success: true, via: sent.via, messageId: sent.id };
   } catch (e) {
+    if (e instanceof HttpsError) throw e;
     console.error("sendAdminEmail failed:", e.message);
     throw new HttpsError("internal", "The message could not be sent: " + e.message);
   }
