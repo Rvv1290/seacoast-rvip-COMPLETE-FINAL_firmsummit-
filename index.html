@@ -292,7 +292,7 @@ window.addEventListener('DOMContentLoaded', checkWidth);
                         Reserved in Advance.<br class="hidden sm:inline"/> Never Left to Chance.
                     </h1>
 <p class="font-body text-base md:text-lg text-on-surface-variant max-w-lg mb-7 md:mb-10 leading-relaxed" style="text-align:left">
-                        Pre-arranged private transportation across the Northeastern Seacoast. Flat rates quoted before you book — no surge pricing, no surprises. Your chauffeur is already waiting when you walk out.
+                        Pre-arranged private transportation in black SUVs across the Northeastern Seacoast. Flat rates quoted before you book — no surge pricing, no surprises. Your chauffeur is already waiting when you walk out.
                     </p>
 <!-- Stacked and equal width on a phone; the two buttons sized to their own
      labels before, which left a ragged edge. -->
@@ -338,9 +338,9 @@ window.addEventListener('DOMContentLoaded', checkWidth);
 <p class="font-body text-on-surface-variant text-sm">Your driver and vehicle are assigned ahead of time — not auctioned at the curb.</p>
 </div>
 <div class="flex flex-col items-center text-center">
-<span class="font-headline text-[2.25rem] md:text-5xl text-primary mb-4">Live Help</span>
-<span class="font-label text-xs uppercase tracking-[0.2em] text-secondary font-bold mb-2">Real Person</span>
-<p class="font-body text-on-surface-variant text-sm">Live help from a real person when you call.</p>
+<span class="font-headline text-[2.25rem] md:text-5xl text-primary mb-4">Black SUVs Only</span>
+<span class="font-label text-xs uppercase tracking-[0.2em] text-secondary font-bold mb-2">One Class of Vehicle</span>
+<p class="font-body text-on-surface-variant text-sm">Every ride is a black, three-row SUV. No sedans, no vans, nothing unexpected at the curb.</p>
 </div>
 </div>
 </div>
@@ -400,62 +400,49 @@ window.addEventListener('DOMContentLoaded', checkWidth);
 </div>
 </section>
 <!-- ===== APPS ===== -->
-<section class="py-16 md:py-32" style="background:#f3f3f3">
-<div class="max-w-5xl mx-auto px-6 md:px-12">
-  <div class="text-center mb-16">
-    <span class="font-label text-secondary uppercase tracking-[0.3em] text-xs font-semibold mb-4 block">Coming Soon to iOS &amp; Android</span>
-    <h2 class="font-headline text-5xl text-primary mb-6">RVIP in Your Pocket</h2>
-    <p class="font-body text-on-surface-variant leading-relaxed max-w-xl mx-auto">Two apps, one platform. Book and watch your driver approach in real time — or drive with us. Partner carriers receive 82% of each fare, and 100% of tips go to the driver. Own-Lane drivers are paid hourly.</p>
-  </div>
+<!-- Rider app. The homepage promotes the passenger app only — a visitor here
+     is a customer, not a driver, and the Driver app has its own section on
+     apps.html. One screenshot, stated plainly, rather than two competing
+     cards. -->
+<section class="py-16 md:py-32" style="background:#f3f3f3;overflow:hidden">
+<div class="max-w-6xl mx-auto px-6 md:px-12">
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
 
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-
-    <!-- RIDER -->
-    <div style="background:#fff;border:1px solid #e2e2e2;padding:2.5rem;display:flex;flex-direction:column">
-      <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem">
-        <img src="assets/rvip-app-icon.png" alt="RVIP Rider app icon" style="width:58px;height:58px;border-radius:13px;display:block;flex-shrink:0;border:1px solid rgba(0,0,0,.12)"/>
-        <div>
-          <h3 class="font-headline text-2xl text-primary" style="line-height:1.2">RVIP Rider</h3>
-          <div class="font-label text-xs uppercase tracking-[0.15em]" style="color:#775a19;font-weight:600">Luxury pre-arranged rides</div>
-        </div>
-      </div>
-      <ul style="list-style:none;padding:0;margin:0 0 2rem;font-family:Inter,sans-serif;font-size:0.85rem;color:#444748;line-height:1.5">
-        <li style="display:flex;gap:9px;margin-bottom:0.65rem"><span class="material-symbols-outlined" style="font-size:17px;color:#775a19;flex-shrink:0">payments</span>Transparent flat-rate fares, estimated up front</li>
-        <li style="display:flex;gap:9px;margin-bottom:0.65rem"><span class="material-symbols-outlined" style="font-size:17px;color:#775a19;flex-shrink:0">my_location</span>Live driver tracking with turn-by-turn ETA</li>
-        <li style="display:flex;gap:9px;margin-bottom:0.65rem"><span class="material-symbols-outlined" style="font-size:17px;color:#775a19;flex-shrink:0">alt_route</span>Multi-stop trips and saved favorite places</li>
-        <li style="display:flex;gap:9px"><span class="material-symbols-outlined" style="font-size:17px;color:#775a19;flex-shrink:0">receipt_long</span>Expense-ready receipts and full trip history</li>
-      </ul>
-      <div style="margin-top:auto;display:flex;gap:0.6rem;flex-wrap:wrap">
-        <span style="flex:1;min-width:140px;text-align:center;background:#eee;color:#999;border:1px dashed #ccc;padding:0.8rem 1rem;font-family:Inter,sans-serif;font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em">App Store — Soon</span>
-        <span style="flex:1;min-width:140px;text-align:center;background:#eee;color:#999;border:1px dashed #ccc;padding:0.8rem 1rem;font-family:Inter,sans-serif;font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em">Google Play — Soon</span>
+    <!-- Screenshot -->
+    <div class="order-2 lg:order-1" style="display:flex;justify-content:center">
+      <div style="position:relative;width:100%;max-width:300px">
+        <div style="position:absolute;inset:-14px;border:1px solid rgba(119,90,25,.28);pointer-events:none"></div>
+        <img src="assets/app/rider-route.webp"
+             alt="RVIP Rider showing the route from Hampton to Logan International Airport with estimated duration and distance"
+             loading="lazy" decoding="async"
+             style="width:100%;height:auto;display:block;border-radius:26px;box-shadow:0 30px 60px -30px rgba(0,0,0,.6)"/>
       </div>
     </div>
 
-    <!-- DRIVER -->
-    <div style="background:#0a0a0a;border:1px solid #0a0a0a;padding:2.5rem;display:flex;flex-direction:column">
-      <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem">
-        <img src="assets/rvip-driver-icon.png" alt="RVIP Driver app icon" style="width:58px;height:58px;border-radius:13px;display:block;flex-shrink:0;border:1px solid rgba(233,193,118,.4)"/>
-        <div>
-          <h3 class="font-headline text-2xl" style="line-height:1.2;color:#fff">RVIP Driver</h3>
-          <div class="font-label text-xs uppercase tracking-[0.15em]" style="color:#e9c176;font-weight:600">Drive with Seacoast RVIP</div>
-        </div>
-      </div>
-      <ul style="list-style:none;padding:0;margin:0 0 2rem;font-family:Inter,sans-serif;font-size:0.85rem;color:rgba(255,255,255,.6);line-height:1.5">
-        <li style="display:flex;gap:9px;margin-bottom:0.65rem"><span class="material-symbols-outlined" style="font-size:17px;color:#e9c176;flex-shrink:0">savings</span>Partner carriers receive 82% of each fare, and 100% of tips go to the driver. Own-Lane drivers are paid hourly.</li>
-        <li style="display:flex;gap:9px;margin-bottom:0.65rem"><span class="material-symbols-outlined" style="font-size:17px;color:#e9c176;flex-shrink:0">radar</span>Radar dispatch of pre-arranged, scheduled trips</li>
-        <li style="display:flex;gap:9px;margin-bottom:0.65rem"><span class="material-symbols-outlined" style="font-size:17px;color:#e9c176;flex-shrink:0">navigation</span>Turn-by-turn navigation to pickup and dropoff</li>
-        <li style="display:flex;gap:9px"><span class="material-symbols-outlined" style="font-size:17px;color:#e9c176;flex-shrink:0">query_stats</span>Earnings dashboard with weekly payout tracking</li>
+    <!-- Copy -->
+    <div class="order-1 lg:order-2">
+      <span class="font-label text-secondary uppercase tracking-[0.3em] text-xs font-semibold mb-4 block">Coming soon to iPhone &amp; Android</span>
+      <h2 class="font-headline text-4xl md:text-5xl text-primary mb-5" style="line-height:1.12">RVIP Rider</h2>
+      <p class="font-body text-on-surface-variant leading-relaxed mb-8" style="max-width:46ch">
+        Your ride, from first tap to final receipt. Set pickup and destination, add a stop,
+        and see the fare before you confirm — then follow the whole journey as it happens.
+      </p>
+
+      <ul style="list-style:none;padding:0;margin:0 0 2.25rem;font-family:Inter,sans-serif;font-size:0.9rem;color:#444748;line-height:1.6">
+        <li style="display:flex;gap:11px;margin-bottom:0.85rem"><span class="material-symbols-outlined" style="font-size:19px;color:#775a19;flex-shrink:0">flight_takeoff</span><span><strong style="color:#1a1c1c;font-weight:600">Flight-aware airport pickups.</strong> Add your flight and available status informs the trip.</span></li>
+        <li style="display:flex;gap:11px;margin-bottom:0.85rem"><span class="material-symbols-outlined" style="font-size:19px;color:#775a19;flex-shrink:0">bolt</span><span><strong style="color:#1a1c1c;font-weight:600">Live Activity on iPhone.</strong> Your ride on the Lock Screen; an ongoing notification on Android.</span></li>
+        <li style="display:flex;gap:11px;margin-bottom:0.85rem"><span class="material-symbols-outlined" style="font-size:19px;color:#775a19;flex-shrink:0">notifications_active</span><span><strong style="color:#1a1c1c;font-weight:600">Trip alerts.</strong> Chauffeur assigned, en route, arriving.</span></li>
+        <li style="display:flex;gap:11px"><span class="material-symbols-outlined" style="font-size:19px;color:#775a19;flex-shrink:0">receipt_long</span><span><strong style="color:#1a1c1c;font-weight:600">Everything in one place.</strong> Saved places, trip history and digital receipts.</span></li>
       </ul>
-      <div style="margin-top:auto;display:flex;gap:0.6rem;flex-wrap:wrap">
-        <span style="flex:1;min-width:140px;text-align:center;background:rgba(255,255,255,.05);color:rgba(255,255,255,.4);border:1px dashed rgba(255,255,255,.2);padding:0.8rem 1rem;font-family:Inter,sans-serif;font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em">App Store — Soon</span>
-        <span style="flex:1;min-width:140px;text-align:center;background:rgba(255,255,255,.05);color:rgba(255,255,255,.4);border:1px dashed rgba(255,255,255,.2);padding:0.8rem 1rem;font-family:Inter,sans-serif;font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em">Google Play — Soon</span>
+
+      <div style="display:flex;gap:0.6rem;flex-wrap:wrap;margin-bottom:1.75rem">
+        <span style="text-align:center;background:#eaeaea;color:#8d8d88;border:1px dashed #cfcfc9;padding:0.8rem 1.1rem;font-family:Inter,sans-serif;font-size:0.68rem;font-weight:600;text-transform:uppercase;letter-spacing:0.09em">App Store — Soon</span>
+        <span style="text-align:center;background:#eaeaea;color:#8d8d88;border:1px dashed #cfcfc9;padding:0.8rem 1.1rem;font-family:Inter,sans-serif;font-size:0.68rem;font-weight:600;text-transform:uppercase;letter-spacing:0.09em">Google Play — Soon</span>
       </div>
+
+      <a href="apps.html" class="font-label text-sm uppercase tracking-widest" style="color:#1a1c1c;text-decoration:none;border-bottom:2px solid #775a19;padding-bottom:3px">See everything the apps do →</a>
     </div>
 
-  </div>
-
-  <div class="text-center" style="margin-top:2.5rem">
-    <a href="apps.html" class="font-label text-sm uppercase tracking-widest" style="color:#1a1c1c;text-decoration:none;border-bottom:2px solid #775a19;padding-bottom:3px">See what the apps do →</a>
   </div>
 </div>
 </section>
