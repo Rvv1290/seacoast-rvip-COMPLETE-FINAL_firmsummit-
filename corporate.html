@@ -32,9 +32,9 @@ body{font-family:'Inter',sans-serif;min-height:100vh;background:#fff;overflow-x:
 
 /* ─── LAYOUT ─── */
 .left{width:480px;min-width:320px;min-height:100vh;padding:3rem 3.5rem;display:flex;flex-direction:column;background:#fff;position:relative;z-index:2;box-shadow:4px 0 40px rgba(0,0,0,0.07);flex-shrink:0}
-.right{flex:1;min-height:100vh;position:relative;overflow:hidden;background:#111}
-.right-img{width:100%;height:100%;object-fit:cover;opacity:0.6;display:block;position:absolute;inset:0}
-.right-grad{position:absolute;inset:0;background:linear-gradient(135deg,rgba(0,0,0,0.4) 0%,transparent 50%,rgba(0,0,0,0.7) 100%)}
+.right{flex:1;min-height:100vh;position:relative;overflow:hidden;isolation:isolate;background:linear-gradient(180deg,#e8e8e6 0%,#dcdcd9 12%,#b6b6b2 34%,#6f6f6b 52%,#232321 70%,#0a0a0a 88%),#0a0a0a}
+.right-img{position:absolute;top:0;left:0;width:100%;height:66%;object-fit:cover;object-position:center 44%;display:block;opacity:1;-webkit-mask-image:linear-gradient(180deg,transparent 0%,#000 9%,#000 70%,transparent 100%);mask-image:linear-gradient(180deg,transparent 0%,#000 9%,#000 70%,transparent 100%)}
+.right-grad{position:absolute;inset:0;background:linear-gradient(180deg,rgba(6,6,6,0) 46%,rgba(6,6,6,0.35) 58%,rgba(6,6,6,0.88) 76%,#050505 100%)}
 .right-content{position:absolute;bottom:3.5rem;left:3.5rem;right:3.5rem;color:white}
 
 /* ─── LOGO ─── */
@@ -116,8 +116,10 @@ body{font-family:'Inter',sans-serif;min-height:100vh;background:#fff;overflow-x:
 @media(max-width:800px){
   .hero-split{flex-direction:column}
   .left{width:100%;padding:2rem 1.75rem;min-height:auto;box-shadow:none}
-  .right{min-height:300px;position:relative}
-  .right-img{position:absolute}
+  .right{min-height:560px;position:relative}
+  .right-img{height:46%;object-position:center 28%}
+  .right-grad{background:linear-gradient(180deg,rgba(6,6,6,0) 24%,rgba(6,6,6,0.5) 38%,rgba(6,6,6,0.94) 52%,#050505 64%)}
+  .right-content{bottom:2rem;left:1.75rem;right:1.75rem}
   .apply-section{padding:2.5rem 1.75rem}
   .a-grid{grid-template-columns:1fr}
 }
@@ -235,12 +237,12 @@ body{font-family:'Inter',sans-serif;min-height:100vh;background:#fff;overflow-x:
 
 <!-- ═══════════ RIGHT PANEL ═══════════ -->
 <div class="right">
-  <img class="right-img" src="https://images.unsplash.com/photo-1563720223185-11003d516935?auto=format&fit=crop&w=1200&q=80" alt="Luxury black car"/>
+  <img class="right-img" src="assets/vehicle/palisade-black.jpg" alt="Black Hyundai Palisade SUV"/>
   <div class="right-grad"></div>
   <div class="right-content">
     <div class="r-tag">Seacoast RVIP — Corporate</div>
     <div class="r-headline">The Business<br>Standard in Ground<br>Transportation</div>
-    <div class="r-sub">NH Seacoast's premier black car service — built for companies that move. Pre-arranged, professional, and always on time.</div>
+    <div class="r-sub">One class of vehicle — the black SUV — for companies that move. Pre-arranged, professional, and consistent on every trip.</div>
     <div class="r-stats">
       <div><div class="r-stat-val">NET-30</div><div class="r-stat-lbl">Invoicing</div></div>
       <div><div class="r-stat-val">Priority</div><div class="r-stat-lbl">Dispatch</div></div>
