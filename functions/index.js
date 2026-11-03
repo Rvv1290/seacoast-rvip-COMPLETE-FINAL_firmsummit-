@@ -1126,6 +1126,39 @@ exports.clientRequestEmailSetup = onCall(async (request) => {
 });
 
 /**
+ * Is this caller entitled to act on THIS client record?
+ *
+ * Same defect as the corporate side: `!!request.auth` treated any signed-in
+ * caller as authorised, so anyone with a session could set another customer's
+ * password by passing their clientId. The session has to belong to the
+ * record — an admin, a portal token minted for it, the Firebase uid already
+ * linked to it, or a VERIFIED email or phone that matches.
+ *
+ * email_verified is required for the email path because email/password signup
+ * does not prove ownership of the address; completing a reset or an email-link
+ * sign-in does. A phone_number on the token is always SMS-verified.
+ */
+function sessionOwnsClient(request, clientId, data) {
+  const t = request.auth && request.auth.token;
+  if (!t) return false;
+  if (t.admin === true) return true;
+  const email = String(t.email || "").trim().toLowerCase();
+  if (ADMIN_EMAILS.includes(email)) return true;
+  if (t.clientId && String(t.clientId) === String(clientId)) return true;
+
+  const d = data || {};
+  if (d.firebaseUid && request.auth.uid && d.firebaseUid === request.auth.uid) return true;
+  if (email && t.email_verified === true &&
+      String(d.email || "").trim().toLowerCase() === email) return true;
+
+  const last10 = (v) => String(v || "").replace(/\D/g, "").slice(-10);
+  const tokenPhone = last10(t.phone_number);
+  if (tokenPhone.length === 10 && last10(d.phone) === tokenPhone) return true;
+
+  return false;
+}
+
+/**
  * Sets a personal client's password, stored only as a bcrypt hash.
  * Authorised by the current password, or by a verified Firebase Auth session
  * (the email-link and SMS setup flows sign the user in before reaching here).
@@ -1146,7 +1179,7 @@ exports.clientSetPassword = onCall(async (request) => {
   const authDoc = await authRef.get();
   const hasHash = authDoc.exists && !!authDoc.data().hash;
   const hasPlain = !!data.password;
-  const verifiedSession = !!request.auth;
+  const verifiedSession = sessionOwnsClient(request, clientId, data);
 
   if ((hasHash || hasPlain) && !verifiedSession) {
     let ok = false;
