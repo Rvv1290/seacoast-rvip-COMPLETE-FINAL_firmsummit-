@@ -374,14 +374,6 @@ exports.corporateRequestPasswordReset = onCall({ secrets: [smtpUrl] }, async (re
   }
 
   const tempPwd = "RVIP" + Math.random().toString(36).slice(-8).toUpperCase();
-  const hash = await bcrypt.hash(tempPwd, 10);
-  await db.collection("corporate_auth").doc(match.id)
-    .set({ hash, updatedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
-  await db.collection("corporate_accounts").doc(match.id).update({
-    password: admin.firestore.FieldValue.delete(),
-    hasPassword: true,
-    passwordResetRequired: true,
-  });
 
   const to = String(match.data.contactEmail || email).trim();
   const body =
@@ -398,6 +390,9 @@ exports.corporateRequestPasswordReset = onCall({ secrets: [smtpUrl] }, async (re
     console.error("corporateRequestPasswordReset: SMTP_URL not configured; temp password not delivered.");
     throw new HttpsError("failed-precondition", "Email is not configured. Call (978) 255-3140.");
   }
+  // Send FIRST, then change the password. The other way round, a failed send
+  // leaves the old password dead and the new one undelivered — the customer is
+  // locked out by asking for help.
   try {
     const nodemailer = require("nodemailer");
     await nodemailer.createTransport(url).sendMail({
@@ -412,6 +407,17 @@ exports.corporateRequestPasswordReset = onCall({ secrets: [smtpUrl] }, async (re
     console.error("corporateRequestPasswordReset send failed:", e.message);
     throw new HttpsError("internal", "Could not send the email. Call (978) 255-3140.");
   }
+
+  // Delivered — now it is safe to make the temporary password the live one.
+  const hash = await bcrypt.hash(tempPwd, 10);
+  await db.collection("corporate_auth").doc(match.id)
+    .set({ hash, updatedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
+  await db.collection("corporate_accounts").doc(match.id).update({
+    password: admin.firestore.FieldValue.delete(),
+    hasPassword: true,
+    passwordResetRequired: true,
+  });
+
   return { success: true };
 });
 

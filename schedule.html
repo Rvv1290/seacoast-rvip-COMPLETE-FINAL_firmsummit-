@@ -555,46 +555,6 @@ CONFIDENTIALITY NOTICE: This communication is intended solely for the named reci
         </div>
       </div>
 
-      <!-- STEP 04 — PAYMENT -->
-      <div class="mb-10">
-        <div class="flex items-baseline gap-3 mb-2">
-          <span class="font-label text-secondary font-bold text-xs tracking-widest uppercase">Step 04</span>
-          <h2 class="font-headline text-2xl font-bold text-primary">How You'll Pay</h2>
-        </div>
-        <p class="text-xs text-on-surface-variant mb-5">No charge until your ride is confirmed.</p>
-        <div class="grid grid-cols-3 gap-3">
-          <div class="pay-card">
-            <input type="radio" name="Payment Method" id="p-card" value="Credit/Debit Card" checked/>
-            <label for="p-card">
-              <span class="material-symbols-outlined text-secondary" style="font-size:1.75rem">credit_card</span>
-              <span class="font-label text-xs font-bold uppercase text-primary">Card</span>
-              <span class="font-body text-xs text-on-surface-variant">Visa · MC · Amex</span>
-            </label>
-          </div>
-          <div class="pay-card">
-            <input type="radio" name="Payment Method" id="p-venmo" value="Venmo"/>
-            <label for="p-venmo">
-              <div style="width:28px;height:28px;border-radius:6px;background:#008CFF;display:flex;align-items:center;justify-content:center">
-                <span style="color:white;font-weight:900;font-size:13px;font-family:sans-serif">V</span>
-              </div>
-              <span class="font-label text-xs font-bold uppercase text-primary">Venmo</span>
-              <span class="font-body text-xs text-on-surface-variant">@SeacoastRVIP</span>
-            </label>
-          </div>
-          <div class="pay-card">
-            <input type="radio" name="Payment Method" id="p-cash" value="Cash on Arrival"/>
-            <label for="p-cash">
-              <span class="material-symbols-outlined text-secondary" style="font-size:1.75rem">payments</span>
-              <span class="font-label text-xs font-bold uppercase text-primary">Cash</span>
-              <span class="font-body text-xs text-on-surface-variant">Pay on arrival</span>
-            </label>
-          </div>
-        </div>
-        <div id="pay-note" class="mt-4 p-4 bg-surface-container-low border-l-2 border-secondary text-xs text-on-surface-variant leading-relaxed">
-          <strong class="text-primary">Card:</strong> We'll send a secure payment link after confirming your booking.
-        </div>
-      </div>
-
       <!-- ERROR -->
       <div id="err-msg" class="hidden mb-4 p-4 bg-red-50 border border-red-200 text-red-700 text-sm rounded">
         Something went wrong. Please call us at <strong>(978) 255-3140</strong>
@@ -1073,18 +1033,6 @@ function selLug(btn, val) {
   btn.classList.add('sel');
   document.getElementById('hid-lug').value = val;
 }
-
-// Payment note toggle
-var payNotes = {
-  'Credit/Debit Card': 'Card: We\'ll send you a secure payment link after confirming your booking. No card info needed now.',
-  'Venmo': 'Venmo: After confirmation, send to @SeacoastRVIP. Include your name + ride date in the note.',
-  'Cash on Arrival': 'Cash: Pay your driver on arrival. Please have the exact amount ready.',
-};
-document.querySelectorAll('input[name="Payment Method"]').forEach(function(r){
-  r.addEventListener('change', function(){
-    document.getElementById('pay-note').innerHTML = '<strong class="text-primary">' + payNotes[this.value] + '</strong>';
-  });
-});
 
 // ToS accordion toggle
 function toggleTos() {
