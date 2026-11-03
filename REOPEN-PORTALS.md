@@ -209,17 +209,35 @@ catch unstamped bookings. Firestore rejects a query it cannot prove against the
 rules, so those now query the owner field only. **Don't reintroduce one** — in
 `account.html` a rejected listener takes the trip list with it.
 
-`update` is still any-signed-in: drivers accept and complete rides they do not
-own, so narrowing it needs the ride-assignment model revisited.
+`update` now matches `read` — `isAdmin() || isDriver() || ownsBooking()`. It
+could be narrowed once `schedule.html` stopped updating a booking straight
+after creating it (that work moved into `linkBookingToCorporate`), so the only
+remaining anonymous write to `bookings` is the create itself.
 
 ## Still open
 - **No App Check.** Every callable can be invoked directly from anywhere —
   authorisation holds, but nothing attests the caller beyond the login
-  throttle. Setting it up needs the Firebase console: App Check → register the
-  web app with reCAPTCHA v3 (or Enterprise), put the site key in the pages'
-  Firebase init, then turn enforcement on **in monitoring mode first**. Switch
-  to enforced only once the console shows verified requests arriving;
-  enforcing early takes every callable offline at once — sign-in included.
+  throttle. Groundwork that already exists:
+  - `recaptchaenterprise.googleapis.com` and `firebaseappcheck.googleapis.com`
+    are both enabled.
+  - A **SCORE**-type reCAPTCHA Enterprise key already exists and is the right
+    kind: `6Lc3p6AsAAAAAMPlRgQjUPSMhptb7-_PAVB2goTa` ("Seacoast RVIP LLC"),
+    allowed domain `seacoastrvip.com` (which covers `www.`).
+  - Every service is currently `UNENFORCED` — confirmed through the App Check
+    API, so nothing is enforcing today.
+
+  Remaining, and it is a deliberate multi-day job rather than one change:
+  1. Firebase console → App Check → register the **web app** with that site
+     key. (The REST path for this 404s because the web app id contains colons,
+     which collide with the API's `:method` syntax — use the console.)
+  2. Add the App Check SDK to the pages that use Firebase, initialised with
+     the same site key.
+  3. Leave every service `UNENFORCED` and watch the console's App Check
+     metrics for several days until verified requests dominate.
+  4. Only then flip `firestore.googleapis.com` and the callables to enforced.
+
+  **Do not skip step 3.** Enforcing before clients are sending tokens takes
+  every callable and all Firestore access offline at once, sign-in included.
 - **`driver-portal.html` audited, November 2, 2026 — it is in better shape
   than the other portals.** It uses real Firebase Auth (`signInWithPhoneNumber`
   plus `onAuthStateChanged`), reads and writes only `drivers/{uid}`, and holds

@@ -97,13 +97,14 @@ service cloud.firestore {
     // Drivers are allowed through because driver-portal.html lists available
     // rides with an unfiltered query, which cannot be expressed as ownership.
     //
-    // `create` stays open for the public booking form on schedule.html.
-    // `update` stays at any-signed-in: drivers accept and complete rides they
-    // do not own, and narrowing it needs the ride-assignment model looked at.
+    // `create` stays open for the public booking form on schedule.html, which
+    // submits before anyone signs in. `update` matches read: drivers are
+    // included because accepting and completing a ride is an update to a
+    // booking they do not own.
     match /bookings/{docId} {
       allow read:   if isAdmin() || isDriver() || ownsBooking();
       allow create: if true;
-      allow update: if request.auth != null;
+      allow update: if isAdmin() || isDriver() || ownsBooking();
       allow delete: if isAdmin();
     }
 
