@@ -172,7 +172,8 @@ function saveBookingToFirebase(data) {
     status:         'Pending',
     source:         'website-form',
     createdAt:      new Date().toISOString(),
-    tosAcceptedAt:  data.tosAcceptedAt  || null
+    tosAcceptedAt:  data.tosAcceptedAt  || null,
+    tosVersion:     data.tosVersion     || null
   };
   
   // Attach client info if logged in
@@ -666,20 +667,20 @@ CONFIDENTIALITY NOTICE: This communication is intended solely for the named reci
           <input type="checkbox" id="tos-check" name="Terms Accepted" value="yes" required
             style="margin-top:3px;width:18px;height:18px;accent-color:#775a19;flex-shrink:0;cursor:pointer">
           <span style="font-family:Inter,sans-serif;font-size:0.875rem;color:#1a1c1c;line-height:1.55">
-            I have read and agree to <a href="terms.html" target="_blank" style="color:#775a19;font-weight:600;text-decoration:underline">Seacoast RVIP's Terms of Service</a> and <strong>Cancellation Policy</strong>.
+            I agree to <a href="terms.html" target="_blank" style="color:#775a19;font-weight:600;text-decoration:underline">Seacoast RVIP's Terms of Service</a>, including the <strong>Cancellation Policy</strong>, and acknowledge the <a href="privacy.html" target="_blank" style="color:#775a19;font-weight:600;text-decoration:underline">Privacy Policy</a>.
           </span>
         </label>
         <input type="hidden" id="tos-timestamp" name="ToS Accepted At" value="">
+        <input type="hidden" id="tos-version" name="ToS Version" value="2026-11-01-formation">
       </div>
 
       <!-- SUBMIT — disabled until ToS is accepted -->
-      <!-- TODO (when online booking returns): the #tos-check box above is already unchecked and
-           required, and #tos-timestamp records the time. Still outstanding: word its label
-           "I agree to the Terms of Service and acknowledge the Privacy Policy." with BOTH documents
-           linked (terms.html and privacy.html - privacy.html is not linked today), and store the
-           accepted version ("2026-11-01-formation") alongside the timestamp and the user.
-           Never pre-check the box. A court refused to enforce online terms without a record of
-           this kind of assent: Kauders v. Uber, 486 Mass. 557 (2021). -->
+      <!-- #tos-check is unchecked and required, #tos-timestamp records when it
+           was ticked and #tos-version which document version was accepted; all
+           three are stored on the booking. Never pre-check the box, and keep
+           both documents linked in the label. A court refused to enforce
+           online terms without a record of this kind of assent:
+           Kauders v. Uber, 486 Mass. 557 (2021). -->
       <button type="submit" id="sub-btn" disabled
         class="w-full bg-primary text-white py-5 font-headline font-black text-xl uppercase tracking-tight border-b-4 border-secondary active:scale-[0.98]"
         style="opacity:0.4;cursor:not-allowed;transition:opacity 0.2s">
@@ -1212,6 +1213,7 @@ function saveBookingToStorage(code) {
     passengers: document.getElementById('hid-pass') ? document.getElementById('hid-pass').value : '1',
     amount: getEstimatedAmount(),
     tosAcceptedAt: (document.getElementById('tos-timestamp') && document.getElementById('tos-timestamp').value) ? document.getElementById('tos-timestamp').value : new Date().toISOString(),
+    tosVersion: (document.getElementById('tos-version') && document.getElementById('tos-version').value) || '2026-11-01-formation',
     submittedAt: new Date().toISOString()
   };
   localStorage.setItem('booking_' + code, JSON.stringify(data));

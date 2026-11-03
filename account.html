@@ -360,14 +360,19 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
       <div class="f-group"><label class="f-label">Create Password * (min 6 chars)</label><input id="reg-pwd" type="password" class="f-input" placeholder="••••••••"/></div>
       
       <div id="reg-err" style="display:none;color:#d32f2f;font-size:0.8rem;margin-bottom:1rem"></div>
-      <!-- TODO (when account sign-up returns): require an UNCHECKED checkbox immediately above this
-           button reading "I agree to the Terms of Service and acknowledge the Privacy Policy." with
-           both documents linked (terms.html, privacy.html). Record the accepted version
-           ("2026-11-01-formation"), the timestamp and the user on the account record. Do not pre-check it.
-           A court refused to enforce online terms without this: Kauders v. Uber, 486 Mass. 557 (2021). -->
+      <!-- Unchecked and required, with both documents linked. doSignup() records
+           the version, the timestamp and the account it belongs to. Never
+           pre-check it: a court refused to enforce online terms without a record
+           of this kind of assent, Kauders v. Uber, 486 Mass. 557 (2021). -->
+      <div style="margin-bottom:1.25rem;padding:0.875rem 1rem;background:#fdfaf4;border:1.5px solid #775a19">
+        <label style="display:flex;align-items:flex-start;gap:0.75rem;cursor:pointer">
+          <input type="checkbox" id="reg-tos" style="margin-top:2px;width:17px;height:17px;accent-color:#775a19;flex-shrink:0;cursor:pointer"/>
+          <span style="font-size:0.8rem;color:#1a1c1c;line-height:1.5">
+            I agree to the <a href="terms.html" target="_blank" style="color:#775a19;font-weight:600;text-decoration:underline">Terms of Service</a> and acknowledge the <a href="privacy.html" target="_blank" style="color:#775a19;font-weight:600;text-decoration:underline">Privacy Policy</a>.
+          </span>
+        </label>
+      </div>
       <button id="reg-btn" onclick="doSignup()" class="btn-k" style="width:100%">Create My Account →</button>
-      
-      <p style="font-size:0.68rem;color:#999;text-align:center;margin-top:1.5rem;line-height:1.5">By signing up, you agree to Seacoast RVIP's Premium Service Terms and Privacy Policy.</p>
     </div>
 
     <!-- Step: New User (shared by both methods) -->
@@ -1493,6 +1498,14 @@ async function doSignup() {
   if (pwd.length < 6) {
     err.textContent = 'Password must be at least 6 characters.'; err.style.display = 'block'; return;
   }
+  // Assent has to be a deliberate act, and recorded — see the note by the box.
+  const tosBox = document.getElementById('reg-tos');
+  if (!tosBox || !tosBox.checked) {
+    err.textContent = 'Please agree to the Terms of Service to continue.';
+    err.style.display = 'block';
+    return;
+  }
+  const tosAcceptedAt = new Date().toISOString();
 
   btn.disabled = true; btn.textContent = 'Creating Account...';
 
@@ -1544,6 +1557,8 @@ async function doSignup() {
       name, email, phone,
       status: 'Approved',
       createdAt: new Date().toISOString(),
+      tosAcceptedAt,
+      tosVersion: '2026-11-01-formation',
       authProvider: 'email'
     };
     await ref.set(data);
