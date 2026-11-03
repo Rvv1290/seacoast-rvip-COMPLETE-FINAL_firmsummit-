@@ -189,40 +189,30 @@ absent referrer was still allowed in testing.
 Only the Maps **JavaScript** API is used. Maps REST web services reject
 referrer-restricted keys outright, so don't introduce a call to one.
 
-## Run this to finish the bookings lockdown
+**17. `bookings` is owner-only.** `isAdmin() || isDriver() || ownsBooking()`,
+matching `clientId` or `corporateAccountId` against the portal token's claims.
+A customer can no longer read anyone else's bookings.
 
-`backfillBookingOwners` is deployed but **has not been run** — the permission
-guard in this session refuses to invoke anything that rewrites production data.
-It stamps `clientId` / `corporateAccountId` onto older bookings by matching
-their email or phone against `clients` and `corporate_accounts`. It is safe to
-re-run.
+The backfill was not needed in the end: of 81 bookings, 77 already carried an
+owner field, and the four that did not match no client record — they were never
+visible to a customer and remain visible to admin.
+`backfillBookingOwners` stays deployed and unrun in case a future import
+leaves documents unstamped:
 
 ```bash
 curl -s -X POST "https://us-central1-seacoast-rip.cloudfunctions.net/backfillBookingOwners" -H "Content-Type: application/json" -d '{"data":{"confirm":"BACKFILL"}}'
 ```
 
-It returns `scanned`, `stampedClient`, `stampedCorp` and `stillUnowned`. Send
-me that output. If `stillUnowned` is small — those are bookings from people
-with no account, which only admin needs — the bookings rule can be narrowed
-from "any signed-in caller" to:
+Both portals previously fanned out queries by company, contact email and
+several phone formats (and in the corporate portal, the same per member) to
+catch unstamped bookings. Firestore rejects a query it cannot prove against the
+rules, so those now query the owner field only. **Don't reintroduce one** — in
+`account.html` a rejected listener takes the trip list with it.
 
-```
-allow read: if isAdmin() || isDriver() || ownsBooking();
-```
-
-`ownsBooking()` and `isDriver()` are already written in `firestore.rules`,
-immediately below the bookings block, and unused until then. The portals'
-loaders also need their per-query fan-out replaced with a single query on the
-owner field (or at least `Promise.allSettled`, so one denied query cannot take
-a page down).
-
-**Do not switch the rule on before the backfill.** Older bookings carry no
-owner field, so customers would silently lose their trip history.
+`update` is still any-signed-in: drivers accept and complete rides they do not
+own, so narrowing it needs the ride-assignment model revisited.
 
 ## Still open
-
-- **`bookings` read is any-signed-in, not owner-only.** A customer can still
-  read another customer's bookings. Blocked on the backfill above.
 - **No App Check.** Every callable can be invoked directly from anywhere —
   authorisation holds, but nothing attests the caller beyond the login
   throttle. Setting it up needs the Firebase console: App Check → register the
