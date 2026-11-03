@@ -10,6 +10,9 @@
     rel="stylesheet">
   <!-- Firebase Config -->
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <!-- 10.7.1 here, not 9.23.0 like the rest of the site — the App Check SDK
+       must match the app SDK already loaded on the page. -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-check-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDGel0ktZDQYcdlOuoZo4bAqZWCuGvOVbc&libraries=places&callback=initGoogleMap" async defer></script>
@@ -1075,6 +1078,16 @@
           storageBucket: 'seacoast-rip.firebasestorage.app',
         });
       }
+      // App Check, monitoring only — every service is still UNENFORCED, so a
+      // failure here cannot block anything. Runs right after initializeApp so
+      // the calls that follow carry a token. reCAPTCHA *Enterprise*: the
+      // project's site key is a SCORE-type Enterprise key, not a v3 key.
+      try {
+        if (firebase.appCheck && firebase.appCheck.ReCaptchaEnterpriseProvider) {
+          firebase.appCheck().activate(
+            new firebase.appCheck.ReCaptchaEnterpriseProvider('6Lc3p6AsAAAAAMPlRgQjUPSMhptb7-_PAVB2goTa'), true);
+        }
+      } catch (e) { console.warn('App Check not activated:', e && e.message); }
       db = firebase.firestore();
     }
 
@@ -1157,7 +1170,7 @@
       try {
         const result = await window.confirmationResult.confirm(code);
         const user = result.user;
-        await resolveDriverProfile(user.phoneNumber);
+        await resolveDriverProfile(user.uid, user.phoneNumber);
       } catch (e) {
         showToast('Invalid code. Try again.');
       } finally {
@@ -1166,10 +1179,16 @@
       }
     }
 
-    async function resolveDriverProfile(phoneId) {
+    // Driver documents are keyed by the Firebase Auth uid, which is what the
+    // iOS app uses and what the drivers rule enforces (uid == driverId) — a
+    // phone-keyed write is rejected outright. This page used to key them by
+    // phone number, so it never found an existing driver and then failed to
+    // create one.
+    async function resolveDriverProfile(uid, phone) {
       if (!db) initFirebase();
+      if (!uid) { showToast('Sign-in incomplete — please try again'); return; }
       try {
-        const docRef = db.collection('drivers').doc(phoneId);
+        const docRef = db.collection('drivers').doc(uid);
         const snap = await docRef.get();
 
         if (!snap.exists) {
@@ -1180,10 +1199,10 @@
           });
 
           driverData = {
-            id: phoneId,
-            phone: phoneId, 
+            id: uid,
+            phone: phone || '',
             status: 'Not Active',
-            profile: { name: '', phone: phoneId, address: '', vMake: '', vModel: '', vPlate: '', plateType: '' },
+            profile: { name: '', phone: phone || '', address: '', vMake: '', vModel: '', vPlate: '', plateType: '' },
             documents: docsInitial,
             createdAt: new Date().toISOString()
           };
@@ -1193,7 +1212,7 @@
           driverData = snap.data();
           
           // Patch schema for older legacy accounts
-          if (!driverData.profile) driverData.profile = { name: driverData.name || '', phone: phoneId, address: '', vMake: '', vModel: '', vPlate: '', plateType: '' };
+          if (!driverData.profile) driverData.profile = { name: driverData.name || '', phone: phone || '', address: '', vMake: '', vModel: '', vPlate: '', plateType: '' };
           if (!driverData.documents) driverData.documents = {};
 
           DOC_REQUIREMENTS.forEach(req => {
@@ -1203,7 +1222,7 @@
           showToast('Authentication Successful');
         }
         
-        currentUser = { uid: phoneId, phone: phoneId };
+        currentUser = { uid: uid, phone: phone || driverData.phone || '' };
         showApp();
 
       } catch (e) {
@@ -1225,7 +1244,7 @@
       
       firebase.auth().onAuthStateChanged((user) => {
         if (user) {
-          resolveDriverProfile(user.phoneNumber);
+          resolveDriverProfile(user.uid, user.phoneNumber);
         } else {
           document.getElementById('app-screen').style.display = 'none';
           document.getElementById('auth-screen').style.display = 'flex';

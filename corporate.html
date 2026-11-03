@@ -8,6 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-check-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -16,6 +17,18 @@
   var c={apiKey:"AIzaSyDGel0ktZDQYcdlOuoZo4bAqZWCuGvOVbc",authDomain:"seacoast-rip.firebaseapp.com",projectId:"seacoast-rip",storageBucket:"seacoast-rip.firebasestorage.app",messagingSenderId:"684535453116",appId:"1:684535453116:web:922c843b5bad3b81ad47b9"};
   try{
     if(!firebase.apps.length)firebase.initializeApp(c);
+
+// App Check, monitoring only — every service is still UNENFORCED, so a failure
+// here cannot block anything. It must run straight after initializeApp so the
+// calls that follow carry a token. Uses reCAPTCHA *Enterprise*: the project's
+// site key is a SCORE-type Enterprise key, not a v3 key.
+try {
+  if (firebase.appCheck && firebase.appCheck.ReCaptchaEnterpriseProvider) {
+    firebase.appCheck().activate(
+      new firebase.appCheck.ReCaptchaEnterpriseProvider('6Lc3p6AsAAAAAMPlRgQjUPSMhptb7-_PAVB2goTa'), true);
+  }
+} catch (e) { console.warn('App Check not activated:', e && e.message); }
+
     window._db=firebase.firestore();
     window._auth=firebase.auth();
     window._auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
