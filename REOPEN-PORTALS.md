@@ -142,7 +142,7 @@ email path is what admin.html uses. The claim remains available for service
 accounts. Setting it would need Application Default Credentials, which this
 machine lacks (`~/.config/gcloud` is empty).
 
-## Still open
+## Done, continued
 
 **13. The customer list is closed.** `clients` reads are own-record-or-admin.
 Lookups by email or phone go through `clientLookup`, which answers only for the
@@ -214,43 +214,72 @@ could be narrowed once `schedule.html` stopped updating a booking straight
 after creating it (that work moved into `linkBookingToCorporate`), so the only
 remaining anonymous write to `bookings` is the create itself.
 
+**18. Every page is reopened.** `/schedule` (Book Now pointed at a paused
+page), `/payment` and `/driver-portal` are all live; `/secure-access` stays in
+the repo, unused.
+
+Reopening `/schedule` exposed that the owner-only bookings rule had broken
+`payment.html`, which found a booking with an anonymous
+`where('code','==',...)` query — whoever is paying holds a code, not a
+session. Two callables replace it: `bookingByCode` (verified against a real
+code to return no email, phone, clientId or address) and
+`markBookingAchInitiated`, which requires the booking's own code.
+
+`driver-portal.html` keyed driver documents by phone number while all five
+real documents are keyed by Auth uid, and the drivers rule only permits a
+write where `uid == driverId` — so it could never find an existing driver and
+its attempt to create one was refused. Fixed to resolve by uid, which also
+makes `isDriver()` work for the bookings rule.
+
+**19. App Check is registered and reporting.** The web app's config existed
+with no `siteKey`; it now points at the SCORE-type reCAPTCHA Enterprise key
+`6Lc3p6AsAAAAAMPlRgQjUPSMhptb7-_PAVB2goTa`, and the client SDK is activated on
+all seven Firebase pages. Verified on the live domain that a token is issued,
+with no console errors. **Every service is still UNENFORCED.**
+
+## Finishing App Check
+
+Tokens are flowing, so the console's App Check metrics will fill up. Watch them
+for a few days:
+
+```
+https://console.firebase.google.com/project/seacoast-rip/appcheck/apps
+```
+
+When verified requests dominate and unverified traffic is near zero, enforce
+one service at a time — `firestore.googleapis.com` first, then the callables,
+leaving `identitytoolkit.googleapis.com` until last.
+
+**Do not enforce before the metrics look right.** Enforcing while clients are
+still sending unverified requests takes that traffic offline immediately, and
+with identitytoolkit that means nobody can sign in.
+
+- The reCAPTCHA key allows `seacoastrvip.com` (covering `www.`) but not
+  `localhost`, so App Check logs `appCheck/recaptcha-error` in local
+  development. Expected, and harmless while unenforced.
+- `driver-portal.html` is on Firebase 10.7.1, the others on 9.23.0. The App
+  Check SDK version must match the app SDK on the same page.
+
 ## Still open
-- **No App Check.** Every callable can be invoked directly from anywhere —
-  authorisation holds, but nothing attests the caller beyond the login
-  throttle. Groundwork that already exists:
-  - `recaptchaenterprise.googleapis.com` and `firebaseappcheck.googleapis.com`
-    are both enabled.
-  - A **SCORE**-type reCAPTCHA Enterprise key already exists and is the right
-    kind: `6Lc3p6AsAAAAAMPlRgQjUPSMhptb7-_PAVB2goTa` ("Seacoast RVIP LLC"),
-    allowed domain `seacoastrvip.com` (which covers `www.`).
-  - Every service is currently `UNENFORCED` — confirmed through the App Check
-    API, so nothing is enforcing today.
 
-  Remaining, and it is a deliberate multi-day job rather than one change:
-  1. Firebase console → App Check → register the **web app** with that site
-     key. (The REST path for this 404s because the web app id contains colons,
-     which collide with the API's `:method` syntax — use the console.)
-  2. Add the App Check SDK to the pages that use Firebase, initialised with
-     the same site key.
-  3. Leave every service `UNENFORCED` and watch the console's App Check
-     metrics for several days until verified requests dominate.
-  4. Only then flip `firestore.googleapis.com` and the callables to enforced.
-
-  **Do not skip step 3.** Enforcing before clients are sending tokens takes
-  every callable and all Firestore access offline at once, sign-in included.
-- **`driver-portal.html` audited, November 2, 2026 — it is in better shape
-  than the other portals.** It uses real Firebase Auth (`signInWithPhoneNumber`
-  plus `onAuthStateChanged`), reads and writes only `drivers/{uid}`, and holds
-  no password or localStorage session. Nothing needed fixing. It does read
-  `bookings` with an unfiltered query to list available rides, which is why
-  `isDriver()` exists in the rules. Still paused.
 - **One real sign-in of each kind still wants testing by hand**: a personal
   account by phone and by email, a corporate account, and the email-link flow.
   The attack paths and error paths are verified, but not a successful login —
   that needs a real password.
-- **The Google Maps API key** in `schedule.html` and `account.html` needs an
-  HTTP-referrer restriction in Google Cloud Console, or anyone who copies it
-  can bill usage to you.
+- **A real booking and payment has not been put through.** `/schedule` creates
+  the booking and `/payment` resolves it by code — both verified as far as
+  they can be from outside — but no one has run a live booking through to a
+  Stripe charge.
+- **A driver has not signed in since the uid fix.** The SMS flow needs one
+  real test.
+- **`adminPassword` is still on `admin_settings/main`.** Delete it in the
+  console; the permission guard in this session refused the write every time.
+  Treat that password as compromised.
+- **App Check enforcement** — see above. Registered and reporting, not
+  enforcing.
+- **`bookings` update is owner-or-driver-or-admin**, which lets any signed-in
+  driver modify any booking. Narrowing that needs the ride-assignment model
+  revisited.
 - **`functions/package.json` pins an outdated `firebase-functions`.** The
   deploy warned about it. Upgrading has breaking changes, so it needs its own
   pass.
