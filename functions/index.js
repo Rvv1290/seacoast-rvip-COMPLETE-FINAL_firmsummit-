@@ -311,124 +311,79 @@ exports.savePaymentMethod = onCall({ secrets: [stripeSecret] }, async (request) 
  * Resets a corporate account password.
  * Runs with admin privileges so Firestore rules don't block the update.
  */
-exports.resetCorpPassword = onCall(async (request) => {
+/**
+ * "Forgot password" for a corporate account.
+ *
+ * The old flow sent a *Firebase Auth* password reset email. That resets a
+ * Firebase Auth credential, which corporateLogin never looks at — it compares
+ * a bcrypt hash in corporate_auth. So a customer could reset their password,
+ * type the new one correctly, and still be told it was wrong. Two separate
+ * password stores.
+ *
+ * This issues a temporary password for the store the portal actually uses and
+ * emails it, then forces a change on first sign-in. Always reports success, so
+ * the endpoint cannot be used to discover which addresses have accounts.
+ */
+exports.corporateRequestPasswordReset = onCall({ secrets: [smtpUrl] }, async (request) => {
   const bcrypt = require("bcryptjs");
-  const { email, newPassword } = request.data;
-  if (!email || !newPassword) throw new HttpsError("invalid-argument", "Missing email or password");
-  if (newPassword.length < 6)  throw new HttpsError("invalid-argument", "Password must be at least 6 characters");
+  const email = String((request.data || {}).email || "").trim().toLowerCase();
+  if (!email || !email.includes("@")) {
+    throw new HttpsError("invalid-argument", "Enter a valid email address.");
+  }
 
   const db = admin.firestore();
-  const snap = await db.collection("corporate_accounts")
-    .where("status", "in", ["Approved", "Active"])
-    .get();
+  // Throttled on the same counters as sign-in: this sends mail and sets a
+  // password, so it must not be free to hammer.
+  const tRefs = await throttleRefs(db, "corpreset", email, request);
+  for (const r of tRefs) await throttleGuard(r);
 
-  let found = null;
-  snap.forEach(d => {
-    if ((d.data().contactEmail || "").toLowerCase().trim() === email.toLowerCase()) found = d;
-  });
+  const match = await _findCorpAccount(db, email);
+  if (!match) {
+    await Promise.all(tRefs.map((r, i) => throttleFailure(r, i === 0 ? THROTTLE_MAX : THROTTLE_IP_MAX)));
+    return { success: true };
+  }
 
-  if (!found) throw new HttpsError("not-found", "No active corporate account found with that email");
-
-  // Store the new password ONLY as a bcrypt hash in the locked corporate_auth
-  // collection, and clear any legacy plaintext field. corporate_accounts is
-  // readable by the portal pages, so a password must never be written there.
-  const hash = await bcrypt.hash(String(newPassword), 10);
-  await db.collection("corporate_auth").doc(found.id)
+  const tempPwd = "RVIP" + Math.random().toString(36).slice(-8).toUpperCase();
+  const hash = await bcrypt.hash(tempPwd, 10);
+  await db.collection("corporate_auth").doc(match.id)
     .set({ hash, updatedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
-  await found.ref.update({
+  await db.collection("corporate_accounts").doc(match.id).update({
     password: admin.firestore.FieldValue.delete(),
     hasPassword: true,
-    passwordResetRequired: false,
+    passwordResetRequired: true,
   });
-  return { success: true };
-});
 
-/**
- * Verifies a corporate account email exists in Firestore (admin SDK bypasses
- * client-side security rules) and ensures a matching Firebase Auth user exists
- * so sendPasswordResetEmail can deliver a reset link.
- */
-exports.ensureCorpAuthAccount = onCall(async (request) => {
-  const { email } = request.data;
-  if (!email) throw new HttpsError("invalid-argument", "Missing email");
+  const to = String(match.data.contactEmail || email).trim();
+  const body =
+    "A temporary password was requested for your Seacoast RVIP corporate portal.\n\n" +
+    "Temporary password: " + tempPwd + "\n\n" +
+    "Sign in at https://www.seacoastrvip.com/corporate and you will be asked to " +
+    "choose a new password straight away. This temporary password stops working " +
+    "once you do.\n\n" +
+    "If you did not request this, call (978) 255-3140 — the previous password no " +
+    "longer works.\n\nSeacoast RVIP, LLC";
 
-  const db = admin.firestore();
-  const snap = await db.collection("corporate_accounts")
-    .where("status", "in", ["Approved", "Active"])
-    .get();
-
-  let found = null;
-  snap.forEach(d => {
-    if ((d.data().contactEmail || "").toLowerCase().trim() === email.toLowerCase()) found = d;
-  });
-  if (!found) throw new HttpsError("not-found", "No active corporate account found with that email");
-
-  // Ensure a Firebase Auth user exists so sendPasswordResetEmail has a target.
-  // We silently absorb auth errors so the function never returns "internal" —
-  // if the user already exists under a different lookup path, that's fine.
-  let authExists = false;
+  const url = smtpUrl.value();
+  if (!url || url === "unset") {
+    console.error("corporateRequestPasswordReset: SMTP_URL not configured; temp password not delivered.");
+    throw new HttpsError("failed-precondition", "Email is not configured. Call (978) 255-3140.");
+  }
   try {
-    await admin.auth().getUserByEmail(email);
-    authExists = true;
+    const nodemailer = require("nodemailer");
+    await nodemailer.createTransport(url).sendMail({
+      from: "Seacoast RVIP <info@seacoastrvip.com>",
+      replyTo: "info@seacoastrvip.com",
+      to,
+      subject: "Your Seacoast RVIP temporary password",
+      text: body,
+      html: body.replace(/\n/g, "<br>"),
+    });
   } catch (e) {
-    if (e.code !== "auth/user-not-found") {
-      // Unexpected lookup error — log it but don't crash; fall through to create
-      console.error("ensureCorpAuthAccount getUserByEmail:", e.code, e.message);
-    }
+    console.error("corporateRequestPasswordReset send failed:", e.message);
+    throw new HttpsError("internal", "Could not send the email. Call (978) 255-3140.");
   }
-
-  if (!authExists) {
-    try {
-      const tempPwd = Math.random().toString(36).slice(-8) + "Aa1!";
-      await admin.auth().createUser({ email, password: tempPwd });
-    } catch (createErr) {
-      // auth/email-already-exists means a race condition — user was created between
-      // our check and create call, which is fine
-      if (createErr.code !== "auth/email-already-exists") {
-        throw new HttpsError("internal", "Could not prepare account: " + createErr.message);
-      }
-    }
-  }
-
   return { success: true };
 });
-
-// ─────────────────────────────────────────────────────────────────────────────
-//  SECURE CORPORATE AUTH (Phase 1)
-//  Passwords are verified/stored server-side as bcrypt hashes in the locked
-//  `corporate_auth/{accountId}` collection (clients can never read it). The
-//  login function falls back to the old plaintext password and upgrades it to a
-//  hash on the fly, so no one is locked out during the migration.
-// ─────────────────────────────────────────────────────────────────────────────
-
-// Find an Approved/Active corporate account by email/phone (contact or member).
-async function _findCorpAccount(db, identifier) {
-  const idRaw = String(identifier || "").trim();
-  const idLower = idRaw.toLowerCase();
-  const isEmail = idRaw.includes("@");
-  const digits = idRaw.replace(/\D/g, "");
-  const snap = await db.collection("corporate_accounts")
-    .where("status", "in", ["Approved", "Active"]).get();
-  let match = null;
-  snap.forEach((d) => {
-    if (match) return;
-    const a = d.data();
-    if (isEmail) {
-      if ((a.contactEmail || "").toLowerCase().trim() === idLower) { match = { id: d.id, data: a }; return; }
-      for (const m of (a.members || [])) {
-        if ((m.email || "").toLowerCase().trim() === idLower) { match = { id: d.id, data: a }; return; }
-      }
-    } else if (digits.length >= 10) {
-      const p = (a.contactPhone || "").replace(/\D/g, "");
-      if (p && (p === digits || p.slice(-10) === digits.slice(-10))) { match = { id: d.id, data: a }; return; }
-      for (const m of (a.members || [])) {
-        const mp = (m.phone || "").replace(/\D/g, "");
-        if (mp && (mp === digits || mp.slice(-10) === digits.slice(-10))) { match = { id: d.id, data: a }; return; }
-      }
-    }
-  });
-  return match;
-}
 
 /**
  * Corporate portal login. Verifies the password server-side (bcrypt hash, with a
@@ -462,7 +417,7 @@ exports.corporateLogin = onCall(async (request) => {
   // 2) If there's no hash yet, OR the hash didn't match, fall back to the plaintext
   //    password on the account. This covers the first login before migration AND a
   //    password reset that wrote a new plaintext value after a hash already existed
-  //    (admin Portal Access / resetCorpPassword). On a match, (re)write the hash so
+  //    (admin Portal Access / a password reset). On a match, (re)write the hash so
   //    it stays in sync with the current password.
   if (!ok && match.data.password && String(match.data.password) === String(password)) {
     ok = true;

@@ -429,17 +429,14 @@ async function submitCorpForgotPwd() {
 
   btn.textContent = 'Sending...'; btn.disabled = true;
   try {
-    // Cloud Function verifies email in Firestore with admin SDK (bypasses security rules)
-    // and creates a Firebase Auth user stub if one doesn't exist yet
-    const ensureFn = firebase.functions().httpsCallable('ensureCorpAuthAccount');
-    await ensureFn({ email });
+    // Resets the password the portal actually checks. This used to send a
+    // Firebase Auth reset email, which changes a different credential
+    // entirely — corporateLogin compares a bcrypt hash in corporate_auth — so
+    // a customer could reset their password, type the new one correctly, and
+    // still be told it was wrong.
+    await firebase.functions().httpsCallable('corporateRequestPasswordReset')({ email });
 
-    // Firebase delivers its own branded reset email — routes through firebaseapp.com,
-    // so no custom-domain authorization issues
-    const continueUrl = 'https://www.seacoastrvip.com/corporate.html?pwdReset=1';
-    await _auth.sendPasswordResetEmail(email, { url: continueUrl });
-
-    succ.textContent = 'Check your email! A password reset link has been sent to ' + email + '.';
+    succ.textContent = 'Check your email — a temporary password is on its way to ' + email + '. You will be asked to choose a new one as soon as you sign in.';
     succ.style.display = 'block';
   } catch (error) {
     const code = error.code || '';
