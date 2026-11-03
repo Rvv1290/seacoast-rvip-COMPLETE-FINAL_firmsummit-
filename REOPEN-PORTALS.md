@@ -260,6 +260,22 @@ with identitytoolkit that means nobody can sign in.
 - `driver-portal.html` is on Firebase 10.7.1, the others on 9.23.0. The App
   Check SDK version must match the app SDK on the same page.
 
+**20. The corporate password reset was resetting the wrong credential.**
+"Forgot Password" sent a *Firebase Auth* reset email, but corporateLogin
+compares a bcrypt hash in `corporate_auth` — two separate stores. Customers
+could reset, type the new password correctly, and still be told it was wrong.
+`corporateRequestPasswordReset` now issues a temporary password for the store
+the portal actually reads, emails it over SMTP and forces a change on first
+sign-in. Setting a password from admin was always correct
+(`corporateSetTempPassword` writes the same hash) and is unchanged.
+
+**21. Two unauthenticated endpoints deleted.** `resetCorpPassword` took an
+email and a new password and set that account's password — **no auth check and
+no callers anywhere**, so knowing a corporate contact address was enough to
+take the account over. `ensureCorpAuthAccount` went with it: it only existed
+for the old reset email and revealed which addresses had accounts. Both now
+return 404.
+
 ## Still open
 
 - **One real sign-in of each kind still wants testing by hand**: a personal
