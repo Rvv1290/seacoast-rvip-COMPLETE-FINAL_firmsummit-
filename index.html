@@ -230,6 +230,51 @@ window.addEventListener('resize', checkWidth);
 window.addEventListener('DOMContentLoaded', checkWidth);
 </script>
 <main class="pt-20">
+<!-- App ribbon: fills the band between the nav and the hero. Pure marquee —
+     duplicated track for a seamless loop, paused on hover, and reduced to a
+     single static line for anyone who has asked for less motion. -->
+<style>
+  .rvip-ribbon{background:#000;overflow:hidden;position:relative}
+  .rvip-ribbon a{display:block;text-decoration:none;padding:0.7rem 0}
+  .rvip-ribbon::before,.rvip-ribbon::after{content:"";position:absolute;top:0;bottom:0;width:90px;z-index:2;pointer-events:none}
+  .rvip-ribbon::before{left:0;background:linear-gradient(90deg,#000,rgba(0,0,0,0))}
+  .rvip-ribbon::after{right:0;background:linear-gradient(270deg,#000,rgba(0,0,0,0))}
+  .rvip-ribbon-track{display:flex;width:max-content;animation:rvip-ribbon-scroll 44s linear infinite}
+  .rvip-ribbon:hover .rvip-ribbon-track{animation-play-state:paused}
+  .rvip-ribbon-seq{display:flex;align-items:center;flex-shrink:0}
+  .rvip-ribbon-seq span{font-family:Inter,sans-serif;font-size:0.68rem;font-weight:500;letter-spacing:0.22em;text-transform:uppercase;color:rgba(255,255,255,0.82);white-space:nowrap;padding:0 1.6rem}
+  .rvip-ribbon-seq b{color:#fff;font-weight:700}
+  .rvip-ribbon-seq i{display:block;width:4px;height:4px;flex-shrink:0;transform:rotate(45deg);background:#C9A84C;opacity:.9}
+  @keyframes rvip-ribbon-scroll{from{transform:translate3d(0,0,0)}to{transform:translate3d(-50%,0,0)}}
+  @media (prefers-reduced-motion: reduce){
+    .rvip-ribbon-track{animation:none;width:100%;justify-content:center}
+    .rvip-ribbon-seq:nth-child(2){display:none}
+    .rvip-ribbon-seq span:nth-child(n+5){display:none}
+  }
+</style>
+<div class="rvip-ribbon" role="complementary" aria-label="RVIP Rider app">
+  <a href="apps.html" aria-label="RVIP Rider — coming soon to iPhone and Android">
+    <div class="rvip-ribbon-track">
+      <div class="rvip-ribbon-seq" aria-hidden="false">
+        <span><b>RVIP Rider</b> &nbsp;— coming soon</span><i></i>
+        <span>Schedule a black SUV in seconds</span><i></i>
+        <span>Your fare before you confirm</span><i></i>
+        <span>Live flight tracking for airport pickups</span><i></i>
+        <span>Live Activity on iPhone</span><i></i>
+        <span>Trip alerts, receipts, saved places</span><i></i>
+      </div>
+      <div class="rvip-ribbon-seq" aria-hidden="true">
+        <span><b>RVIP Rider</b> &nbsp;— coming soon</span><i></i>
+        <span>Schedule a black SUV in seconds</span><i></i>
+        <span>Your fare before you confirm</span><i></i>
+        <span>Live flight tracking for airport pickups</span><i></i>
+        <span>Live Activity on iPhone</span><i></i>
+        <span>Trip alerts, receipts, saved places</span><i></i>
+      </div>
+    </div>
+  </a>
+</div>
+
 <!-- min-h is modest and the vertical padding lives on the grid, not the text
      column: an 85vh section centring a fixed-height card left a large empty
      band under the header on tall screens, and the section clips (it is

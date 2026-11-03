@@ -42,6 +42,42 @@
   .store-btn .sb-sub{display:block;font-size:0.58rem;text-transform:uppercase;letter-spacing:0.1em;opacity:.7;font-weight:700}
   .store-btn .sb-main{display:block;font-size:0.85rem;font-weight:700;line-height:1.15}
 
+  /* ── App showcase ─────────────────────────────────────────────── */
+  .kin{overflow:hidden;border-top:1px solid rgba(255,255,255,.12);border-bottom:1px solid rgba(255,255,255,.12);margin-top:2.25rem}
+  .kin-track{display:flex;width:max-content;animation:kin-scroll 38s linear infinite}
+  .kin:hover .kin-track{animation-play-state:paused}
+  .kin-seq{display:flex;align-items:center;flex-shrink:0;padding:0.85rem 0}
+  .kin-seq em{font-family:'Times New Roman',serif;font-style:italic;font-size:1.05rem;color:rgba(255,255,255,.92);white-space:nowrap;padding:0 1.5rem}
+  .kin-seq i{display:block;width:4px;height:4px;flex-shrink:0;transform:rotate(45deg);background:#C9A84C}
+  @keyframes kin-scroll{from{transform:translate3d(0,0,0)}to{transform:translate3d(-50%,0,0)}}
+
+  .showcase{margin-top:3.25rem}
+  .sc-eyebrow{font-family:'Work Sans',sans-serif;font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.18em;color:#775a19;margin-bottom:0.6rem}
+  .sc-title{font-family:'Times New Roman',serif;font-size:clamp(1.65rem,3.4vw,2.3rem);line-height:1.15;color:#000;margin-bottom:0.7rem}
+  .sc-lead{font-size:0.93rem;line-height:1.75;color:#55585a;max-width:46ch}
+  .shots{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin:2.25rem 0 0}
+  .shot{position:relative;border-radius:22px;overflow:hidden;background:#000;border:1px solid #e4e0d8;box-shadow:0 18px 40px -24px rgba(0,0,0,.55);aspect-ratio:9/19.5}
+  .shot img{width:100%;height:100%;object-fit:cover;display:block}
+  .shot figcaption{position:absolute;left:0;right:0;bottom:0;padding:1.6rem .85rem .7rem;
+    background:linear-gradient(0deg,rgba(0,0,0,.92),rgba(0,0,0,0));
+    font-family:'Work Sans',sans-serif;font-size:0.58rem;font-weight:700;text-transform:uppercase;letter-spacing:0.13em;color:#fff;text-align:center}
+  .cap-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.25rem;margin-top:2.5rem}
+  .cap{background:#fff;border:1px solid #ebe8e1;border-radius:14px;padding:1.4rem 1.3rem}
+  .cap .material-symbols-outlined{font-size:21px;color:#775a19}
+  .cap h4{font-family:'Times New Roman',serif;font-size:1.02rem;color:#000;margin:.55rem 0 .35rem;font-weight:700}
+  .cap p{font-size:0.82rem;line-height:1.65;color:#55585a;margin:0}
+  .liveband{background:#000;color:#fff;border-radius:16px;padding:2.25rem 2.25rem;margin-top:2.5rem;display:grid;grid-template-columns:1.05fr 1fr;gap:2rem;align-items:center}
+  .liveband h3{font-family:'Times New Roman',serif;font-size:1.5rem;margin:.45rem 0 .6rem}
+  .liveband p{font-size:0.88rem;line-height:1.75;color:rgba(255,255,255,.68);margin:0}
+  .lb-list{list-style:none;margin:0;padding:0}
+  .lb-list li{display:flex;gap:.65rem;align-items:flex-start;font-size:0.84rem;line-height:1.6;color:rgba(255,255,255,.82);margin-bottom:.7rem}
+  .lb-list .material-symbols-outlined{font-size:18px;color:#C9A84C;flex-shrink:0;margin-top:1px}
+  .fineprint{font-size:0.72rem;color:#8a8d8f;line-height:1.7;margin-top:1.1rem}
+  @media(max-width:860px){
+    .shots{grid-template-columns:repeat(2,1fr)}
+    .cap-grid{grid-template-columns:1fr}
+    .liveband{grid-template-columns:1fr;padding:1.6rem}
+  }
   .notify{background:#000;color:#fff;border-left:4px solid #775a19;padding:2rem 2.5rem;margin-top:3rem;border-radius:0 12px 12px 0}
   .notify a{color:#e8c97a;text-decoration:none}
   .notify a:hover{text-decoration:underline}
@@ -161,50 +197,144 @@ checkWidth();
 <div class="hero">
   <div class="hero-inner">
     <div style="font-family:'Work Sans',sans-serif;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.15em;color:#775a19;margin-bottom:0.75rem">Mobile Apps</div>
-    <h1 style="font-size:clamp(2rem,5vw,3.1rem);font-weight:900;line-height:1.1;margin-bottom:1rem">The Ride You Can Count On — Now in Your Pocket</h1>
-    <p style="font-size:0.95rem;color:rgba(255,255,255,0.6);font-family:Inter,sans-serif;max-width:620px;line-height:1.7">Two apps, built for the Seacoast. <strong style="color:#fff">RVIP Rider</strong> to book and track your ride. <strong style="color:#fff">RVIP Driver</strong> for our professional drivers. Coming soon to iPhone and Android.</p>
-    <div style="margin-top:1.5rem"><span class="badge-soon"><span class="material-symbols-outlined" style="font-size:13px">schedule</span>Launching Soon</span></div>
+    <h1 style="font-size:clamp(2rem,5vw,3.1rem);font-weight:900;line-height:1.1;margin-bottom:1rem">Wherever the road takes you</h1>
+    <p style="font-size:0.95rem;color:rgba(255,255,255,0.6);font-family:Inter,sans-serif;max-width:620px;line-height:1.7">Two connected apps make every scheduled ride easier to plan and manage. <strong style="color:#fff">RVIP Rider</strong> puts the whole journey in your hand. <strong style="color:#fff">RVIP Driver</strong> keeps your chauffeur a step ahead.</p>
+    <div style="margin-top:1.5rem"><span class="badge-soon"><span class="material-symbols-outlined" style="font-size:13px">schedule</span>Coming soon to iPhone &amp; Android</span></div>
+  </div>
+  <!-- Kinetic line. Duplicated track for a seamless loop; pauses on hover. -->
+  <div class="kin" aria-hidden="true">
+    <div class="kin-track">
+      <div class="kin-seq">
+        <em>Schedule in seconds</em><i></i><em>Fare shown before you confirm</em><i></i><em>Live flight tracking</em><i></i><em>Follow your chauffeur</em><i></i><em>Receipts, saved places, history</em><i></i>
+      </div>
+      <div class="kin-seq">
+        <em>Schedule in seconds</em><i></i><em>Fare shown before you confirm</em><i></i><em>Live flight tracking</em><i></i><em>Follow your chauffeur</em><i></i><em>Receipts, saved places, history</em><i></i>
+      </div>
+    </div>
   </div>
 </div>
 
 <!-- CONTENT -->
 <div class="content">
 
-  <div class="app-grid">
+  <!-- ── RVIP RIDER ─────────────────────────────────────────────── -->
+  <section class="showcase">
+    <div class="sc-eyebrow">RVIP Rider · For passengers</div>
+    <h2 class="sc-title">The whole journey, in your hand.</h2>
+    <p class="sc-lead">Choose your vehicle, set pickup and destination, add a stop, and review the fare before you confirm. Then watch it unfold — your chauffeur approaching, your flight tracked, your receipt filed.</p>
 
-    <!-- RIDER -->
-    <div class="app-card">
-      <img class="app-icon" src="assets/rvip-app-icon.png" alt="RVIP Rider app icon" style="border:1px solid rgba(0,0,0,.12)"/>
-      <div class="app-name">RVIP Rider</div>
-      <div class="app-for">For Passengers</div>
-      <p class="app-desc">Book premium black-car service in seconds, see your driver on the way, and keep every receipt in one place.</p>
-      <ul class="feat">
-        <li><span class="material-symbols-outlined">check_circle</span>Book airport transfers, events and hourly service</li>
-        <li><span class="material-symbols-outlined">check_circle</span>Live driver tracking and arrival updates</li>
-        <li><span class="material-symbols-outlined">check_circle</span>Saved places and stored trip preferences</li>
-        <li><span class="material-symbols-outlined">check_circle</span>Upfront pricing before you confirm</li>
-        <li><span class="material-symbols-outlined">check_circle</span>Digital receipts and trip history</li>
-      </ul>
-      <div class="store-row" data-app="rider"></div>
+    <div class="shots">
+      <figure class="shot">
+        <img src="assets/app/rider-home.webp" alt="RVIP Rider home screen with pickup address and destination search" loading="lazy" decoding="async"/>
+        <figcaption>Where to?</figcaption>
+      </figure>
+      <figure class="shot">
+        <img src="assets/app/rider-destinations.webp" alt="Saved and recent destinations in RVIP Rider" loading="lazy" decoding="async"/>
+        <figcaption>Recent &amp; saved</figcaption>
+      </figure>
+      <figure class="shot">
+        <img src="assets/app/rider-route.webp" alt="Route from Hampton to Logan International Airport with duration and distance" loading="lazy" decoding="async"/>
+        <figcaption>Route &amp; timing</figcaption>
+      </figure>
+      <figure class="shot">
+        <img src="assets/app/rider-vehicle.webp" alt="Choosing passengers, luggage and vehicle class in RVIP Rider" loading="lazy" decoding="async"/>
+        <figcaption>Choose your vehicle</figcaption>
+      </figure>
     </div>
 
-    <!-- DRIVER -->
-    <div class="app-card">
-      <img class="app-icon" src="assets/rvip-driver-icon.png" alt="RVIP Driver app icon" style="border:1px solid rgba(0,0,0,.12)"/>
-      <div class="app-name">RVIP Driver</div>
-      <div class="app-for">For Professional Drivers</div>
-      <p class="app-desc">Everything our drivers need on the road — assigned trips, turn-by-turn navigation, and clear earnings.</p>
-      <ul class="feat">
-        <li><span class="material-symbols-outlined">check_circle</span>Receive and accept assigned trips</li>
-        <li><span class="material-symbols-outlined">check_circle</span>Turn-by-turn navigation with stops</li>
-        <li><span class="material-symbols-outlined">check_circle</span>Trip details, passenger info and notes</li>
-        <li><span class="material-symbols-outlined">check_circle</span>Earnings and payout summaries</li>
-        <li><span class="material-symbols-outlined">check_circle</span>Document and compliance status</li>
-      </ul>
-      <div class="store-row" data-app="driver"></div>
+    <div class="cap-grid">
+      <div class="cap">
+        <span class="material-symbols-outlined">flight_takeoff</span>
+        <h4>Flight-aware pickups</h4>
+        <p>Add your flight to an airport booking and available flight status informs the trip, so your pickup follows the aircraft rather than the schedule.</p>
+      </div>
+      <div class="cap">
+        <span class="material-symbols-outlined">bolt</span>
+        <h4>Live Activity</h4>
+        <p>On supported iPhones your ride appears on the Lock Screen and in the Dynamic Island. Android shows an ongoing live ride notification.</p>
+      </div>
+      <div class="cap">
+        <span class="material-symbols-outlined">notifications_active</span>
+        <h4>Trip alerts</h4>
+        <p>Notifications for the updates that matter — chauffeur assigned, en route, arriving — when you enable them on your phone.</p>
+      </div>
+      <div class="cap">
+        <span class="material-symbols-outlined">receipt_long</span>
+        <h4>Everything in one place</h4>
+        <p>Upcoming and past trips, saved places, payment in the app, and digital receipts ready when you need them.</p>
+      </div>
+      <div class="cap">
+        <span class="material-symbols-outlined">price_check</span>
+        <h4>Fare before you confirm</h4>
+        <p>Review the route and the upfront trip price first. Flat rates, quoted in advance — never metered, never surged.</p>
+      </div>
+      <div class="cap">
+        <span class="material-symbols-outlined">add_location_alt</span>
+        <h4>Stops and preferences</h4>
+        <p>Add a stop along the way, set passengers and luggage, and keep the details you use most ready for next time.</p>
+      </div>
     </div>
 
+    <div class="store-row" data-app="rider" style="margin-top:2rem"></div>
+  </section>
+
+  <!-- ── LIVE TRACKING BAND ─────────────────────────────────────── -->
+  <div class="liveband">
+    <div>
+      <div class="sc-eyebrow" style="color:#C9A84C">Live, not guessed</div>
+      <h3>Your ride, as it happens.</h3>
+      <p>Pre-arranged means the plan is set in advance. It does not mean you are left wondering. From the moment a chauffeur is assigned, the app follows the trip in real time — and for airport runs, the flight too.</p>
+    </div>
+    <ul class="lb-list">
+      <li><span class="material-symbols-outlined">radar</span>Follow your chauffeur's approach and trip progress</li>
+      <li><span class="material-symbols-outlined">flight_land</span>Available flight updates shape airport pickups</li>
+      <li><span class="material-symbols-outlined">smartphone</span>Live Activity on iPhone · ongoing notification on Android</li>
+      <li><span class="material-symbols-outlined">forum</span>Alerts at assignment, en route and arrival</li>
+    </ul>
   </div>
+
+  <!-- ── RVIP DRIVER ────────────────────────────────────────────── -->
+  <section class="showcase">
+    <div class="sc-eyebrow">RVIP Driver · For professional chauffeurs</div>
+    <h2 class="sc-title">Clearly organised for the road.</h2>
+    <p class="sc-lead">Everything the chauffeur needs before and during a trip, in one place — so the person meeting you already knows the plan.</p>
+
+    <div class="cap-grid" style="margin-top:1.75rem">
+      <div class="cap">
+        <span class="material-symbols-outlined">event_available</span>
+        <h4>Scheduled rides</h4>
+        <p>Review trip assignments and what is coming up, ahead of time.</p>
+      </div>
+      <div class="cap">
+        <span class="material-symbols-outlined">map</span>
+        <h4>Trip preview</h4>
+        <p>Route, distance, driving time, pickup information and the notes that matter for the trip.</p>
+      </div>
+      <div class="cap">
+        <span class="material-symbols-outlined">flight_land</span>
+        <h4>Airport arrivals</h4>
+        <p>Available flight updates for airport pickups, with a live flight card on supported iPhones and an ongoing notification on Android.</p>
+      </div>
+      <div class="cap">
+        <span class="material-symbols-outlined">navigation</span>
+        <h4>Navigate and manage</h4>
+        <p>Turn-by-turn to pickup and drop-off, updating the trip as it progresses.</p>
+      </div>
+      <div class="cap">
+        <span class="material-symbols-outlined">notifications</span>
+        <h4>Stay informed</h4>
+        <p>Notifications for relevant assignments and trip updates when enabled.</p>
+      </div>
+      <div class="cap">
+        <span class="material-symbols-outlined">history</span>
+        <h4>Trip history</h4>
+        <p>Review completed trips and the records appropriate to the driver account.</p>
+      </div>
+    </div>
+
+    <div class="store-row" data-app="driver" style="margin-top:2rem"></div>
+    <p class="fineprint">Live cards and alerts depend on device support, notification settings, connectivity and available flight data. Thoughtfully planned for riders. Clearly organised for chauffeurs.</p>
+  </section>
 
   <!-- NOTIFY -->
   <div class="notify">
