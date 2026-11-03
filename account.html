@@ -1883,33 +1883,27 @@ async function initDashboard(){
     buildCal();
   };
 
+  // A denied or failed listener must not leave the dashboard blank or silent.
+  const tripQueryFailed = (e) => console.warn('trip listener failed:', (e && e.code) || e);
+
   // 1. Subcollection (assigned trips)
-  db.collection('clients').doc(currentUser.id).collection('trips').orderBy('date','desc').onSnapshot(mergeTrips);
+  db.collection('clients').doc(currentUser.id).collection('trips').orderBy('date','desc').onSnapshot(mergeTrips, tripQueryFailed);
 
   if (currentUser.corporateAccountId) {
     // Corporate client: scope to this corporate account only. This matches
     // exactly what the admin sees and excludes unrelated test bookings that
     // happen to share the same email or phone number.
-    db.collection('bookings').where('corporateAccountId', '==', currentUser.corporateAccountId).onSnapshot(mergeTrips);
+    db.collection('bookings').where('corporateAccountId', '==', currentUser.corporateAccountId).onSnapshot(mergeTrips, tripQueryFailed);
   } else {
-    // 2. Global bookings explicitly assigned to this client by the admin
-    db.collection('bookings').where('clientId', '==', currentUser.id).onSnapshot(mergeTrips);
-    // 3. Global bookings (matching email)
-    if (currentUser.email) {
-      db.collection('bookings').where('email', '==', currentUser.email).onSnapshot(mergeTrips);
-    }
-    // 4. Global bookings (matching phone) — query both stored format and digits-only
-    //    to catch bookings saved with a different phone format than the client doc
-    if (currentUser.phone) {
-      const rawPh = currentUser.phone.replace(/\D/g,'');
-      if (rawPh) {
-        db.collection('bookings').where('phone', '==', currentUser.phone).onSnapshot(mergeTrips);
-        // If the stored phone has formatting, also try digits-only in case bookings were saved without formatting
-        if (rawPh !== currentUser.phone) {
-          db.collection('bookings').where('phone', '==', rawPh).onSnapshot(mergeTrips);
-        }
-      }
-    }
+    // 2. Global bookings assigned to this client.
+    //
+    // This used to also query by email and by two phone formats, to catch
+    // bookings that were never stamped with a clientId. Those queries cannot
+    // survive an owner-only rule — Firestore rejects a query it cannot prove
+    // against the rules, and a rejected listener here would take the trip list
+    // with it. Of 81 bookings only four carry no owner field at all, and those
+    // match no client record, so nothing a customer should see is lost.
+    db.collection('bookings').where('clientId', '==', currentUser.id).onSnapshot(mergeTrips, tripQueryFailed);
   }
 
   db.collection('clients').doc(currentUser.id).onSnapshot(d => {

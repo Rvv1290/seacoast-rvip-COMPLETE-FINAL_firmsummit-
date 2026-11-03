@@ -1237,11 +1237,9 @@ async function markPastPeriodTripsAsPaid(paidAmount, tipAmount) {
     // contact email/phone, members) — not just corporateAccountId — so tips land
     // on the right trips even when bookings are linked inconsistently.
     var queries = [];
-    if (sess.accountId)    queries.push(db.collection('bookings').where('corporateAccountId', '==', sess.accountId).get());
-    if (sess.company)      queries.push(db.collection('bookings').where('corporateCompany', '==', sess.company).get());
-    if (sess.contactEmail) queries.push(db.collection('bookings').where('email', '==', sess.contactEmail).get());
-    if (sess.contactPhone) { var rp = sess.contactPhone.replace(/\D/g,''); if (rp.length>=10){ queries.push(db.collection('bookings').where('phone','==',sess.contactPhone).get()); queries.push(db.collection('bookings').where('phone','==','+1'+rp.slice(-10)).get()); queries.push(db.collection('bookings').where('phone','==',rp.slice(-10)).get()); } }
-    (sess.members || []).forEach(function(m){ if (m.email) queries.push(db.collection('bookings').where('email','==',m.email).get()); });
+    // Account id only — the identity fan-out is rejected by the owner-only
+    // bookings rule. See the note on the listeners further down.
+    if (sess.accountId) queries.push(db.collection('bookings').where('corporateAccountId', '==', sess.accountId).get());
     var snaps = await Promise.all(queries.map(function(q){ return q.catch(function(){ return null; }); }));
     // Collect eligible trips (deduped by doc id)
     var eligible = [], seenDoc = {};
@@ -1880,41 +1878,21 @@ function loadTrips(){
     } catch(e) { console.error(e); }
   }
 
-  // 1. Direct IDs
+  // Scoped to this corporate account only.
+  //
+  // This used to also listen on corporateCompany, on the contact's email and
+  // three phone formats, and on the same for every member — a fan-out that
+  // existed to catch bookings never stamped with an account id. Under the
+  // owner-only bookings rule those queries are rejected outright (Firestore
+  // refuses a query it cannot prove), so each one would fail, retry three
+  // times and log. Bookings are stamped with corporateAccountId on creation by
+  // linkBookingToCorporate, so this single listener covers them.
   addListener('corporateAccountId', sess.accountId, 'accId');
-  addListener('corporateCompany', sess.company, 'company');
-
-  // 2. Identity Matches (Primary) — try all phone formats so booking storage differences don't miss trips
-  addListener('email', sess.contactEmail);
-  if(sess.contactPhone) {
-    var raw = sess.contactPhone.replace(/\D/g,'');
-    if(raw.length >= 10) {
-      addListener('phone', sess.contactPhone);
-      var r10 = raw.slice(-10), rFull = '+1' + r10;
-      if(rFull !== sess.contactPhone) addListener('phone', rFull);
-      if(r10  !== sess.contactPhone) addListener('phone', r10);
-    }
-  }
-
-  // 3. Member Identity Matches — same normalized phone approach
-  (sess.members || []).forEach(function(m) {
-    if(m.email) addListener('email', m.email);
-    if(m.phone) {
-      var mr = m.phone.replace(/\D/g,'');
-      if(mr.length >= 10) {
-        addListener('phone', m.phone);
-        var m10 = mr.slice(-10), mFull = '+1' + m10;
-        if(mFull !== m.phone) addListener('phone', mFull);
-        if(m10  !== m.phone) addListener('phone', m10);
-      }
-    }
-  });
 
   // Immediate one-time query so trips show before onSnapshot resolves
   var initQueries = [];
+  // Account id only — see the note on the listeners above.
   if(sess.accountId) initQueries.push(db.collection('bookings').where('corporateAccountId','==',sess.accountId).get());
-  if(sess.company)   initQueries.push(db.collection('bookings').where('corporateCompany','==',sess.company).get());
-  if(sess.contactEmail) initQueries.push(db.collection('bookings').where('email','==',sess.contactEmail).get());
   if(initQueries.length) {
     Promise.all(initQueries.map(function(q){ return q.catch(function(){ return null; }); }))
       .then(function(results) {

@@ -89,25 +89,24 @@ service cloud.firestore {
     // to signed-in callers, which since the portals took up Firebase Auth
     // means customers, drivers, the apps and admin.
     //
-    // STILL "any signed-in caller", not owner-only: one customer can read
-    // another's bookings. Narrowing it to ownsBooking() below is ready to go,
-    // but it must not be switched on until backfillBookingOwners has run —
-    // older documents carry no clientId or corporateAccountId, so the portals
-    // would silently stop finding those trips. See REOPEN-PORTALS.md.
+    // Owner-only: a customer sees their own bookings and nothing else. Of the
+    // 81 bookings in the database, 77 already carry a clientId or a
+    // corporateAccountId; the four that carry neither match no client record
+    // and are visible to admin only.
     //
-    // The driver allowance is required either way: driver-portal.html lists
-    // available rides with an unfiltered query, so it cannot be expressed as
-    // ownership.
+    // Drivers are allowed through because driver-portal.html lists available
+    // rides with an unfiltered query, which cannot be expressed as ownership.
     //
     // `create` stays open for the public booking form on schedule.html.
+    // `update` stays at any-signed-in: drivers accept and complete rides they
+    // do not own, and narrowing it needs the ride-assignment model looked at.
     match /bookings/{docId} {
-      allow read:   if request.auth != null;
+      allow read:   if isAdmin() || isDriver() || ownsBooking();
       allow create: if true;
       allow update: if request.auth != null;
       allow delete: if isAdmin();
     }
 
-    // Ready for the switch above once the backfill has run.
     function ownsBooking() {
       return request.auth != null && (
                (request.auth.token.clientId != null
