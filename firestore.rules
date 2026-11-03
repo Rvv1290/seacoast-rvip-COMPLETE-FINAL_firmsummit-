@@ -94,17 +94,19 @@ service cloud.firestore {
     // corporateAccountId; the four that carry neither match no client record
     // and are visible to admin only.
     //
-    // Drivers are allowed through because driver-portal.html lists available
-    // rides with an unfiltered query, which cannot be expressed as ownership.
+    // No driver allowance: the website has no driver sign-in. Drivers work in
+    // the mobile app, which runs on `rides`, not `bookings`. isDriver() used
+    // to be here for driver-portal.html, and it let anyone holding a
+    // drivers/{uid} document read every booking.
     //
     // `create` stays open for the public booking form on schedule.html, which
     // submits before anyone signs in. `update` matches read: drivers are
     // included because accepting and completing a ride is an update to a
     // booking they do not own.
     match /bookings/{docId} {
-      allow read:   if isAdmin() || isDriver() || ownsBooking();
+      allow read:   if isAdmin() || ownsBooking();
       allow create: if true;
-      allow update: if isAdmin() || isDriver() || ownsBooking();
+      allow update: if isAdmin() || ownsBooking();
       allow delete: if isAdmin();
     }
 
@@ -115,13 +117,6 @@ service cloud.firestore {
                (request.auth.token.accountId != null
                 && resource.data.get('corporateAccountId', '') == request.auth.token.accountId)
              );
-    }
-
-    // A driver signed in through driver-portal.html. Costs one document read
-    // per rule evaluation, which is why it is only used where it is needed.
-    function isDriver() {
-      return request.auth != null
-             && exists(/databases/$(database)/documents/drivers/$(request.auth.uid));
     }
 
     // Corporate accounts. A password must NEVER be written onto these documents

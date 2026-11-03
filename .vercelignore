@@ -1,0 +1,23 @@
+# The repository root is the web root, so anything left here is downloadable.
+# These were all being served: the full-site zip, the Cloud Functions source,
+# the Firestore rules, and REOPEN-PORTALS.md — which lists the site's remaining
+# weaknesses. Keep this list in step with anything new that is not a public page.
+
+# Notes and documentation
+*.md
+
+# Firebase config, rules and functions (deployed separately, never over HTTP)
+firebase.json
+.firebaserc
+firestore.rules
+storage.rules
+firestore.indexes.json
+functions/
+
+# Tooling and build leftovers. package.json is deliberately NOT listed: it
+# already 404s, and hiding it could change how Vercel detects this project.
+node_modules/
+*.zip
+.claude/
+.github/
+scratchpad/
