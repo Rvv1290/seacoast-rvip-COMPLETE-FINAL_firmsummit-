@@ -11,7 +11,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
     rel="stylesheet" />
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-check-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -1853,16 +1852,6 @@
           appId: '1:684535453116:web:922c843b5bad3b81ad47b9'
         });
       }
-      // App Check, monitoring only — every service is still UNENFORCED, so a
-      // failure here cannot block anything. Runs right after initializeApp so
-      // the calls that follow carry a token. reCAPTCHA *Enterprise*: the
-      // project's site key is a SCORE-type Enterprise key, not a v3 key.
-      try {
-        if (firebase.appCheck && firebase.appCheck.ReCaptchaEnterpriseProvider) {
-          firebase.appCheck().activate(
-            new firebase.appCheck.ReCaptchaEnterpriseProvider('6Lc3p6AsAAAAAMPlRgQjUPSMhptb7-_PAVB2goTa'), true);
-        }
-      } catch (e) { console.warn('App Check not activated:', e && e.message); }
       db = firebase.firestore();
       console.log('Firebase ready');
     } catch (e) { console.warn('Firebase:', e.message); }
