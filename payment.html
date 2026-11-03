@@ -686,55 +686,34 @@ async function fetchBookings(code) {
   
   var codeUpper = code.toUpperCase().trim();
 
-  // METHOD 1: Firebase Firestore — primary source
-  if (db) {
+  // METHOD 1: the bookingByCode Cloud Function — primary source.
+  // This used to be an anonymous where('code','==',...) query straight against
+  // Firestore. Bookings are owner-only now and whoever is paying has a code,
+  // not a session, so the lookup happens server-side and returns only the
+  // fields this screen renders.
+  if (window.firebase && firebase.functions) {
     try {
-      var snap = await db.collection('bookings')
-        .where('code', '==', codeUpper)
-        .limit(1)
-        .get();
-      if (!snap.empty) {
-        snap.forEach(function(doc) {
-          var b = doc.data();
-          allBookings[codeUpper] = {
-            name: b.name || b.clientName || '',
-            service: b.service || '',
-            date: b.date || '',
-            time: b.time || '',
-            pickup: b.pickup || '',
-            destination: b.destination || '',
-            vehicle: b.vehicle || '',
-            passengers: b.passengers || '1',
-            price: parseFloat(b.price) || 0,
-          };
-        });
-        return true;
-      }
-      
-      // Also try lowercase code
-      var snap2 = await db.collection('bookings')
-        .where('code', '==', code.trim())
-        .limit(1)
-        .get();
-      if (!snap2.empty) {
-        snap2.forEach(function(doc) {
-          var b = doc.data();
-          allBookings[codeUpper] = {
-            name: b.name || b.clientName || '',
-            service: b.service || '',
-            date: b.date || '',
-            time: b.time || '',
-            pickup: b.pickup || '',
-            destination: b.destination || '',
-            vehicle: b.vehicle || '',
-            passengers: b.passengers || '1',
-            price: parseFloat(b.price) || 0,
-          };
-        });
+      var res = await firebase.functions().httpsCallable('bookingByCode')({ code: code.trim() });
+      if (res && res.data && res.data.found && res.data.booking) {
+        var b = res.data.booking;
+        allBookings[codeUpper] = {
+          id: b.id,
+          code: b.code,
+          name: b.name || '',
+          service: b.service || '',
+          date: b.date || '',
+          time: b.time || '',
+          pickup: b.pickup || '',
+          destination: b.destination || '',
+          vehicle: b.vehicle || '',
+          passengers: b.passengers || '1',
+          price: parseFloat(b.price) || 0,
+          status: b.status || 'Pending'
+        };
         return true;
       }
     } catch(e) {
-      console.log('Firebase:', e.code, e.message);
+      console.log('bookingByCode:', (e && e.code) || e);
     }
   }
 
@@ -856,20 +835,17 @@ function findBookingInStorage(code) {
 
 // Try Firebase silently in background after localStorage hit
 function tryFirebaseBackground(code) {
-  if (!db) return;
-  db.collection('bookings').where('code','==',code).limit(1).get()
-    .then(function(snap){
-      if (!snap.empty) {
-        snap.forEach(function(doc){
-          var b = doc.data();
-          // Update price display if different
-          if (b.price && currentBooking) {
-            currentBooking.price = parseFloat(b.price)||currentBooking.price;
-          }
-        });
+  if (!window.firebase || !firebase.functions) return;
+  firebase.functions().httpsCallable('bookingByCode')({ code: code })
+    .then(function(res){
+      var b = res && res.data && res.data.booking;
+      if (b && b.price && currentBooking) {
+        currentBooking.price = parseFloat(b.price) || currentBooking.price;
+        if (!currentBooking.id && b.id) currentBooking.id = b.id;
       }
     }).catch(function(){});
 }
+
 
 // Manual lookup
 async function manualLookup() {
@@ -1162,7 +1138,9 @@ async function submitBankPayment() {
     document.getElementById('bank-pay-form').style.display = 'none';
     document.getElementById('bank-pay-success').style.display = 'block';
     if(currentBooking && currentBooking.id){
-      try{ await firebase.firestore().collection('bookings').doc(currentBooking.id).update({ status:'Confirmed', paymentMethod:'Bank ACH', paymentNote:'ACH initiated — pending settlement' }); }catch(e){}
+      // Recorded server-side: this page is not signed in and bookings no
+      // longer accept anonymous writes. The code proves which booking.
+      try{ await firebase.functions().httpsCallable('markBookingAchInitiated')({ bookingId: currentBooking.id, code: currentBooking.code || code }); }catch(e){ console.warn('ACH status not recorded:', (e && e.code) || e); }
     }
   }
 }

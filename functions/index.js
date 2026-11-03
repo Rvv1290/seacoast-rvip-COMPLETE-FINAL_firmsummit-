@@ -719,6 +719,79 @@ exports.clientLogin = onCall(async (request) => {
 });
 
 /**
+ * Looks a booking up by its RVIP code for the payment page.
+ *
+ * payment.html used an anonymous where('code','==',...) query, which the
+ * owner-only bookings rule denies — the payer has a code, not a session. The
+ * code is the bearer credential here, exactly as it is on the printed
+ * confirmation, and only the fields the payment screen renders come back.
+ */
+exports.bookingByCode = onCall(async (request) => {
+  const raw = String((request.data || {}).code || "").trim();
+  if (!raw) throw new HttpsError("invalid-argument", "Missing booking code.");
+
+  const db = admin.firestore();
+  // Codes have been stored both bare and RVIP-prefixed, in either case.
+  const bare = raw.replace(/^RVIP-/i, "");
+  const candidates = [...new Set([raw, raw.toUpperCase(), bare, bare.toUpperCase(),
+    "RVIP-" + bare, "RVIP-" + bare.toUpperCase()])];
+
+  for (const c of candidates) {
+    const snap = await db.collection("bookings").where("code", "==", c).limit(1).get();
+    if (snap.empty) continue;
+    const doc = snap.docs[0];
+    const b = doc.data() || {};
+    return {
+      found: true,
+      booking: {
+        id: doc.id,
+        code: b.code || c,
+        name: b.name || b.clientName || "",
+        service: b.service || "",
+        date: b.date || "",
+        time: b.time || "",
+        pickup: b.pickup || "",
+        destination: b.destination || "",
+        vehicle: b.vehicle || "",
+        passengers: b.passengers || "1",
+        price: parseFloat(b.price) || 0,
+        status: b.status || "Pending",
+      },
+    };
+  }
+  return { found: false, booking: null };
+});
+
+/**
+ * Records that an ACH payment was initiated for a booking. payment.html wrote
+ * this straight to Firestore while unauthenticated, which the bookings rule
+ * now refuses. Requires the booking's own code, so a caller cannot flip the
+ * status of a booking they do not hold a code for.
+ */
+exports.markBookingAchInitiated = onCall(async (request) => {
+  const { bookingId, code } = request.data || {};
+  if (!bookingId || !code) throw new HttpsError("invalid-argument", "Missing booking or code.");
+
+  const db = admin.firestore();
+  const ref = db.collection("bookings").doc(String(bookingId));
+  const doc = await ref.get();
+  if (!doc.exists) throw new HttpsError("not-found", "Booking not found.");
+
+  const stored = String((doc.data() || {}).code || "").replace(/^RVIP-/i, "").toUpperCase();
+  const given = String(code).replace(/^RVIP-/i, "").toUpperCase();
+  if (!stored || stored !== given) {
+    throw new HttpsError("permission-denied", "That code does not match this booking.");
+  }
+
+  await ref.update({
+    status: "Confirmed",
+    paymentMethod: "Bank ACH",
+    paymentNote: "ACH initiated — pending settlement",
+  });
+  return { success: true };
+});
+
+/**
  * One-time: stamps clientId / corporateAccountId onto bookings that predate
  * those fields, by matching the booking's email or phone against the clients
  * and corporate_accounts collections.
