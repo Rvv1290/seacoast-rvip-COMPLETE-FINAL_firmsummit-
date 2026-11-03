@@ -311,6 +311,36 @@ exports.savePaymentMethod = onCall({ secrets: [stripeSecret] }, async (request) 
  * Resets a corporate account password.
  * Runs with admin privileges so Firestore rules don't block the update.
  */
+// Finds a corporate account by contact email/phone, or by a member's.
+// Used by corporateLogin and the password reset.
+async function _findCorpAccount(db, identifier) {
+  const idRaw = String(identifier || "").trim();
+  const idLower = idRaw.toLowerCase();
+  const isEmail = idRaw.includes("@");
+  const digits = idRaw.replace(/\D/g, "");
+  const snap = await db.collection("corporate_accounts")
+    .where("status", "in", ["Approved", "Active"]).get();
+  let match = null;
+  snap.forEach((d) => {
+    if (match) return;
+    const a = d.data();
+    if (isEmail) {
+      if ((a.contactEmail || "").toLowerCase().trim() === idLower) { match = { id: d.id, data: a }; return; }
+      for (const m of (a.members || [])) {
+        if ((m.email || "").toLowerCase().trim() === idLower) { match = { id: d.id, data: a }; return; }
+      }
+    } else if (digits.length >= 10) {
+      const p = (a.contactPhone || "").replace(/\D/g, "");
+      if (p && (p === digits || p.slice(-10) === digits.slice(-10))) { match = { id: d.id, data: a }; return; }
+      for (const m of (a.members || [])) {
+        const mp = (m.phone || "").replace(/\D/g, "");
+        if (mp && (mp === digits || mp.slice(-10) === digits.slice(-10))) { match = { id: d.id, data: a }; return; }
+      }
+    }
+  });
+  return match;
+}
+
 /**
  * "Forgot password" for a corporate account.
  *
