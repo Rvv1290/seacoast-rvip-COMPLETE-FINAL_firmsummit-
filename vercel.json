@@ -3,9 +3,7 @@
   "trailingSlash": false,
   "redirects": [
     { "source": "/quote", "destination": "/contact", "permanent": true },
-    { "source": "/quote.html", "destination": "/contact", "permanent": true },
-    { "source": "/driver-portal", "destination": "/secure-access", "permanent": false },
-    { "source": "/driver-portal.html", "destination": "/secure-access", "permanent": false }
+    { "source": "/quote.html", "destination": "/contact", "permanent": true }
   ],
   "headers": [
     { "source": "/secure-access", "headers": [ { "key": "Cache-Control", "value": "no-store" } ] }
