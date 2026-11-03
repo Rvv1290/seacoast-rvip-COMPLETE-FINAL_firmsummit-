@@ -163,15 +163,31 @@ companies, contacts, whole member lists — to match one phone number.
 `linkBookingToCorporate` does it server-side and returns only whether a link
 was made.
 
-**16. The browser API key is restricted** to `www.seacoastrvip.com`,
-`seacoastrvip.com` and the local preview. Verified the Maps JavaScript API and
-Places still load on the live site, and that no page calls a Maps REST web
-service (those reject referrer-restricted keys outright).
+**16. The browser API key is restricted.** Allowed referrers:
 
-**Be clear about what that last one does:** a `Referer` header is trivially
-forged, and Firestore and Identity Toolkit do not enforce referrer restrictions
-at all. It protects *Maps billing* against someone copying the key into their
-own site. It is not a data-security control — the Firestore rules are.
+```
+https://www.seacoastrvip.com/*      https://seacoastrvip.com/*
+https://seacoast-rip.firebaseapp.com/*   https://seacoast-rip.web.app/*
+http://localhost:8777/*             http://localhost:3000/*
+```
+
+**`seacoast-rip.firebaseapp.com` is not optional.** It is the Firebase
+`authDomain`, and the sign-in handler for email-link and social logins runs
+from there. Leaving it out breaks sign-in with
+`API_KEY_HTTP_REFERRER_BLOCKED` from `identitytoolkit.googleapis.com` — which
+is exactly what happened on the first attempt. Any new host that serves these
+pages (a Vercel preview URL, a new domain) has to be added here too.
+
+**What this restriction is and isn't:** a `Referer` header is trivially forged,
+so it is not a security boundary. Identity Toolkit *does* enforce it (see
+above) and so do the Maps APIs, which is the point — it stops someone copying
+the key into their own site and billing Maps usage to this project. It gives no
+data protection; the Firestore rules do that. Firestore itself appears not to
+enforce referrer restrictions at all — an anonymous REST read with a forged or
+absent referrer was still allowed in testing.
+
+Only the Maps **JavaScript** API is used. Maps REST web services reject
+referrer-restricted keys outright, so don't introduce a call to one.
 
 ## Still open
 
