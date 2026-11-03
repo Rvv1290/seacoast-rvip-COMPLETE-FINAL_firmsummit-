@@ -344,26 +344,27 @@ async function _findCorpAccount(db, identifier) {
 /**
  * "Forgot password" for a corporate account.
  *
- * The old flow sent a *Firebase Auth* password reset email. That resets a
- * Firebase Auth credential, which corporateLogin never looks at — it compares
- * a bcrypt hash in corporate_auth. So a customer could reset their password,
- * type the new one correctly, and still be told it was wrong. Two separate
- * password stores.
+ * Delivery goes through Firebase Auth's own password-reset email, not our
+ * SMTP. Google rejects the app password for info@seacoastrvip.com, so every
+ * SMTP send fails — while Firebase's email, which the admin reset already
+ * relies on, arrives reliably.
  *
- * This issues a temporary password for the store the portal actually uses and
- * emails it, then forces a change on first sign-in. Always reports success, so
- * the endpoint cannot be used to discover which addresses have accounts.
+ * This only makes sure a Firebase Auth user exists for the address; the page
+ * then calls sendPasswordResetEmail. When the customer signs in afterwards,
+ * corporate.html syncs that new password into corporate_auth, which is what
+ * corporateLogin actually compares.
+ *
+ * Always reports success so the endpoint cannot be used to discover which
+ * addresses have accounts.
  */
-exports.corporateRequestPasswordReset = onCall({ secrets: [smtpUrl] }, async (request) => {
-  const bcrypt = require("bcryptjs");
+exports.corporateRequestPasswordReset = onCall(async (request) => {
   const email = String((request.data || {}).email || "").trim().toLowerCase();
   if (!email || !email.includes("@")) {
     throw new HttpsError("invalid-argument", "Enter a valid email address.");
   }
 
   const db = admin.firestore();
-  // Throttled on the same counters as sign-in: this sends mail and sets a
-  // password, so it must not be free to hammer.
+  // Throttled like sign-in: it provisions an auth user and triggers an email.
   const tRefs = await throttleRefs(db, "corpreset", email, request);
   for (const r of tRefs) await throttleGuard(r);
 
@@ -373,50 +374,23 @@ exports.corporateRequestPasswordReset = onCall({ secrets: [smtpUrl] }, async (re
     return { success: true };
   }
 
-  const tempPwd = "RVIP" + Math.random().toString(36).slice(-8).toUpperCase();
-
-  const to = String(match.data.contactEmail || email).trim();
-  const body =
-    "A temporary password was requested for your Seacoast RVIP corporate portal.\n\n" +
-    "Temporary password: " + tempPwd + "\n\n" +
-    "Sign in at https://www.seacoastrvip.com/corporate and you will be asked to " +
-    "choose a new password straight away. This temporary password stops working " +
-    "once you do.\n\n" +
-    "If you did not request this, call (978) 255-3140 — the previous password no " +
-    "longer works.\n\nSeacoast RVIP, LLC";
-
-  const url = readSmtpUrl();
-  if (!url || url === "unset") {
-    console.error("corporateRequestPasswordReset: SMTP_URL not configured; temp password not delivered.");
-    throw new HttpsError("failed-precondition", "Email is not configured. Call (978) 255-3140.");
-  }
-  // Send FIRST, then change the password. The other way round, a failed send
-  // leaves the old password dead and the new one undelivered — the customer is
-  // locked out by asking for help.
+  // The reset link has to have somewhere to land.
   try {
-    const nodemailer = require("nodemailer");
-    await nodemailer.createTransport(url).sendMail({
-      from: "Seacoast RVIP <info@seacoastrvip.com>",
-      replyTo: "info@seacoastrvip.com",
-      to,
-      subject: "Your Seacoast RVIP temporary password",
-      text: body,
-      html: body.replace(/\n/g, "<br>"),
-    });
+    await admin.auth().getUserByEmail(email);
   } catch (e) {
-    console.error("corporateRequestPasswordReset send failed:", e.message);
-    throw new HttpsError("internal", "Could not send the email. Call (978) 255-3140.");
+    if (e.code === "auth/user-not-found") {
+      // No password set here: the customer chooses one through the reset link,
+      // and signing in with it syncs the portal password.
+      await admin.auth().createUser({
+        email,
+        emailVerified: false,
+        displayName: match.data.company || undefined,
+      });
+    } else {
+      console.error("corporateRequestPasswordReset getUserByEmail:", e.message);
+      throw new HttpsError("internal", "Could not start the reset. Call (978) 255-3140.");
+    }
   }
-
-  // Delivered — now it is safe to make the temporary password the live one.
-  const hash = await bcrypt.hash(tempPwd, 10);
-  await db.collection("corporate_auth").doc(match.id)
-    .set({ hash, updatedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
-  await db.collection("corporate_accounts").doc(match.id).update({
-    password: admin.firestore.FieldValue.delete(),
-    hasPassword: true,
-    passwordResetRequired: true,
-  });
 
   return { success: true };
 });
@@ -489,6 +463,58 @@ exports.corporateLogin = onCall(async (request) => {
  * Sets a NEW corporate password (hashed). Requires the current password unless
  * none is set yet. Clears the legacy plaintext field and the reset flag.
  */
+/**
+ * Resolves the corporate account belonging to a verified Firebase Auth
+ * session, so a customer who has just reset their password through the
+ * Firebase link can have that password adopted as their portal password.
+ *
+ * Requires a verified email, for the reason in sessionOwnsCorpAccount:
+ * signing up with an address does not prove you own it, completing a reset
+ * does.
+ */
+exports.corporateAccountForSession = onCall(async (request) => {
+  const t = request.auth && request.auth.token;
+  if (!t) throw new HttpsError("unauthenticated", "Sign in first.");
+  const email = String(t.email || "").trim().toLowerCase();
+  if (!email || t.email_verified !== true) {
+    throw new HttpsError("permission-denied", "Verify your email address first.");
+  }
+  const db = admin.firestore();
+  const match = await _findCorpAccount(db, email);
+  if (!match) return { found: false, accountId: null };
+  return { found: true, accountId: match.id };
+});
+
+/**
+ * Is this caller entitled to act on THIS corporate account?
+ *
+ * Previously any signed-in caller counted as a "verified session", so a
+ * personal client — or anyone who had signed in at all — could set another
+ * company's password by passing its accountId. The session now has to belong
+ * to the account: an admin, a portal token minted for it, or a Firebase Auth
+ * user whose VERIFIED email is the contact or a member.
+ *
+ * email_verified matters: plain email/password signup does not verify an
+ * address, so without it someone could register another company's contact
+ * email and take the account over. Completing a password reset does verify it,
+ * which is the path this is for.
+ */
+function sessionOwnsCorpAccount(request, accountId, data) {
+  const t = request.auth && request.auth.token;
+  if (!t) return false;
+  if (t.admin === true) return true;
+  const email = String(t.email || "").trim().toLowerCase();
+  if (ADMIN_EMAILS.includes(email)) return true;
+  if (t.accountId && String(t.accountId) === String(accountId)) return true;
+  if (email && t.email_verified === true) {
+    if (String((data || {}).contactEmail || "").trim().toLowerCase() === email) return true;
+    for (const m of ((data || {}).members || [])) {
+      if (String((m || {}).email || "").trim().toLowerCase() === email) return true;
+    }
+  }
+  return false;
+}
+
 exports.corporateSetCorporatePassword = onCall(async (request) => {
   const bcrypt = require("bcryptjs");
   const { accountId, currentPassword, newPassword } = request.data || {};
@@ -507,7 +533,7 @@ exports.corporateSetCorporatePassword = onCall(async (request) => {
 
   // Authorised by the current password, or by a verified Firebase Auth session
   // (the SMS setup flow signs the user in before reaching here).
-  const verifiedSession = !!request.auth;
+  const verifiedSession = sessionOwnsCorpAccount(request, accountId, data);
   if ((hasHash || hasPlain) && !verifiedSession) {
     let ok = false;
     if (hasHash) ok = await bcrypt.compare(String(currentPassword || ""), authDoc.data().hash);

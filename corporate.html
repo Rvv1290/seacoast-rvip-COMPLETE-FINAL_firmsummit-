@@ -340,6 +340,33 @@ async function sendCode(){
       err.style.display = 'block';
       mig.style.display = 'block';
     } else if (code === 'unauthenticated' || code === 'invalid-argument') {
+      // The password may have just been set through the Firebase reset link,
+      // which changes a different credential than corporateLogin compares.
+      // If it signs in there, adopt it as the portal password so the two stay
+      // in step and this detour only ever happens once.
+      var _synced = false;
+      if (isEmail) {
+        try {
+          await firebase.auth().signInWithEmailAndPassword(iden, pwd);
+          var _who = await firebase.functions().httpsCallable('corporateAccountForSession')({});
+          var _accId = _who && _who.data && _who.data.accountId;
+          if (_accId) {
+            await firebase.functions().httpsCallable('corporateSetCorporatePassword')({
+              accountId: _accId, newPassword: pwd
+            });
+            var _again = await firebase.functions().httpsCallable('corporateLogin')({ identifier: iden, password: pwd });
+            if (_again && _again.data && _again.data.success && _again.data.account) {
+              if (_again.data.authToken) await firebase.auth().signInWithCustomToken(_again.data.authToken);
+              _acc = _again.data.account;
+              grantAccess(_acc);
+              _synced = true;
+            }
+          }
+        } catch (_syncErr) {
+          console.warn('post-reset sync:', (_syncErr && _syncErr.code) || _syncErr);
+        }
+      }
+      if (_synced) return;
       err.textContent = 'Incorrect email/phone or password.';
       err.style.display = 'block';
     } else {
@@ -429,14 +456,15 @@ async function submitCorpForgotPwd() {
 
   btn.textContent = 'Sending...'; btn.disabled = true;
   try {
-    // Resets the password the portal actually checks. This used to send a
-    // Firebase Auth reset email, which changes a different credential
-    // entirely — corporateLogin compares a bcrypt hash in corporate_auth — so
-    // a customer could reset their password, type the new one correctly, and
-    // still be told it was wrong.
+    // Make sure the address has somewhere for the link to land, then let
+    // Firebase deliver the email — our own SMTP login is being rejected by
+    // Google, and Firebase's delivery is the one that works.
     await firebase.functions().httpsCallable('corporateRequestPasswordReset')({ email });
+    await _auth.sendPasswordResetEmail(email, {
+      url: 'https://www.seacoastrvip.com/corporate.html?pwdReset=1'
+    });
 
-    succ.textContent = 'Check your email — a temporary password is on its way to ' + email + '. You will be asked to choose a new one as soon as you sign in.';
+    succ.textContent = 'Check your email — a reset link is on its way to ' + email + '. Choose a new password, then sign in here with it.';
     succ.style.display = 'block';
   } catch (error) {
     const code = error.code || '';
