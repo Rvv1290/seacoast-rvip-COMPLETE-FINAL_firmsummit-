@@ -319,6 +319,17 @@ exports.savePaymentMethod = onCall({ secrets: [stripeSecret] }, async (request) 
  */
 // Finds a corporate account by contact email/phone, or by a member's.
 // Used by corporateLogin and the password reset.
+/** Company names come from customer-entered Firestore data, so they are escaped
+ *  before going into an HTML email body. */
+function escapeHtml(s) {
+  return String(s == null ? "" : s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 async function _findCorpAccount(db, identifier) {
   const idRaw = String(identifier || "").trim();
   const idLower = idRaw.toLowerCase();
@@ -350,27 +361,36 @@ async function _findCorpAccount(db, identifier) {
 /**
  * "Forgot password" for a corporate account.
  *
- * Delivery goes through Firebase Auth's own password-reset email, not our
- * SMTP. Google rejects the app password for info@seacoastrvip.com, so every
- * SMTP send fails — while Firebase's email, which the admin reset already
- * relies on, arrives reliably.
+ * Emails a temporary password straight into `corporate_auth`, which is the
+ * credential `corporateLogin` actually compares. This replaced a Firebase Auth
+ * sendPasswordResetEmail flow that reset a *different* credential: the customer
+ * completed the reset, Firebase reported success, and corporateLogin still
+ * rejected them, because nothing had touched the bcrypt hash. corporate.html
+ * papered over that with a sync step after the next sign-in, which left the
+ * reset working only if that second step also ran.
  *
- * This only makes sure a Firebase Auth user exists for the address; the page
- * then calls sendPasswordResetEmail. When the customer signs in afterwards,
- * corporate.html syncs that new password into corporate_auth, which is what
- * corporateLogin actually compares.
+ * It also removes the one-time oobCode, which is what produced "this link has
+ * expired": those codes are single-use and are consumed by whoever fetches them
+ * first, so a mail scanner that follows links burns the code before the
+ * customer clicks it. A temporary password in the body has nothing to consume.
+ *
+ * The send happens BEFORE the hash is written. The other order locks the
+ * customer out when delivery fails — their old password is already gone and the
+ * new one never arrived. This way a failed send leaves the account exactly as
+ * it was.
  *
  * Always reports success so the endpoint cannot be used to discover which
  * addresses have accounts.
  */
-exports.corporateRequestPasswordReset = onCall(async (request) => {
+exports.corporateRequestPasswordReset = onCall({ secrets: [smtpUrl, resendKey] }, async (request) => {
+  const bcrypt = require("bcryptjs");
   const email = String((request.data || {}).email || "").trim().toLowerCase();
   if (!email || !email.includes("@")) {
     throw new HttpsError("invalid-argument", "Enter a valid email address.");
   }
 
   const db = admin.firestore();
-  // Throttled like sign-in: it provisions an auth user and triggers an email.
+  // Throttled like sign-in: it resets a credential and sends an email.
   const tRefs = await throttleRefs(db, "corpreset", email, request);
   for (const r of tRefs) await throttleGuard(r);
 
@@ -380,23 +400,48 @@ exports.corporateRequestPasswordReset = onCall(async (request) => {
     return { success: true };
   }
 
-  // The reset link has to have somewhere to land.
+  // Ambiguous characters left out: this gets read off a screen and retyped.
+  const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const bytes = require("crypto").randomBytes(10);
+  let tempPwd = "RVIP-";
+  for (const b of bytes) tempPwd += ALPHABET[b % ALPHABET.length];
+
+  const company = match.data.company || "your account";
+  const text =
+    "A password reset was requested for " + company + " on the Seacoast RVIP corporate portal.\n\n" +
+    "Temporary password: " + tempPwd + "\n\n" +
+    "Sign in at https://www.seacoastrvip.com/corporate with your email and this " +
+    "password, then choose a new one. It replaces your previous password.\n\n" +
+    "If you did not request this, call (978) 255-3140 — your account should be " +
+    "reset again, because this password is now active.\n\n" +
+    "Seacoast RVIP";
+  const html =
+    '<div style="font-family:Inter,Helvetica,Arial,sans-serif;max-width:520px;color:#111">' +
+    '<p>A password reset was requested for <strong>' + escapeHtml(company) + '</strong> on the ' +
+    "Seacoast RVIP corporate portal.</p>" +
+    '<p style="margin:24px 0"><span style="font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#775a19">Temporary password</span><br>' +
+    '<code style="display:inline-block;margin-top:6px;padding:12px 18px;background:#f5f5f3;border-left:3px solid #775a19;font-size:18px;letter-spacing:.06em">' +
+    escapeHtml(tempPwd) + "</code></p>" +
+    '<p><a href="https://www.seacoastrvip.com/corporate" style="background:#000;color:#fff;padding:12px 22px;text-decoration:none;display:inline-block">Sign in</a></p>' +
+    "<p>Use your email and this password, then choose a new one. It replaces your previous password.</p>" +
+    '<p style="color:#666;font-size:13px">If you did not request this, call (978) 255-3140 — this password is ' +
+    "now active, so the account should be reset again.</p></div>";
+
   try {
-    await admin.auth().getUserByEmail(email);
+    await deliverEmail({ to: email, subject: "Your Seacoast RVIP corporate password", text, html });
   } catch (e) {
-    if (e.code === "auth/user-not-found") {
-      // No password set here: the customer chooses one through the reset link,
-      // and signing in with it syncs the portal password.
-      await admin.auth().createUser({
-        email,
-        emailVerified: false,
-        displayName: match.data.company || undefined,
-      });
-    } else {
-      console.error("corporateRequestPasswordReset getUserByEmail:", e.message);
-      throw new HttpsError("internal", "Could not start the reset. Call (978) 255-3140.");
-    }
+    console.error("corporateRequestPasswordReset delivery failed:", e.message);
+    throw new HttpsError("internal", "Could not send the reset email. Call (978) 255-3140.");
   }
+
+  const hash = await bcrypt.hash(tempPwd, 10);
+  await db.collection("corporate_auth").doc(match.id)
+    .set({ hash, updatedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
+  await db.collection("corporate_accounts").doc(match.id).set({
+    hasPassword: true,
+    passwordResetRequired: true,
+    updatedAt: new Date().toISOString(),
+  }, { merge: true });
 
   return { success: true };
 });

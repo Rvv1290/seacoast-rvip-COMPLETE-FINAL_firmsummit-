@@ -231,7 +231,7 @@ body{font-family:'Inter',sans-serif;min-height:100vh;background:#fff;overflow-x:
       <label class="f-label">Account Email</label>
       <input id="c-forgot-email" type="email" class="f-input" placeholder="name@company.com" style="background:#fafaf8"/>
     </div>
-    <button id="c-forgot-btn" class="btn-blk" onclick="submitCorpForgotPwd()" style="margin-bottom:0">Send Reset Link</button>
+    <button id="c-forgot-btn" class="btn-blk" onclick="submitCorpForgotPwd()" style="margin-bottom:0">Email a Temporary Password</button>
   </div>
 </div>
 
@@ -342,33 +342,12 @@ async function sendCode(){
       err.style.display = 'block';
       mig.style.display = 'block';
     } else if (code === 'unauthenticated' || code === 'invalid-argument') {
-      // The password may have just been set through the Firebase reset link,
-      // which changes a different credential than corporateLogin compares.
-      // If it signs in there, adopt it as the portal password so the two stay
-      // in step and this detour only ever happens once.
-      var _synced = false;
-      if (isEmail) {
-        try {
-          await firebase.auth().signInWithEmailAndPassword(iden, pwd);
-          var _who = await firebase.functions().httpsCallable('corporateAccountForSession')({});
-          var _accId = _who && _who.data && _who.data.accountId;
-          if (_accId) {
-            await firebase.functions().httpsCallable('corporateSetCorporatePassword')({
-              accountId: _accId, newPassword: pwd
-            });
-            var _again = await firebase.functions().httpsCallable('corporateLogin')({ identifier: iden, password: pwd });
-            if (_again && _again.data && _again.data.success && _again.data.account) {
-              if (_again.data.authToken) await firebase.auth().signInWithCustomToken(_again.data.authToken);
-              _acc = _again.data.account;
-              grantAccess(_acc);
-              _synced = true;
-            }
-          }
-        } catch (_syncErr) {
-          console.warn('post-reset sync:', (_syncErr && _syncErr.code) || _syncErr);
-        }
-      }
-      if (_synced) return;
+      // There used to be a fallback here that retried the typed password
+      // against Firebase Auth and, on success, adopted it as the portal
+      // password. It existed only to rescue the Firebase reset link, which no
+      // longer runs. It also retried outside corporateLogin's throttle, so
+      // every wrong guess got a second free attempt against a different
+      // credential store. Gone with the flow it propped up.
       err.textContent = 'Incorrect email/phone or password.';
       err.style.display = 'block';
     } else {
@@ -458,15 +437,14 @@ async function submitCorpForgotPwd() {
 
   btn.textContent = 'Sending...'; btn.disabled = true;
   try {
-    // Make sure the address has somewhere for the link to land, then let
-    // Firebase deliver the email — our own SMTP login is being rejected by
-    // Google, and Firebase's delivery is the one that works.
+    // One call, one credential. This used to also run
+    // _auth.sendPasswordResetEmail, which reset the Firebase Auth password
+    // while corporateLogin compares the bcrypt hash in corporate_auth — so the
+    // reset "succeeded" and sign-in still failed. The function now emails a
+    // temporary password for the credential that is actually checked.
     await firebase.functions().httpsCallable('corporateRequestPasswordReset')({ email });
-    await _auth.sendPasswordResetEmail(email, {
-      url: 'https://www.seacoastrvip.com/corporate.html?pwdReset=1'
-    });
 
-    succ.textContent = 'Check your email — a reset link is on its way to ' + email + '. Choose a new password, then sign in here with it.';
+    succ.textContent = 'Check your email — a temporary password is on its way to ' + email + '. Sign in with it here, then choose a new password.';
     succ.style.display = 'block';
   } catch (error) {
     const code = error.code || '';
@@ -479,23 +457,14 @@ async function submitCorpForgotPwd() {
     }
     err.style.display = 'block';
   } finally {
-    btn.textContent = 'Send Reset Link'; btn.disabled = false;
+    btn.textContent = 'Email a Temporary Password'; btn.disabled = false;
   }
 }
 
-// ─── HANDLE ?pwdReset=1 AFTER FIREBASE PASSWORD RESET REDIRECT ───
-(function(){
-  const params = new URLSearchParams(window.location.search);
-  if (params.get('pwdReset') !== '1') return;
-  window.history.replaceState({}, document.title, window.location.pathname);
-  // Show a success notice in the sign-in error area once the page has loaded
-  window.addEventListener('DOMContentLoaded', function(){
-    var el = document.getElementById('err1');
-    if (!el) return;
-    el.style.cssText = 'display:block;background:#e8f5e9;border:1px solid #a5d6a7;color:#2e7d32;padding:0.75rem 1rem;border-radius:4px;margin-bottom:0.75rem';
-    el.textContent = 'Password updated! Please sign in with your new password.';
-  });
-})();
+// The ?pwdReset=1 landing handler was removed with the Firebase reset link it
+// served. A stale link from an old email now lands on the normal sign-in form,
+// which is correct: completing it changes a Firebase Auth password the portal
+// does not read, so announcing "password updated" would have been a lie.
 function dnext(el,n){if(el.value.length===1&&n<=5)document.getElementById('d'+n).focus();}
 function dprev(e,el,p){if(e.key==='Backspace'&&el.value===''&&p!==null)document.getElementById('d'+p).focus();}
 function dcheck(){var c='';for(var i=0;i<6;i++)c+=(document.getElementById('d'+i).value||'');if(c.length===6)setTimeout(verifyCode,200);}
