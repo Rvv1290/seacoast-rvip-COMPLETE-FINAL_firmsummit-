@@ -42,10 +42,7 @@ tailwind.config = {
 </script>
 <style>
 .material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 300,'GRAD' 0,'opsz' 24}
-body{font-family:'Inter',sans-serif;background-color:#f9f9f9}
-
-/* Map container */
-#map{width:100%;height:100%;min-height:100vh}
+body{font-family:'Inter',sans-serif;background-color:#f7f7f4}
 
 /* Payment cards */
 .pay-card input[type="radio"]{display:none}
@@ -59,11 +56,11 @@ body{font-family:'Inter',sans-serif;background-color:#f9f9f9}
 
 /* Vehicle cards */
 .v-card input[type="radio"]{display:none}
-.v-card label{display:block;cursor:pointer;border-bottom:2px solid transparent;transition:all 0.2s;background:#f3f3f3;padding:1rem}
-.v-card input[type="radio"]:checked+label{border-bottom-color:#775a19;background:white}
+.v-card label{display:block;cursor:pointer;border:1px solid #e6e6df;border-radius:12px;transition:all 0.2s;background:#f7f7f4;padding:1rem}
+.v-card input[type="radio"]:checked+label{border-color:#C9A84C;background:#fff}
 
 /* Passenger buttons */
-.p-btn{transition:all 0.15s;width:3rem;height:3rem;border-radius:50%;border:1px solid #c4c7c7;font-weight:700;font-size:0.875rem;font-family:'Work Sans',sans-serif;cursor:pointer;background:white;min-width:44px;min-height:44px}
+.p-btn{transition:all 0.15s;min-width:3rem;height:2.9rem;padding:0 0.9rem;border-radius:11px;border:1px solid #c4c7c7;font-weight:700;font-size:0.875rem;font-family:'Work Sans',sans-serif;cursor:pointer;background:white;min-width:44px;min-height:44px}
 .p-btn.sel{background:#000;color:white;border-color:#000}
 
 /* Mobile: larger touch targets & readable inputs */
@@ -75,22 +72,23 @@ body{font-family:'Inter',sans-serif;background-color:#f9f9f9}
 }
 
 /* Inputs */
-.f-input{width:100%;background:#f3f3f3;border:0;border-bottom:2px solid #c4c7c7;padding:0.75rem 0;font-family:'Inter',sans-serif;font-size:1rem;transition:all 0.2s;outline:none}
-.f-input:focus{border-bottom-color:#000}
-.f-label{font-family:'Work Sans',sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:#444748;margin-bottom:0.5rem;display:block}
+.f-input{width:100%;background:#f7f7f4;border:1px solid #e6e6df;border-radius:10px;padding:0.8rem 0.95rem;font-family:'Inter',sans-serif;font-size:0.95rem;transition:all 0.2s;outline:none}
+.f-input:focus{border-color:#C9A84C;background:#fff;box-shadow:0 0 0 3px rgba(201,168,76,0.15)}
+.f-label{font-family:'Work Sans',sans-serif;font-size:0.62rem;text-transform:uppercase;letter-spacing:0.12em;color:#8a8a80;margin-bottom:0.5rem;display:block}
+
+/* ─── CENTRED RESERVATION COLUMN ─── */
+.resv-col{width:100%;max-width:720px;margin:0 auto;padding:2.5rem 1.25rem 0}
+@media(min-width:768px){.resv-col{padding:3.5rem 1.5rem 0}}
+.step-card{background:#fff;border:1px solid #ebebe5;border-radius:14px;padding:1.75rem 1.6rem;box-shadow:0 1px 2px rgba(0,0,0,0.03)}
+@media(min-width:768px){.step-card{padding:2rem}}
+.step-num{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:#111;color:#fff;font-family:'Work Sans',sans-serif;font-size:0.64rem;font-weight:700;flex-shrink:0}
+.sub-wrap{padding:0.5rem 0 1.5rem}
 
 /* Route info card */
-#route-card{display:none;background:rgba(255,255,255,0.97);backdrop-filter:blur(20px);border-left:3px solid #775a19}
-
-/* Service area badge */
-.area-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;background:rgba(119,90,25,0.12);border-radius:20px;font-size:11px;color:#775a19;font-family:'Work Sans',sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:0.05em}
+#route-card{display:none;background:#fff;border:1px solid #ebebe5;border-left:3px solid #C9A84C;border-radius:12px}
 
 /* Success */
 #success-msg{display:none;text-align:center;padding:2rem;background:#f0fdf4;border:1px solid #86efac;border-radius:8px}
-
-/* Map controls overlay */
-.map-overlay{position:absolute;z-index:10;pointer-events:none}
-.map-overlay *{pointer-events:all}
 
 /* Autocomplete dropdown fix */
 .pac-container{z-index:9999!important;font-family:'Inter',sans-serif;border-radius:4px;border-top:2px solid #775a19}
@@ -308,12 +306,12 @@ window.addEventListener('DOMContentLoaded', checkWidth);
 checkWidth();
 </script>
 
-<main class="pt-20 flex flex-col md:flex-row min-h-screen">
+<main class="pt-20 min-h-screen">
 
   <!-- ═══════════════════════════════════════ -->
   <!-- LEFT — BOOKING FORM -->
   <!-- ═══════════════════════════════════════ -->
-  <section class="w-full md:w-1/2 px-4 md:px-8 lg:px-14 py-8 md:py-12 overflow-y-auto">
+  <section class="resv-col">
 
     <div class="mb-10">
       <span class="font-label text-secondary uppercase tracking-widest text-xs font-semibold mb-2 block">The Ride You Can Count On</span>
@@ -369,9 +367,9 @@ CONFIDENTIALITY NOTICE: This communication is intended solely for the named reci
       </div>
 
       <!-- STEP 01 -->
-      <div class="mb-10">
-        <div class="flex items-baseline gap-3 mb-5">
-          <span class="font-label text-secondary font-bold text-xs tracking-widest uppercase">Step 01</span>
+      <div class="mb-10 step-card">
+        <div class="flex items-center gap-3 mb-6">
+          <span class="step-num">01</span>
           <h2 class="font-headline text-2xl font-bold text-primary">Personal Info</h2>
         </div>
         <div class="space-y-4">
@@ -398,16 +396,16 @@ CONFIDENTIALITY NOTICE: This communication is intended solely for the named reci
       </div>
 
       <!-- STEP 02 -->
-      <div class="mb-10">
-        <div class="flex items-baseline gap-3 mb-5">
-          <span class="font-label text-secondary font-bold text-xs tracking-widest uppercase">Step 02</span>
+      <div class="mb-10 step-card">
+        <div class="flex items-center gap-3 mb-6">
+          <span class="step-num">02</span>
           <h2 class="font-headline text-2xl font-bold text-primary">Vehicle Class</h2>
         </div>
         <div class="grid grid-cols-2 gap-3">
           <div class="v-card">
             <input type="radio" name="Vehicle Class" id="v1" value="Black SUV Luxury (7 passengers)" checked/>
             <label for="v1">
-              <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuCVUPBh5oQxrX7I9qlzu6QDGpuuiaZdhBH0UBkLAVKxzR4in41bPEhhffL8dvdYhbmeIRRjn5BVfDNw971kuJzVCN5SglGulLfrFmLfzx6mgQx59omvwObM4z9798Z4qkSkzBxZ401j19rXBjIpqO10fBqx8D1lfWXrPcRDGkI7uYsItkG4YE4f2uVrtSoiZlQbpT3ksAza03T_Lwps90Og60b2UQa1oQepmTFJf_SXIWnooRTQcNyXYgPQupPAxCvraJgH-Sxg-35C" class="w-full h-28 object-cover mb-2" alt="Black SUV"/>
+              <img src="assets/vehicle/suburban-black.jpg" class="w-full h-28 object-cover mb-2" alt="Black SUV"/>
               <p class="font-headline font-bold text-sm text-primary mb-1">Black Lux XL SUV</p>
               <p class="text-xs text-on-surface-variant">👤 7 &nbsp;|&nbsp; 🧳 5</p>
             </label>
@@ -415,7 +413,7 @@ CONFIDENTIALITY NOTICE: This communication is intended solely for the named reci
           <div class="v-card">
             <input type="radio" name="Vehicle Class" id="v2" value="Regular SUV (6 passengers)"/>
             <label for="v2">
-              <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuBU2xk2TUq20eeEwO5dmeetrkexgALL6bqqA1QFc3aZipQUqCbPJRO1MnOLkEKbsRTg_d4dwwbr1F5MEg3kwHfqyaAHqOi5HWC7tTxMZ4g2Qg0dgqPA7qg_EYkLuFNFhYWSAABexk262XX2xjAcv74w7OOFl21ayeMP6zbznNiaeIIxltrNr7B7quxmSl2HHvoAXrUXcpTVpFigrTtW0EE6yp6s798MWGyG6lYhJaKsDbOQffha2q1h9LawQfsi93MNrKvGfMM0J400" class="w-full h-28 object-cover mb-2" alt="Regular SUV"/>
+              <img src="assets/vehicle/palisade-black.jpg" class="w-full h-28 object-cover mb-2" alt="Regular SUV"/>
               <p class="font-headline font-bold text-sm text-primary mb-1">Regular Black SUV</p>
               <p class="text-xs text-on-surface-variant">👤 6 &nbsp;|&nbsp; 🧳 4</p>
             </label>
@@ -424,9 +422,9 @@ CONFIDENTIALITY NOTICE: This communication is intended solely for the named reci
       </div>
 
       <!-- STEP 03 -->
-      <div class="mb-10">
-        <div class="flex items-baseline gap-3 mb-5">
-          <span class="font-label text-secondary font-bold text-xs tracking-widest uppercase">Step 03</span>
+      <div class="mb-10 step-card">
+        <div class="flex items-center gap-3 mb-6">
+          <span class="step-num">03</span>
           <h2 class="font-headline text-2xl font-bold text-primary">Trip Details</h2>
         </div>
         <div class="space-y-4">
@@ -630,11 +628,13 @@ CONFIDENTIALITY NOTICE: This communication is intended solely for the named reci
            both documents linked in the label. A court refused to enforce
            online terms without a record of this kind of assent:
            Kauders v. Uber, 486 Mass. 557 (2021). -->
+      <div class="sub-wrap">
       <button type="submit" id="sub-btn" disabled
         class="w-full bg-primary text-white py-5 font-headline font-black text-xl uppercase tracking-tight border-b-4 border-secondary active:scale-[0.98]"
         style="opacity:0.4;cursor:not-allowed;transition:opacity 0.2s">
         Request My Ride →
       </button>
+      </div>
       <p class="text-center text-xs text-on-surface-variant mt-4">
         Prefer to call? <a href="tel:9782553140" class="text-secondary font-semibold underline">(978) 255-3140</a> &nbsp;|&nbsp;
         <a href="sms:9782553140" class="text-secondary font-semibold underline">Text Us</a>
@@ -642,47 +642,6 @@ CONFIDENTIALITY NOTICE: This communication is intended solely for the named reci
     </form>
   </section>
 
-  <!-- ═══════════════════════════════════════ -->
-  <!-- RIGHT — GOOGLE MAP -->
-  <!-- ═══════════════════════════════════════ -->
-  <section class="hidden md:block md:w-1/2 relative" style="min-height:100vh">
-
-    <!-- Map fills this container -->
-    <div id="map" style="width:100%;height:100vh;position:sticky;top:0"></div>
-
-    <!-- Top overlay — service area badge -->
-    <div class="map-overlay" style="top:90px;left:20px;right:20px">
-      <div class="flex flex-wrap gap-2">
-        <div class="area-badge">📍 Portsmouth NH</div>
-        <div class="area-badge">Hampton NH</div>
-        <div class="area-badge">Exeter NH</div>
-        <div class="area-badge">Newburyport MA</div>
-        <div class="area-badge">Kittery ME</div>
-        <div class="area-badge">✈ BOS · MHT</div>
-      </div>
-    </div>
-
-    <!-- Bottom overlay — branding -->
-    <div class="map-overlay" style="bottom:24px;left:20px;right:20px">
-      <div style="background:rgba(0,0,0,0.82);backdrop-filter:blur(12px);padding:16px 20px;border-left:3px solid #775a19">
-        <div class="grid grid-cols-3 gap-4 text-center mb-3">
-          <div>
-            <p class="font-headline text-xl text-white font-bold">100%</p>
-            <p class="font-label text-xs text-zinc-400 uppercase tracking-wider">On-Time</p>
-          </div>
-          <div>
-            <p class="font-headline text-xl text-white font-bold">Reserved</p>
-            <p class="font-label text-xs text-zinc-400 uppercase tracking-wider">In Advance</p>
-          </div>
-          <div>
-            <p class="font-headline text-xl text-white font-bold">5★</p>
-            <p class="font-label text-xs text-zinc-400 uppercase tracking-wider">Rated</p>
-          </div>
-        </div>
-        <p class="font-label text-xs text-zinc-500 uppercase tracking-widest text-center">Seacoast RVIP · The Ride You Can Count On</p>
-      </div>
-    </div>
-  </section>
 
 </main>
 
@@ -780,131 +739,20 @@ var GOOGLE_API_KEY = 'AIzaSyDGel0ktZDQYcdlOuoZo4bAqZWCuGvOVbc';
 var BASE_FARE = 15;        // base fare $
 var RATE_PER_MILE = 2.50;  // per mile
 
-// Service area center
-var SERVICE_CENTER = { lat: 43.0718, lng: -70.7626 }; // Portsmouth NH
 
-// Service area towns with coordinates
-var SERVICE_AREA = [
-  { name: 'Hampton', lat: 42.9362, lng: -70.8400 },
-  { name: 'Portsmouth', lat: 43.0718, lng: -70.7626 },
-  { name: 'Exeter', lat: 42.9812, lng: -70.9478 },
-  { name: 'Rye', lat: 43.0140, lng: -70.7651 },
-  { name: 'Newburyport', lat: 42.8126, lng: -70.8773 },
-  { name: 'Kittery', lat: 43.0870, lng: -70.7348 },
-];
 
-// Airport locations
-var AIRPORTS = [
-  { name: 'Boston Logan (BOS)', lat: 42.3656, lng: -71.0096 },
-  { name: 'Manchester MHT', lat: 42.9326, lng: -71.4357 },
-];
 // ────────────────────────────────────────────────────────────
 
-var map, directionsService, directionsRenderer, autocompletePickup, autocompleteDest;
+var directionsService, autocompletePickup, autocompleteDest;
 var pickupPlace = null, destPlace = null;
 
-// Dark luxury map style
-var DARK_STYLE = [
-  {elementType:'geometry',stylers:[{color:'#1a1a1a'}]},
-  {elementType:'labels.text.fill',stylers:[{color:'#8a8a8a'}]},
-  {elementType:'labels.text.stroke',stylers:[{color:'#1a1a1a'}]},
-  {featureType:'administrative',elementType:'geometry',stylers:[{visibility:'off'}]},
-  {featureType:'road',elementType:'geometry',stylers:[{color:'#2c2c2c'}]},
-  {featureType:'road',elementType:'geometry.stroke',stylers:[{color:'#212121'}]},
-  {featureType:'road.highway',elementType:'geometry',stylers:[{color:'#3a3a3a'}]},
-  {featureType:'road.highway',elementType:'geometry.stroke',stylers:[{color:'#1f1f1f'}]},
-  {featureType:'road.highway',elementType:'labels.text.fill',stylers:[{color:'#f3d19c'}]},
-  {featureType:'water',elementType:'geometry',stylers:[{color:'#0d1b2a'}]},
-  {featureType:'water',elementType:'labels.text.fill',stylers:[{color:'#3d6b8a'}]},
-  {featureType:'poi',stylers:[{visibility:'off'}]},
-  {featureType:'transit',stylers:[{visibility:'off'}]},
-  {featureType:'landscape',elementType:'geometry',stylers:[{color:'#212121'}]},
-];
 
 function initMap() {
-  // Create the dark map
-  map = new google.maps.Map(document.getElementById('map'), {
-    center: SERVICE_CENTER,
-    zoom: 10,
-    styles: DARK_STYLE,
-    disableDefaultUI: false,
-    zoomControl: true,
-    mapTypeControl: false,
-    streetViewControl: false,
-    fullscreenControl: false,
-    gestureHandling: 'cooperative',
-  });
-
-  // Add service area markers with gold dots
-  SERVICE_AREA.forEach(function(town) {
-    new google.maps.Marker({
-      position: { lat: town.lat, lng: town.lng },
-      map: map,
-      title: town.name,
-      icon: {
-        path: google.maps.SymbolPath.CIRCLE,
-        scale: 6,
-        fillColor: '#775a19',
-        fillOpacity: 0.85,
-        strokeColor: '#e8c97a',
-        strokeWeight: 1.5,
-      }
-    });
-  });
-
-  // Add airport markers with white icons
-  AIRPORTS.forEach(function(airport) {
-    new google.maps.Marker({
-      position: { lat: airport.lat, lng: airport.lng },
-      map: map,
-      title: airport.name,
-      icon: {
-        path: 'M21,16v-2l-8-5V3.5C13,2.67,12.33,2,11.5,2S10,2.67,10,3.5V9l-8,5v2l8-2.5V19l-2,1.5V22l3.5-1l3.5,1v-1.5L13,19v-5.5L21,16z',
-        fillColor: '#ffffff',
-        fillOpacity: 0.9,
-        strokeColor: '#775a19',
-        strokeWeight: 1,
-        scale: 1,
-        anchor: new google.maps.Point(12, 12),
-      }
-    });
-  });
-
-  // Draw service area circle
-  new google.maps.Circle({
-    map: map,
-    center: SERVICE_CENTER,
-    radius: 50000, // ~31 miles radius
-    strokeColor: '#775a19',
-    strokeOpacity: 0.4,
-    strokeWeight: 1.5,
-    fillColor: '#775a19',
-    fillOpacity: 0.04,
-  });
-
-  // Setup directions
+  // The visible map is gone, but Directions is a separate service from it:
+  // the distance, drive time and flat-rate estimate below still come from
+  // here, and Places still powers the two address fields.
   directionsService = new google.maps.DirectionsService();
-  directionsRenderer = new google.maps.DirectionsRenderer({
-    map: map,
-    suppressMarkers: false,
-    polylineOptions: {
-      strokeColor: '#C9A84C',
-      strokeWeight: 4,
-      strokeOpacity: 0.9,
-    },
-    markerOptions: {
-      icon: {
-        path: google.maps.SymbolPath.CIRCLE,
-        scale: 8,
-        fillColor: '#000000',
-        fillOpacity: 1,
-        strokeColor: '#775a19',
-        strokeWeight: 2.5,
-      }
-    }
-  });
 
-  // Setup Places autocomplete (new Places API)
   installAddressAutocomplete(document.getElementById('pickup-input'), {
     onSelect: function(place){ pickupPlace = place; if(place.geometry) tryRoute(); }
   });
@@ -996,8 +844,6 @@ function tryRoute() {
     travelMode: google.maps.TravelMode.DRIVING,
   }, function(result, status) {
     if (status === 'OK') {
-      directionsRenderer.setDirections(result);
-
       var leg = result.routes[0].legs[0];
       var distMiles = (leg.distance.value / 1609.34).toFixed(1);
       var duration = leg.duration.text;
@@ -1013,11 +859,6 @@ function tryRoute() {
       document.getElementById('hid-distance').value = distMiles + ' miles';
       document.getElementById('hid-duration').value = duration;
 
-      // Fit map to route
-      var bounds = new google.maps.LatLngBounds();
-      bounds.extend(pickupPlace.geometry.location);
-      bounds.extend(destPlace.geometry.location);
-      map.fitBounds(bounds, { top: 100, bottom: 100, left: 40, right: 40 });
     }
   });
 }
