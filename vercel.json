@@ -6,6 +6,12 @@
     { "source": "/quote.html", "destination": "/contact", "permanent": true }
   ],
   "headers": [
-    { "source": "/secure-access", "headers": [ { "key": "Cache-Control", "value": "no-store" } ] }
+    { "source": "/secure-access", "headers": [ { "key": "Cache-Control", "value": "no-store" } ] },
+    {
+      "source": "/assets/:path*",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=86400, stale-while-revalidate=604800" }
+      ]
+    }
   ]
 }

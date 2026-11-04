@@ -311,12 +311,13 @@ window.addEventListener('DOMContentLoaded', checkWidth);
 </div>
 </div>
 <div class="relative h-[300px] sm:h-[420px] lg:h-[580px] w-full flex items-center justify-center">
-<!-- No poster: the old still flashed on every refresh before the first frame
-     painted. The card sits on black instead, so the gap before playback reads
-     as part of the footage rather than a different photo. preload="auto" so
-     that gap is as short as possible. -->
+<!-- The poster is frame 0 of hero.mp4, not a separate photo, so there is
+     nothing to flash: the still and the first painted frame are the same
+     picture. The earlier poster was a different image, which is why it read
+     as a flash. preload="auto" keeps the gap short. -->
 <div class="absolute inset-0 rounded-xl overflow-hidden shadow-2xl" style="background:#000">
 <video class="w-full h-full object-cover" style="object-position:center center;background:#000" autoplay muted loop playsinline preload="auto"
+       poster="assets/hero-poster.jpg"
        aria-label="Seacoast RVIP chauffeur service">
   <source src="assets/hero.mp4" type="video/mp4"/>
 </video>
