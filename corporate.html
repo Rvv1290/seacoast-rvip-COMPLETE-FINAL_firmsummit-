@@ -28,27 +28,45 @@
 *{box-sizing:border-box;margin:0;padding:0}
 .material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 300,'GRAD' 0,'opsz' 24}
 body{font-family:'Inter',sans-serif;min-height:100vh;background:#fff;overflow-x:hidden}
-.hero-split{display:flex;min-height:100vh}
+.hero-split{display:flex;align-items:center;justify-content:center;min-height:68vh;
+  position:relative;isolation:isolate;overflow:hidden;background:#0b0b0b;padding:4rem 1.5rem}
+/* The Escalade sits behind the card as atmosphere, not as a subject: a low
+   opacity plus a veil, so the white card stays the only thing with contrast. */
+.hero-split::before{content:'';position:absolute;inset:0;z-index:0;
+  background-image:url('assets/vehicle/escalade-hero.jpg');background-size:cover;
+  background-position:center 62%;opacity:0.42;filter:grayscale(0.15)}
+.hero-split::after{content:'';position:absolute;inset:0;z-index:0;
+  background:linear-gradient(180deg,rgba(6,6,6,0.6) 0%,rgba(6,6,6,0.3) 38%,rgba(6,6,6,0.45) 78%,rgba(6,6,6,0.75) 100%)}
 
 /* ─── LAYOUT ─── */
-.left{width:480px;min-width:320px;min-height:100vh;padding:3rem 3.5rem;display:flex;flex-direction:column;background:#fff;position:relative;z-index:2;box-shadow:4px 0 40px rgba(0,0,0,0.07);flex-shrink:0}
-.right{flex:1;min-height:100vh;position:relative;overflow:hidden;isolation:isolate;background:linear-gradient(180deg,#e8e8e6 0%,#dcdcd9 12%,#b6b6b2 34%,#6f6f6b 52%,#232321 70%,#0a0a0a 88%),#0a0a0a}
-.right-img{position:absolute;top:0;left:0;width:100%;height:66%;object-fit:cover;object-position:center 44%;display:block;opacity:1;-webkit-mask-image:linear-gradient(180deg,transparent 0%,#000 9%,#000 70%,transparent 100%);mask-image:linear-gradient(180deg,transparent 0%,#000 9%,#000 70%,transparent 100%)}
-.right-grad{position:absolute;inset:0;background:linear-gradient(180deg,rgba(6,6,6,0) 46%,rgba(6,6,6,0.35) 58%,rgba(6,6,6,0.88) 76%,#050505 100%)}
-.right-content{position:absolute;bottom:3.5rem;left:3.5rem;right:3.5rem;color:white}
+.left{position:relative;z-index:2;width:100%;max-width:440px;min-width:0;min-height:auto;
+  padding:2.9rem 2.6rem 2.4rem;display:flex;flex-direction:column;background:#fff;
+  box-shadow:0 34px 90px rgba(0,0,0,0.5);border-top:3px solid #775a19;flex-shrink:1}
+
+/* ─── NEW TO CORPORATE — wide strip between the hero and the form ─── */
+.corp-cta{background:#fafaf8;border-top:1px solid #e9e9e3;border-bottom:1px solid #e9e9e3;padding:3rem 3.5rem}
+.corp-cta-inner{max-width:1120px;margin:0 auto;display:flex;align-items:center;gap:3.5rem}
+.cc-lead{flex:0 0 250px}
+.cc-tag{font-family:'Work Sans',sans-serif;font-size:0.56rem;font-weight:700;text-transform:uppercase;letter-spacing:0.2em;color:#775a19;margin-bottom:0.45rem}
+.cc-head{font-family:'Times New Roman',serif;font-size:1.45rem;font-weight:700;color:#111;line-height:1.2}
+.cc-grid{flex:1;display:grid;grid-template-columns:repeat(4,1fr);gap:1.5rem}
+.cc-grid>div{border-top:1px solid #e3e3dc;padding-top:0.65rem}
+.cc-grid strong{display:block;font-family:'Work Sans',sans-serif;font-size:0.85rem;font-weight:700;color:#111}
+.cc-grid span{display:block;font-family:Inter,sans-serif;font-size:0.62rem;color:#9a9a93;text-transform:uppercase;letter-spacing:0.1em;margin-top:2px}
+.cc-btn{flex:0 0 auto;background:#000;color:#fff;padding:0.95rem 1.9rem;text-decoration:none;font-family:'Work Sans',sans-serif;font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:0.14em;white-space:nowrap}
 
 /* ─── LOGO ─── */
 .logo{font-family:'Times New Roman',serif;font-size:1.4rem;font-weight:700;color:#000;text-decoration:none;display:block;margin-bottom:3px}
 .logo-tag{font-family:'Work Sans',sans-serif;font-size:0.58rem;font-weight:700;text-transform:uppercase;letter-spacing:0.2em;color:#775a19}
-.logo-wrap{margin-bottom:3rem}
+.logo-wrap{margin-bottom:2rem;text-align:center}
 
 /* ─── STEPS ─── */
 .step{display:none}
 .step.active{display:block}
 
 /* ─── FORM ─── */
-.panel-title{font-family:'Times New Roman',serif;font-size:2rem;font-weight:700;color:#000;line-height:1.1;margin-bottom:0.5rem}
-.panel-sub{font-family:Inter,sans-serif;font-size:0.85rem;color:#666;line-height:1.65;margin-bottom:2.25rem}
+.panel-title{font-family:'Times New Roman',serif;font-size:2rem;font-weight:700;color:#000;line-height:1.1;margin-bottom:0.5rem;text-align:center}
+.panel-sub{font-family:Inter,sans-serif;font-size:0.85rem;color:#666;line-height:1.65;margin-bottom:1.9rem;text-align:center}
 .f-group{margin-bottom:1.25rem}
 .f-label{font-family:'Work Sans',sans-serif;font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:#555;display:block;margin-bottom:0.4rem}
 .f-input{width:100%;padding:0.875rem 0;background:transparent;border:0;border-bottom:2px solid #e5e5e5;font-family:Inter,sans-serif;font-size:0.95rem;color:#000;transition:border-color 0.2s;outline:none}
@@ -84,10 +102,6 @@ body{font-family:'Inter',sans-serif;min-height:100vh;background:#fff;overflow-x:
 .div-line span{font-size:0.72rem;color:#aaa;white-space:nowrap;font-family:Inter,sans-serif}
 
 /* ─── APPLY BANNER ─── */
-.apply-box{background:#fafaf8;border:1px solid #e8e0d0;border-left:3px solid #775a19;padding:1.25rem}
-.apply-box-tag{font-family:'Work Sans',sans-serif;font-size:0.58rem;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:#775a19;margin-bottom:0.3rem}
-.apply-box-txt{font-family:Inter,sans-serif;font-size:0.82rem;color:#555;line-height:1.55;margin-bottom:0.875rem}
-.apply-box a{background:#000;color:#fff;padding:0.5rem 1.25rem;font-family:'Work Sans',sans-serif;font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;text-decoration:none;border-bottom:2px solid #775a19;display:inline-block}
 
 /* ─── FOOTER LINKS ─── */
 .foot-links{margin-top:auto;padding-top:2rem;display:flex;flex-wrap:wrap;gap:1rem}
@@ -95,12 +109,6 @@ body{font-family:'Inter',sans-serif;min-height:100vh;background:#fff;overflow-x:
 .foot-links a:hover{color:#000}
 
 /* ─── RIGHT PANEL ─── */
-.r-tag{font-family:'Work Sans',sans-serif;font-size:0.58rem;font-weight:700;text-transform:uppercase;letter-spacing:0.18em;color:#e8c97a;margin-bottom:0.875rem}
-.r-headline{font-family:'Times New Roman',serif;font-size:clamp(1.75rem,3vw,2.5rem);font-weight:700;color:#fff;line-height:1.15;margin-bottom:0.875rem}
-.r-sub{font-family:Inter,sans-serif;font-size:0.85rem;color:rgba(255,255,255,0.55);line-height:1.65;max-width:360px}
-.r-stats{display:flex;gap:2.5rem;margin-top:2rem}
-.r-stat-val{font-family:'Work Sans',sans-serif;font-size:1.25rem;font-weight:700;color:#e8c97a}
-.r-stat-lbl{font-family:Inter,sans-serif;font-size:0.68rem;color:rgba(255,255,255,0.45);margin-top:2px}
 
 /* ─── APPLY FORM (below fold) ─── */
 .apply-section{padding:4rem 3.5rem;background:#fafaf8;border-top:3px solid #775a19}
@@ -114,12 +122,13 @@ body{font-family:'Inter',sans-serif;min-height:100vh;background:#fff;overflow-x:
 .r-sel-btn.on{background:#000;color:#fff;border-color:#000}
 
 @media(max-width:800px){
-  .hero-split{flex-direction:column}
-  .left{width:100%;padding:2rem 1.75rem;min-height:auto;box-shadow:none}
-  .right{min-height:560px;position:relative}
-  .right-img{height:46%;object-position:center 28%}
-  .right-grad{background:linear-gradient(180deg,rgba(6,6,6,0) 24%,rgba(6,6,6,0.5) 38%,rgba(6,6,6,0.94) 52%,#050505 64%)}
-  .right-content{bottom:2rem;left:1.75rem;right:1.75rem}
+  .hero-split{min-height:auto;padding:2.5rem 1.25rem}
+  .left{width:100%;padding:2rem 1.6rem}
+  .corp-cta{padding:2.25rem 1.75rem}
+  .corp-cta-inner{flex-direction:column;align-items:stretch;gap:1.75rem}
+  .cc-lead{flex:none}
+  .cc-grid{grid-template-columns:1fr 1fr;gap:1rem 1.25rem}
+  .cc-btn{text-align:center}
   .apply-section{padding:2.5rem 1.75rem}
   .a-grid{grid-template-columns:1fr}
 }
@@ -154,12 +163,6 @@ body{font-family:'Inter',sans-serif;min-height:100vh;background:#fff;overflow-x:
     <button class="btn-blk" id="send-btn" onclick="sendCode()" style="margin-top:10px">Sign In →</button>
     <button onclick="openCorpForgotModal()" style="width:100%;margin-bottom:0.875rem;background:transparent;border:none;color:#888;font-size:0.7rem;cursor:pointer;text-decoration:underline">Forgot Password?</button>
     <button class="btn-out" onclick="window.location.href='index.html'">← Back to Home</button>
-    <div class="div-line"><span>New to Corporate?</span></div>
-    <div class="apply-box">
-      <div class="apply-box-tag">💼 Apply for a Business Account</div>
-      <div class="apply-box-txt">NET-30 invoicing · Priority dispatch · Monthly statements· Dedicated support</div>
-      <a href="#apply">Apply Now →</a>
-    </div>
     
     <div id="migration-prompt" style="display:none;margin-top:1.5rem;padding:1.25rem;background:#fff8e1;border:1px solid #ffe082;border-radius:6px;font-size:0.8rem">
       <div style="font-weight:700;color:#775a19">First-time sign in?</div>
@@ -222,7 +225,7 @@ body{font-family:'Inter',sans-serif;min-height:100vh;background:#fff;overflow-x:
   <div style="background:#fff;width:90%;max-width:400px;padding:2rem;position:relative;border-top:4px solid #775a19">
     <button onclick="closeCorpForgotModal()" style="position:absolute;top:1rem;right:1rem;background:transparent;border:none;font-size:1.5rem;cursor:pointer;color:#aaa">&times;</button>
     <h3 style="font-family:'Times New Roman',serif;font-size:1.35rem;margin-bottom:0.5rem">Reset Password</h3>
-    <p style="font-size:0.85rem;color:#666;line-height:1.5;margin-bottom:1.25rem">Enter your business email. We'll send you a secure link to set a new password.</p>
+    <p style="font-size:0.85rem;color:#666;line-height:1.5;margin-bottom:1.25rem">Enter your business email. We'll email you a temporary password — sign in with it here, then choose a new one.</p>
 
     <div id="c-forgot-err" class="alert-err" style="margin-bottom:1rem"></div>
     <div id="c-forgot-succ" class="alert-ok" style="margin-bottom:1rem"></div>
@@ -235,22 +238,24 @@ body{font-family:'Inter',sans-serif;min-height:100vh;background:#fff;overflow-x:
   </div>
 </div>
 
-<!-- ═══════════ RIGHT PANEL ═══════════ -->
-<div class="right">
-  <img class="right-img" src="assets/vehicle/palisade-black.jpg" alt="Black Hyundai Palisade SUV"/>
-  <div class="right-grad"></div>
-  <div class="right-content">
-    <div class="r-tag">Seacoast RVIP — Corporate</div>
-    <div class="r-headline">The Business<br>Standard in Ground<br>Transportation</div>
-    <div class="r-sub">One class of vehicle — the black SUV — for companies that move. Pre-arranged, professional, and consistent on every trip.</div>
-    <div class="r-stats">
-      <div><div class="r-stat-val">NET-30</div><div class="r-stat-lbl">Invoicing</div></div>
-      <div><div class="r-stat-val">Priority</div><div class="r-stat-lbl">Dispatch</div></div>
-      <div><div class="r-stat-val">Live</div><div class="r-stat-lbl">Phone Support</div></div>
+</div><!-- /hero-split -->
+
+<!-- ═══════════ NEW TO CORPORATE — wide strip ═══════════ -->
+<div class="corp-cta">
+  <div class="corp-cta-inner">
+    <div class="cc-lead">
+      <div class="cc-tag">New to Corporate</div>
+      <div class="cc-head">Apply for a business account</div>
     </div>
+    <div class="cc-grid">
+      <div><strong>NET-30</strong><span>Invoicing</span></div>
+      <div><strong>Priority</strong><span>Dispatch</span></div>
+      <div><strong>Monthly</strong><span>Statements</span></div>
+      <div><strong>Dedicated</strong><span>Support</span></div>
+    </div>
+    <a href="#apply" class="cc-btn">Apply Now →</a>
   </div>
 </div>
-</div><!-- /hero-split -->
 
 <!-- ═══════════ APPLY SECTION — Full Width Below ═══════════ -->
 
