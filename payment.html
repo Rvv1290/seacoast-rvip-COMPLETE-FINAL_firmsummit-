@@ -297,13 +297,7 @@ checkWidth();
           <span class="font-body text-xs text-on-surface-variant">@Ramon-Vargas-83</span>
         </a>
 
-        <a id="btn-cash" onclick="selectPay('cash');return false" href="#" class="pay-btn">
-          <span class="material-symbols-outlined text-secondary" style="font-size:2.25rem">payments</span>
-          <span class="font-label text-sm font-bold uppercase tracking-wider text-primary">Cash</span>
-          <span class="font-body text-xs text-on-surface-variant">Pay on arrival</span>
-        </a>
-
-        <a id="btn-bank" onclick="selectPay('bank');return false" href="#" class="pay-btn" style="grid-column:span 2">
+        <a id="btn-bank" onclick="selectPay('bank');return false" href="#" class="pay-btn">
           <span class="material-symbols-outlined text-secondary" style="font-size:2.25rem">account_balance</span>
           <span class="font-label text-sm font-bold uppercase tracking-wider text-primary">Bank Account (ACH)</span>
           <span class="font-body text-xs text-on-surface-variant">Direct bank transfer · No card needed</span>
@@ -392,30 +386,6 @@ checkWidth();
       </a>
     </div>
 
-    <!-- CASH SECTION -->
-    <div id="section-cash" class="section-hidden bg-white p-5 mb-5 border-l-4 border-secondary shadow-sm">
-      <div class="bg-green-50 border border-green-200 p-5 mb-4 text-center">
-        <span class="material-symbols-outlined text-green-600 block mb-2" style="font-size:2rem">check_circle</span>
-        <p class="font-headline text-lg text-green-800 mb-1">You're All Set!</p>
-        <p class="text-xs text-green-700">No payment needed now — pay your driver on arrival.</p>
-      </div>
-      <ul class="space-y-3">
-        <li class="flex items-center gap-3 text-sm text-on-surface-variant">
-          <span class="material-symbols-outlined text-secondary" style="font-size:16px">payments</span>
-          Have <strong class="text-primary" id="cash-amt">exact amount</strong> ready
-        </li>
-        <li class="flex items-center gap-3 text-sm text-on-surface-variant">
-          <span class="material-symbols-outlined text-secondary" style="font-size:16px">schedule</span>
-          Driver arrives <strong class="text-primary">10 minutes early</strong>
-        </li>
-        <li class="flex items-center gap-3 text-sm text-on-surface-variant">
-          <span class="material-symbols-outlined text-secondary" style="font-size:16px">confirmation_number</span>
-          Your code: <strong class="text-primary" id="cash-code">—</strong>
-        </li>
-      </ul>
-    </div>
-
-    
     <!-- BANK ACCOUNT (ACH) SECTION -->
     <div id="section-bank" class="section-hidden bg-white p-5 mb-5 shadow-sm" style="border-left:4px solid #C9A84C">
       <div class="flex items-center gap-2 mb-3">
@@ -962,8 +932,6 @@ function renderPayment(code, b) {
   document.getElementById('card-amt').textContent = b.price;
   document.getElementById('venmo-amt').textContent = '$' + b.price;
   document.getElementById('venmo-code').textContent = code;
-  document.getElementById('cash-amt').textContent = '$' + b.price + ' cash';
-  document.getElementById('cash-code').textContent = code;
 
   // Transportation provider (carrier of record) + vehicle, shown before payment
   var carrierEl = document.getElementById('pay-carrier');
@@ -1112,7 +1080,7 @@ async function submitCardPayment() {
 
 // Payment method toggle
 function selectPay(method) {
-  ['apple','card','venmo','cash','bank'].forEach(function(m){
+  ['apple','card','venmo','bank'].forEach(function(m){
     var btn = document.getElementById('btn-'+m);
     var sec = document.getElementById('section-'+m);
     if(btn) btn.classList.remove('selected');

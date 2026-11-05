@@ -261,9 +261,13 @@ checkWidth();
 </section>
 <!-- Professional Inquiry Form & Visual -->
 <section class="py-24 px-12 bg-surface-container-low">
-<div class="max-w-5xl mx-auto flex flex-col md:flex-row gap-24">
-<div class="w-full md:w-1/2">
-<h2 class="font-headline text-4xl mb-8" style="">Direct Inquiry</h2>
+<div class="max-w-xl mx-auto">
+<div class="w-full">
+<div class="text-center mb-10">
+<span class="font-label text-secondary uppercase tracking-[0.25em] text-xs font-semibold mb-4 block">Direct Inquiry</span>
+<h2 class="font-headline text-4xl mb-5" style="">Get in touch.</h2>
+<div style="width:48px;height:1px;background:#C9A84C;margin:0 auto"></div>
+</div>
 <form action="https://formsubmit.co/info@seacoastrvip.com" method="POST" class="space-y-8" onsubmit="contactSubmit(event)">
 <input type="hidden" name="_subject" value="[CONTACT] New Message via Seacoast RVIP Website"/>
 <input type="hidden" name="_captcha" value="false"/>
@@ -316,11 +320,11 @@ CONFIDENTIALITY NOTICE: This communication is intended solely for the named reci
 <div id="contact-success" style="display:none;background:#f0fdf4;border:1px solid #bbf7d0;padding:1rem;color:#166534;font-family:Inter,sans-serif;font-size:0.875rem;margin-bottom:1rem">
   ✅ Message sent! We aim to reply within 24 hours.
 </div>
-<button id="contact-btn" class="bg-primary text-on-primary px-12 py-4 font-label uppercase tracking-widest text-sm hover:scale-[0.98] transition-transform flex items-center gap-4" type="submit">
+<button id="contact-btn" class="bg-primary text-on-primary px-12 py-4 font-label uppercase tracking-widest text-sm hover:scale-[0.98] transition-transform flex items-center gap-4 mx-auto" type="submit">
   Send Message
   <span class="material-symbols-outlined text-sm">arrow_forward</span>
 </button>
-<p class="font-body text-xs text-on-surface-variant leading-relaxed mt-4 max-w-xl">
+<p class="font-body text-xs text-on-surface-variant leading-relaxed mt-6 max-w-md mx-auto text-center">
   By sending this form, you agree that we may reply by email or phone about your request. We do not send marketing messages without your separate consent. See our <a href="privacy.html" class="underline" style="color:#775a19">Privacy Policy</a> and <a href="terms.html" class="underline" style="color:#775a19">Terms of Service</a>.
 </p>
 </form>
@@ -339,26 +343,6 @@ async function contactSubmit(e) {
   form.reset();
 }
 </script>
-</div>
-<div class="w-full md:w-1/2 hidden md:block">
-<div class="aspect-[4/5] relative overflow-hidden flex" style="background:#0a0a0a;border:1px solid rgba(201,168,76,0.28)">
-<div class="absolute inset-0" style="background:radial-gradient(120% 80% at 82% 4%, rgba(201,168,76,0.16) 0%, rgba(201,168,76,0) 55%)"></div>
-<div class="relative z-10 p-10 flex flex-col h-full w-full">
-<div class="flex items-center justify-between">
-<span class="font-label uppercase tracking-[0.25em] text-xs" style="color:#C9A84C">Seacoast RVIP</span>
-<img src="assets/rvip-monogram-gold.png" alt="RVIP" style="height:30px;width:auto;opacity:0.9"/>
-</div>
-<div class="mt-auto">
-<div style="width:48px;height:1px;background:#C9A84C;margin-bottom:1.75rem"></div>
-<h4 class="font-headline text-3xl leading-snug mb-7" style="color:#fff">The ride you can count on.</h4>
-<div class="flex flex-col gap-3.5">
-<div class="flex items-center gap-3"><span style="width:5px;height:5px;border-radius:50%;background:#C9A84C;flex-shrink:0"></span><span class="text-sm" style="color:rgba(255,255,255,0.72)">Pre-arranged &amp; private &mdash; no surge, ever</span></div>
-<div class="flex items-center gap-3"><span style="width:5px;height:5px;border-radius:50%;background:#C9A84C;flex-shrink:0"></span><span class="text-sm" style="color:rgba(255,255,255,0.72)">Flat fare agreed before you book</span></div>
-<div class="flex items-center gap-3"><span style="width:5px;height:5px;border-radius:50%;background:#C9A84C;flex-shrink:0"></span><span class="text-sm" style="color:rgba(255,255,255,0.72)">Founder-operated on the Seacoast</span></div>
-</div>
-</div>
-</div>
-</div>
 </div>
 </div>
 </section>
@@ -407,7 +391,7 @@ async function contactSubmit(e) {
 <span class="material-symbols-outlined text-secondary transition-transform group-hover:rotate-45" data-icon="add" style="">add</span>
 </button>
 <div class="mt-4 text-on-surface-variant leading-relaxed max-w-2xl text-sm" style="">
-                            Card and Apple Pay payments &mdash; and bank transfers &mdash; are processed securely through Stripe. We also accept Venmo, and cash on arrival. Corporate accounts are billed to the account and settled from the client portal.
+                            Card, Apple Pay and other digital payments are processed securely through Stripe, and we also accept Venmo. Corporate accounts are billed to the account and settled from the client portal.
                         </div>
 </div>
 <!-- FAQ Item 5 -->
