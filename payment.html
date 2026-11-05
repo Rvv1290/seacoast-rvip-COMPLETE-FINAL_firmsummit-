@@ -250,6 +250,22 @@ checkWidth();
       <p class="font-label text-xs uppercase tracking-widest opacity-60 mb-1">Total Amount Due</p>
       <p class="font-headline font-bold mb-1 price-hero" id="price-display">$0</p>
       <p class="font-label text-xs uppercase tracking-widest opacity-50 leading-relaxed" id="service-display">—</p>
+      <p class="text-xs opacity-60 leading-relaxed mt-2" style="font-family:Inter,sans-serif;text-transform:none;letter-spacing:0">All-in price — includes every mandatory charge. No surge pricing. An optional tip is up to you.</p>
+    </div>
+
+    <!-- TRANSPORTATION PROVIDER (carrier of record) — shown before payment -->
+    <div class="bg-white p-5 mb-5 shadow-sm" style="border-left:4px solid #775a19">
+      <p class="font-label text-xs uppercase tracking-widest text-secondary font-bold mb-3">Your Transportation Provider</p>
+      <div class="detail-row">
+        <span style="font-family:'Work Sans',sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:#444748;min-width:110px;flex-shrink:0">Carrier of record</span>
+        <span id="pay-carrier" style="font-size:0.9rem;color:#1a1c1c;text-align:right;font-weight:600;font-family:Inter,sans-serif">Seacoast RVIP, LLC</span>
+      </div>
+      <div class="detail-row">
+        <span style="font-family:'Work Sans',sans-serif;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:#444748;min-width:110px;flex-shrink:0">Vehicle</span>
+        <span id="pay-vehicle" style="font-size:0.9rem;color:#1a1c1c;text-align:right;font-family:Inter,sans-serif">—</span>
+      </div>
+      <p class="text-xs text-on-surface-variant leading-relaxed mt-3">On an Own-Lane trip, Seacoast RVIP, LLC is your carrier of record. If an approved partner carrier is assigned, the partner's legal name is shown here before you pay. Your driver and the vehicle plate are confirmed with you before pickup.</p>
+      <p class="text-xs leading-relaxed mt-3" style="color:#1a1c1c;background:#fdfaf4;border:1px solid #e8c97a;padding:0.75rem 0.9rem">By continuing to payment, you acknowledge the named provider as your transportation provider and agree to the reservation details.</p>
     </div>
 
     <!-- 4 Payment buttons -->
@@ -294,6 +310,11 @@ checkWidth();
         </a>
 
       </div>
+    </div>
+
+    <!-- Payment-before-trip note -->
+    <div class="mb-5 text-center" style="background:#f3f3f3;padding:0.9rem 1rem">
+      <p class="text-xs text-on-surface-variant leading-relaxed" style="font-family:Inter,sans-serif">Your trip is confirmed once payment is received. Your driver may arrive early, but the trip does not begin until payment is confirmed. A digital receipt is available as soon as you pay.</p>
     </div>
 
     <!-- APPLE PAY / GOOGLE PAY SECTION -->
@@ -943,6 +964,12 @@ function renderPayment(code, b) {
   document.getElementById('venmo-code').textContent = code;
   document.getElementById('cash-amt').textContent = '$' + b.price + ' cash';
   document.getElementById('cash-code').textContent = code;
+
+  // Transportation provider (carrier of record) + vehicle, shown before payment
+  var carrierEl = document.getElementById('pay-carrier');
+  if (carrierEl) carrierEl.textContent = (b.carrier && String(b.carrier).trim()) ? b.carrier : 'Seacoast RVIP, LLC';
+  var vehEl = document.getElementById('pay-vehicle');
+  if (vehEl) vehEl.textContent = b.vehicle || '—';
 
   // Venmo deep link
   document.getElementById('venmo-btn').href =
