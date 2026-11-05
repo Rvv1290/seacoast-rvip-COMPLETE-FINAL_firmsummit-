@@ -3,7 +3,15 @@
   "trailingSlash": false,
   "redirects": [
     { "source": "/quote", "destination": "/contact", "permanent": true },
-    { "source": "/quote.html", "destination": "/contact", "permanent": true }
+    { "source": "/quote.html", "destination": "/contact", "permanent": true },
+    { "source": "/app-terms", "destination": "/terms", "permanent": true },
+    { "source": "/app-terms.html", "destination": "/terms", "permanent": true },
+    { "source": "/app-privacy", "destination": "/privacy", "permanent": true },
+    { "source": "/app-privacy.html", "destination": "/privacy", "permanent": true },
+    { "source": "/safety-policy", "destination": "/safety", "permanent": true },
+    { "source": "/safety-policy.html", "destination": "/safety", "permanent": true },
+    { "source": "/electronic-consent", "destination": "/e-sign", "permanent": true },
+    { "source": "/electronic-consent.html", "destination": "/e-sign", "permanent": true }
   ],
   "headers": [
     { "source": "/secure-access", "headers": [ { "key": "Cache-Control", "value": "no-store" } ] },
