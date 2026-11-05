@@ -266,7 +266,7 @@ checkWidth();
       <div class="cap">
         <span class="material-symbols-outlined">price_check</span>
         <h4>Fare before you confirm</h4>
-        <p>Review the route and the upfront trip price first. Flat rates, quoted in advance — never metered, never surged.</p>
+        <p>Review the route and the upfront trip price first. Your full price is quoted in advance and you agree to it before you reserve — never metered, never surged.</p>
       </div>
       <div class="cap">
         <span class="material-symbols-outlined">add_location_alt</span>
@@ -419,7 +419,7 @@ checkWidth();
     function shareRVIP(){
       var url='https://www.seacoastrvip.com';
       var data={title:'Seacoast RVIP — The Ride You Can Count On',
-                text:'Luxury pre-arranged rides across the Northeastern Seacoast. Flat rates, no surge pricing.',
+                text:'Luxury pre-arranged rides across the Northeastern Seacoast. Upfront pricing, no surge.',
                 url:url};
       if(navigator.share){navigator.share(data).catch(function(){});}
       else if(navigator.clipboard){navigator.clipboard.writeText(url)
