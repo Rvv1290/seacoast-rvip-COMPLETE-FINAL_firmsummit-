@@ -371,6 +371,17 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
           </span>
         </label>
       </div>
+      <!-- 18+ confirmation. Recorded in the shared consent ledger (users/{uid})
+           by doSignup() in the same shape the apps use, so a rider who signs up
+           on the web is not re-prompted for age in the app. Never pre-check it. -->
+      <div style="margin-bottom:1.25rem;padding:0.875rem 1rem;background:#fdfaf4;border:1.5px solid #775a19">
+        <label style="display:flex;align-items:flex-start;gap:0.75rem;cursor:pointer">
+          <input type="checkbox" id="reg-adult" style="margin-top:2px;width:17px;height:17px;accent-color:#775a19;flex-shrink:0;cursor:pointer"/>
+          <span style="font-size:0.8rem;color:#1a1c1c;line-height:1.5">
+            I confirm I am at least 18. RVIP does not transport minors, including when accompanied.
+          </span>
+        </label>
+      </div>
       <button id="reg-btn" onclick="doSignup()" class="btn-k" style="width:100%">Create My Account →</button>
     </div>
 
@@ -1449,6 +1460,40 @@ auth.getRedirectResult().then(function(result) {
   localStorage.removeItem('rvip-social-pending');
 });
 
+// Records the Rider's 18+ confirmation and web sign-up acceptance in the
+// SHARED consent ledger at users/{uid} — the same place and field shape the
+// RVIP apps use (see RiderLegalAcceptance in ViewsRiderLegalUpdate.swift), so a
+// rider who signs up on the web is not re-prompted for age in the app. The
+// SHA-256 digests are of the current master legal texts
+// (Legal_Rider_Terms.txt / Legal_Privacy_Policy.txt) published on this site.
+// Must run while the session is a plain app user (before any portal-token
+// upgrade), because that is when Firestore rules allow writing users/{uid}.
+async function recordWebRiderConsent(uid, acceptedAtIso, isNewAuthUser) {
+  if (!uid) throw new Error('Missing user id for the consent ledger');
+  const FV = firebase.firestore.FieldValue;
+  const evidence = {
+    version: '2026-11-01-formation',
+    termsSHA256: 'bbea3b5070661c4b8f333dd963b621f988a71cd4dadda95f68f3c8abff26167b',
+    privacyPolicySHA256: 'b7395a6dc026d4f33e42598cc0e7b187d90cad0a80d3c0eb4cb124034b96d708',
+    method: 'web_signup_checkbox',
+    platform: 'web',
+    acceptedAt: acceptedAtIso || new Date().toISOString()
+  };
+  const payload = {
+    adultAttestation: {
+      confirmed18OrOlder: true,
+      method: 'checked_in_web_signup',
+      confirmedAt: FV.serverTimestamp()
+    },
+    legalAcceptanceHistory: FV.arrayUnion(evidence),
+    updatedAt: FV.serverTimestamp()
+  };
+  // The apps treat accountTermsAcceptance as the original sign-up proof and
+  // never overwrite it, so only a brand-new account writes it.
+  if (isNewAuthUser) payload.accountTermsAcceptance = evidence;
+  await db.collection('users').doc(uid).set(payload, { merge: true });
+}
+
 async function doSignup() {
   const name = document.getElementById('reg-name').value.trim();
   const email = document.getElementById('reg-email').value.trim();
@@ -1471,6 +1516,12 @@ async function doSignup() {
     err.style.display = 'block';
     return;
   }
+  const adultBox = document.getElementById('reg-adult');
+  if (!adultBox || !adultBox.checked) {
+    err.textContent = 'Please confirm you are at least 18 to continue.';
+    err.style.display = 'block';
+    return;
+  }
   const tosAcceptedAt = new Date().toISOString();
 
   btn.disabled = true; btn.textContent = 'Creating Account...';
@@ -1487,6 +1538,7 @@ async function doSignup() {
 
     // Create Firebase Auth account (enables real password reset emails)
     let firebaseUser = null;
+    let isNewAuthUser = true;
     try {
       const cred = await auth.createUserWithEmailAndPassword(email, pwd);
       firebaseUser = cred.user;
@@ -1494,6 +1546,7 @@ async function doSignup() {
     } catch (authErr) {
       if (authErr.code === 'auth/email-already-in-use') {
         // Firebase Auth account already exists — just sign them in
+        isNewAuthUser = false;
         try {
           const cred = await auth.signInWithEmailAndPassword(email, pwd);
           firebaseUser = cred.user;
@@ -1506,6 +1559,21 @@ async function doSignup() {
       } else {
         throw authErr;
       }
+    }
+
+    // Record the 18+ confirmation (and web sign-up acceptance) in the shared
+    // consent ledger now — before any portal-token upgrade below, while this
+    // session is still a plain app user that the Firestore rules let write
+    // users/{uid}. Required: don't proceed as if consent was recorded when it
+    // was not.
+    try {
+      await recordWebRiderConsent(firebaseUser.uid, tosAcceptedAt, isNewAuthUser);
+    } catch (ledgerErr) {
+      console.error('consent ledger write failed:', (ledgerErr && ledgerErr.code) || '', (ledgerErr && ledgerErr.message) || '');
+      err.textContent = 'We could not record your age and terms confirmation. Please check your connection and try again.';
+      err.style.display = 'block';
+      btn.disabled = false; btn.textContent = 'Create My Account →';
+      return;
     }
 
     // Check Firestore for existing email doc
@@ -1525,6 +1593,8 @@ async function doSignup() {
       createdAt: new Date().toISOString(),
       tosAcceptedAt,
       tosVersion: '2026-11-01-formation',
+      adultConfirmed18: true,
+      adultConfirmedAt: tosAcceptedAt,
       authProvider: 'email'
     };
     await ref.set(data);

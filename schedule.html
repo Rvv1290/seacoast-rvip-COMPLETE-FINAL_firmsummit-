@@ -146,7 +146,11 @@ body{font-family:'Inter',sans-serif;background-color:#f7f7f4}
 })();
 
 function saveBookingToFirebase(data) {
-  if (!window._db) return;
+  // Returns a promise that resolves only when the booking is written to
+  // Firestore (the system of record the admin dashboard reads). The caller
+  // gates the confirmation screen on it, so a failed write can never show a
+  // false "Booking Request Sent!".
+  if (!window._db) return Promise.reject(new Error('Database unavailable'));
   var id = 'bk_' + Date.now().toString();
   var doc = {
     id:             id,
@@ -183,30 +187,35 @@ function saveBookingToFirebase(data) {
     }
   } catch(e) {}
 
-  window._db.collection('bookings').doc(id).set(doc)
-    .then(function(){ console.log('Booking saved to Firebase:', doc.code); })
-    .catch(function(e){ console.warn('Firebase error:', e.message); });
+  // Mirror to localStorage first so the request is never lost, even if the
+  // network write below fails.
   try {
     var bks = JSON.parse(localStorage.getItem('rv-bks') || '[]');
     bks.push(doc);
     localStorage.setItem('rv-bks', JSON.stringify(bks));
   } catch(le) {}
 
-  // Auto-detect corporate member — link booking to corporate account.
-  // This used to pull every Approved/Active corporate account into the browser
-  // to compare phone numbers, which handed the whole client list — companies,
-  // contacts and member names — to anyone who loaded this page. The match now
-  // happens inside the linkBookingToCorporate function.
-  var rawPhone = (data.phone || '').replace(/\D/g, '').slice(-10);
-  if (rawPhone.length === 10) {
-    try {
-      firebase.functions().httpsCallable('linkBookingToCorporate')({ bookingId: id, phone: rawPhone })
-        .then(function(res) {
-          if (res && res.data && res.data.linked) console.log('Booking auto-linked to a corporate account');
-        })
-        .catch(function(e) { console.warn('Corp link check failed:', (e && e.code) || e); });
-    } catch (e) { console.warn('Corp link check unavailable:', e); }
-  }
+  // The booking write is the system of record. Return its promise so the
+  // caller only shows the confirmation once it actually resolves.
+  return window._db.collection('bookings').doc(id).set(doc).then(function(){
+    console.log('Booking saved to Firebase:', doc.code);
+
+    // Auto-detect corporate member — link the booking to a corporate account,
+    // only after the booking exists. The match happens inside the
+    // linkBookingToCorporate function so the client list is never pulled into
+    // the browser.
+    var rawPhone = (data.phone || '').replace(/\D/g, '').slice(-10);
+    if (rawPhone.length === 10) {
+      try {
+        firebase.functions().httpsCallable('linkBookingToCorporate')({ bookingId: id, phone: rawPhone })
+          .then(function(res) {
+            if (res && res.data && res.data.linked) console.log('Booking auto-linked to a corporate account');
+          })
+          .catch(function(e) { console.warn('Corp link check failed:', (e && e.code) || e); });
+      } catch (e) { console.warn('Corp link check unavailable:', e); }
+    }
+    return id;
+  });
 }
 </script>
 <body class="text-on-background antialiased">
@@ -921,37 +930,70 @@ function handleSubmit(e) {
   var emailEl = form.querySelector('input[name="Email"]');
   if (emailEl) document.getElementById('reply-email').value = emailEl.value;
 
-  // Build FormData
-  var fd = new FormData(form);
+  // Build the booking and save it locally so the request is never lost.
+  var bookingData = saveBookingToStorage(code);
 
-  // Submit to FormSubmit via fetch
+  // A booking is only "sent" once it lands in Firestore — the system of record
+  // the admin dashboard reads. Gate the confirmation screen on that write so we
+  // never tell a rider their ride is booked when it was not actually recorded.
+  saveBookingToFirebase(bookingData)
+    .then(function() {
+      // Recorded. The dashboard already has it; email is a courtesy notice.
+      sendBookingEmail(form, false);
+      showSuccessWithCode(code, bookingData);
+    })
+    .catch(function(e) {
+      console.warn('Booking not recorded:', (e && e.message) || e);
+      // Not recorded — email is now the only ops channel, so allow the native
+      // fallback. Do NOT show the green confirmation.
+      sendBookingEmail(form, true);
+      showBookingWriteError();
+    });
+}
+
+// Sends the booking email through FormSubmit. Whether this succeeds does not
+// gate the confirmation screen — the Firestore write does. When the booking
+// failed to record (allowNativeFallback), a blocked fetch falls back to a
+// native form POST so the email still reaches us.
+function sendBookingEmail(form, allowNativeFallback) {
+  var fd = new FormData(form);
   fetch('https://formsubmit.co/info@seacoastrvip.com', {
     method: 'POST',
     body: fd
   }).then(function(r) {
     console.log('FormSubmit response:', r.status);
-    showSuccessWithCode(code, form);
   }).catch(function(err) {
-    console.log('Fetch error, trying native submit:', err);
-    // Fallback: native form submit
-    showSuccessWithCode(code, form);
-    setTimeout(function() {
-      var f2 = document.createElement('form');
-      f2.method = 'POST';
-      f2.action = 'https://formsubmit.co/info@seacoastrvip.com';
-      f2.style.display = 'none';
-      var fd2 = new FormData(form);
-      fd2.forEach(function(val, key) {
-        var i = document.createElement('input');
-        i.type = 'hidden';
-        i.name = key;
-        i.value = val;
-        f2.appendChild(i);
-      });
-      document.body.appendChild(f2);
-      f2.submit();
-    }, 2000);
+    console.log('Email fetch failed:', err);
+    if (!allowNativeFallback) return;
+    var f2 = document.createElement('form');
+    f2.method = 'POST';
+    f2.action = 'https://formsubmit.co/info@seacoastrvip.com';
+    f2.style.display = 'none';
+    var fd2 = new FormData(form);
+    fd2.forEach(function(val, key) {
+      var i = document.createElement('input');
+      i.type = 'hidden';
+      i.name = key;
+      i.value = val;
+      f2.appendChild(i);
+    });
+    document.body.appendChild(f2);
+    f2.submit();
   });
+}
+
+// Shown when the booking could not be written to the system of record. The
+// request is still in localStorage and we still email it, but we do NOT claim
+// it is confirmed.
+function showBookingWriteError() {
+  var em = document.getElementById('err-msg');
+  if (em) {
+    em.innerHTML = 'We could not confirm your booking just now, so it was not saved. Please try again, or call/text us at <strong>(978) 255-3140</strong> and we will book it for you.';
+    em.classList.remove('hidden');
+  }
+  var btn = document.getElementById('sub-btn');
+  if (btn) { btn.textContent = 'Request My Ride →'; btn.disabled = false; }
+  window.scrollTo(0, 0);
 }
 
 function generateCode() {
@@ -987,7 +1029,8 @@ function saveBookingToStorage(code) {
     submittedAt: new Date().toISOString()
   };
   localStorage.setItem('booking_' + code, JSON.stringify(data));
-  saveBookingToFirebase(data);
+  // The Firestore write is driven by handleSubmit so its result can gate the
+  // confirmation screen — don't fire it here.
   return data;
 }
 
@@ -1002,9 +1045,8 @@ function getEstimatedAmount() {
   return 95;
 }
 
-function showSuccessWithCode(code, form) {
-  var bookingData = saveBookingToStorage(code);
-  var name = bookingData.name || 'there';
+function showSuccessWithCode(code, bookingData) {
+  var name = (bookingData && bookingData.name) || 'there';
   var firstName = name.split(' ')[0];
 
   document.getElementById('book-form').style.display = 'none';
