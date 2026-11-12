@@ -10,6 +10,8 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-check-compat.js"></script>
+<script src="appcheck-config.js"></script>
 <script src="https://js.stripe.com/v3/"></script>
 <style>
 :root{--gold:#C9A84C;--gold-dark:#775a19;--bg:#ffffff;--sidebar:#fcfcfc;--card:#ffffff;--border:#eeeeee;--text:#1a1a1a;--text-sec:#666666}
@@ -1166,6 +1168,7 @@ const FB_CFG = {
   appId: "1:684535453116:web:922c843b5bad3b81ad47b9"
 };
 if(!firebase.apps.length) firebase.initializeApp(FB_CFG);
+if(window.RVIP_ACTIVATE_APPCHECK) RVIP_ACTIVATE_APPCHECK();
 
 
 const db = firebase.firestore();

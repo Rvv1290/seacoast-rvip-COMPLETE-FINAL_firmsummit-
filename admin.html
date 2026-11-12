@@ -14,6 +14,8 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-check-compat.js"></script>
+  <script src="appcheck-config.js"></script>
   <style>
     * {
       box-sizing: border-box;
@@ -1852,6 +1854,7 @@
           appId: '1:684535453116:web:922c843b5bad3b81ad47b9'
         });
       }
+      if (window.RVIP_ACTIVATE_APPCHECK) RVIP_ACTIVATE_APPCHECK();
       db = firebase.firestore();
       console.log('Firebase ready');
     } catch (e) { console.warn('Firebase:', e.message); }

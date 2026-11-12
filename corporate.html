@@ -11,12 +11,14 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-check-compat.js"></script>
+<script src="appcheck-config.js"></script>
 <script>
 (function(){
   var c={apiKey:"AIzaSyDGel0ktZDQYcdlOuoZo4bAqZWCuGvOVbc",authDomain:"seacoast-rip.firebaseapp.com",projectId:"seacoast-rip",storageBucket:"seacoast-rip.firebasestorage.app",messagingSenderId:"684535453116",appId:"1:684535453116:web:922c843b5bad3b81ad47b9"};
   try{
     if(!firebase.apps.length)firebase.initializeApp(c);
-
+    if(window.RVIP_ACTIVATE_APPCHECK)RVIP_ACTIVATE_APPCHECK();
 
     window._db=firebase.firestore();
     window._auth=firebase.auth();
