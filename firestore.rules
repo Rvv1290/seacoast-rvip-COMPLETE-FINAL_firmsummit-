@@ -1,241 +1,688 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // An iOS app or admin session — any signed-in caller that is NOT a portal
-    // customer. The app rules below used to say `request.auth != null`, which
-    // was equivalent while the portals had no Firebase Auth identity at all.
-    // Now that they do, the app's collections have to exclude them explicitly,
-    // or every portal customer could read every app user, driver and ride.
-    // App and admin tokens carry no `portal` claim, so their access is
-    // unchanged.
-    function isAppUser() {
-      return request.auth != null && request.auth.token.portal == null;
+    function hasAssignedCompanyDriverAccess(uid) {
+      let driver = get(/databases/$(database)/documents/drivers/$(uid)).data;
+      let company = get(/databases/$(database)/documents/companies/$(driver.companyId)).data;
+      return driver.companyId is string
+        && company.status == 'ACTIVE'
+        && company.approvalStatus == 'APPROVED_FOR_SPECIFIC_SCOPE'
+        && company.get('testActivationActive', false) == false
+        && (
+          (company.isHouseCompany == true
+            && driver.isHouseDriver == true
+            && driver.houseDriverKind in ['owner', 'employee'])
+          ||
+          (company.isHouseCompany != true
+            && driver.partnerDriverRole in ['owner', 'affiliate'])
+        );
     }
-
-    // Administrators, by the email on their Firebase Auth token. Keep this in
-    // step with ADMIN_EMAILS in functions/index.js and admin.html.
-    function isAdmin() {
-      return request.auth != null && (
-               request.auth.token.admin == true ||
-               (request.auth.token.email != null &&
-                request.auth.token.email.lower() in ['ramon@seacoastrvip.com'])
-             );
+    function hasOperationalCompanyDriverAccess(uid) {
+      let driver = get(/databases/$(database)/documents/drivers/$(uid)).data;
+      return hasAssignedCompanyDriverAccess(uid)
+        && driver.status == 'ACTIVE'
+        && driver.isVerified == true
+        && driver.isActive == true;
     }
-
+    function isRiderIdentity(uid) {
+      return get(/databases/$(database)/documents/users/$(uid)).data.role == 'rider';
+    }
+    // Account closure archives are operational/legal evidence, never client data.
+    match /accountClosureRequests/{uid} {
+      allow read, write: if false;
+    }
+    match /privacyDataRequests/{uid} {
+      allow read, write: if false;
+    }
+    match /privacyExportCleanup/{id} {
+      allow read, write: if false;
+    }
+    // Console-reviewed operating credentials: never phone assertions.
+    match /driverVehicleCredentials/{id} {
+      allow read, write: if false;
+    }
+    match /refundRecoveryQueue/{id} {
+      allow read, write: if false;
+    }
+    match /refundRecoveryState/{id} {
+      allow read, write: if false;
+    }
+    match /flightLookupRateLimits/{uid} {
+      allow read, write: if false;
+    }
     // ─────────────────────────────────────────────────────────────
-    // iOS APP RULES (unchanged — do not edit)
+    // MOBILE APP RULES (shared by iOS and Android)
     // These collections use real Firebase Auth (UID-based).
     // ─────────────────────────────────────────────────────────────
-
     match /users/{userId} {
-      allow read:   if isAppUser();
-      allow write:  if isAppUser() && request.auth.uid == userId;
+      // Full profile includes contact, saved places, payment IDs and tokens.
+      // Drivers obtain only the rating through the authenticated API.
+      allow read:   if request.auth != null && request.auth.uid == userId;
+      allow create: if request.auth != null && request.auth.uid == userId
+        && request.resource.data.get('rating', 5) in [null, 5]
+        && request.resource.data.get('ratingCount', 0) == 0;
+      // Full-profile saves may carry unchanged values, never new aggregates.
+      allow update: if request.auth != null && request.auth.uid == userId
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['rating', 'ratingCount']);
+      // Account closure is server-managed; delete/recreate cannot reset ratings.
+      allow delete: if false;
+      // One ActivityKit token/state document per active Rider trip. Keep the
+      // token private to its owner; Cloud Functions uses the Admin SDK and
+      // can read it without broadening client access.
+      match /rideLiveActivities/{rideId} {
+        function currentRiderPosition() {
+          let ride = get(/databases/$(database)/documents/rides/$(rideId)).data;
+          return ride.riderId == request.auth.uid
+            && ride.driverId == resource.data.driverPosition.driverId
+            && ride.status in ['driverEnRoute', 'driverArrived', 'active'];
+        }
+        allow read: if request.auth != null && request.auth.uid == userId
+          && (resource == null || resource.data.get('driverPosition', null) == null || currentRiderPosition());
+        // Phones register ActivityKit tokens, not server-owned ETA/GPS state.
+        allow create: if request.auth != null && request.auth.uid == userId
+          && request.resource.data.keys().hasOnly([
+            'token', 'platform', 'updatedAt', 'activityID', 'tokenUpdatedAt'
+          ]);
+        allow update: if request.auth != null && request.auth.uid == userId
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'token', 'platform', 'updatedAt', 'activityID', 'tokenUpdatedAt'
+          ]);
+        allow delete: if false;
+      }
     }
-
     match /drivers/{driverId} {
-      allow read:   if isAppUser();
-      allow write:  if isAppUser() && request.auth.uid == driverId;
-
+      // Riders obtain minimal card details through the authenticated API;
+      // trip-scoped live data never exposes this private profile document.
+      allow read:   if request.auth != null && (request.auth.uid == driverId || isWebsiteAdmin());
+      // Drivers may maintain their own profile and upload onboarding data,
+      // but only the trusted backend/console may grant, suspend, assign, or
+      // restore operating authority. Admin SDK writes bypass these rules.
+      // Driver identities are created only by the invitation/console backend.
+      // A phone must never be able to manufacture its own driver record.
+      allow create: if false;
+      allow update: if request.auth != null
+                    && request.auth.uid == driverId
+                    && hasAssignedCompanyDriverAccess(driverId)
+                    && !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+                      'rating', 'ratingCount',
+                      'isVerified', 'isActive', 'status', 'companyId',
+                      'isHouseCompany', 'isHouseDriver', 'approvedAt',
+                      'approvedBy', 'suspendedAt', 'suspendedBy',
+                      'suspendedReason', 'adminLuxOverride',
+                      'partnerDriverRole', 'partnerCommissionPct', 'houseDriverKind',
+                      'isOwnerOperator',
+                      'claimedInvitationId', 'isAdmin', 'role',
+                      'companyManagedEmployeeOnboarding', 'companyEmployeeReview', 'employeeProfileConfirmedAt',
+                      'companyFleetAssignment', 'companyVehicleInsuranceReview',
+                      'savedVehicles', 'activeVehicleId', 'approvedVehicleIds',
+                      'availableVehicleTypes', 'vehicleMake', 'vehicleModel',
+                      'vehicleYear', 'vehicleColor', 'vehiclePlate', 'vehicleType',
+                      'vehicleRegisteredAt',
+                      'licenseVerified', 'insuranceVerified',
+                      'backgroundCheckComplete', 'onInsuranceSchedule'
+                    ]);
+      allow delete: if false;
       match /complianceDocuments/{docType} {
-        allow read:  if isAppUser();
-        allow write: if isAppUser() && request.auth.uid == driverId;
+        allow read: if request.auth != null && request.auth.uid == driverId;
+        function pendingUpload() {
+          return request.auth != null && request.auth.uid == driverId
+            && hasAssignedCompanyDriverAccess(driverId)
+            && request.resource.data.docType == docType
+            && request.resource.data.verificationStatus == 'pending'
+            && request.resource.data.storageURL is string
+            && request.resource.data.storageURL.size() > 0;
+        }
+        function uploadFields() {
+          return ['docType', 'storageURL', 'uploadedAt', 'issuedISO', 'expiresISO',
+                  'verificationStatus', 'rejectionReason'];
+        }
+        allow create: if pendingUpload() && request.resource.data.keys().hasOnly(uploadFields());
+        allow update: if pendingUpload()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(uploadFields());
+        // Vehicle removal is now performed by the authenticated server route.
+        allow delete: if false;
       }
       match /payouts/{weekKey} {
-        allow read:  if isAppUser() && request.auth.uid == driverId;
+        allow read:  if request.auth != null && request.auth.uid == driverId;
         allow write: if false;
       }
     }
+    // ─────────────────────────────────────────────────────────────
+    // PAYMENT FIELDS ARE SERVER-ONLY
+    //
+    // These are the fields that assert money moved from the rider to
+    // RVIP. Nothing running on a phone may write them — not the rider's
+    // app, not the driver's. They are written by:
+    //
+    //   • the `stripeWebhook` function, from Stripe's own event
+    //   • the `/payments/venmo-claim` route, which checks the caller is
+    //     the rider and marks the result unverified
+    //
+    // Both run in Cloud Functions with admin credentials, which bypass
+    // these rules entirely — so locking the client out does not lock the
+    // server out.
+    //
+    // `driverNetPayout` is deliberately NOT in this list. It is a
+    // derived payout figure the driver's app writes when it completes a
+    // trip, and blocking it would break completion. The webhook
+    // recomputes it after a tip, so the server still has the last word
+    // on anything money moved.
+    // ─────────────────────────────────────────────────────────────
+    // Only the fields that ASSERT MONEY MOVED are here. Derived figures
+    // (`totalWithTip`, `driverNetPayout`) stay writable: the driver's app
+    // recomputes them when it completes a trip and when a rating comes
+    // in, and locking them would break completion rather than protect
+    // anything — neither one is evidence of a payment on its own.
+    function paymentFields() {
+      return [
+        'isPaid', 'isTestRide', 'paymentLivemode', 'paidAt', 'paymentIntentId', 'fareCharged', 'processingFee',
+        'tip', 'tipPaidAt', 'tipProcessingFee',
+        'paymentVerified', 'paymentNeedsReview', 'paymentReviewReason',
+        'venmoClaimedAt', 'venmoClaimedAmount',
+        'payoutTransferred', 'payoutTransferId', 'payoutTransferredAt',
+        'carrierDisclosure', 'pendingModificationId', 'lastModificationId', 'ordinaryFareCheckout',
+        'modificationRefundedAmount', 'modificationRefundIds',
+        // Group split payment (2026-11-14): server-owned.
+        'split', 'splitCutoffAtMs',
+        // Corporate billing (2026-11-14): server-owned.
+        'billing', 'corporateAccountId', 'corporateCompany'
+      ];
+    }
+
+    function touchesPaymentFields() {
+      return request.resource.data.diff(resource.data)
+               .affectedKeys()
+               .hasAny(paymentFields().toSet());
+    }
+    function touchesServerRideFields() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasAny([
+        'fare', 'riderId', 'riderID', 'riderPhone', 'driverId', 'driverID', 'sourceTripId',
+        'companyId', 'companyLegalName', 'companyNameAtBooking', 'isHouseCompanyTrip',
+        'platformFeePctAtBooking', 'companyMarginPctAtBooking', 'partnerDriverRoleAtBooking',
+        'vehicleId', 'vehicleMake', 'vehicleModel', 'vehicleYear', 'vehicleColor', 'vehiclePlate', 'assignedVehicleType',
+        'routing', 'routingCompanyId', 'routingDriverId', 'cancelledBy', 'canceledBy',
+        'refundStatus', 'refundedAmount', 'refundIds', 'refundProcessedAt',
+        'refundReviewRequestedAt', 'refundErrors', 'refundError',
+        'cancellationPhase', 'cancellationPreviousStatus', 'cancellationPhaseRecordedAt',
+        'bookingQuoteId', 'bookingQuoteBinding', 'bookingPricingVersion', 'bookingFareComponents'
+        , 'riderDiscountCode', 'riderDiscountPercent', 'riderDiscountCents',
+        'riderDiscountAppliedAt', 'riderDiscountFunding', 'riderAmountDueCents',
+        // Server-only (2026-11-15): card on file for auto-charge, Night Out links.
+        'autopay', 'nightOut', 'nightOutPlan', 'nightOutMode', 'nightOutGuests', 'nightOutGuestCount'
+      ]);
+    }
+    function changesVerifiedBooking() {
+      return resource.data.get('bookingPricingVersion', '') == 'initial-v1'
+        && request.resource.data.diff(resource.data).affectedKeys().hasAny([
+          'pickup', 'pickupLocation', 'pickupAddress', 'dropoff', 'dropoffLocation', 'dropoffAddress',
+          'stops', 'stopLocations', 'scheduledAt', 'scheduledPickupTime', 'vehicleType',
+          'passengerCount', 'luggageCount', 'serviceType', 'eventRateBasis', 'eventDurationHours',
+          'eventReturnAt', 'eventBaseCharge', 'waitingHours', 'waitingCharge', 'estimatedDistance',
+          'estimatedDuration', 'flightNumber', 'bookingAcceptanceVersion',
+          'bookingTermsSHA256', 'bookingPricingSHA256', 'bookingAcceptanceText', 'bookingAcceptedAt',
+          'bookingDisclosureText', 'bookingDisclosureShownAt', 'bookingAcceptanceMethod'
+        ])
+        || (resource.data.get('bookingPricingVersion', '') == 'initial-v1'
+          && request.resource.data.diff(resource.data).affectedKeys().hasAny(['flightInfo'])
+          && (request.auth.uid == resource.data.riderId
+            || request.resource.data.get('flightInfo', {}).get('flightNumber', '') != resource.data.get('flightInfo', {}).get('flightNumber', '')
+            || request.resource.data.get('flightInfo', {}).get('arrivalAirport', '') != resource.data.get('flightInfo', {}).get('arrivalAirport', '')));
+    }
+    function changesAcceptedRoute() {
+      return resource.data.status != 'pending'
+        && request.resource.data.diff(resource.data).affectedKeys().hasAny([
+          'pickup', 'pickupLocation', 'pickupAddress', 'dropoff', 'dropoffLocation',
+          'dropoffAddress', 'stops', 'stopLocations', 'scheduledAt', 'scheduledPickupTime'
+        ]);
+    }
+    function driverStatusStep() {
+      let old = resource.data.status;
+      let next = request.resource.data.status;
+      return next == old
+        || (old == 'accepted' && next == 'driverEnRoute')
+        || (old == 'driverEnRoute' && next == 'driverArrived')
+        || (old == 'driverArrived' && next == 'active')
+        || (old == 'active' && next == 'completed')
+        || (old in ['pending', 'accepted', 'driverEnRoute', 'driverArrived'] && next == 'cancelled');
+    }
+    function riderStatusStep() {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+          'driverNetPayout', 'driverStatsCounted', 'driverThankedAt', 'driverThankYouMessage'
+        ]) && (request.resource.data.status == resource.data.status
+          || (resource.data.status in ['pending', 'accepted', 'driverEnRoute', 'driverArrived']
+              && request.resource.data.status == 'cancelled'));
+    }
+
+    function isRideParticipant(rideId) {
+      let ride = get(/databases/$(database)/documents/rides/$(rideId)).data;
+      return request.auth != null && (
+        ride.get('riderId', '') == request.auth.uid ||
+        ride.get('driverId', 'none') == request.auth.uid
+      );
+    }
+
+    // ── REMOVED: paidBeforeStart() ───────────────────────────────
+    //
+    // This required `isPaid && paymentVerified` on the stored document
+    // before a driver could move a trip to `active`. In practice
+    // `paymentVerified` was often absent, so the rule denied the driver's
+    // Start Trip write and Firestore surfaced it as the generic
+    // "Missing or insufficient permissions." — a driver staring at a
+    // slider that refused to work, with nothing naming the cause.
+    //
+    // Per operator directive, starting a trip carries no payment
+    // precondition. Payment state is still recorded and still shown to
+    // the driver in the app; it simply no longer blocks the trip.
+
+    // ── THE CREATE GUARD, DELIBERATELY DULL ──────────────────────
+    //
+    // This started as a list of forbidden fields checked with
+    // `keys().hasAny(...)`. Two separate bugs came out of that in one
+    // day — a List/Set type mismatch, and before it a blanket ban that
+    // would have rejected every booking because Codable always encodes
+    // `isPaid` — and BOTH failed the same silent way: the rule compiles,
+    // the deploy reports success, the ride is written to the phone's
+    // local cache so the app says "see it in Upcoming", the server
+    // rejects the sync, and the SDK rolls it back with no error anywhere.
+    // Nothing about that failure tells you a rule caused it.
+    //
+    // So the guard is now one comparison with no clever operators in it.
+    // A booking may not arrive already marked paid; that is the whole
+    // check, and it is the only part that was ever load-bearing.
+    //
+    // The real protection was never here. It is `touchesPaymentFields()`
+    // on UPDATE — a freshly created ride is worthless to an attacker
+    // unless they can later flip it to paid, and that path is closed and
+    // uses `affectedKeys()`, which genuinely is a Set. Defence-in-depth
+    // is not worth an outage on the booking flow.
+    function createsUnpaid() {
+      return request.resource.data.get('isPaid', false) == false
+        && request.resource.data.get('tip', 0) == 0
+        && !request.resource.data.keys().hasAny([
+          'riderPhone', 'carrierDisclosure', 'assignedVehicleType', 'paymentIntentId', 'paidAt', 'fareCharged',
+          'processingFee', 'tipPaidAt', 'tipProcessingFee', 'paymentVerified',
+          'paymentNeedsReview', 'paymentReviewReason', 'venmoClaimedAt',
+          'venmoClaimedAmount', 'payoutTransferred', 'payoutTransferId',
+          'payoutTransferredAt', 'refundStatus', 'refundedAmount', 'refundIds',
+          'cancellationPhase', 'cancellationPreviousStatus', 'cancellationPhaseRecordedAt',
+          'pendingModificationId', 'lastModificationId', 'modificationRefundedAmount', 'modificationRefundIds', 'ordinaryFareCheckout'
+        ]);
+    }
+
+    // A driver may claim an unassigned pending ride. Older ride documents
+    // omitted driverId instead of storing the current "none" sentinel, while
+    // newer Android/iOS builds may also encounter an empty legacy value.
+    // Keep the exception narrow: it can only assign the caller and advance
+    // pending -> accepted; it cannot transfer or rewrite somebody else's ride.
+    function claimsUnassignedRide() {
+      return resource.data.status == 'pending'
+        && (
+          resource.data.get('driverId', 'none') == 'none' ||
+          resource.data.get('driverId', 'none') == '' ||
+          resource.data.get('driverId', 'none') == null
+        )
+        && request.resource.data.status == 'accepted'
+        && request.resource.data.driverId == request.auth.uid
+        && request.resource.data.riderId == resource.data.riderId;
+    }
+
 
     match /rides/{rideId} {
-      allow read:   if isAppUser() && (
+      allow read:   if request.auth != null && (
                        resource == null ||
                        request.auth.uid == resource.data.riderId ||
-                       request.auth.uid == resource.data.driverId ||
-                       resource.data.status == 'pending'
+                       (request.auth.uid == resource.data.driverId
+                         && hasOperationalCompanyDriverAccess(request.auth.uid))
                     );
-      allow create: if isAppUser() && request.auth.uid == request.resource.data.riderId;
-      allow update: if isAppUser() && (
-                       request.auth.uid == resource.data.riderId ||
-                       request.auth.uid == resource.data.driverId ||
-                       resource.data.driverId == 'none'
-                    );
+      // New Rider bookings go through authenticated server quotes/commit.
+      // Admin SDK console/Functions writes bypass client rules as intended.
+      // Older clients must update; existing reservations remain readable.
+      allow create: if false;
+      allow update: if request.auth != null && (
+                       (request.auth.uid == resource.data.riderId && riderStatusStep()) ||
+                       (request.auth.uid == resource.data.driverId
+                         && hasOperationalCompanyDriverAccess(request.auth.uid)
+                         && driverStatusStep())
+                    )
+                    && resource.data.get('pendingModificationId', null) == null
+                    && !touchesPaymentFields()
+                    && !touchesServerRideFields()
+                    && !changesVerifiedBooking()
+                    && !changesAcceptedRoute();
       match /messages/{msgId} {
-        allow read:   if isAppUser();
-        allow create: if isAppUser() && request.auth.uid == request.resource.data.senderId;
+        allow read: if isRideParticipant(rideId);
+        allow create: if isRideParticipant(rideId)
+          && request.auth.uid == request.resource.data.senderId
+          && request.resource.data.text is string
+          && request.resource.data.text.size() > 0
+          && request.resource.data.text.size() <= 2000;
+        allow update, delete: if false;
       }
+    }
+    // ── Driver inbox — operations → one driver ────────────────────
+    //
+    // Written ONLY by the admin dashboard, which uses the Firebase admin
+    // SDK and so bypasses these rules entirely. Nothing in either phone
+    // app creates a message here, which is why there is no create rule:
+    // a driver cannot send themselves a payout confirmation.
+    //
+    // The driver may read their own inbox, and may update exactly one
+    // field — `readAt` — so opening a message marks it read. The
+    // affectedKeys check is what stops a driver editing the subject or
+    // body of a message they have been sent.
+    match /driverInbox/{driverId}/messages/{messageId} {
+      allow read: if request.auth != null && request.auth.uid == driverId
+                  && hasOperationalCompanyDriverAccess(driverId);
+      allow update: if request.auth != null
+                    && request.auth.uid == driverId
+                    && hasOperationalCompanyDriverAccess(driverId)
+                    && request.resource.data.diff(resource.data)
+                         .affectedKeys().hasOnly(['readAt']);
+      allow create, delete: if false;
     }
 
     match /pings/{userId} {
-      allow read:  if isAppUser() && request.auth.uid == userId;
-      allow write: if isAppUser();
+      allow read:  if request.auth != null && request.auth.uid == userId;
+      // Recipients and payment/status facts are selected by trusted servers.
+      allow write: if false;
     }
-
+    // Incident reports filed from the rider app. A signed-in rider may
+    // CREATE a report tied to their own uid; nobody reads or edits it
+    // from a client — the operations console reads through the Admin SDK,
+    // which bypasses these rules.
+    match /incidents/{incidentId} {
+      allow read: if false;
+      allow create: if request.auth != null
+        && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if false;
+    }
     match /_meta/{any} {
       allow read: if true;
       allow write: if false;
     }
-
     match /__warmup/{any} {
-      allow read: if isAppUser();
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+    // ═════════════════════════════════════════════════════════════
+    // TRIPS — shared iOS/Android booking mirror.
+    // Participant reads support both historical ID spellings. Operational
+    // Unassigned offers use the authenticated limited-preview API. Deploy
+    // compatible Driver clients before enabling these restrictive read rules.
+    // Clients cannot assign drivers or rewrite payment/authority evidence.
+    match /trips/{docId} {
+      function ownsTrip(data) {
+        return data.get('riderId', '') == request.auth.uid
+          || data.get('riderID', '') == request.auth.uid;
+      }
+      function drivesTrip(data) {
+        return (data.get('driverId', '') == request.auth.uid
+          || data.get('driverID', '') == request.auth.uid)
+          && hasOperationalCompanyDriverAccess(request.auth.uid);
+      }
+      function tripStage(status) {
+        return status in ['pending', 'scheduled', 'searching'] ? 0
+          : status in ['accepted', 'driver_assigned'] ? 1
+          : status in ['driverEnRoute', 'driver_enroute'] ? 2
+          : status in ['driverArrived', 'driver_arrived'] ? 3
+          : status in ['active', 'in_progress'] ? 4
+          : status == 'completed' ? 5
+          : status == 'cancelled' ? 6 : -1;
+      }
+      function tripStatusStep(driver) {
+        let old = tripStage(resource.data.status);
+        let next = tripStage(request.resource.data.status);
+        return request.resource.data.status == resource.data.status
+          || (old >= 0 && old == next)
+          || (old in [0, 1, 2, 3] && next == 6)
+          || (driver && old in [1, 2, 3, 4] && next == old + 1);
+      }
+      function tripFieldsStayTrusted() {
+        return !touchesPaymentFields() && !touchesServerRideFields()
+          && !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+            'pricing', 'paymentStatus', 'receipt', 'driverName', 'driverPhone',
+            'driverProfileImageURL'
+          ])
+          && !(tripStage(resource.data.status) > 0
+            && request.resource.data.diff(resource.data).affectedKeys().hasAny([
+              'pricing', 'pickup', 'pickupLocation', 'pickupAddress', 'dropoff',
+              'dropoffLocation', 'dropoffAddress', 'stops', 'stopLocations',
+              'scheduledAt', 'scheduledPickupTime', 'riderName', 'riderPhone',
+              'riderProfileImageURL'
+            ]));
+      }
+      allow read: if request.auth != null
+        && (ownsTrip(resource.data) || drivesTrip(resource.data));
+      // Close the alternate legacy client booking path as well.
+      allow create: if false;
+      allow update: if request.auth != null
+        && resource.data.get('pendingModificationId', null) == null
+        && tripFieldsStayTrusted()
+        && !changesVerifiedBooking()
+        && ((ownsTrip(resource.data) && tripStatusStep(false)
+              && !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+                'driverNetPayout', 'driverStatsCounted', 'driverThankedAt', 'driverThankYouMessage'
+              ]))
+          || (drivesTrip(resource.data) && tripStatusStep(true)));
+      allow delete: if false;
+    }
+
+    // Append-only evidence written through the authenticated API.
+    match /carrierAcceptances/{acceptanceId} {
+      allow read: if request.auth != null && request.auth.uid == resource.data.riderId;
       allow write: if false;
     }
 
     // ─────────────────────────────────────────────────────────────
-    // WEBSITE RULES (open — website pages don't sign in with Auth)
+    // SEACOAST RVIP WEBSITE COLLECTIONS (website portals)
+    //
+    // 2026-11-13: merged from the website's rules (published from the website
+    // project on 2026-11-12 10:58, which REPLACED this whole file and locked
+    // both apps out). One project has ONE rules file: the app rules above and
+    // the website rules below must always be deployed together from here.
+    // Website portal customers sign in with Firebase Auth and carry a
+    // `portal` / `clientId` / `accountId` claim; app tokens carry none.
+    // Every claim is read with .get(): reading a missing token key is an
+    // ERROR in rules, which is what made the website's isAppUser() deny
+    // every app user ("Missing or insufficient permissions").
     // ─────────────────────────────────────────────────────────────
-
-    // Bookings were readable by anyone on the internet. They are now limited
-    // to signed-in callers, which since the portals took up Firebase Auth
-    // means customers, drivers, the apps and admin.
-    //
-    // Owner-only: a customer sees their own bookings and nothing else. Of the
-    // 81 bookings in the database, 77 already carry a clientId or a
-    // corporateAccountId; the four that carry neither match no client record
-    // and are visible to admin only.
-    //
-    // No driver allowance: the website has no driver sign-in. Drivers work in
-    // the mobile app, which runs on `rides`, not `bookings`. isDriver() used
-    // to be here for driver-portal.html, and it let anyone holding a
-    // drivers/{uid} document read every booking.
-    //
-    // `create` stays open for the public booking form on schedule.html, which
-    // submits before anyone signs in. `update` matches read: drivers are
-    // included because accepting and completing a ride is an update to a
-    // booking they do not own.
-    match /bookings/{docId} {
-      allow read:   if isAdmin() || ownsBooking();
-      allow create: if true;
-      allow update: if isAdmin() || ownsBooking();
-      allow delete: if isAdmin();
-    }
-
-    function ownsBooking() {
+    function isWebsiteAdmin() {
       return request.auth != null && (
-               (request.auth.token.clientId != null
-                && resource.data.get('clientId', '') == request.auth.token.clientId) ||
-               (request.auth.token.accountId != null
-                && resource.data.get('corporateAccountId', '') == request.auth.token.accountId)
+               request.auth.token.get('admin', false) == true ||
+               request.auth.token.get('email', '').lower() in ['ramon@seacoastrvip.com']
              );
     }
+    function ownsBooking() {
+      return request.auth != null && (
+               (request.auth.token.get('clientId', null) != null
+                && resource.data.get('clientId', '') == request.auth.token.get('clientId', null)) ||
+               (request.auth.token.get('accountId', null) != null
+                && resource.data.get('corporateAccountId', '') == request.auth.token.get('accountId', null))
+             );
+    }
+    function isThisClient(clientId) {
+      return request.auth != null && request.auth.token.get('clientId', null) == clientId;
+    }
 
-    // Corporate accounts. A password must NEVER be written onto these documents
-    // — they are client-readable, so a plaintext field here is public. Sign-in
-    // goes through the corporateLogin Cloud Function, which compares a bcrypt
-    // hash in corporate_auth below. These rules reject any write that would
-    // (re)introduce a password field, so an old build cannot repopulate it.
-    // `create` stays open because corporate.html's public application form
-    // writes the new account document itself. Reads and updates are now the
-    // account's own portal session or an admin.
-    //
-    // NOTE: schedule.html lists every Approved/Active corporate account to
-    // fill a dropdown, with nobody signed in. That query is denied by this
-    // rule, so it has to be reworked before /schedule is reopened.
+    // Owner-only bookings; `create` stays open for the public booking form.
+    // Corporate mode membership (2026-11-14): written by the server and the
+    // RVIP console only; a member may read their own status.
+    match /corporateMemberships/{uid} {
+      // The member, RVIP admin, or the company's own portal login (member requests).
+      allow read: if request.auth != null && (request.auth.uid == uid || isWebsiteAdmin()
+                  || request.auth.token.get('accountId', null) == resource.data.accountId);
+      allow write: if false;
+    }
+    // Corporate statements (server-written): RVIP admin, or the company's own portal login.
+    match /corporateStatements/{statementId} {
+      allow read: if isWebsiteAdmin() || (request.auth != null && request.auth.token.get('accountId', null) == resource.data.accountId);
+      allow write: if false;
+    }
+    match /bookings/{docId} {
+      allow read:   if isWebsiteAdmin() || ownsBooking();
+      allow create: if true;
+      allow update: if isWebsiteAdmin() || ownsBooking();
+      allow delete: if isWebsiteAdmin();
+    }
+    // Corporate accounts: never a password field on these documents.
     match /corporate_accounts/{docId} {
-      allow read:   if isAdmin() || (request.auth != null && request.auth.token.accountId == docId);
+      allow read:   if isWebsiteAdmin() || (request.auth != null && request.auth.token.get('accountId', null) == docId);
       allow create: if !('password' in request.resource.data);
-      allow update: if (isAdmin() || (request.auth != null && request.auth.token.accountId == docId))
+      allow update: if (isWebsiteAdmin() || (request.auth != null && request.auth.token.get('accountId', null) == docId))
                     && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['password'])
                         || !('password' in request.resource.data));
-      allow delete: if isAdmin();
+      allow delete: if isWebsiteAdmin();
     }
-
-    // Hashed corporate passwords — clients can NEVER read or write this.
-    // Only Cloud Functions (Admin SDK) touch it.
-    match /corporate_auth/{docId} {
-      allow read, write: if false;
-    }
-
-    // A portal customer acting on their own client record.
-    function isThisClient(clientId) {
-      return request.auth != null && request.auth.token.clientId == clientId;
-    }
-
-    // Personal clients. A password must never be written onto one of these —
-    // they are readable, so a plaintext field here would be public. Sign-in
-    // goes through the clientLogin Cloud Function against client_auth below.
-    //
-    // Reads are the account's own record or an admin. Looking a client up by
-    // email or phone before sign-in now goes through the clientLookup Cloud
-    // Function, which answers only for the identifier supplied — reading this
-    // collection used to be open, which exposed every customer's name, email,
-    // phone, address and balance to anyone holding the API key.
+    match /corporate_auth/{docId} { allow read, write: if false; }
+    // Personal clients: own record or admin; never a password field.
     match /clients/{clientId} {
-      allow read:   if isAdmin()
+      allow read:   if isWebsiteAdmin()
                     || isThisClient(clientId)
-                    || (request.auth != null && resource.data.firebaseUid == request.auth.uid);
+                    || (request.auth != null && resource.data.get('firebaseUid', '') == request.auth.uid);
       allow create: if !('password' in request.resource.data);
-      // The email-link flow links a Firebase uid to the client record while
-      // signed in but before a portal token exists, so that one field is
-      // allowed on its own.
-      allow update: if (isAdmin()
+      allow update: if (isWebsiteAdmin()
                         || isThisClient(clientId)
                         || (request.auth != null
                             && request.resource.data.diff(resource.data)
                                  .affectedKeys().hasOnly(['firebaseUid'])))
                     && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['password'])
                         || !('password' in request.resource.data));
-      allow delete: if isAdmin();
-
-      // Every trip lives here, under its own client — the top-level `trips`
-      // collection is unused.
+      allow delete: if isWebsiteAdmin();
       match /trips/{tripId} {
-        allow read, write: if isAdmin() || isThisClient(clientId);
+        allow read, write: if isWebsiteAdmin() || isThisClient(clientId);
+      }
+    }
+    match /client_auth/{docId} { allow read, write: if false; }
+    match /auth_throttle/{docId} { allow read, write: if false; }
+    match /client_trips/{docId} { allow read, write: if isWebsiteAdmin(); }
+    match /invoices/{docId} { allow read, write: if isWebsiteAdmin(); }
+    match /quotes/{docId} { allow read, write: if isWebsiteAdmin(); }
+    match /admin_settings/{docId} { allow read, write: if isWebsiteAdmin(); }
+    match /estimates/{docId} { allow read, write: if isWebsiteAdmin(); }
+    // Mail queue: closed (no extension installed; mail goes through a function).
+    match /mail/{mailId} { allow read, write: if false; }
+    // NOTE: top-level /trips is the APP's booking mirror (rules above), not
+    // the website's. The website keeps its trips under clients/{id}/trips.
+
+    // ═════════════════════════════════════════════════════════════
+    // PARTNER-COMPANY MODEL — NEW COLLECTIONS ONLY
+    //
+    // Nothing above this line was touched. These rules govern
+    // collections that did not exist before, so they cannot change
+    // how either app behaves today.
+    //
+    // ── THE PRINCIPLE ───────────────────────────────────────────
+    //
+    // A driver may READ what concerns them and WRITE almost nothing.
+    // Status, company membership, approval and every money field are
+    // decided by an admin or by a Cloud Function running with admin
+    // credentials — which bypass these rules entirely.
+    //
+    // A driver who could write their own `status` could set themselves
+    // ACTIVE and take airport work on an expired decal. A driver who
+    // could write `companyId` could attach to any partner. Neither is
+    // something the UI hiding a field can prevent.
+    // ═════════════════════════════════════════════════════════════
+
+    // Admin identification. ⚠️ REPLACE WITH THE REAL ADMIN UIDs before
+    // the console goes live. An empty list means no client is an admin,
+    // which is the safe default: Cloud Functions still work, because the
+    // Admin SDK is not subject to these rules at all.
+    function isAdmin() {
+      return request.auth != null
+        && request.auth.uid in [
+          // 'PUT_ADMIN_UID_HERE'
+        ];
+    }
+
+    // App sessions only: website portal customers (portal claim) are excluded.
+    function signedIn() { return request.auth != null && request.auth.token.get('portal', null) == null; }
+
+    // Companies — readable by any signed-in user so a driver's app can
+    // show "you belong to Atlas Livery". Writable by admins only.
+    match /companies/{companyId} {
+      allow read:  if signedIn();
+      allow write: if isAdmin();
+    }
+
+    // Invitations are never touched by a client. `claimDriverInvitation`
+    // runs server-side with the Admin SDK and is the only writer; a
+    // client that could read these could enumerate every pending driver
+    // and their phone number.
+    match /driverInvitations/{invitationId} {
+      allow read:  if isAdmin();
+      allow write: if isAdmin();
+    }
+
+    // Vehicles belong to the COMPANY, not the driver. A driver may read
+    // the fleet to pick today's car; approval is an admin decision.
+    match /vehicles/{vehicleId} {
+      allow read:  if signedIn();
+      allow write: if isAdmin();
+    }
+
+    // Credential vault. Contains licence and insurance images.
+    match /documents/{documentId} {
+      allow read:  if isAdmin();
+      allow write: if isAdmin();
+    }
+
+    // Company-level payouts. NEVER driver-level — a driver is paid by
+    // their own company, and a per-driver payout view in this system
+    // would misrepresent who owes whom.
+    match /payoutRuns/{payoutId} {
+      allow read:  if isAdmin();
+      allow write: if isAdmin();
+      match /lines/{lineId} {
+        allow read:  if isAdmin();
+        allow write: if isAdmin();
       }
     }
 
-    // Hashed client passwords — clients can NEVER read or write this.
-    // Only Cloud Functions (Admin SDK) touch it.
-    match /client_auth/{docId} {
-      allow read, write: if false;
+    match /expenses/{expenseId} {
+      allow read:  if isAdmin();
+      allow write: if isAdmin();
     }
 
-    // Failed sign-in counters behind the login throttle. If this were
-    // writable, the throttle could be cleared by the thing it limits.
-    match /auth_throttle/{docId} {
-      allow read, write: if false;
+    // The review queue for "name matched but the phone differs".
+    // Written by the claim function, resolved by a human.
+    match /driverReviewQueue/{itemId} {
+      allow read:  if isAdmin();
+      allow write: if isAdmin();
     }
 
-    // Unused — no page in the repo reads or writes a top-level trip; they all
-    // live under clients/{clientId}/trips.
-    match /trips/{docId} {
-      allow read, write: if isAdmin();
+    // Open call channels. Each document holds BOTH parties' real phone
+    // numbers, which is the one piece of data this whole feature exists
+    // to keep apart — so nothing outside the Admin SDK touches it, not
+    // even the two people it names. The app never needs to read it: it
+    // asks /calls/mask/start for a number to dial and gets exactly that
+    // back, and the routing happens server-side from Twilio's webhook.
+    //
+    // Rules are default-deny, so these lines are strictly redundant.
+    // They are here anyway, because a future catch-all `match /{doc=**}`
+    // written for some unrelated convenience would otherwise silently
+    // expose every rider's phone number to every signed-in account, and
+    // an explicit `false` is the thing that survives that edit.
+    match /callMasks/{rideId} {
+      allow read:   if false;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
     }
 
-    // No page in this repo reads or writes client_trips or invoices — the
-    // portals' "invoices" views are built from bookings. Closed to admin only
-    // rather than deleted, in case a future tool needs them.
-    match /client_trips/{docId} {
-      allow read, write: if isAdmin();
+    // Append-only. An audit log a client can edit is not an audit log,
+    // and one an admin can edit is only slightly better — so nothing
+    // outside the Admin SDK writes here at all.
+    match /auditLog/{entryId} {
+      allow read:   if isAdmin();
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
     }
-
-    match /invoices/{docId} {
-      allow read, write: if isAdmin();
-    }
-
-    // Only admin.html touches these two, and they hold prospect contact
-    // details and pricing, so they were worth closing.
-    match /quotes/{docId} {
-      allow read, write: if isAdmin();
-    }
-
-    // Only admin.html touches these, and it now signs in with Firebase Auth,
-    // so this one can be closed properly.
-    match /admin_settings/{docId} {
-      allow read, write: if isAdmin();
-    }
-
-    match /estimates/{docId} {
-      allow read, write: if isAdmin();
-    }
-
-    // Closed. This was the Trigger Email extension's drop box, open to
-    // anonymous creates — but no extension is installed on this project, so
-    // the documents just accumulated and nothing was ever sent. Outgoing mail
-    // goes through the sendAdminEmail function instead. If the extension is
-    // ever installed, reopen create deliberately and narrow it to isAdmin().
-    match /mail/{mailId} {
-      allow read, write: if false;
-    }
+    match /rideBookingQuotes/{id} { allow read, write: if false; }
+    match /rideBookingRequests/{id} { allow read, write: if false; }
+    match /bookingPromotionUses/{id} { allow read, write: if false; }
+    match /bookingPromotionCounts/{id} { allow read, write: if false; }
+    match /bookingRateLimits/{id} { allow read, write: if false; }
   }
 }

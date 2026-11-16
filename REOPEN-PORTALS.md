@@ -1,5 +1,16 @@
 # Portal status
 
+> November 6, 2026 coordination: The November 3 website Firestore rules were
+> republished at 12:14 ET and denied the Rider app its own profile after a
+> successful Google sign-in. The owner approved restoring the reviewed secure
+> rules. This repository's `firestore.rules` now matches the authoritative
+> `/Volumes/RAMON VV/FINAL APP/firestore.rules` (SHA256
+> `13955c3a826b9b7efcbc09145de06aa66697d08578dae2d653b5f0ef853a2b64`).
+> Do not restore the older permissive rules or deploy a divergent rules file.
+> Website `/schedule` still submits a direct `bookings` write and is not a
+> confirmed booking channel until moved to a trusted server flow. The history
+> below describes the November 2 state and is not current release guidance.
+
 Last run: November 2, 2026.
 
 ## Done
