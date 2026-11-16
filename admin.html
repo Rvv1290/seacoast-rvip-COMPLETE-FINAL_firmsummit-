@@ -1153,6 +1153,14 @@
                 </div>
               </div>
 
+              <!-- Payments & Receipts -->
+              <div class="cd-section">
+                <div class="cd-section-title">Payments &amp; Receipts</div>
+                <div style="font-size:0.75rem;color:#888;margin:-0.25rem 0 0.75rem;line-height:1.5">Each payment lists the trips it paid for. If a charge was more than its trips (an overpayment), use <strong>Apply to trips</strong> to put the rest toward specific trips — they show as paid by that payment, appear on its receipt, and are not billed again when their cycle closes.</div>
+                <div id="cd-payments-list"></div>
+                <div id="cd-apply-panel" style="display:none;margin-top:0.75rem;border:1px solid #e5e5e5;border-left:3px solid #775a19;padding:0.9rem 1rem;background:#fafafa"></div>
+              </div>
+
               <!-- Trip History -->
               <div class="cd-section">
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;flex-wrap:wrap;gap:0.5rem">
@@ -2742,47 +2750,13 @@
     async function fbSync(bk) {
       if (!db) return;
       try {
-        // 1. Corporate balance — only count trips in CLOSED billing periods
-        // Current-period trips are not due yet and should not appear in the balance.
-        if (bk.corporateAccountId) {
-          var price = parseFloat(bk.price) || 0;
-
-          // Determine start of the account's current (open) billing period
-          var _corpPeriodStart = (function(cycle, tripDate) {
-            var now = new Date();
-            var c = (cycle || 'Monthly').toLowerCase();
-            if (c.includes('bi') || c.includes('2')) {
-              var anchor = new Date('2024-01-01T00:00:00');
-              var days = Math.floor((now - anchor) / 864e5);
-              var s = new Date(anchor); s.setDate(s.getDate() + Math.floor(days / 14) * 14); return s;
-            }
-            if (c.includes('week')) {
-              var dow = now.getDay(); var diff = dow === 0 ? 6 : dow - 1;
-              var s = new Date(now); s.setDate(now.getDate() - diff); s.setHours(0,0,0,0); return s;
-            }
-            return new Date(now.getFullYear(), now.getMonth(), 1); // Monthly
-          })(bk.billingCycle, bk.date);
-
-          var tripDate = new Date((bk.date || '') + 'T12:00:00');
-          var inClosedPeriod = !isNaN(tripDate.getTime()) && tripDate < _corpPeriodStart;
-
-          if (bk.status === 'Confirmed' && !bk.balanceAdded && price > 0 && inClosedPeriod) {
-            try {
-              await db.collection('corporate_accounts').doc(bk.corporateAccountId).update({
-                balance: firebase.firestore.FieldValue.increment(price)
-              });
-              bk.balanceAdded = true;
-            } catch(e) { console.warn('Corp Balance +:', e.message); }
-          }
-          if (bk.status === 'Paid' && bk.balanceAdded && price > 0) {
-            try {
-              await db.collection('corporate_accounts').doc(bk.corporateAccountId).update({
-                balance: firebase.firestore.FieldValue.increment(-price),
-                lastPaymentDate: new Date().toISOString()
-              });
-            } catch(e) { console.warn('Corp Balance -:', e.message); }
-          }
-        }
+        // A corporate account's balance is no longer incremented here. This used
+        // to add a trip's fare to `balance` whenever it was Confirmed in a closed
+        // period, alongside the absolute writes elsewhere (payment, auto-sync,
+        // manual set). The two drifted apart, and the portal charged the higher
+        // figure — a $600 charge for $300 of trips (EnterpriseDB, Nov 2026). The
+        // amount due is now the itemized Completed trips; see getDisplayBalance()
+        // in corporate-portal.html and renderCdTrips() below.
 
         await db.collection('bookings').doc(bk.id).set({
           id: bk.id, code: (bk.code || '').toUpperCase(),
@@ -2933,7 +2907,13 @@
     function payMarkPaid() {
       if (!curPayBk) return;
       var bks = getBks(), b = bks.find(function (x) { return x.id === curPayBk.id; });
-      if (b) { b.status = 'Paid'; setBks(bks); fbSync(b); }
+      if (b) {
+        b.status = 'Paid'; b.paidAt = b.paidAt || new Date().toISOString(); setBks(bks);
+        // fbSync's write doesn't carry paidAt; stamp it so the trip lands on a payment receipt
+        fbSync(b).then(function () {
+          if (db) return db.collection('bookings').doc(b.id).update({ paidAt: b.paidAt });
+        }).catch(function () {});
+      }
       closeM('m-pay'); renderBks(); toast('✅ Marked as Paid!');
     }
 
@@ -4040,7 +4020,7 @@
 
           actionBtns = payDriverBtnHtml +
             '<button onclick="addToCalendar(\'' + b.id + '\')" class="btn bo" style="font-size:.62rem"><span class="material-symbols-outlined" style="font-size:13px">calendar_add_on</span>Calendar</button>' +
-            '<button onclick="markPaidDr(\'' + b.id + '\')" class="btn bgn" style="font-size:.62rem"><span class="material-symbols-outlined" style="font-size:13px">check_circle</span>Mark Client Paid</button>';
+            '<button onclick="markPaidDr(\'' + b.id + '\')" class="btn bgn" style="font-size:.62rem"><span class="material-symbols-outlined" style="font-size:13px">check_circle</span>Mark Completed</button>';
         } else {
           var dName = encodeURIComponent(curUser.name);
           var cName = encodeURIComponent(e(b.name).split(' ')[0] || 'there');
@@ -4094,10 +4074,13 @@
     function markPaidDr(id) {
       var bks = getBks(), b = bks.find(function (x) { return x.id === id; });
       if (!b) return;
+      // Completed means "ride done, client owes". Never demote a trip the client
+      // already paid for, or it is billed again when its cycle closes.
+      if (b.status === 'Paid') { toast('Already paid by the client — left as Paid'); return; }
       b.status = 'Completed';
       setBks(bks); fbSync(b);
       loadDriverRides(); renderBks();
-      toast('✅ Marked Completed — driver paid');
+      toast('✅ Marked Completed');
     }
 
     function openDriverPay() {
@@ -4686,6 +4669,8 @@
 
     function renderCdTrips(trips, bonusPoints, billingCycle){
       document.getElementById('cd-trips-loading').textContent = trips.length+' trip'+(trips.length!==1?'s':'')+' found';
+      _cdTripsCache = trips;
+      renderCdPayments(trips);
 
       // Billing-period cutoff — same logic as corporate portal
       var now = new Date();
@@ -4721,21 +4706,25 @@
       document.getElementById('cd-stat-pend').textContent  = pending;
       document.getElementById('cd-stat-rev').textContent   = '$'+revenue.toFixed(2);
 
-      // Auto-sync: if trip-calculated outstanding > stored balance, a new cycle closed
-      // with unpaid trips — auto-update the account's balance field to include them.
+      // Balance due = the itemized Completed trips from closed periods — the same
+      // figure the client's statement adds up — unless admin typed a balance by
+      // hand (Update), which is kept as-is. Taking the higher of the two used to
+      // let a drifted stored balance be charged above the trips.
       var storedBal = (_cdAcc && _cdAcc.balance) || 0;
-      var displayBal = Math.max(storedBal, outstandingBal);
+      var isManual = _cdIsManualBalance(_cdAcc);
+      var displayBal = isManual ? storedBal : outstandingBal;
       document.getElementById('cd-stat-bal').textContent = '$'+displayBal.toFixed(2);
       // Update balance input to show current effective balance
       document.getElementById('cd-balance-input').value = displayBal > 0 ? displayBal.toFixed(2) : '';
 
-      // If calculated outstanding exceeds stored balance, auto-update Firestore
-      if (outstandingBal > storedBal && _cdCorpId && db) {
+      // Keep the stored figure equal to the trips (up or down) unless it is manual
+      if (!isManual && Math.abs(outstandingBal - storedBal) >= 0.01 && _cdCorpId && db) {
         db.collection('corporate_accounts').doc(_cdCorpId).update({
           balance: outstandingBal,
+          balanceManual: false,
           balanceUpdatedAt: new Date().toISOString()
         }).then(function(){
-          if (_cdAcc) _cdAcc.balance = outstandingBal;
+          if (_cdAcc) { _cdAcc.balance = outstandingBal; _cdAcc.balanceManual = false; }
         }).catch(function(err){ console.warn('Auto-sync balance:', err.message); });
       }
 
@@ -4772,8 +4761,200 @@
       // Tear down real-time trip listeners so they don't keep running in the background
       _cdTripUnsubs.forEach(function(u){ try{ u(); }catch(e){} });
       _cdTripUnsubs = [];
+      cdCloseApply();
       document.getElementById('corp-detail-modal').style.display='none';
       document.body.style.overflow='';
+    }
+
+    // ─────────────────────────────────────────────
+    //  CORPORATE PAYMENTS & RECEIPTS
+    // ─────────────────────────────────────────────
+    // A payment is the set of trips stamped with the same paidAt (to the minute):
+    // the portal's card payment stamps every trip it covers with one timestamp,
+    // and "Apply to trips" stamps added trips with that same value.
+    var _cdTripsCache = [];
+    var _cdApplyKey = null;
+
+    // Only a balance typed in via Update overrides the itemized trips. Accounts
+    // saved before balanceManual existed count as manual only if they carry a note.
+    function _cdIsManualBalance(acc){
+      if (!acc) return false;
+      if (acc.balanceManual === true) return true;
+      if (acc.balanceManual === false) return false;
+      return !!String(acc.balanceNote || '').trim();
+    }
+
+    function _cdMoney(trips, withFee){
+      var fares = 0, tips = 0;
+      trips.forEach(function(t){ fares += parseFloat((t.price+'').replace(/[^0-9.]/g,'')) || 0; tips += parseFloat(t.tip) || 0; });
+      fares = Math.round(fares*100)/100; tips = Math.round(tips*100)/100;
+      var fee = withFee === false ? 0 : Math.round(fares*0.029*100)/100;   // 2.9% card fee on fares, as charged
+      return { fares: fares, tips: tips, fee: fee, total: Math.round((fares+tips+fee)*100)/100 };
+    }
+
+    function _cdPayGroups(trips){
+      var groups = {}, keys = [];
+      (trips || []).forEach(function(t){
+        if (t.status !== 'Paid' || !t.paidAt || t.deleted) return;
+        var key = String(t.paidAt).slice(0,16);
+        if (!groups[key]) { groups[key] = { key: key, paidAt: t.paidAt, trips: [] }; keys.push(key); }
+        groups[key].trips.push(t);
+      });
+      keys.sort().reverse();                                 // ISO strings sort by time; newest first
+      return keys.map(function(k){ return groups[k]; });
+    }
+
+    function _cdFindGroup(key){
+      return _cdPayGroups(_cdTripsCache).filter(function(g){ return g.key === key; })[0] || null;
+    }
+
+    function _cdPayLabel(iso){
+      var d = new Date(iso);
+      return isNaN(d.getTime()) ? String(iso) : d.toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'});
+    }
+
+    // The account's last recorded card charge, when it belongs to this payment
+    function _cdRecordedCharge(g){
+      if (!_cdAcc || !_cdAcc.lastPaymentDate || !(parseFloat(_cdAcc.lastPaymentAmount) > 0)) return null;
+      return String(_cdAcc.lastPaymentDate).slice(0,16) === g.key ? parseFloat(_cdAcc.lastPaymentAmount) : null;
+    }
+
+    function renderCdPayments(trips){
+      var el = document.getElementById('cd-payments-list');
+      if (!el) return;
+      var groups = _cdPayGroups(trips);
+      if (!groups.length){ el.innerHTML = '<div style="font-size:0.8rem;color:#bbb;padding:0.5rem 0">No payments recorded yet.</div>'; return; }
+      el.innerHTML = groups.map(function(g){
+        var m = _cdMoney(g.trips);
+        var charged = _cdRecordedCharge(g);
+        var gap = charged === null ? 0 : Math.round((charged - m.total)*100)/100;
+        var note = '';
+        if (gap >= 0.01) note = '<div style="color:#b91c1c;font-size:0.74rem;margin-top:4px">Unapplied <strong>$'+gap.toFixed(2)+'</strong> — the card was charged $'+charged.toFixed(2)+' but these trips total $'+m.total.toFixed(2)+'. Apply it to trips, or refund it in Stripe.</div>';
+        else if (gap <= -0.01) note = '<div style="color:#b45309;font-size:0.74rem;margin-top:4px">These trips total $'+m.total.toFixed(2)+', more than the $'+charged.toFixed(2)+' charged.</div>';
+        return '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:0.75rem;flex-wrap:wrap;padding:0.7rem 0;border-bottom:1px solid #f0f0f0">'+
+          '<div style="font-size:0.8rem;line-height:1.5"><strong>'+e(_cdPayLabel(g.paidAt))+'</strong> &middot; '+g.trips.length+' trip'+(g.trips.length!==1?'s':'')+
+            '<div style="color:#666">Fares $'+m.fares.toFixed(2)+(m.tips>0?' + tips $'+m.tips.toFixed(2):'')+' + card fee $'+m.fee.toFixed(2)+' = <strong>$'+m.total.toFixed(2)+'</strong></div>'+note+'</div>'+
+          '<div style="display:flex;gap:0.4rem">'+
+            '<button onclick="cdPrintReceipt(\''+g.key+'\')" class="btn bo" style="font-size:0.66rem"><span class="material-symbols-outlined" style="font-size:13px">receipt_long</span>Receipt</button>'+
+            '<button onclick="cdOpenApply(\''+g.key+'\')" class="btn bg" style="font-size:0.66rem">Apply to trips</button>'+
+          '</div></div>';
+      }).join('');
+    }
+
+    function cdOpenApply(key){
+      var g = _cdFindGroup(key), panel = document.getElementById('cd-apply-panel');
+      if (!g || !panel) return;
+      _cdApplyKey = key;
+      var open = _cdTripsCache.filter(function(t){ return t.status !== 'Paid' && t.status !== 'Cancelled' && !t.deleted; })
+        .sort(function(a,b){ return new Date(a.date) - new Date(b.date); });
+      var charged = _cdRecordedCharge(g);
+      var gap = charged === null ? null : Math.round((charged - _cdMoney(g.trips).total)*100)/100;
+      var head = '<div style="font-size:0.8rem;margin-bottom:0.6rem"><strong>Apply to the '+e(_cdPayLabel(g.paidAt))+' payment</strong>'+
+        (gap !== null && gap >= 0.01 ? ' &middot; unapplied <strong>$'+gap.toFixed(2)+'</strong>' : '')+
+        '<div style="color:#888;font-size:0.72rem;margin-top:2px">Tick the trips this payment should cover. Trips in the current cycle are fine — once paid they are skipped when the cycle closes.</div></div>';
+      if (!open.length){
+        panel.innerHTML = head + '<div style="font-size:0.8rem;color:#999">No unpaid trips on this account.</div><div style="margin-top:0.6rem"><button onclick="cdCloseApply()" class="btn bo" style="font-size:0.7rem">Close</button></div>';
+        panel.style.display = 'block'; return;
+      }
+      var rows = open.map(function(t){
+        var id = t._docId || t.id;
+        var d = new Date((t.date||'')+'T12:00:00');
+        var ds = isNaN(d.getTime()) ? e(t.date||'—') : d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+        var fare = parseFloat((t.price+'').replace(/[^0-9.]/g,'')) || 0;
+        var unlinked = t.corporateAccountId !== _cdCorpId ? ' <span title="Not linked to this account by ID. Applying links it, so the client sees it." style="color:#b45309;font-size:0.66rem">· not linked</span>' : '';
+        return '<label style="display:flex;gap:0.6rem;align-items:center;padding:0.35rem 0;font-size:0.78rem;cursor:pointer">'+
+          '<input type="checkbox" class="cd-apply-chk" value="'+e(id)+'" data-fare="'+fare+'" onchange="cdApplyTotal()"/>'+
+          '<span style="min-width:92px">'+ds+'</span><span style="min-width:110px;color:#775a19;font-weight:600">'+e(t.code||'—')+'</span>'+
+          '<span style="flex:1">'+e(t.service||'—')+unlinked+'</span><span style="color:#888">'+e(t.status||'')+'</span>'+
+          '<span style="min-width:70px;text-align:right;font-weight:600">$'+fare.toFixed(2)+'</span></label>';
+      }).join('');
+      panel.innerHTML = head + rows +
+        '<div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem;flex-wrap:wrap;margin-top:0.7rem;padding-top:0.6rem;border-top:1px solid #e5e5e5">'+
+          '<div id="cd-apply-sum" style="font-size:0.78rem;color:#555">Selected: $0.00</div>'+
+          '<div style="display:flex;gap:0.4rem"><button onclick="cdCloseApply()" class="btn bo" style="font-size:0.7rem">Cancel</button>'+
+          '<button onclick="cdApplySelected()" class="btn bg" style="font-size:0.7rem">Apply</button></div></div>';
+      panel.style.display = 'block';
+    }
+
+    function cdApplyTotal(){
+      var fares = 0;
+      document.querySelectorAll('#cd-apply-panel .cd-apply-chk:checked').forEach(function(c){ fares += parseFloat(c.getAttribute('data-fare')) || 0; });
+      var fee = Math.round(fares*0.029*100)/100;
+      var el = document.getElementById('cd-apply-sum');
+      if (el) el.innerHTML = 'Selected: $'+fares.toFixed(2)+' + card fee $'+fee.toFixed(2)+' = <strong>$'+(fares+fee).toFixed(2)+'</strong>';
+    }
+
+    function cdCloseApply(){
+      _cdApplyKey = null;
+      var panel = document.getElementById('cd-apply-panel');
+      if (panel){ panel.style.display = 'none'; panel.innerHTML = ''; }
+    }
+
+    function cdApplySelected(){
+      if (!db || !_cdApplyKey) return;
+      var g = _cdFindGroup(_cdApplyKey);
+      if (!g) return toast('That payment is no longer listed — reopen the account');
+      var ids = [];
+      document.querySelectorAll('#cd-apply-panel .cd-apply-chk:checked').forEach(function(c){ ids.push(c.value); });
+      if (!ids.length) return toast('Tick at least one trip');
+      var sel = _cdTripsCache.filter(function(t){ return ids.indexOf(t._docId || t.id) !== -1; });
+      var m = _cdMoney(sel), label = _cdPayLabel(g.paidAt);
+      var via = (g.trips.filter(function(t){ return t.paidVia; })[0] || {}).paidVia;
+      if (!confirm('Mark '+sel.length+' trip'+(sel.length!==1?'s':'')+' ($'+m.fares.toFixed(2)+' in fares, $'+m.total.toFixed(2)+' with the card fee) as paid by the '+label+' payment?\n\nThey will appear on that payment\'s receipt and will not be billed when their cycle closes.')) return;
+      var now = new Date().toISOString(), batch = db.batch(), updates = {};
+      sel.forEach(function(t){
+        var upd = { status: 'Paid', paidAt: g.paidAt, balanceAdded: false, updatedAt: now, paidNote: 'Applied from the ' + label + ' payment' };
+        if (via) upd.paidVia = via;
+        // The client portal only sees trips carrying this account's id
+        if (_cdCorpId && t.corporateAccountId !== _cdCorpId){
+          upd.corporateAccountId = _cdCorpId;
+          if (_cdAcc && _cdAcc.company) upd.corporateCompany = _cdAcc.company;
+        }
+        updates[t._docId || t.id] = upd;
+        batch.update(db.collection('bookings').doc(t._docId || t.id), upd);
+      });
+      batch.commit().then(function(){
+        // fbSync writes a booking from admin's local cache, so update the cache
+        // too — otherwise a later edit would write the old status back.
+        var bks = getBks(), changed = false;
+        bks.forEach(function(b){ var u = updates[b.id]; if (u){ Object.keys(u).forEach(function(k){ b[k] = u[k]; }); changed = true; } });
+        if (changed) setBks(bks);
+        cdCloseApply();
+        toast('✅ '+sel.length+' trip'+(sel.length!==1?'s':'')+' applied to the '+label+' payment');
+      }).catch(function(err){ alert('Could not apply: ' + err.message); });
+    }
+
+    function cdPrintReceipt(key){
+      var g = _cdFindGroup(key);
+      if (!g) return;
+      // Card payments carry the 2.9% fee; payments recorded by hand do not
+      var hasCard = g.trips.some(function(t){ return t.paidVia === 'card'; }) || _cdRecordedCharge(g) !== null;
+      var allManual = g.trips.every(function(t){ return t.paidVia === 'manual'; });
+      var withFee = hasCard ? true : (allManual ? false : confirm('Was this payment made by card?\n\nOK adds the 2.9% card processing fee to the receipt. Cancel leaves it off.'));
+      var trips = g.trips.slice().sort(function(a,b){ return new Date(a.date||0) - new Date(b.date||0); });
+      var m = _cdMoney(trips, withFee), acc = _cdAcc || {};
+      var rows = trips.map(function(t){
+        var d = new Date((t.date||'')+'T12:00:00');
+        var ds = isNaN(d.getTime()) ? '—' : d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+        var fare = parseFloat((t.price+'').replace(/[^0-9.]/g,'')) || 0, tip = parseFloat(t.tip) || 0;
+        return '<tr><td>'+ds+'</td><td>'+_escH(t.code||'—')+'</td><td>'+_escH(t.service||'—')+'</td><td>'+_escH(t.pickup||'')+' → '+_escH(t.destination||'')+'</td><td style="text-align:right">$'+fare.toFixed(2)+'</td><td style="text-align:right">'+(tip>0?'$'+tip.toFixed(2):'—')+'</td></tr>';
+      }).join('');
+      var rcpt = 'RCPT-' + key.replace(/\D/g,'');
+      var w = window.open('', '_blank');
+      if (!w) return toast('Pop-up blocked — please allow pop-ups');
+      w.document.write('<html><head><title>Receipt '+rcpt+' — '+_escH(acc.company||'')+'</title>');
+      w.document.write('<style>body{font-family:Arial,sans-serif;padding:2.5rem;max-width:800px;margin:0 auto;color:#111}table{width:100%;border-collapse:collapse;margin-top:1rem}th,td{border:1px solid #ddd;padding:8px;text-align:left;font-size:0.85rem}th{background:#111;color:#fff}h1{font-size:1.6rem;margin:0}.head{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #111;padding-bottom:1rem;margin-bottom:1.5rem}.muted{color:#666;font-size:0.85rem}.tots{margin:1rem 0 0 auto;width:320px;font-size:0.9rem}.tots div{display:flex;justify-content:space-between;padding:4px 0}.tots .grand{border-top:2px solid #111;font-weight:700;font-size:1.1rem;margin-top:4px;padding-top:8px}.gold{color:#775a19}@media print{body{padding:1rem}}</style>');
+      w.document.write('</head><body>');
+      w.document.write('<div class="head"><div><h1>SEACOAST <span class="gold">RVIP</span></h1><div class="muted">Premium Ground Transportation</div></div><div style="text-align:right"><div style="font-weight:700;letter-spacing:.1em">PAYMENT RECEIPT</div><div class="muted">'+rcpt+'</div><div class="muted">Paid '+_escH(_cdPayLabel(g.paidAt))+'</div></div></div>');
+      w.document.write('<div style="margin-bottom:1rem"><strong>Received from:</strong><br>'+_escH(acc.company||'—')+(acc.contactName?'<br>'+_escH(acc.contactName):'')+(acc.contactEmail?'<br>'+_escH(acc.contactEmail):'')+'</div>');
+      w.document.write('<table><thead><tr><th>Date</th><th>Conf#</th><th>Service</th><th>Route</th><th style="text-align:right">Fare</th><th style="text-align:right">Tip</th></tr></thead><tbody>'+rows+'</tbody></table>');
+      w.document.write('<div class="tots"><div><span>Fares</span><span>$'+m.fares.toFixed(2)+'</span></div><div><span>Tips</span><span>$'+m.tips.toFixed(2)+'</span></div>'+
+        (withFee ? '<div><span>Card processing fee (2.9%)</span><span>$'+m.fee.toFixed(2)+'</span></div>' : '')+
+        '<div class="grand"><span>Total paid</span><span>$'+m.total.toFixed(2)+'</span></div></div>');
+      w.document.write('<p class="muted" style="margin-top:2rem">Thank you — payment received. Questions: info@seacoastrvip.com · (978) 255-3140 · seacoastrvip.com</p>');
+      w.document.write('</body></html>');
+      w.document.close();
+      setTimeout(function(){ try { w.print(); } catch(e){} }, 300);
     }
 
     function cdAction(newStatus){
@@ -5064,9 +5245,10 @@
       db.collection('corporate_accounts').doc(_cdCorpId).update({
         balance: 0,
         balanceNote: '',
+        balanceManual: false,
         balanceUpdatedAt: ''  // clear so corporate portal falls back to trip calculation
       }).then(function(){
-        if (_cdAcc) _cdAcc.balance = 0;
+        if (_cdAcc) { _cdAcc.balance = 0; _cdAcc.balanceManual = false; _cdAcc.balanceNote = ''; }
         document.getElementById('cd-balance-input').value = '';
         document.getElementById('cd-balance-note').value = '';
         toast('✅ Balance reset to automatic — system will calculate from completed trips.');
@@ -5084,13 +5266,16 @@
       if(!_cdCorpId||!db) return;
       var amt = parseFloat(document.getElementById('cd-balance-input').value) || 0;
       var note = (document.getElementById('cd-balance-note').value || '').trim();
+      // A typed balance is a deliberate override: the portal charges it as-is
+      // instead of the itemized trips, until it is cleared or reset to Auto.
       db.collection('corporate_accounts').doc(_cdCorpId).update({
         balance: amt,
         balanceNote: note,
+        balanceManual: true,
         balanceUpdatedAt: new Date().toISOString()
       }).then(function(){
         // Update local state and stat card immediately
-        if (_cdAcc) _cdAcc.balance = amt;
+        if (_cdAcc) { _cdAcc.balance = amt; _cdAcc.balanceManual = true; _cdAcc.balanceNote = note; }
         document.getElementById('cd-stat-bal').textContent = '$' + amt.toFixed(2);
         toast('✅ Balance updated to $' + amt.toFixed(2));
       }).catch(function(e){ alert('Error: ' + e.message); });
@@ -5152,7 +5337,7 @@
               if (t.status !== 'Completed') return;
               var td = new Date((t.date || '') + 'T12:00:00');
               if (isNaN(td.getTime()) || td >= periodStart) return;
-              batch.update(d.ref, { status: 'Paid', balanceAdded: false, updatedAt: now, paidAt: now });
+              batch.update(d.ref, { status: 'Paid', balanceAdded: false, updatedAt: now, paidAt: now, paidVia: 'manual' });
               count++;
             });
           });
@@ -5163,9 +5348,13 @@
           return db.collection('corporate_accounts').doc(_cdCorpId).update({
             balance: 0,
             balanceNote: '',
+            balanceManual: false,
             balanceUpdatedAt: now,
             lastPaymentDate: now
-          }).then(function(){ return markedCount; });
+          }).then(function(){
+            if (_cdAcc) { _cdAcc.balance = 0; _cdAcc.balanceManual = false; _cdAcc.balanceNote = ''; }
+            return markedCount;
+          });
         })
         // 3. Refresh modal trip list
         .then(function(markedCount) {

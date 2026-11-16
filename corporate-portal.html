@@ -853,6 +853,19 @@ var _sess = null;
       <div id="pay-empty" style="display:none" class="empty-state">
         <span class="material-symbols-outlined">receipt_long</span>No invoices yet.
       </div>
+      <div class="sec-hdr" style="margin-top:2rem">
+        <div><div class="sec-title">Payment Receipts</div></div>
+      </div>
+      <div style="font-family:Inter,sans-serif;font-size:0.78rem;color:#888;margin:-0.25rem 0 0.75rem">One receipt per payment, listing exactly the trips it paid for and the card fee — it matches the amount on your card statement.</div>
+      <div style="overflow-x:auto">
+        <table class="pay-table">
+          <thead><tr><th>Paid</th><th>Trips</th><th>Amount</th><th></th></tr></thead>
+          <tbody id="rcpt-tbody"></tbody>
+        </table>
+      </div>
+      <div id="rcpt-empty" style="display:none" class="empty-state">
+        <span class="material-symbols-outlined">receipt_long</span>No payments yet.
+      </div>
     </div>
 
     <!-- ══════════ STATEMENTS ══════════ -->
@@ -1130,6 +1143,7 @@ var _tripFilter = 'all';
 var _calDate = new Date();
 var _veh = 'Black SUV Luxury';
 var _accountBalance = 0;
+var _accountManual = false;  // admin typed the balance by hand (see getDisplayBalance)
 var _balanceUpdatedAt = null; // ISO string — set by admin via SET BALANCE DUE / CLEAR
 var _cardData = null;
 
@@ -1202,12 +1216,13 @@ function calcPeriodBalance() {
   return total;
 }
 
-// Which balance to display: use the higher of the stored account balance (set by admin
-// or auto-synced) and the calculated trip balance. This ensures newly closed cycles
-// are always reflected even before admin opens the account.
+// The amount due is the itemized trips above — the same Completed trips the
+// client's statement adds up — so what they pay always matches what they see.
+// A stored balance is only used when admin typed it in by hand (balanceManual).
+// This used to be the higher of the stored balance and the trips, which charged
+// a drifted stored figure: $600 for $300 of trips (EnterpriseDB, Nov 2026).
 function getDisplayBalance() {
-  var tripBal = calcPeriodBalance();
-  return Math.max(_accountBalance, tripBal);
+  return _accountManual ? _accountBalance : calcPeriodBalance();
 }
 
 // After a successful payment, mark closed-period trips as Paid ONLY up to the paid amount.
@@ -1263,7 +1278,7 @@ async function markPastPeriodTripsAsPaid(paidAmount, tipAmount) {
     var batch = db.batch();
     var tipAssigned = 0;
     for (var k = 0; k < toMark.length; k++) {
-      var upd = { status: 'Paid', balanceAdded: false, updatedAt: nowIso, paidAt: nowIso };
+      var upd = { status: 'Paid', balanceAdded: false, updatedAt: nowIso, paidAt: nowIso, paidVia: 'card' };
       if (tipPool > 0) {
         var share = (k === toMark.length - 1)
           ? Math.round((tipPool - tipAssigned) * 100) / 100           // last trip gets the remainder
@@ -1286,6 +1301,7 @@ async function markPastPeriodTripsAsPaid(paidAmount, tipAmount) {
     if (db && sess.accountId) {
       await db.collection('corporate_accounts').doc(sess.accountId).update({
         balance: newBalance,
+        balanceManual: false,
         balanceUpdatedAt: nowIso,
         lastPaymentDate: nowIso,
         lastPaymentAmount: paidAmount || 0,
@@ -1307,6 +1323,9 @@ function loadAccountLive(){
     if(!snap.exists) return;
     var d = snap.data();
     _accountBalance    = d.balance || 0;
+    // Accounts saved before balanceManual existed count as manual only with a note
+    _accountManual     = d.balanceManual === true ||
+                         (d.balanceManual === undefined && !!String(d.balanceNote || '').trim());
     _balanceUpdatedAt  = d.balanceUpdatedAt || d.lastPaymentDate || null;
 
     // Stripe card data
@@ -2143,7 +2162,7 @@ function filterTrips(f,el){
 function renderPayments(){
   var tbody=document.getElementById('pay-tbody');
   var empty=document.getElementById('pay-empty');
-  if(!_trips.length){tbody.innerHTML='';empty.style.display='block';return;}
+  if(!_trips.length){tbody.innerHTML='';empty.style.display='block';renderPaymentReceipts();return;}
   empty.style.display='none';
   tbody.innerHTML=_trips.map(function(t){
     var d=_rideDate(t.date);
@@ -2157,6 +2176,92 @@ function renderPayments(){
     return '<tr><td>'+dateStr+'</td><td style="font-weight:600;color:#775a19">'+(t.code||'—')+'</td><td>'+escH(t.service||'—')+'</td><td>'+escH((t.pickup||'—').substring(0,20))+'→'+escH((t.destination||'—').substring(0,20))+'</td><td><strong>'+(t.price||'—')+'</strong></td><td>'+bdg+'</td></tr>';
   }).join('');
   document.getElementById('pay-cycle').textContent=(sess.billingCycle||'Monthly (NET-30)')+' billing';
+  renderPaymentReceipts();
+}
+
+// ─── PAYMENT RECEIPTS ───
+// A payment is the set of trips stamped with the same paidAt (to the minute):
+// a card payment stamps every trip it covers with one timestamp, and admin can
+// apply an overpayment to more trips with that same timestamp.
+function _paymentGroups(){
+  var groups = {}, keys = [], seen = {};
+  _trips.forEach(function(t){
+    var id = t.id || t._docId;
+    if (id && seen[id]) return; if (id) seen[id] = true;
+    if (t.status !== 'Paid' || !t.paidAt) return;
+    var key = String(t.paidAt).slice(0, 16);
+    if (!groups[key]) { groups[key] = { key: key, paidAt: t.paidAt, trips: [] }; keys.push(key); }
+    groups[key].trips.push(t);
+  });
+  keys.sort().reverse();                       // ISO strings sort by time; newest first
+  return keys.map(function(k){ return groups[k]; });
+}
+
+// Card payments carry the 2.9% fee; a payment recorded by hand (paidVia 'manual') does not
+function _receiptTotal(g){
+  var b = _stmtBreakdown(g.trips);
+  var manual = g.trips.every(function(t){ return t.paidVia === 'manual'; });
+  return manual ? Math.round((b.fares + b.tips) * 100) / 100 : b.paid;
+}
+
+function _paidLabel(iso){
+  var d = new Date(iso);
+  return isNaN(d.getTime()) ? String(iso) : d.toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'});
+}
+
+function renderPaymentReceipts(){
+  var tbody = document.getElementById('rcpt-tbody'), empty = document.getElementById('rcpt-empty');
+  if (!tbody) return;
+  var groups = _paymentGroups();
+  if (!groups.length){ tbody.innerHTML = ''; empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  tbody.innerHTML = groups.map(function(g){
+    return '<tr><td>' + escH(_paidLabel(g.paidAt)) + '</td>' +
+      '<td>' + g.trips.length + ' trip' + (g.trips.length !== 1 ? 's' : '') + '</td>' +
+      '<td><strong>$' + _receiptTotal(g).toFixed(2) + '</strong></td>' +
+      '<td><button class="btn-out" style="margin-left:0" onclick="printPaymentReceipt(\'' + g.key + '\')">🧾 Receipt</button></td></tr>';
+  }).join('');
+}
+
+function printPaymentReceipt(key){
+  var g = _paymentGroups().filter(function(x){ return x.key === key; })[0];
+  if (!g) return;
+  var trips = g.trips.slice().sort(function(a,b){ return _rideDate(a.date) - _rideDate(b.date); });
+  var manual = trips.every(function(t){ return t.paidVia === 'manual'; });
+  var b = _stmtBreakdown(trips);
+  var rows = trips.map(function(t){
+    var base = parseFloat((t.price+'').replace(/[^0-9.]/g,'')) || 0;
+    var d = new Date(t.date+'T12:00:00');
+    var ds = isNaN(d.getTime()) ? escH(t.date||'—') : d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+    var route = escH((t.pickup||'').split(',')[0])+' <span class="arr">→</span> '+escH((t.destination||'').split(',')[0]);
+    return '<tr><td class="c-date">'+ds+'</td><td class="c-conf">'+escH(t.code||'—')+'</td>'+
+      '<td class="c-svc"><div class="svc-name">'+escH(t.service||'—')+'</div><div class="svc-route">'+route+'</div>'+_stmtPaidTag(t)+'</td>'+
+      '<td class="c-amt">$'+base.toFixed(2)+'</td></tr>';
+  }).join('');
+  var paidStr = _paidLabel(g.paidAt);
+  var total = manual ? Math.round((b.fares + b.tips) * 100) / 100 : b.paid;
+  var tots = '<div class="tot-row"><span class="tot-lbl">Subtotal (Fares)</span><span class="tot-val">$' + b.fares.toFixed(2) + '</span></div>' +
+    '<div class="tot-row"><span class="tot-lbl">Tips</span><span class="tot-val">$' + b.tips.toFixed(2) + '</span></div>' +
+    (manual ? '' : '<div class="tot-row"><span class="tot-lbl">Card Processing Fee (2.9%)</span><span class="tot-val">$' + b.fee.toFixed(2) + '</span></div>') +
+    '<div class="tot-row grand paid"><span class="tot-lbl">Total Paid &middot; ' + escH(paidStr) + '</span><span class="tot-val">$' + total.toFixed(2) + '</span></div>';
+  var w = window.open('','_blank');
+  w.document.write('<html><head><title>Payment Receipt — '+escH(sess.company)+'</title><style>'+stmtLuxuryCSS()+'</style></head><body><div class="sheet">');
+  w.document.write('<header class="stmt-hdr"><div class="wordmark">Seacoast <span class="gold">RVIP</span></div><div class="wordmark-sub">Premium Ground Transportation</div></header>');
+  w.document.write('<section class="meta">'+
+    '<div class="meta-l"><div class="meta-lbl">Received From</div><div class="meta-val">'+escH(sess.company)+'</div>'+
+      (sess.contactName?'<div class="meta-sub">'+escH(sess.contactName)+'</div>':'')+
+      (sess.billingAddress?'<div class="meta-sub">'+escH(sess.billingAddress)+'</div>':'')+
+    '</div>'+
+    '<div class="meta-r"><div class="meta-lbl">Payment Receipt</div><div class="meta-val mono">RCPT-'+escH(key.replace(/\D/g,''))+'</div>'+
+      '<div class="meta-sub">Paid '+escH(paidStr)+'</div>'+
+      '<div class="meta-sub">'+trips.length+' trip'+(trips.length!==1?'s':'')+'</div>'+
+    '</div></section>');
+  w.document.write('<section class="items"><div class="items-hdr"><span>Date</span><span>Conf.</span><span>Service</span><span class="ta-r">Amount</span></div><table class="items-tbl"><tbody>'+rows+'</tbody></table></section>');
+  w.document.write('<section class="totals">'+tots+'</section>');
+  w.document.write('<footer class="stmt-ft"><div class="ft-line">Payment received — thank you. Seacoast RVIP.</div><div class="ft-line">(978) 255-3140 &nbsp;·&nbsp; info@seacoastrvip.com &nbsp;·&nbsp; seacoastrvip.com</div></footer>');
+  w.document.write('</div></body></html>');
+  w.document.close();
+  setTimeout(function(){w.print();},250);
 }
 
 // ─── CALENDAR ───
@@ -2421,6 +2526,35 @@ function _stmtTotalsHTML(b, grandLabel){
   return h;
 }
 
+// Under a paid trip's service line: when it was paid and on which receipt
+function _stmtPaidTag(t){
+  if ((t.status || '') !== 'Paid' || !t.paidAt) return '';
+  return '<div class="svc-route">Paid ' + escH(_paidLabel(t.paidAt)) + ' &middot; RCPT-' + escH(String(t.paidAt).slice(0, 16).replace(/\D/g, '')) + '</div>';
+}
+
+// "Payments Applied": every payment that paid for trips on this document, at its
+// full amount — so a payment that also covered trips outside this period (an
+// October payment that prepaid November trips) still reads as one payment.
+function _stmtPaymentsHTML(trips){
+  var ids = {}, keys = {};
+  (trips || []).forEach(function(t){
+    ids[t.id || t._docId || t.code] = true;
+    if ((t.status || '') === 'Paid' && t.paidAt) keys[String(t.paidAt).slice(0, 16)] = true;
+  });
+  var groups = _paymentGroups().filter(function(g){ return keys[g.key]; });
+  if (!groups.length) return '';
+  var h = '<section class="totals"><div class="tot-row"><span class="tot-lbl"><strong>Payments Applied</strong></span><span class="tot-val"></span></div>';
+  groups.forEach(function(g){
+    var here = g.trips.filter(function(t){ return ids[t.id || t._docId || t.code]; }).length;
+    var codes = g.trips.map(function(t){ return escH(t.code || '—'); }).join(', ');
+    h += '<div class="tot-row"><span class="tot-lbl">' + escH(_paidLabel(g.paidAt)) + ' &middot; RCPT-' + escH(g.key.replace(/\D/g, '')) +
+      '<br><span style="font-size:0.85em;color:#888">' + g.trips.length + ' trip' + (g.trips.length !== 1 ? 's' : '') + ': ' + codes +
+      (here < g.trips.length ? ' (' + here + ' on this statement)' : '') + '</span></span>' +
+      '<span class="tot-val">$' + _receiptTotal(g).toFixed(2) + '</span></div>';
+  });
+  return h + '</section>';
+}
+
 // ─── PRINT INVOICE ───
 function printInvoice(){
   var total = _trips.reduce(function(s,t){var p=parseFloat((t.price+'').replace(/[^0-9.]/g,''));return s+(isNaN(p)?0:p);},0);
@@ -2432,7 +2566,7 @@ function printInvoice(){
     return '<tr>'+
       '<td class="c-date">'+ds+'</td>'+
       '<td class="c-conf">'+escH(t.code||'—')+'</td>'+
-      '<td class="c-svc"><div class="svc-name">'+escH(t.service||'—')+'</div><div class="svc-route">'+route+'</div></td>'+
+      '<td class="c-svc"><div class="svc-name">'+escH(t.service||'—')+'</div><div class="svc-route">'+route+'</div>'+_stmtPaidTag(t)+'</td>'+
       '<td class="c-amt">$'+base.toFixed(2)+'</td>'+
       '</tr>';
   }).join('');
@@ -2452,6 +2586,7 @@ function printInvoice(){
     '</div></section>');
   w.document.write('<section class="items"><div class="items-hdr"><span>Date</span><span>Conf.</span><span>Service</span><span class="ta-r">Amount</span></div><table class="items-tbl"><tbody>'+rows+'</tbody></table></section>');
   w.document.write('<section class="totals">'+ _stmtTotalsHTML(_stmtBreakdown(_trips), 'Total') +'</section>');
+  w.document.write(_stmtPaymentsHTML(_trips));
   w.document.write('<footer class="stmt-ft"><div class="ft-line">Payable to Seacoast RVIP.</div><div class="ft-line">(978) 255-3140 &nbsp;·&nbsp; info@seacoastrvip.com &nbsp;·&nbsp; seacoastrvip.com</div></footer>');
   w.document.write('</div></body></html>');
   w.document.close();
@@ -2601,7 +2736,7 @@ function _renderLuxuryStatement(opts){
     return '<tr>'+
       '<td class="c-date">'+ds+'</td>'+
       '<td class="c-conf">'+escH(t.code||'—')+'</td>'+
-      '<td class="c-svc"><div class="svc-name">'+escH(t.service||'—')+'</div><div class="svc-route">'+route+'</div></td>'+
+      '<td class="c-svc"><div class="svc-name">'+escH(t.service||'—')+'</div><div class="svc-route">'+route+'</div>'+_stmtPaidTag(t)+'</td>'+
       '<td class="c-amt">$'+base.toFixed(2)+'</td>'+
       '</tr>';
   }).join('');
@@ -2621,6 +2756,7 @@ function _renderLuxuryStatement(opts){
     '</div></section>');
   w.document.write('<section class="items"><div class="items-hdr"><span>Date</span><span>Conf.</span><span>Service</span><span class="ta-r">Amount</span></div><table class="items-tbl"><tbody>'+rows+'</tbody></table></section>');
   w.document.write('<section class="totals">'+ _stmtTotalsHTML(_stmtBreakdown(opts.trips), 'Total Due') +'</section>');
+  w.document.write(_stmtPaymentsHTML(opts.trips));
   w.document.write('<footer class="stmt-ft"><div class="ft-line">Payment Terms — Net 30 from statement date. Payable to Seacoast RVIP.</div><div class="ft-line">(978) 255-3140 &nbsp;·&nbsp; info@seacoastrvip.com &nbsp;·&nbsp; seacoastrvip.com</div></footer>');
   w.document.write('</div></body></html>');
   w.document.close();
@@ -2997,6 +3133,7 @@ function filterStmt(){
       var d=new Date(t.date+'T12:00:00');
       var ds=d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
       var bdg=t.status==='Paid'?'<span class="bdg bdg-com">Paid</span>':'<span class="bdg bdg-pen">Due</span>';
+      if(t.status==='Paid'&&t.paidAt) bdg+='<div style="font-size:0.62rem;color:#888;margin-top:3px">Paid '+escH(_paidLabel(t.paidAt))+'<br>RCPT-'+escH(String(t.paidAt).slice(0,16).replace(/\D/g,''))+'</div>';
       return '<tr><td>'+ds+'</td><td style="color:#775a19;font-weight:600">'+escH(t.code||'—')+'</td><td>'+escH(t.name||'—')+'</td><td>'+escH(t.service||'—')+'</td><td>'+escH((t.pickup||'—').substring(0,18))+'→'+escH((t.destination||'—').substring(0,18))+'</td><td><strong>'+(t.price||'—')+'</strong></td><td>'+bdg+'</td></tr>';
     }).join('');
   }
@@ -3022,7 +3159,7 @@ function printStmtPDF(){
     return '<tr>'+
       '<td class="c-date">'+ds+'</td>'+
       '<td class="c-conf">'+escH(t.code||'—')+'</td>'+
-      '<td class="c-svc"><div class="svc-name">'+escH(t.service||'—')+'</div><div class="svc-route">'+route+'</div></td>'+
+      '<td class="c-svc"><div class="svc-name">'+escH(t.service||'—')+'</div><div class="svc-route">'+route+'</div>'+_stmtPaidTag(t)+'</td>'+
       '<td class="c-amt">$'+base.toFixed(2)+'</td>'+
       '</tr>';
   }).join('');
@@ -3046,6 +3183,7 @@ function printStmtPDF(){
   w.document.write('<section class="items"><div class="items-hdr"><span>Date</span><span>Conf.</span><span>Service</span><span class="ta-r">Amount</span></div><table class="items-tbl"><tbody>'+rows+'</tbody></table></section>');
   // Totals
   w.document.write('<section class="totals">'+ _stmtTotalsHTML(_stmtBreakdown(_stmtFiltered), 'Total Due') +'</section>');
+  w.document.write(_stmtPaymentsHTML(_stmtFiltered));
   // Footer
   w.document.write('<footer class="stmt-ft"><div class="ft-line">Payable to Seacoast RVIP — Net 30 from statement date.</div><div class="ft-line">(978) 255-3140 &nbsp;·&nbsp; info@seacoastrvip.com &nbsp;·&nbsp; seacoastrvip.com</div></footer>');
   w.document.write('</div></body></html>');w.document.close();
